@@ -1096,7 +1096,7 @@ def to_external_embed(obj, description=None, blobs=None):
 
   Args:
     obj (dict): AS1 object
-    description (str): if provided, overrides ``summary`` and ``content` in ``obj`
+    description (str): if provided, overrides ``summary`` and ``content`` in ``obj``
 
   Returns:
     dict: Bluesky ``app.bsky.embed.external#external`` record

@@ -43,13 +43,19 @@ extensions = [
 ]
 
 # autodoc settings
+# http://www.sphinx-doc.org/en/stable/ext/autodoc.html
 autoclass_content = 'class'
 autodoc_member_order = 'bysource'
 autodoc_default_options = {
     'show-inheritance': True,
     'members': True,
-    'special-members': True,
+    'private-members': '_convert, _handle',
+    'no-undoc-members': True,
+    'no-special-members': True,
+    'no-imported-members': True,
+    'member-order': 'bysource',
 }
+autodoc_inherit_docstrings = False
 
 # Napoleon settings
 # http://www.sphinx-doc.org/en/stable/ext/napoleon.html
@@ -118,7 +124,8 @@ exclude_patterns = ['_build', '**/appengine_config.py', '**/tests', '**/test_*.p
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-#add_module_names = True
+add_module_names = False
+python_use_unqualified_type_names = True
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.

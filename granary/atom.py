@@ -126,7 +126,7 @@ def from_as1(input, actor=None, title=None, request_url=None, host_url=None,
       feed ``<id>`` element.
     xml_base (str): base URL, if any. Used in the top-level ``xml:base``
       attribute.
-    rels (dict): rel links to include. Keys are string ``rel``s, values are
+    rels (dict): rel links to include. Keys are string ``rel``, values are
       string URLs.
     reader (bool): whether the output will be rendered in a feed reader.
       Currently just includes location if True, not otherwise.

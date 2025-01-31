@@ -449,7 +449,18 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
-8.0 - unreleased
+8.1 - unreleased
+~~~~~~~~~~~~~~~~
+
+- ``as2``:
+
+  - ``to_as1``: support integer seconds ``duration``, which is
+    non-standard but sent by some AP implementations, `eg
+    Funkwhale <https://dev.funkwhale.audio/funkwhale/funkwhale/-/issues/1566>`__.
+  - ``link_tags``: add ``class="hashtag"`` for hashtag (``Tag``) tags
+    (`bridgy-fed/#1634 <https://github.com/snarfed/bridgy-fed/issues/1634#issuecomment-2577519871>`__).
+
+8.0 - 2025-01-01
 ~~~~~~~~~~~~~~~~
 
 *Breaking changes:*
@@ -584,6 +595,8 @@ removed until at least v9.0, if not later.
     boolean kwarg to fetch and generate a preview ``attachment`` for the
     first link in the HTML ``content``, if any.
 
+.. _section-1:
+
 7.0 - 2024-06-24
 ~~~~~~~~~~~~~~~~
 
@@ -703,7 +716,7 @@ removed until at least v9.0, if not later.
   - ``Source.postprocess``: when extracting @-mentions, defer to
     existing tag if it has the same ``displayName`` and has ``url``.
 
-.. _section-1:
+.. _section-2:
 
 6.2 - 2024-03-15
 ~~~~~~~~~~~~~~~~
@@ -861,7 +874,7 @@ removed until at least v9.0, if not later.
   - ``postprocess_activity/object``: add ``mentions`` kwarg to convert
     @-mentions in HTML links to ``mention`` tags.
 
-.. _section-2:
+.. _section-3:
 
 6.1 - 2023-09-16
 ~~~~~~~~~~~~~~~~
@@ -999,7 +1012,7 @@ at least in the REST API.
 
   - ``from_activities``: handle bare string id ``author``.
 
-.. _section-3:
+.. _section-4:
 
 6.0 - 2023-03-22
 ~~~~~~~~~~~~~~~~
@@ -1111,7 +1124,7 @@ at least in the REST API.
 
   - ``from_activities``: fix item ordering to match input activities.
 
-.. _section-4:
+.. _section-5:
 
 5.0 - 2022-12-03
 ~~~~~~~~~~~~~~~~
@@ -1245,7 +1258,7 @@ at least in the REST API.
 - ``Source.original_post_discovery``: add new ``max_redirect_fetches``
   keyword arg.
 
-.. _section-5:
+.. _section-6:
 
 4.0 - 2022-03-23
 ~~~~~~~~~~~~~~~~
@@ -1291,7 +1304,7 @@ at least in the REST API.
 
   - Handle malformed ``items.author`` element.
 
-.. _section-6:
+.. _section-7:
 
 3.2 - 2021-09-15
 ~~~~~~~~~~~~~~~~
@@ -1348,7 +1361,7 @@ at least in the REST API.
 - REST API: ported web framework from webapp2 to Flask. No user-visible
   behavior change expected.
 
-.. _section-7:
+.. _section-8:
 
 3.1 - 2021-04-03
 ~~~~~~~~~~~~~~~~
@@ -1453,7 +1466,7 @@ at least in the REST API.
   - ``from_as1()``: convert ``username`` to ``preferredUsername``.
   - ``from_as1()``: bug fix, make ``context`` kwarg actually work.
 
-.. _section-8:
+.. _section-9:
 
 3.0 - 2020-04-08
 ~~~~~~~~~~~~~~~~
@@ -1531,7 +1544,7 @@ Non-breaking changes:
   caching now.
 - Added Meetup.com support for publishing RSVPs.
 
-.. _section-9:
+.. _section-10:
 
 2.2 - 2019-11-02
 ~~~~~~~~~~~~~~~~
@@ -1580,7 +1593,7 @@ Non-breaking changes:
     enclosure per item, so we now only include the first, and log a
     warning if the activity has more.)
 
-.. _section-10:
+.. _section-11:
 
 2.1 - 2019-09-04
 ~~~~~~~~~~~~~~~~
@@ -1630,7 +1643,7 @@ Non-breaking changes:
 
   - Default title to ellipsized content.
 
-.. _section-11:
+.. _section-12:
 
 2.0 - 2019-03-01
 ~~~~~~~~~~~~~~~~
@@ -1639,7 +1652,7 @@ Non-breaking changes:
 March <https://developers.google.com/+/api-shutdown>`__. Notably, this
 removes the ``googleplus`` module.
 
-.. _section-12:
+.. _section-13:
 
 1.15 - 2019-02-28
 ~~~~~~~~~~~~~~~~~
@@ -1690,7 +1703,7 @@ removes the ``googleplus`` module.
 - ``/url``: Return HTTP 400 when fetching the user’s URL results in an
   infinite redirect.
 
-.. _section-13:
+.. _section-14:
 
 1.14 - 2018-11-12
 ~~~~~~~~~~~~~~~~~
@@ -1717,7 +1730,7 @@ Encode ``&``\ s in author URL and email address too. (Thanks
 `sebsued <https://twitter.com/sebsued>`__!) \* AS2: \* Add ``Follow``
 support.
 
-.. _section-14:
+.. _section-15:
 
 1.13 - 2018-08-08
 ~~~~~~~~~~~~~~~~~
@@ -1777,7 +1790,7 @@ support.
   - Support ``alt`` attribute in ``<img>`` tags
     (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
 
-.. _section-15:
+.. _section-16:
 
 1.12 - 2018-03-24
 ~~~~~~~~~~~~~~~~~
@@ -1812,7 +1825,7 @@ impact of the Python 3 migration. It *should* be a noop for existing
 Python 2 users, and we’ve tested thoroughly, but I’m sure there are
 still bugs. Please file issues if you notice anything broken!
 
-.. _section-16:
+.. _section-17:
 
 1.11 - 2018-03-09
 ~~~~~~~~~~~~~~~~~
@@ -1884,7 +1897,7 @@ still bugs. Please file issues if you notice anything broken!
   - Omit title from items if it’s the same as the content. (Often caused
     by microformats2’s implied ``p-name`` logic.)
 
-.. _section-17:
+.. _section-18:
 
 1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
@@ -1925,7 +1938,7 @@ still bugs. Please file issues if you notice anything broken!
   - Fix bug that omitted title in some cases
     (`#122 <https://github.com/snarfed/granary/issues/122>`__).
 
-.. _section-18:
+.. _section-19:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
@@ -1952,7 +1965,7 @@ still bugs. Please file issues if you notice anything broken!
     ``json``, ``json-mf2``, and ``xml`` are still accepted, but
     deprecated.
 
-.. _section-19:
+.. _section-20:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -2029,7 +2042,7 @@ still bugs. Please file issues if you notice anything broken!
   `bug <https://github.com/kylewm/brevity/issues/5>`__
   `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
-.. _section-20:
+.. _section-21:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
@@ -2076,7 +2089,7 @@ still bugs. Please file issues if you notice anything broken!
   “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which is
   the default on Mac OS X, Windows, and older \*nix.
 
-.. _section-21:
+.. _section-22:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
@@ -2110,7 +2123,7 @@ still bugs. Please file issues if you notice anything broken!
 - Error handling: return HTTP 502 for non-JSON API responses, 504 for
   connection failures.
 
-.. _section-22:
+.. _section-23:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -2147,14 +2160,14 @@ still bugs. Please file issues if you notice anything broken!
   - Switch creating comments and reactions from GraphQL to REST API
     (`bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__.
 
-.. _section-23:
+.. _section-24:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 - Bump oauth-dropins requirement to 1.4.
 
-.. _section-24:
+.. _section-25:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -2188,7 +2201,7 @@ still bugs. Please file issues if you notice anything broken!
 - Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
   App Engine.
 
-.. _section-25:
+.. _section-26:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
@@ -2196,7 +2209,7 @@ still bugs. Please file issues if you notice anything broken!
 - Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
   dependency to >=1.3.
 
-.. _section-26:
+.. _section-27:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -2239,7 +2252,7 @@ still bugs. Please file issues if you notice anything broken!
 - Misc bug fixes.
 - Set up Coveralls.
 
-.. _section-27:
+.. _section-28:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -2295,7 +2308,7 @@ still bugs. Please file issues if you notice anything broken!
 - Misc bug fixes.
 - Set up CircleCI.
 
-.. _section-28:
+.. _section-29:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
@@ -2318,7 +2331,7 @@ still bugs. Please file issues if you notice anything broken!
 - Improve original post discovery algorithm.
 - New logo.
 
-.. _section-29:
+.. _section-30:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
@@ -2326,7 +2339,7 @@ still bugs. Please file issues if you notice anything broken!
 - Bug fix for atom template rendering.
 - Facebook, Instagram: support access_token parameter.
 
-.. _section-30:
+.. _section-31:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~

@@ -1483,7 +1483,7 @@ class Facebook(source.Source):
     Args:
       rsvp (dict): Facebook RSVP object
       type (str): optional Facebook RSVP type, one of ``RSVP_FIELDS``
-      event (dict): Facebook event object. May contain only a single ``id`
+      event (dict): Facebook event object. May contain only a single ``id``
         element.
 
     Returns:
@@ -2424,21 +2424,21 @@ class Facebook(source.Source):
     Facebook ids come in different formats:
 
     * Simple number, usually a user or post: ``12``
-    * Two numbers with underscore, usually ``POST_COMMENT`` or ``USER_POST``\:
+    * Two numbers with underscore, usually ``POST_COMMENT`` or ``USER_POST``:
       ``12_34``
-    * Three numbers with underscores, ``USER_POST_COMMENT``\: ``12_34_56``
-    * Three numbers with colons, ``USER:POST:SHARD``\: ``12:34:63``
+    * Three numbers with underscores, ``USER_POST_COMMENT``: ``12_34_56``
+    * Three numbers with colons, ``USER:POST:SHARD``: ``12:34:63``
       (We're guessing that the third part is a shard in some FB internal system.
       In our experience so far, it's always either 63 or the app-scoped user id
       for 63.)
-    * Two numbers with colon, ``POST:SHARD``\: ``12:34``
+    * Two numbers with colon, ``POST:SHARD``: ``12:34``
       (We've seen 0 as shard in this format.)
-    * Four numbers with colons/underscore, ``USER:POST:SHARD_COMMENT``\:
+    * Four numbers with colons/underscore, ``USER:POST:SHARD_COMMENT``:
       ``12:34:63_56``
-    * Five numbers with colons/underscore, ``USER:EVENT:UNKNOWN:UNKNOWN_UNKNOWN``\.
+    * Five numbers with colons/underscore, ``USER:EVENT:UNKNOWN:UNKNOWN_UNKNOWN``.
       Not currently supported! Examples:
-         * ``111599105530674:998145346924699:10102446236688861:10207188792305341_998153510257216``
-         * ``111599105530674:195181727490727:10102446236688861:10205257726909910_195198790822354``
+      * ``111599105530674:998145346924699:10102446236688861:10207188792305341_998153510257216``
+      * ``111599105530674:195181727490727:10102446236688861:10205257726909910_195198790822354``
 
     Background:
 
