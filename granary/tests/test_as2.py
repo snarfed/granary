@@ -705,14 +705,20 @@ foo
   def test_link_tags_hashtag(self):
     # Tag (hashtag) tag should include class="hashtag"
     obj = {
-      'content': 'foo #bar baz',
-      'tag': [{'href': 'http://bar', 'startIndex': 4, 'length': 4, 'type': 'Tag'}],
+      'content': 'foo #bar #baz biff',
+      'tag': [
+        {'href': 'http://bar', 'startIndex': 4, 'length': 4, 'type': 'Tag'},
+        {'href': 'http://baz', 'startIndex': 9, 'length': 4, 'type': 'Hashtag'},
+      ],
     }
     as2.link_tags(obj)
     self.assert_equals({
-      'content': 'foo <a class="hashtag" href="http://bar">#bar</a> baz',
+      'content': 'foo <a class="hashtag" href="http://bar">#bar</a> <a class="hashtag" href="http://baz">#baz</a> biff',
       'content_is_html': True,
-      'tag': [{'href': 'http://bar', 'type': 'Tag'}],
+      'tag': [
+        {'href': 'http://bar', 'type': 'Tag'},
+        {'href': 'http://baz', 'type': 'Hashtag'},
+      ],
     }, obj)
 
   def test_is_server_actor(self):

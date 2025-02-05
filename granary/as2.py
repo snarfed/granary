@@ -766,7 +766,7 @@ def link_tags(obj):
     # https://github.com/snarfed/bridgy-fed/issues/887#issuecomment-2452141758
     # https://github.com/snarfed/bridgy-fed/issues/1634#issuecomment-2577519871
     cls = ('class="mention" ' if tag.get('type') == 'Mention'
-           else 'class="hashtag" ' if tag.get('type') == 'Tag'
+           else 'class="hashtag" ' if tag.get('type') in ('Hashtag', 'Tag')
            else '')
     start = tag['startIndex']
     if start < last_end:
