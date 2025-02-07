@@ -36,10 +36,7 @@ CONTEXT = 'https://www.w3.org/ns/activitystreams'
 MISSKEY_QUOTE_CONTEXT = {'_misskey_quote': 'https://misskey-hub.net/ns#_misskey_quote'}
 # https://swicg.github.io/miscellany/#sensitive
 SENSITIVE_CONTEXT = {'sensitive': 'as:sensitive'}
-PROPERTY_VALUE_CONTEXT = {
-  'schema': 'http://schema.org#',
-  'PropertyValue': 'schema:PropertyValue'
-}
+PROPERTY_VALUE_CONTEXT = {'PropertyValue': 'http://schema.org#PropertyValue'}
 # https://codeberg.org/fediverse/fep/src/branch/main/fep/5feb/fep-5feb.md#specifying-search-indexing-consent-at-the-actor-level
 # https://docs.joinmastodon.org/spec/activitypub/#discoverable
 DISCOVERABLE_INDEXABLE_CONTEXT = {

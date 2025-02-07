@@ -467,8 +467,7 @@ class ActivityStreams2Test(testutil.TestCase):
       '@context': [
         'https://www.w3.org/ns/activitystreams',
         {
-          'schema': 'http://schema.org#',
-          'PropertyValue': 'schema:PropertyValue'
+          'PropertyValue': 'http://schema.org#PropertyValue',
         }, {
           'discoverable': 'http://joinmastodon.org/ns#discoverable',
           'indexable': 'http://joinmastodon.org/ns#indexable',

@@ -5,8 +5,7 @@
       "discoverable": "http://joinmastodon.org/ns#discoverable",
       "indexable": "http://joinmastodon.org/ns#indexable"
     }, {
-      "schema": "http://schema.org#",
-      "PropertyValue": "schema:PropertyValue"
+        "PropertyValue": "http://schema.org#PropertyValue"
     }
   ],
   "type": "Person",
