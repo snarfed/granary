@@ -317,6 +317,7 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
   * `atom_to_activity/ies`: Get URL from `link` for activities as well as objects. ([Thanks @imax9000!](https://github.com/snarfed/granary/issues/752))
 * `bluesky`:
   * Translate Bluesky `app.bsky.feed.post#langs` to/from AS1 `contentMap` (which isn't officially part of AS1; we steal it from AS2).
+  * Translate Bluesky `app.bsky.feed.post#tags` to/from AS1 `tags` ([snarfed/bridgy-fed#1394](https://github.com/snarfed/bridgy-fed/issues/1394)).
   * Translate AS2 `sensitive` on posts to Bluesky `graphic-media` self label, and many Bluesky self labels back to `sensitive` with content warning(s) in `summary`.
   * Translate AS1/2 DMs to/from Bluesky chats.
   * Translate video embeds in posts.

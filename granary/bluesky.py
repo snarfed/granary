@@ -815,6 +815,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       text_byte_end = len(text.encode())
 
     facets = []
+    standalone_tags = []
     if (truncated and original_post_text_suffix
         and text.endswith(original_post_text_suffix)):
       facets.append({
@@ -917,8 +918,12 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
       # skip or trim this facet if it's off the end of content that got truncated
       index = facet.get('index')
+
       if not index:
+        if tag_type == 'hashtag':
+          standalone_tags.append(name)
         continue
+
       if index.get('byteStart', 0) >= text_byte_end:
         continue
       if index.get('byteEnd', 0) > text_byte_end:
@@ -1010,6 +1015,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       'reply': reply,
       'langs': langs,
       'labels': labels,
+      'tags': standalone_tags,
     }
 
     if as_embed or (type == 'article' and url):
@@ -1296,6 +1302,13 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         logger.warning(f"Couldn't apply facet {facet} to unicode text: {text}")
 
       tags.append(tag)
+
+    # extra tags not in post text
+    tags.extend({
+      'objectType': 'hashtag',
+      'displayName': name,
+      'url': f'https://bsky.app/search?q=%23{urllib.parse.quote(name)}',
+    } for name in obj.get('tags', []))
 
     in_reply_to = obj.get('reply', {}).get('parent', {}).get('uri')
 

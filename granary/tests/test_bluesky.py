@@ -1178,6 +1178,22 @@ class BlueskyTest(testutil.TestCase):
       'tags': [{'displayName': '#tunetuesday'}],
     }))
 
+  def test_from_as1_tag_hashtag_not_in_content(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo bar',
+      'tags': ['hache-☕'],
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'fooOriginalText': 'foo bar',
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': 'foo bar',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'hache-☕',
+      }],
+    }))
+
   def test_from_as1_tag_mention_guess_index(self):
     self.assert_equals(POST_BSKY_FACET_MENTION, self.from_as1({
       'objectType': 'note',
@@ -1441,6 +1457,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
       'text': '',
+      'tags': ['a**b('],
     }, from_as1({
       'objectType': 'note',
       'tags': [{
@@ -2695,6 +2712,37 @@ class BlueskyTest(testutil.TestCase):
 
   def test_to_as1_facet_hashtag(self):
     self.assert_equals(NOTE_AS_TAG_HASHTAG, to_as1(POST_BSKY_FACET_HASHTAG))
+
+  def test_to_as1_tags(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': '#hache-☕',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'foo',
+        'url': 'https://bsky.app/search?q=%23foo',
+      }, {
+        'objectType': 'hashtag',
+        'displayName': 'bar',
+        'url': 'https://bsky.app/search?q=%23bar',
+      }],
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': '#hache-☕',
+      'tags': ['foo', 'bar']
+    }))
+
+  def test_to_as1_facet_hashtag_and_tags(self):
+    expected = copy.deepcopy(NOTE_AS_TAG_HASHTAG)
+    expected['tags'].append({
+      'objectType': 'hashtag',
+      'displayName': 'biff',
+      'url': 'https://bsky.app/search?q=%23biff',
+    })
+    self.assert_equals(expected, to_as1({
+      **POST_BSKY_FACET_HASHTAG,
+      'tags': ['biff']
+    }))
 
   def test_to_as1_facet_mention(self):
     expected = copy.deepcopy(NOTE_AS_TAG_MENTION_URL)
