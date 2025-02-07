@@ -781,6 +781,11 @@ def link_tags(obj):
 
   obj['content'] = linked + orig[last_end:]
 
+  if content_map := obj.get('contentMap'):
+    for lang, val in content_map.items():
+      if val == orig:
+        content_map[lang] = obj['content']
+
 
 def is_server_actor(actor):
   """Returns True if this is the instance's server actor, False otherwise.

@@ -660,6 +660,7 @@ class ActivityStreams2Test(testutil.TestCase):
     # with indices, should link and then remove indices
     obj = {
       'content': 'foo\nbar\nbaz',
+      'contentMap': {'xyz': 'foo\nbar\nbaz'},
       'tag': [
         {'href': 'http://bar', 'startIndex': 4, 'length': 3},
         {'url': 'http://baz', 'startIndex': 8, 'length': 3},
@@ -672,6 +673,12 @@ foo
 <a href="http://bar">bar</a>
 <a href="http://baz">baz</a>
 """,
+      'contentMap': {
+        'xyz': """\
+foo
+<a href="http://bar">bar</a>
+<a href="http://baz">baz</a>
+"""},
       'content_is_html': True,
       'tag': [
         {'href': 'http://bar'},
