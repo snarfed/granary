@@ -153,6 +153,24 @@ def get_urls(obj, key='url'):
                           for link in util.get_list(obj, key))
 
 
+def set_content(obj, new_content):
+  """Sets ``content`` and also all matching values in ``contentMap``.
+
+  ...to try to keep them in sync.
+
+  Args:
+    obj (dict): AS2 object
+    new_content (str)
+  """
+  orig = obj.get('content')
+  obj['content'] = new_content
+
+  if content_map := obj.get('contentMap'):
+    for lang, val in content_map.items():
+      if val == orig:
+        content_map[lang] = new_content
+
+
 def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   """Converts an ActivityStreams 1 activity or object to ActivityStreams 2.
 
@@ -246,12 +264,14 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
           'quoteUrl': href,
         })
         util.add(obj['@context'], MISSKEY_QUOTE_CONTEXT)
-        content = obj.setdefault('content', '')
+        content = obj.get('content') or ''
         if not QUOTE_RE_SUFFIX.search(html_to_text(content)):
           if content:
-            obj['content'] += '<br><br>'
+            content += '<br><br>'
           url = url or id
-          obj['content'] += f'RE: <a href="{url}">{url}</a>'
+          content += f'RE: <a href="{url}">{url}</a>'
+          set_content(obj, content)
+          # don't set content_is_html to True here because that blocks eg link_tags()
           quote['name'] = f'RE: {url}'
 
       quote.pop('id', None)
@@ -779,12 +799,7 @@ def link_tags(obj):
     del tag['startIndex']
     del tag['length']
 
-  obj['content'] = linked + orig[last_end:]
-
-  if content_map := obj.get('contentMap'):
-    for lang, val in content_map.items():
-      if val == orig:
-        content_map[lang] = obj['content']
+  set_content(obj, linked + orig[last_end:])
 
 
 def is_server_actor(actor):

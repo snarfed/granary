@@ -131,8 +131,8 @@ mappings = (
   # ('mf2.html', ['as-from-mf2.json', 'as.json'], html_to_activity, ()),
   ('as.json', ['feed-from-as.json', 'feed.json'], activity_to_jsonfeed, (), ()),
   ('feed.json', ['as-from-feed.json', 'as.json'], jsonfeed_to_activity, (), ()),
-  ('as.json', ['as2-from-as.json', 'as2.json'], as2.from_as1, (), ()),
-  ('as2.json', ['as-from-as2.json', 'as.json'], as2.to_as1, (), ()),
+  ('as.json', ['as2-from-as.json', 'as2.json'], as2.from_as1, (), ('content_is_html',)),
+  ('as2.json', ['as-from-as2.json', 'as.json'], as2.to_as1, (), ('content_is_html',)),
   ('as.json', ['rss.xml'], rss_from_activities, (), ()),
   ('rss.xml', ['as-from-rss.json', 'as.json'], rss_to_objects, (), ()),
   ('as.json', ['bsky-from-as.json', 'bsky.json'], bluesky_from_as1,
@@ -153,7 +153,8 @@ for src_ext, dst_exts, fn, exclude_prefixes, ignore_fields in mappings:
       f'test_{fn.__module__.split(".")[-1]}_{fn.__name__}_{src[:-len(src_ext)]}'
     ).replace('.', '_').replace('-', '_').strip('_')
     # assert test_name not in test_funcs, test_name
-    test_funcs[test_name] = create_test_function(fn, original, expected, ignore=[])
+    test_funcs[test_name] = create_test_function(fn, original, expected,
+                                                 ignore=ignore_fields)
 
 os.chdir(prevdir)
 

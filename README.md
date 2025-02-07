@@ -304,6 +304,7 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
 * `as2`:
   * Add [`sensitive`](https://swicg.github.io/miscellany/#sensitive), [`indexable`](https://codeberg.org/fediverse/fep/src/branch/main/fep/5feb/fep-5feb.md#specifying-search-indexing-consent-at-the-actor-level), and [`discoverable`](https://docs.joinmastodon.org/spec/activitypub/#discoverable) support.
   * Add new `is_server_actor` function ([FEP-d556](https://codeberg.org/fediverse/fep/src/branch/main/fep/d556/fep-d556.md), [discussion](https://socialhub.activitypub.rocks/t/fep-d556-server-level-actor-discovery-using-webfinger/3861)).
+  * Add new `set_content` function to help keep `content` and `contentMap` in sync.
   * `from_as1`:
     * Always convert images to objects with `type: Image`, never to bare string URLs ([bridgy-fed#/1000](https://github.com/snarfed/bridgy-fed/issues/1000)).
     * Bug fixes for converting links to facets when the link text is the link URL.

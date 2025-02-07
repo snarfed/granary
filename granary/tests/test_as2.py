@@ -191,6 +191,30 @@ class ActivityStreams2Test(testutil.TestCase):
       }]
     }), ignore=['@context'])
 
+  def test_from_as1_quote_post_contentMap_html(self):
+    self.assert_equals({
+      'content': 'foo<br><br>RE: <a href="http://the/url">http://the/url</a>',
+      'contentMap': {
+        'xyz': 'foo<br><br>RE: <a href="http://the/url">http://the/url</a>',
+      },
+      'tag': [{
+        'type': 'Link',
+        'href': 'http://the/id',
+        'name': 'RE: http://the/url',
+        'mediaType': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+      }],
+      'quoteUrl': 'http://the/id',
+      '_misskey_quote': 'http://the/id',
+    }, as2.from_as1({
+      'content': 'foo',
+      'contentMap': {'xyz': 'foo'},
+      'attachments': [{
+        'objectType': 'note',
+        'id': 'http://the/id',
+        'url': 'http://the/url',
+      }]
+    }), ignore=['@context'])
+
   def test_preserve_contentMap(self):
     as2_note = {
       '@context': ['https://www.w3.org/ns/activitystreams'],
