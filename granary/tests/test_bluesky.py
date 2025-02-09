@@ -2421,14 +2421,48 @@ class BlueskyTest(testutil.TestCase):
       'published': '2007-07-07T03:04:05.000Z',
     }, to_as1(POST_BSKY, uri='at://alice.com/app.bsky.feed.post/123'))
 
-  @skip
   def test_to_as1_post_escape_html_chars(self):
     self.assert_equals({
       'objectType': 'note',
-      'summary': 'one &lt;two&gt; &lt;thr&amp;ee&gt;',
+      'content': 'one &lt;two&gt; &lt;thr&ee&gt;',
     }, to_as1({
       '$type': 'app.bsky.feed.post',
       'text': 'one <two> <thr&ee>',
+    }))
+
+  def test_to_as1_post_escape_html_chars_with_facets(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'one &lt;two&gt; &lt;thr&ee&gt;',
+      'tags': [{
+        'objectType': 'article',
+        'url': 'http://two',
+        'displayName': 'e <two>',
+        'startIndex': 2,
+        'length': 13,
+      }, {
+        'objectType': 'mention',
+        'url': 'https://bsky.app/profile/did:plc:ee',
+        'displayName': 'ee',
+        'startIndex': 24,
+        'length': 2,
+      }],
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': 'one <two> <thr&ee>',
+      'facets': [{
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://two',
+        }],
+        'index': {'byteStart': 2, 'byteEnd': 9},
+      }, {
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#mention',
+          'did': 'did:plc:ee',
+        }],
+        'index': {'byteStart': 15, 'byteEnd': 17},
+      }],
     }))
 
   def test_to_as1_post_langs(self):

@@ -1256,8 +1256,6 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
                 'chat.bsky.convo.defs#messageInput',
                 'chat.bsky.convo.defs#messageView',
                 ):
-    # TODO: escape HTML chars. difficult because we have to shuffle over facet
-    # indices to match.
     text = obj.get('text', '')
     text_encoded = text.encode()
 
@@ -1302,6 +1300,28 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         logger.warning(f"Couldn't apply facet {facet} to unicode text: {text}")
 
       tags.append(tag)
+
+    # escape HTML characters: <, >, &. shuffle over facet indices to match.
+    # ordered_tags = sorted((t for t in tags if 'startIndex' in t and 'length' in t),
+    #                       key = lambda t: t['startIndex'])
+    while match := re.search(r'<|>', text):
+      # escape char
+      entity = f'&{html.entities.codepoint2name[ord(match.group(0))]};'
+      pos = match.start(0)
+      text = text[:pos] + entity + text[pos + 1:]
+      # no need to update text_encoded, we're done with it by here
+
+      # shuffle indices
+      added = len(entity) - 1
+      for tag in tags:
+        start = tag['startIndex']
+        end = tag['startIndex'] + tag['length']  # exclusive
+        if end <= pos:
+          continue
+        elif start <= pos:
+          tag['length'] += added
+        else:  # start > pos
+          tag['startIndex'] += added
 
     # extra tags not in post text
     tags.extend({

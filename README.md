@@ -340,6 +340,7 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
     * Extract links from `app.bsky.actor.profile#description` and `#summary` into `url`/`urls` fields.
     * Bug fix: first URL (singular) goes in `url`, list of URLs goes in `urls`.
     * Bug fix: handle hashtags with regexp special characters.
+    * Bug fix: HTML-escape `<` and `>` characters, while preserving facet indices, so that they don't disappear ([snarfed/bridgy-fed#1144](https://github.com/snarfed/bridgy-fed/issues/1144)).
     * Support string and bytes CIDs in blob `ref`s as well as `CID` instances.
     * Link hashtags to bsky.app hashtag search pages ([bridgy-fed#1634](https://github.com/snarfed/bridgy-fed/issues/1634)).
   * `Bluesky.get_activities`: skip unknown record types instead of raising `ValueError`.
