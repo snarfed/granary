@@ -920,8 +920,12 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       index = facet.get('index')
 
       if not index:
+        max = LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['tags']['maxLength']
         if tag_type == 'hashtag':
-          standalone_tags.append(name)
+          if len(standalone_tags) < max:
+            standalone_tags.append(name)
+          else:
+            logger.warning(f'More than {max} standalone hashtags, omitting "{name}"')
         continue
 
       if index.get('byteStart', 0) >= text_byte_end:

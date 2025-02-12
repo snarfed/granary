@@ -1194,6 +1194,30 @@ class BlueskyTest(testutil.TestCase):
       }],
     }))
 
+  def test_from_as1_too_many_hashtags(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo bar',
+      'tags': ['1', '2', '3', '4', '5', '6', '7', '8'],
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'fooOriginalText': 'foo bar',
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': 'foo bar',
+      'tags': [
+        {'objectType': 'hashtag', 'displayName': '1'},
+        {'objectType': 'hashtag', 'displayName': '2'},
+        {'objectType': 'hashtag', 'displayName': '3'},
+        {'objectType': 'hashtag', 'displayName': '4'},
+        {'objectType': 'hashtag', 'displayName': '5'},
+        {'objectType': 'hashtag', 'displayName': '6'},
+        {'objectType': 'hashtag', 'displayName': '7'},
+        {'objectType': 'hashtag', 'displayName': '8'},
+        {'objectType': 'hashtag', 'displayName': '9'},
+        {'objectType': 'hashtag', 'displayName': '10'},
+      ],
+    }))
+
   def test_from_as1_tag_mention_guess_index(self):
     self.assert_equals(POST_BSKY_FACET_MENTION, self.from_as1({
       'objectType': 'note',
