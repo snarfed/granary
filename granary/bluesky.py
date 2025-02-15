@@ -879,11 +879,16 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
             did = client.com.atproto.identity.resolveHandle(handle=did)['did']
 
         if not did:
-          continue
-        facet['features'] = [{
-          '$type': 'app.bsky.richtext.facet#mention',
-          'did': did,
-        }]
+          # preserve the profile link if we couldn't resolve it
+          facet['features'] = [{
+            '$type': 'app.bsky.richtext.facet#link',
+            'uri': tag_url,
+          }]
+        else:
+          facet['features'] = [{
+            '$type': 'app.bsky.richtext.facet#mention',
+            'did': did,
+          }]
 
       else:
         facet['features'] = [{
