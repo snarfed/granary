@@ -1230,7 +1230,7 @@ class BlueskyTest(testutil.TestCase):
     }))
 
   def test_from_as1_tag_mention_html_content_guess_index(self):
-    content = '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>'
+    content = '<p>foo <a href="https://bsky.app/profile/did:plc:foo">@you.com</a> bar</p>'
     self.assert_equals({
       **POST_BSKY_FACET_MENTION,
       'fooOriginalText': content,
@@ -1245,7 +1245,7 @@ class BlueskyTest(testutil.TestCase):
     }))
 
   def test_from_as1_tag_mention_display_name_server_html_content_guess_index(self):
-    content = '<p>foo <a href="https://bsky.app/...">@you.com</a> bar</p>'
+    content = '<p>foo <a href="https://bsky.app/profile/did:plc:foo">@you.com</a> bar</p>'
     self.assert_equals({
       **POST_BSKY_FACET_MENTION,
       'fooOriginalText': content,
@@ -1273,7 +1273,7 @@ class BlueskyTest(testutil.TestCase):
     }, self.from_as1(note))
 
   def test_from_as1_tag_mention_at_beginning(self):
-    content = '<p><span class="h-card" translate="no"><a href="https://bsky.brid.gy/r/https://bsky.app/profile/shreyanjain.net" class="u-url mention">@<span>shreyanjain.net</span></a></span> hello there</p>'
+    content = '<p><span class="h-card" translate="no"><a href="https://bsky.app/profile/did:plc:foo" class="u-url mention">@<span>shreyanjain.net</span></a></span> hello there</p>'
 
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
