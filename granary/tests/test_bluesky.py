@@ -1476,6 +1476,34 @@ class BlueskyTest(testutil.TestCase):
       }],
     }))
 
+  def test_from_as1_link_mention_unresolved(self):
+    content = 'foo <a href="https://instance.name/@you">@you</a> baz'
+
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'foo @you baz',
+      'fooOriginalText': content,
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'https://instance.name/@you',
+        }],
+        'index': {
+          'byteStart': 4,
+          'byteEnd': 8,
+        },
+      }],
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': content,
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': '@you',
+      }],
+    }))
+
   def test_from_as1_hashtag_special_chars(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
