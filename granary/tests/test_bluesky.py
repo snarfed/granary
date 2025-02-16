@@ -1569,6 +1569,13 @@ class BlueskyTest(testutil.TestCase):
     }}
     self.assert_equals(expected, self.from_as1(POST_AS_VIDEO, blobs=blobs))
 
+  def test_from_as1_post_with_video_blobs_aspect(self):
+    expected = copy.deepcopy(POST_BSKY_VIDEO)
+    expected['embed']['aspectRatio'] = {'width': 123, 'height': 456}
+    blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
+    aspects = {NEW_BLOB_URL: (123, 456)}
+    self.assert_equals(expected, self.from_as1(POST_AS_VIDEO, blobs=blobs, aspects=aspects))
+
   def test_from_as1_post_view_with_image(self):
     expected = copy.deepcopy(POST_VIEW_BSKY_IMAGES)
     del expected['record']['embed']
