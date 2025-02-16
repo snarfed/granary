@@ -448,7 +448,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       provided, or if this doesn't have an ``image`` or similar URL in the input
       object, its output blob will be omitted.
     aspects (dict): optional mapping from str URL to int (width,height) tuple.
-        Used to provide aspect ratio in image embeds.
+        Used to provide aspect ratio in image/video embeds.
     client (Bluesky or lexrpc.Client): optional; if provided, this will be used
       to make API calls to PDSes to fetch and populate CIDs for records
       referenced by replies, likes, reposts, etc.
@@ -692,6 +692,12 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           'video': blob,
           'alt': alt,
         }
+
+        if aspect := aspects.get(url):
+          video_record_embed['aspectRatio'] = {
+            'width': aspect[0],
+            'height': aspect[1]
+          }
         break
 
     # by default, original post link goes into an external embed. Bluesky can't
