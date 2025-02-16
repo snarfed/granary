@@ -284,8 +284,13 @@ Changelog
 ### 8.1 - unreleased
 
 * `as2`:
+  * Add new `set_content` function to help keep `content` and `contentMap` in sync.
   * `to_as1`: support integer seconds `duration`, which is non-standard but sent by some AP implementations, [eg Funkwhale](https://dev.funkwhale.audio/funkwhale/funkwhale/-/issues/1566).
   * `link_tags`: add `class="hashtag"` for hashtag (`Tag`, `Hashtag`) tags ([bridgy-fed/#1634](https://github.com/snarfed/bridgy-fed/issues/1634#issuecomment-2577519871)).
+* `bluesky`:
+  * Translate Bluesky `app.bsky.feed.post#tags` to/from AS1 `tags` ([snarfed/bridgy-fed#1394](https://github.com/snarfed/bridgy-fed/issues/1394)).
+  * `to_as1`:
+    * Bug fix: HTML-escape `<` and `>` characters, while preserving facet indices, so that they don't disappear ([snarfed/bridgy-fed#1144](https://github.com/snarfed/bridgy-fed/issues/1144)).
 
 
 ### 8.0 - 2025-01-01
@@ -304,7 +309,6 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
 * `as2`:
   * Add [`sensitive`](https://swicg.github.io/miscellany/#sensitive), [`indexable`](https://codeberg.org/fediverse/fep/src/branch/main/fep/5feb/fep-5feb.md#specifying-search-indexing-consent-at-the-actor-level), and [`discoverable`](https://docs.joinmastodon.org/spec/activitypub/#discoverable) support.
   * Add new `is_server_actor` function ([FEP-d556](https://codeberg.org/fediverse/fep/src/branch/main/fep/d556/fep-d556.md), [discussion](https://socialhub.activitypub.rocks/t/fep-d556-server-level-actor-discovery-using-webfinger/3861)).
-  * Add new `set_content` function to help keep `content` and `contentMap` in sync.
   * `from_as1`:
     * Always convert images to objects with `type: Image`, never to bare string URLs ([bridgy-fed#/1000](https://github.com/snarfed/bridgy-fed/issues/1000)).
     * Bug fixes for converting links to facets when the link text is the link URL.
@@ -317,7 +321,6 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
   * `atom_to_activity/ies`: Get URL from `link` for activities as well as objects. ([Thanks @imax9000!](https://github.com/snarfed/granary/issues/752))
 * `bluesky`:
   * Translate Bluesky `app.bsky.feed.post#langs` to/from AS1 `contentMap` (which isn't officially part of AS1; we steal it from AS2).
-  * Translate Bluesky `app.bsky.feed.post#tags` to/from AS1 `tags` ([snarfed/bridgy-fed#1394](https://github.com/snarfed/bridgy-fed/issues/1394)).
   * Translate AS2 `sensitive` on posts to Bluesky `graphic-media` self label, and many Bluesky self labels back to `sensitive` with content warning(s) in `summary`.
   * Translate AS1/2 DMs to/from Bluesky chats.
   * Translate video embeds in posts.
@@ -340,7 +343,6 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
     * Extract links from `app.bsky.actor.profile#description` and `#summary` into `url`/`urls` fields.
     * Bug fix: first URL (singular) goes in `url`, list of URLs goes in `urls`.
     * Bug fix: handle hashtags with regexp special characters.
-    * Bug fix: HTML-escape `<` and `>` characters, while preserving facet indices, so that they don't disappear ([snarfed/bridgy-fed#1144](https://github.com/snarfed/bridgy-fed/issues/1144)).
     * Support string and bytes CIDs in blob `ref`s as well as `CID` instances.
     * Link hashtags to bsky.app hashtag search pages ([bridgy-fed#1634](https://github.com/snarfed/bridgy-fed/issues/1634)).
   * `Bluesky.get_activities`: skip unknown record types instead of raising `ValueError`.
