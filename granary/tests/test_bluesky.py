@@ -588,7 +588,7 @@ class BlueskyTest(testutil.TestCase):
 
   def assert_call(self, mock, method, json=None):
     mock.assert_any_call(f'https://bsky.social/xrpc/{method}', data=None,
-                         json=json, headers={
+                         json=json, auth=None, headers={
                            'Authorization': 'Bearer towkin',
                            'Content-Type': 'application/json',
                            'User-Agent': util.user_agent,
@@ -3127,7 +3127,7 @@ class BlueskyTest(testutil.TestCase):
     mock_post.assert_called_once_with(
       'https://bsky.social/xrpc/com.atproto.server.createSession',
       json={'identifier': 'handull', 'password': 'pazzwurd'},
-      data=None,
+      data=None, auth=None,
       headers={
         'Content-Type': 'application/json',
         'User-Agent': util.user_agent,
@@ -3657,9 +3657,7 @@ class BlueskyTest(testutil.TestCase):
                                 headers={'User-Agent': util.user_agent})
     mock_post.assert_any_call(
       'https://bsky.social/xrpc/com.atproto.repo.uploadBlob',
-      json=None,
-      data=ANY,
-      headers={
+      json=None, data=ANY, auth=None, headers={
         'Authorization': 'Bearer towkin',
         'Content-Type': 'image/jpeg',
         'User-Agent': util.user_agent,
@@ -3702,9 +3700,7 @@ class BlueskyTest(testutil.TestCase):
                                 headers={'User-Agent': util.user_agent})
     mock_post.assert_any_call(
       'https://bsky.social/xrpc/com.atproto.repo.uploadBlob',
-      json=None,
-      data=ANY,
-      headers={
+      json=None, data=ANY, auth=None, headers={
         'Authorization': 'Bearer towkin',
         'Content-Type': 'video/mpeg',
         'User-Agent': util.user_agent,
