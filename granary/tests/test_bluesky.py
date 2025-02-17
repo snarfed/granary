@@ -335,6 +335,29 @@ POST_VIEW_BSKY_VIDEO['embed'] = {
   'alt': 'my alt text',
 }
 
+POST_AS_AUDIO = copy.deepcopy(POST_AS)
+POST_AS_AUDIO['object']['attachments'] = [{
+  'objectType': 'audio',
+  'displayName': 'my alt text',
+  'stream': {
+    'url': NEW_BLOB_URL,
+    'mimeType': 'audio/mpeg',
+  }
+}]
+
+POST_BSKY_AUDIO = {
+  **POST_BSKY,
+  'embed': {
+    '$type': 'app.bsky.embed.external',
+    'external': {
+      '$type': 'app.bsky.embed.external#external',
+      'description': '',
+      'title': '[Audio] Original post on bsky.app',
+      'uri': 'https://bsky.app/profile/did:al:ice/post/tid',
+    },
+  },
+}
+
 REPLY_AS = {
   'objectType': 'activity',
   'verb': 'post',
@@ -1575,6 +1598,10 @@ class BlueskyTest(testutil.TestCase):
     blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
     aspects = {NEW_BLOB_URL: (123, 456)}
     self.assert_equals(expected, self.from_as1(POST_AS_VIDEO, blobs=blobs, aspects=aspects))
+
+  def test_from_as1_post_with_audio(self):
+    expected = copy.deepcopy(POST_BSKY_AUDIO)
+    self.assert_equals(expected, self.from_as1(POST_AS_AUDIO))
 
   def test_from_as1_post_view_with_image(self):
     expected = copy.deepcopy(POST_VIEW_BSKY_IMAGES)
