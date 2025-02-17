@@ -674,6 +674,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     # first video => embed
     attachments = util.get_list(obj, 'attachments')
+    has_audio_attachment = any(as1.object_type(att) == 'audio' for att in attachments)
     video = video_embed = video_record_embed = None
     for att in attachments:
       url = util.get_url(att, 'stream')
@@ -711,9 +712,16 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     if url:
       snippet = f'Original post on {util.domain_from_link(url)}'
       original_post_embed_name = snippet
-      original_post_text_suffix = f'\n\n[{snippet}]'
-      include_link = (INCLUDE_IF_TRUNCATED if images or video
-                      else OMIT_LINK)  # link will be in the external embed, not text
+      original_post_text_suffix = f'[{snippet}]'
+      if has_audio_attachment:
+        original_post_embed_name = '[Audio] ' + original_post_embed_name
+        original_post_text_suffix = '[Audio] ' + original_post_text_suffix
+      original_post_text_suffix = '\n\n' + original_post_text_suffix
+
+      if images or video:
+        include_link = INCLUDE_LINK if has_audio_attachment else INCLUDE_IF_TRUNCATED
+      else:
+        include_link = OMIT_LINK  # link will be in the external embed, not text
 
     # convert text from HTML and truncate
     link_tags = []
@@ -950,7 +958,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # if we truncated this post's text, override external embed with link to
     # original post. (if there are images, we added a link in the text instead,
     # and this won't get used.)
-    if truncated and url:
+    if (truncated or has_audio_attachment) and url:
       external_record_embed = {
         '$type': f'app.bsky.embed.external',
         'external': {
