@@ -13,6 +13,7 @@ from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.testutil import NOW, requests_response
 from oauth_dropins.webutil.util import HTTP_TIMEOUT, trim_nulls
 import requests
+from requests.auth import HTTPBasicAuth
 
 from ..bluesky import (
   AT_URI_PATTERN,
@@ -609,13 +610,15 @@ class BlueskyTest(testutil.TestCase):
   def assert_equals(self, expected, actual, **kwargs):
     return super().assert_equals(expected, actual, in_order=True, **kwargs)
 
-  def assert_call(self, mock, method, json=None):
+  def assert_call(self, mock, method, json=None, headers=None, auth=None):
+    if headers is None:
+      headers = {
+        'Authorization': 'Bearer towkin',
+        'Content-Type': 'application/json',
+        'User-Agent': util.user_agent,
+      }
     mock.assert_any_call(f'https://bsky.social/xrpc/{method}', data=None,
-                         json=json, auth=None, headers={
-                           'Authorization': 'Bearer towkin',
-                           'Content-Type': 'application/json',
-                           'User-Agent': util.user_agent,
-                         })
+                         json=json, auth=auth, headers=headers)
 
   @staticmethod
   def from_as1(obj, **kwargs):
@@ -3160,6 +3163,17 @@ class BlueskyTest(testutil.TestCase):
         'User-Agent': util.user_agent,
       },
     )
+
+  @patch('requests.get', return_value=requests_response({'feed': []}))
+  def test_constructor_auth(self, mock_get):
+    auth = HTTPBasicAuth('user', 'pwd')
+    bs = Bluesky('handull', auth=auth)
+
+    bs.get_activities()
+    self.assert_call(mock_get, 'app.bsky.feed.getTimeline', auth=auth, headers={
+      'Content-Type': 'application/json',
+      'User-Agent': util.user_agent,
+    })
 
   @patch('requests.get')
   def test_get_activities_friends(self, mock_get):

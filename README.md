@@ -289,7 +289,8 @@ Changelog
   * `link_tags`: add `class="hashtag"` for hashtag (`Tag`, `Hashtag`) tags ([bridgy-fed/#1634](https://github.com/snarfed/bridgy-fed/issues/1634#issuecomment-2577519871)).
 * `bluesky`:
   * Translate Bluesky `app.bsky.feed.post#tags` to/from AS1 `tags` ([snarfed/bridgy-fed#1394](https://github.com/snarfed/bridgy-fed/issues/1394)).
-  * `to_as1`:
+  * Add `auth` kwarg to `Bluesky` constructor to pass through as custom auth object to `requests.get`/`post`.
+* `to_as1`:
     * Bug fix: HTML-escape `<` and `>` characters, while preserving facet indices, so that they don't disappear ([snarfed/bridgy-fed#1144](https://github.com/snarfed/bridgy-fed/issues/1144)).
 
 
