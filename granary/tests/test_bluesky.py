@@ -340,7 +340,7 @@ POST_AS_AUDIO['object']['attachments'] = [{
   'objectType': 'audio',
   'displayName': 'my alt text',
   'stream': {
-    'url': NEW_BLOB_URL,
+    'url': 'https://instance.name/audio.mp3',
     'mimeType': 'audio/mpeg',
   }
 }]
