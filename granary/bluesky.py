@@ -676,6 +676,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     attachments = util.get_list(obj, 'attachments')
     has_audio_attachment = any(as1.object_type(att) == 'audio' for att in attachments)
     video = video_embed = video_record_embed = None
+    video_missing_blob = False
     for att in attachments:
       url = util.get_url(att, 'stream')
       blob = blobs.get(url)
@@ -700,6 +701,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
             'height': aspect[1]
           }
         break
+      elif as1.object_type(att) == 'video':
+        video_missing_blob = True
 
     # by default, original post link goes into an external embed. Bluesky can't
     # do either images or video along with an external embed in the same post
@@ -716,10 +719,13 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       if has_audio_attachment:
         original_post_embed_name = '[Audio] ' + original_post_embed_name
         original_post_text_suffix = '[Audio] ' + original_post_text_suffix
+      elif video_missing_blob:
+        original_post_embed_name = '[Video] ' + original_post_embed_name
+        original_post_text_suffix = '[Video] ' + original_post_text_suffix
       original_post_text_suffix = '\n\n' + original_post_text_suffix
 
       if images or video:
-        include_link = INCLUDE_LINK if has_audio_attachment else INCLUDE_IF_TRUNCATED
+        include_link = INCLUDE_LINK if has_audio_attachment or video_missing_blob else INCLUDE_IF_TRUNCATED
       else:
         include_link = OMIT_LINK  # link will be in the external embed, not text
 
@@ -958,7 +964,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # if we truncated this post's text, override external embed with link to
     # original post. (if there are images, we added a link in the text instead,
     # and this won't get used.)
-    if (truncated or has_audio_attachment) and url:
+    if (truncated or has_audio_attachment or video_missing_blob) and url:
       external_record_embed = {
         '$type': f'app.bsky.embed.external',
         'external': {
