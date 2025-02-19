@@ -1128,6 +1128,19 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     }, client=self.bs), ignore=['createdAt'])
 
+  # resolveHandle
+  @patch('requests.get', return_value=requests_response({'did': 'did:plc:foo'}))
+  def test_from_as1_bare_mention(self, _):
+    content = 'foo @you.com bar'
+    self.assert_equals({
+      **POST_BSKY_FACET_MENTION,
+      'fooOriginalText': content,
+      'fooOriginalUrl': 'https://bsky.app/profile/did:al:ice/post/tid',
+    }, self.from_as1({
+      **POST_AS['object'],
+      'content': content,
+    }, client=self.bs), ignore=['createdAt'])
+
   def test_from_as1_tag_hashtag(self):
     self.assert_equals(POST_BSKY_FACET_HASHTAG, self.from_as1(NOTE_AS_TAG_HASHTAG))
 
