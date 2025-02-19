@@ -47,7 +47,7 @@ HANDLE_REGEX = (
 )
 HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX + r'$')
 DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX + r'$')
-AT_MENTION_PATTERN = re.compile(r'(?:^|\s)@' + HANDLE_REGEX + r'(?:$|\s)')
+AT_MENTION_PATTERN = re.compile(r'(?:^|\s)(@' + HANDLE_REGEX + r')(?:$|\s)')
 
 MAX_MEDIA_SIZE_BYTES = 5_000_000
 
@@ -766,18 +766,6 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     tags = util.get_list(obj, 'tags')
 
-    # extract un-linked @-mentions
-    if client:
-      for handle in AT_MENTION_PATTERN.finditer(content):
-        handle = handle.group(0).strip()
-        did = client.com.atproto.identity.resolveHandle(handle=handle[1:])['did']
-        if did:
-          tags.append({
-            'objectType': 'mention',
-            'url': did,
-            'displayName': handle,
-          })
-
     # handle summary. for articles, use instead of content. for notes, assume
     # it's a fediverse-style content warnings, add above content.
     # https://github.com/snarfed/bridgy-fed/issues/1001
@@ -976,6 +964,35 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
       if facet not in facets:
         facets.append(facet)
+
+    # extract un-linked @-mentions
+    if client:
+      for match in AT_MENTION_PATTERN.finditer(text):
+        handle = match.group(0).strip()
+        did = client.com.atproto.identity.resolveHandle(handle=handle[1:])['did']
+        if did:
+          facet = {
+            '$type': 'app.bsky.richtext.facet',
+            'features': [{
+              '$type': 'app.bsky.richtext.facet#mention',
+              'did': did,
+            }],
+            'index': {
+              'byteStart': len(text[:match.start(1)].encode()),
+              'byteEnd': len(text[:match.end(1)].encode()),
+            }
+          }
+
+          # add if no overlap with any existing facets
+          def index_range_overlap(index1, index2):
+            start1 = index1.get('byteStart', 0)
+            end1 = index1.get('byteEnd', 0)
+            start2 = index2.get('byteStart', 0)
+            end2 = index2.get('byteEnd', 0)
+            return (start1 >= start2 and start1 < end2) or (end1 > start2 and end1 < end2)
+
+          if not any('index' in f and index_range_overlap(facet['index'], f['index']) for f in facets):
+            facets.append(facet)
 
     # if we truncated this post's text, override external embed with link to
     # original post. (if there are images, we added a link in the text instead,
