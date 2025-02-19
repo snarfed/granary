@@ -1573,7 +1573,15 @@ class BlueskyTest(testutil.TestCase):
 
   def test_from_as1_post_with_video(self):
     expected = copy.deepcopy(POST_BSKY_VIDEO)
-    del expected['embed']
+    expected['embed'] = {
+      '$type': 'app.bsky.embed.external',
+      'external': {
+        '$type': 'app.bsky.embed.external#external',
+        'description': '',
+        'title': '[Video] Original post on bsky.app',
+        'uri': 'https://bsky.app/profile/did:al:ice/post/tid'
+      }
+    }
     self.assert_equals(expected, self.from_as1(POST_AS_VIDEO))
 
   def test_from_as1_post_with_video_blobs(self):
