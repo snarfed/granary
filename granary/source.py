@@ -689,19 +689,26 @@ class Source(object, metaclass=SourceMeta):
       # https://github.com/snarfed/bridgy-fed/issues/493
       # TODO: unify into new textContent field
       # https://github.com/snarfed/granary/issues/729
-      existing_tags_with_urls = util.trim_nulls({
-        t.get('displayName') for t in obj.setdefault('tags', []) if t.get('url')
-      })
+      existing_tags_with_urls = []
+      for tag in obj.get('tags', []):
+        if tag.get('url'):
+          name = (tag.get('displayName') or '').strip()
+          if name.startswith('@') and name.count('@') == 2:
+            name = name.rsplit('@', maxsplit=1)[0]
+          existing_tags_with_urls.append(name)
 
       for a in links:
         href = a.get('href')
         text = a.get_text('').strip()
-        if href and text.startswith('@') and text not in existing_tags_with_urls:
-          obj.setdefault('tags', []).append({
-            'objectType': 'mention',
-            'url': href,
-            'displayName': text,
-          })
+        if text.startswith('@'):
+          if text.count('@') == 2:
+            text = text.rsplit('@', maxsplit=1)[0]
+          if href and text not in existing_tags_with_urls:
+            obj.setdefault('tags', []).append({
+              'objectType': 'mention',
+              'url': href,
+              'displayName': text,
+            })
 
     if (first_link_to_attachment and links and links[0].get('href')
         and not obj.get('attachments')):

@@ -386,6 +386,25 @@ Watching  \t waves
     self.assert_equals(expected, Source.postprocess_object(obj))
     self.assert_equals(expected, Source.postprocess_object(obj, mentions=True))
 
+  def test_postprocess_object_mention_existing_tag_webfinger_user_vs_server(self):
+    for in_content, name in (
+        ('@bar', '@bar@inst'),
+        ('@bar@inst', '@bar'),
+    ):
+      with self.subTest(in_content=in_content, name=name):
+        obj = {
+          'objectType': 'note',
+          'content': f'hi <a href="http://foo">{in_content}</a>',
+          'tags': [{
+            'objectType': 'mention',
+            'url': 'http://other/link',
+            'displayName': name,
+          }],
+        }
+        expected = copy.deepcopy(obj)  # because postprocess_object modifies obj
+        self.assert_equals(expected, Source.postprocess_object(obj))
+        self.assert_equals(expected, Source.postprocess_object(obj, mentions=True))
+
   def test_postprocess_object_location(self):
     obj = {
       'location': {

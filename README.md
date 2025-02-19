@@ -292,7 +292,8 @@ Changelog
   * Add `auth` kwarg to `Bluesky` constructor to pass through as custom auth object to `requests.get`/`post`.
 * `to_as1`:
     * Bug fix: HTML-escape `<` and `>` characters, while preserving facet indices, so that they don't disappear ([snarfed/bridgy-fed#1144](https://github.com/snarfed/bridgy-fed/issues/1144)).
-
+* `source`:
+  * `Source.postprocess_object`: relax mention text matching with `mentions=True`, ignore server part of webfinger addresses.
 
 ### 8.0 - 2025-01-01
 
