@@ -496,18 +496,6 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   obj = copy.deepcopy(obj)
   Source.postprocess_object(obj, mentions=True)
 
-  # extract un-linked @-mentions
-  if client and 'content' in obj:
-    for handle in AT_MENTION_PATTERN.finditer(obj['content']):
-      handle = handle.group(0).strip()
-      did = client.com.atproto.identity.resolveHandle(handle=handle[1:])['did']
-      if did:
-        obj['tags'].append({
-          'objectType': 'mention',
-          'url': did,
-          'displayName': handle,
-        })
-
   ret = None
 
   # for nested from_as1 calls, if necessary
@@ -771,6 +759,18 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           content = content[:start] + link['text'] + content[end:]
 
     tags = util.get_list(obj, 'tags')
+
+    # extract un-linked @-mentions
+    if client:
+      for handle in AT_MENTION_PATTERN.finditer(content):
+        handle = handle.group(0).strip()
+        did = client.com.atproto.identity.resolveHandle(handle=handle[1:])['did']
+        if did:
+          tags.append({
+            'objectType': 'mention',
+            'url': did,
+            'displayName': handle,
+          })
 
     # handle summary. for articles, use instead of content. for notes, assume
     # it's a fediverse-style content warnings, add above content.
