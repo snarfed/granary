@@ -754,7 +754,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           start, end = link.span()
           # our regexp isn't perfect, so skip links that we can't extract a
           # clean URL from
-          if util.is_web(link['url']) and not link['text'].startswith(('@', '#')):
+          if util.is_web(link['url']) and not link['text'].strip().startswith(('@', '#')):
             link_tags.append({
               'objectType': 'link',
               'displayName': link['text'],
