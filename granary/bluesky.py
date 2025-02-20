@@ -1781,7 +1781,7 @@ class Bluesky(Source):
       session_callback (callable, dict => None): passed to :class:`lexrpc.Client`
         constructor, called when a new session is created or refreshed
     """
-    assert not ((access_token or refresh_token) and app_password)
+    assert not ((access_token or refresh_token) and auth)
 
     self.handle = handle
     self.did = did
