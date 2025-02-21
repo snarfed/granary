@@ -43,10 +43,11 @@ logger = logging.getLogger(__name__)
 # via https://atproto.com/specs/handle
 HANDLE_REGEX = (
   r'([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+'
-  r'[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$'
+  r'[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?'
 )
-HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX)
-DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX)
+HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX + r'$')
+DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX + r'$')
+AT_MENTION_PATTERN = re.compile(r'(?:^|\s)(@' + HANDLE_REGEX + r')(?:$|\s)')
 
 MAX_MEDIA_SIZE_BYTES = 5_000_000
 
@@ -753,7 +754,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           start, end = link.span()
           # our regexp isn't perfect, so skip links that we can't extract a
           # clean URL from
-          if util.is_web(link['url']) and not link['text'].startswith(('@', '#')):
+          if util.is_web(link['url']) and not link['text'].strip().startswith(('@', '#')):
             link_tags.append({
               'objectType': 'link',
               'displayName': link['text'],
@@ -960,6 +961,42 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
       if facet not in facets:
         facets.append(facet)
+
+    # extract un-linked @-mentions
+    if client:
+      for match in AT_MENTION_PATTERN.finditer(text):
+        handle = match.group(0).strip()
+
+        index = {
+          'byteStart': len(text[:match.start(1)].encode()),
+          'byteEnd': len(text[:match.end(1)].encode()),
+        }
+
+        # check if no overlap with any existing facets
+        def index_range_overlap(index1, index2):
+          start1 = index1.get('byteStart', 0)
+          end1 = index1.get('byteEnd', 0)
+          start2 = index2.get('byteStart', 0)
+          end2 = index2.get('byteEnd', 0)
+          return (start1 >= start2 and start1 < end2) or (end1 > start2 and end1 < end2)
+
+        if any('index' in f and index_range_overlap(index, f['index']) for f in facets):
+          continue
+
+        # attempt to resolve handle
+        did = client.com.atproto.identity.resolveHandle(handle=handle[1:])['did']
+
+        if did:
+          facet = {
+            '$type': 'app.bsky.richtext.facet',
+            'features': [{
+              '$type': 'app.bsky.richtext.facet#mention',
+              'did': did,
+            }],
+            'index': index
+          }
+
+          facets.append(facet)
 
     # if we truncated this post's text, override external embed with link to
     # original post. (if there are images, we added a link in the text instead,

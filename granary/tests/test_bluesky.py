@@ -1128,6 +1128,59 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     }, client=self.bs), ignore=['createdAt'])
 
+  # resolveHandle
+  @patch('requests.get', return_value=requests_response({'did': 'did:plc:foo'}))
+  def test_from_as1_tag_mention_url_html_link_space(self, _):
+    content = 'foo<a href="https://bsky.app/profile/you.com"> @you.com</a> bar'
+    self.assert_equals({
+      **POST_BSKY_FACET_MENTION,
+      'fooOriginalText': content,
+      'fooOriginalUrl': 'https://bsky.app/profile/did:al:ice/post/tid',
+    }, self.from_as1({
+      **POST_AS['object'],
+      'content': content,
+    }, client=self.bs), ignore=['createdAt'])
+
+  # resolveHandle
+  @patch('requests.get', return_value=requests_response({'did': 'did:plc:foo'}))
+  def test_from_as1_bare_mention(self, _):
+    content = 'foo @you.com bar'
+    self.assert_equals({
+      **POST_BSKY_FACET_MENTION,
+      'fooOriginalText': content,
+      'fooOriginalUrl': 'https://bsky.app/profile/did:al:ice/post/tid',
+    }, self.from_as1({
+      **POST_AS['object'],
+      'content': content,
+    }, client=self.bs), ignore=['createdAt'])
+
+  # resolveHandle
+  @patch('requests.get', return_value=requests_response({'did': 'did:plc:foo'}))
+  def test_from_as1_bare_mention_in_link(self, _):
+    content = 'foo <a href="https://a.link/...">@you.com bar</a>'
+    expected = {
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo @you.com bar',
+      'fooOriginalText': content,
+      'fooOriginalUrl': 'https://bsky.app/profile/did:al:ice/post/tid',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'https://a.link/...',
+        }],
+        'index': {
+          'byteStart': 4,
+          'byteEnd': 16,
+        },
+      }],
+    }
+    self.assert_equals(expected, self.from_as1({
+      **POST_AS['object'],
+      'content': content,
+    }, client=self.bs), ignore=['createdAt'])
+
   def test_from_as1_tag_hashtag(self):
     self.assert_equals(POST_BSKY_FACET_HASHTAG, self.from_as1(NOTE_AS_TAG_HASHTAG))
 
