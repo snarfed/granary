@@ -782,6 +782,34 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # attachments to embed(s), including quoted posts
     record_embed = record_record_embed = external_embed = external_record_embed = None
 
+    # convert link at end of post to a quote
+    attachment_urls = [att['url'] for att in attachments if 'url' in att]
+    
+    text_end = len(full_text)
+
+    for tag in link_tags:
+      # check that the link is at the end and the text is the url
+      if (tag.get('objectType') != 'link' or tag.get('url') != tag.get('displayName') or
+          tag.get('startIndex', 0) + tag.get('length', 0) + index_offset != text_end):
+        continue
+
+      # check the link is to a bluesky post and not already in attachments
+      if (tag['url'].startswith('at://') or tag['url'].startswith(Bluesky.BASE_URL)) and not tag['url'] in attachment_urls:
+        start_index = tag['startIndex'] + index_offset
+
+        # check link is on its own line
+        if start_index > 0 and full_text[start_index - 1] != '\n':
+          continue
+
+        # create attachment
+        attachments.append({
+          'objectType' : 'note',
+          'url' : tag['url']
+        })
+
+        # remove link
+        full_text = full_text[:start_index - 1]
+
     for att in attachments:
       att_id = att.get('id') or ''
       att_url = as1.get_url(att) or ''
