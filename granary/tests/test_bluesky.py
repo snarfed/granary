@@ -2423,6 +2423,39 @@ class BlueskyTest(testutil.TestCase):
       mock_get,
       'com.atproto.repo.getRecord?repo=did%3Ax%3Ay&collection=app.bsky.feed.post&rkey=ab')
 
+  @patch('requests.get')
+  def test_from_as1_quote_post_from_link(self, mock_get):
+    mock_get.side_effect = [
+      requests_response({
+        'did': 'did:x:y',
+      }),
+      requests_response({
+        'uri': 'at://did:x:y/app.bsky.feed.post/3kzrdhahdcbc2',
+        'cid': 'sydddddd',
+        'value': {},
+      }),
+    ]
+
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'Because I just randomly enabled bridging at some point, my first bluesky post is the middle of a project with no context. 😆\n',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.record',
+        'record': {
+          'uri': 'at://did:x:y/app.bsky.feed.post/3kzrdhahdcbc2',
+          'cid': 'sydddddd',
+        },
+      },
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': '<p>Because I just randomly enabled bridging at some point, my first bluesky post is the middle of a project with no context. 😆</p><p><a href="https://bsky.app/profile/charlie.daft.games/post/3kzrdhahdcbc2"><span class="invisible">https://</span><span class="ellipsis">bsky.app/profile/charlie.daft.</span><span class="invisible">games/post/3kzrdhahdcbc2</span></a></p>',
+    }, client=self.bs._client), ignore=['fooOriginalText', 'fooOriginalUrl'])
+
+    self.assert_call(
+      mock_get,
+      'com.atproto.repo.getRecord?repo=did%3Ax%3Ay&collection=app.bsky.feed.post&rkey=3kzrdhahdcbc2')
+
   def test_from_as1_sensitive(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
