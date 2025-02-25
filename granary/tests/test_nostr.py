@@ -468,7 +468,7 @@ class NostrTest(testutil.TestCase):
     self.assertEqual(event, from_as1(follow))
 
 
-class GetActivitiesTest(testutil.TestCase):
+class ClientTest(testutil.TestCase):
   last_token = None
 
   def setUp(self):
@@ -623,9 +623,13 @@ class GetActivitiesTest(testutil.TestCase):
       ['OK', NOTE_NOSTR['id'], True],
     ]
 
+    expected = {
+      **NOTE_NOSTR,
+      'created_at': NOW_TS,
+    }
     result = self.nostr.create(NOTE_AS1)
-    self.assert_equals(NOTE_NOSTR, result.content)
-    self.assertEqual([['EVENT', NOTE_NOSTR]], FakeConnection.sent)
+    self.assert_equals(expected, result.content)
+    self.assertEqual([['EVENT', expected]], FakeConnection.sent)
 
   def test_create_note_ok_false(self):
     FakeConnection.to_receive = [
@@ -635,6 +639,25 @@ class GetActivitiesTest(testutil.TestCase):
     result = self.nostr.create(NOTE_AS1)
     self.assertEqual('foo bar', result.error_plain)
     self.assertTrue(result.abort)
+
+  def test_delete_note(self):
+    id = 'nostr:npub1z24szqzphd'
+    expected = {
+      'pubkey': ID,
+      'kind': 5,
+      'tags': [['e', uri_to_id(id)]],
+      'content': '',
+      'created_at': NOW_TS,
+    }
+    expected['id'] = id_for(expected)
+    FakeConnection.to_receive = [
+      ['OK', expected['id'], True],
+    ]
+
+    client = nostr.Nostr(['ws://relay'], URI)
+    result = client.delete(id)
+    self.assert_equals(expected, result.content, result)
+    self.assertEqual([['EVENT', expected]], FakeConnection.sent)
 
   def test_get_actor_npub(self):
     profile = {

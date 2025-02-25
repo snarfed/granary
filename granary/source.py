@@ -783,7 +783,7 @@ class Source(object, metaclass=SourceMeta):
     # that have a list value, e.g. likes or reposts of multiple objects.
     candidates = []
     for field in ('inReplyTo', 'object', 'target'):
-      candidates += util.get_list(obj, field)
+      candidates += as1.get_objects(obj, field)
 
     for base_obj in candidates:
       parsed_id = util.parse_tag_uri(base_obj.get('id', ''))

@@ -84,7 +84,8 @@ def id_for(event):
     according to NIP-01
   """
   event.setdefault('tags', [])
-  assert event.keys() == set(('content', 'created_at', 'kind', 'pubkey', 'tags'))
+  assert event.keys() >= set(('content', 'created_at', 'kind', 'pubkey', 'tags')), \
+    event.keys()
   return sha256(json_dumps([
     0,
     event['pubkey'],
@@ -156,7 +157,7 @@ def from_as1(obj):
   event = {
     'id': uri_to_id(obj.get('id')),
     'pubkey': uri_to_id(as1.get_owner(obj)),
-    'content': obj.get('content') or obj.get('summary') or obj.get('displayName'),
+    'content': obj.get('content') or obj.get('summary') or obj.get('displayName') or '',
     'tags': [],
   }
 
@@ -249,6 +250,8 @@ def from_as1(obj):
   elif type == 'delete':
     event.update({
       'kind': 5,
+      # TODO: include kind of the object being deleted, in a `k` tag. we'd have
+      # to fetch it first. :/
       'tags': [['e', uri_to_id(as1.get_object(obj).get('id'))]],
     })
 
@@ -416,16 +419,22 @@ class Nostr(Source):
   BASE_URL = None
   NAME = 'Nostr'
 
-  def __init__(self, relays):
-    """Constructor."""
+  def __init__(self, relays, pubkey=None):
+    """Constructor.
+
+    Args:
+      relays (sequence of str)
+      pubkey (str): bech32-encoded pubkey of the current user. May be a ``nostr:`` URI.
+    """
     assert relays
     self.relays = relays
+    self.pubkey = uri_to_id(pubkey)
 
   def get_actor(self, user_id=None):
     """Fetches and returns a Nostr user profile.
 
     Args:
-      user_id (str):  NIP-21 ``nostr:npub...``
+      user_id (str): NIP-21 ``nostr:npub...``
 
     Returns:
       dict: AS1 actor object
@@ -580,13 +589,17 @@ class Nostr(Source):
     prefer_content = type == 'note' or (base_url and is_reply)
 
     event = from_as1(obj)
+    event.setdefault('pubkey', self.pubkey)
+    event['created_at'] = int(util.now().timestamp())
 
     content = self._content_for_create(
-      obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content)
-    if content:
-      if include_link == INCLUDE_LINK and url:
-        content += '\n' + url
-      event['content'] = content
+      obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content) or ''
+    if include_link == INCLUDE_LINK and url:
+      content += '\n' + url
+    event['content'] = content
+
+    # TODO: override
+    event.setdefault('id', id_for(event))
 
     with connect(self.relays[0],
                  open_timeout=HTTP_TIMEOUT,
@@ -605,3 +618,15 @@ class Nostr(Source):
       return creation_result(event)
 
     return creation_result(error_plain=resp[-1], abort=True)
+
+  def delete(self, id):
+    """Deletes a post.
+
+    Args:
+      id (str): bech32-encoded id of the event to delete
+    """
+    return self.create({
+      'objectType': 'activity',
+      'verb': 'delete',
+      'object': id,
+    })
