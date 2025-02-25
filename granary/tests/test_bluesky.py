@@ -1924,6 +1924,22 @@ class BlueskyTest(testutil.TestCase):
       'image': 'http://pic',
     }))
 
+  def test_to_external_embed_html_content(self):
+    self.assertEqual({
+      '$type': 'app.bsky.embed.external',
+      'external': {
+        '$type': 'app.bsky.embed.external#external',
+        'uri': 'http://my/link',
+        'title': 'A link',
+        'description': 'some HTML stuff',
+      },
+    }, to_external_embed({
+      'objectType': 'article',
+      'url': 'http://my/link',
+      'displayName': 'A link',
+      'content': '<p>some <span>HTML</span> stuff</p>',
+    }))
+
   def test_from_as1_note_display_name_as_embed(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',

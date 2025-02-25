@@ -1145,7 +1145,10 @@ def to_external_embed(obj, description=None, blobs=None):
       '$type': f'app.bsky.embed.external#external',
       'uri': url,
       'title': obj.get('displayName') or '',  # required
-      'description': description or obj.get('summary') or obj.get('content') or '',
+      'description': (description
+                      or html_to_text(obj.get('summary') or obj.get('content'),
+                                      ignore_links=True)
+                      or ''),
     }
   }
 

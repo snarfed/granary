@@ -290,7 +290,9 @@ Changelog
 * `bluesky`:
   * Translate Bluesky `app.bsky.feed.post#tags` to/from AS1 `tags` ([snarfed/bridgy-fed#1394](https://github.com/snarfed/bridgy-fed/issues/1394)).
   * Add `auth` kwarg to `Bluesky` constructor to pass through as custom auth object to `requests.get`/`post`.
-* `to_as1`:
+  * `from_as1`:
+    * Bug fix for generating external embeds: convert HTML `content`/`summary` to plain text `description` ([bridgy-fed#1615](https://github.com/snarfed/bridgy-fed/issues/1615)).
+  * `to_as1`:
     * Bug fix: HTML-escape `<` and `>` characters, while preserving facet indices, so that they don't disappear ([snarfed/bridgy-fed#1144](https://github.com/snarfed/bridgy-fed/issues/1144)).
 * `source`:
   * `Source.postprocess_object`: relax mention text matching with `mentions=True`, ignore server part of webfinger addresses.
