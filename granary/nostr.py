@@ -44,6 +44,7 @@ import secrets
 import bech32
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
+import secp256k1
 from websockets.exceptions import ConnectionClosedOK
 from websockets.sync.client import connect
 
@@ -141,6 +142,26 @@ def id_to_uri(prefix, id):
 
   data = bech32.convertbits(bytes.fromhex(id), 8, 5)
   return 'nostr:' + bech32.bech32_encode(prefix, data)
+
+
+def sign(event, privkey):
+  """Signs a Nostr event, in place.
+
+  Args:
+    event (dict)
+    privkey (str): bech32-encoded nsec private key
+
+  Returns:
+    dict: event, populated with a ``sig`` field with the hex-encoded secp256k1
+      Schnorr signature of the ``id`` field
+  """
+  assert len(privkey) == 64, privkey
+  assert event.get('id'), event
+  assert 'sig' not in event, event
+
+  key = secp256k1.PrivateKey(privkey=privkey, raw=False)
+  event['sig'] = key.schnorr_sign(bytes.fromhex(event['id']), None, raw=True).hex()
+  return event
 
 
 def from_as1(obj):

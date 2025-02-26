@@ -296,6 +296,7 @@ Changelog
     * Bug fix: HTML-escape `<` and `>` characters, while preserving facet indices, so that they don't disappear ([snarfed/bridgy-fed#1144](https://github.com/snarfed/bridgy-fed/issues/1144)).
 * `nostr`:
   * Add new `Nostr.delete` method.
+  * Add new `sign` function.
 * `source`:
   * `Source.postprocess_object`: relax mention text matching with `mentions=True`, ignore server part of webfinger addresses.
 

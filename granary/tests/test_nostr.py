@@ -108,6 +108,19 @@ class NostrTest(testutil.TestCase):
     self.assertFalse(is_bech32('abc'))
     self.assertFalse(is_bech32(None))
 
+  def test_sign(self):
+    privkey = '1fb759a121ece5e22da48cb20989813fddfc9b2896a4e0207b4ffdd9a0bd189b'
+    event = {
+      'kind': 1,
+      'created_at': 1676605199,
+      'tags': [],
+      'content': 'Hello world!',
+      'pubkey': 'abc123',
+      'id': 'def456'
+    }
+    nostr.sign(event, privkey)
+    self.assertEqual('a8cd52725fef8d51806b40be943d499e8b2b760775b1c157c76bcd8f069ee137b586f40dd5233da6c4a0cd804433ad0751902ea391f85c111e33a86927286f78', event['sig'])
+
   def test_to_from_as1_profile(self):
     person = {
       'objectType': 'person',
