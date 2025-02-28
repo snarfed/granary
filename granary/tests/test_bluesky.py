@@ -1244,6 +1244,21 @@ class BlueskyTest(testutil.TestCase):
       ],
     }))
 
+  def test_hashtag_too_long(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo bar',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'fooOriginalText': 'foo bar',
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': 'foo bar',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'A234567890B234567890C234567890D234567890E234567890F234567890G123456',
+      }],
+    }))
+
   def test_from_as1_tag_mention_guess_index(self):
     self.assert_equals(POST_BSKY_FACET_MENTION, self.from_as1({
       'objectType': 'note',
