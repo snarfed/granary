@@ -83,10 +83,6 @@ BSKY_APP_TYPE_TO_COLLECTION = {
   name: coll for coll, name in COLLECTION_TO_BSKY_APP_TYPE.items()
 }
 
-# TODO: load from app.bsky.embed.images lexicon
-# https://github.com/snarfed/atproto/blob/c0489626327e1ac9c08961ad9ce828793d0d1d43/lexicons/app/bsky/embed/images.json#L13
-MAX_IMAGES = 4
-
 # maps AS1 objectType/verb to possible output Bluesky lexicon types.
 # used in from_as1
 POST_TYPES = tuple(as1.POST_TYPES) + ('bookmark',)
@@ -979,7 +975,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         if tag_type == 'hashtag':
           if len(standalone_tags) >= max_length:
             logger.warning(f'More than {max} standalone hashtags, omitting "{name}"')
-          elif len(name) > max_graphemes:
+          elif len(name) >= max_graphemes:
             logger.warning(f'Hashtag "{name}" longer than maxGraphemes {max_graphemes}')
           else:
             standalone_tags.append(name)
@@ -2309,9 +2305,10 @@ class Bluesky(Source):
       else:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['post']}</span>:"
 
-      if len(images) > MAX_IMAGES:
-        images = images[:MAX_IMAGES]
-        logger.warning(f'Found {len(images)} images! Only using the first {MAX_IMAGES}: {images!r}')
+      max_images = LEXRPC_TRUNCATE.defs['app.bsky.embed.images']['properties']['images']['maxLength']
+      if len(images) > max_images:
+        images = images[:max_images]
+        logger.warning(f'Found {len(images)} images! Only using the first {max_images}: {images!r}')
 
       if preview:
         media_previews = [

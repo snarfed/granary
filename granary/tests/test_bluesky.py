@@ -25,7 +25,6 @@ from ..bluesky import (
   from_as1,
   from_as1_to_strong_ref,
   LEXRPC_TRUNCATE,
-  MAX_IMAGES,
   NO_AUTHENTICATED_LABEL,
   to_as1,
   to_external_embed,
@@ -3886,7 +3885,8 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.post')
   def test_preview_with_too_many_media(self, mock_post):
-    image_urls = [f'http://my/picture/{i}' for i in range(MAX_IMAGES + 1)]
+    max_images = LEXRPC_TRUNCATE.defs['app.bsky.embed.images']['properties']['images']['maxLength']
+    image_urls = [f'http://my/picture/{i}' for i in range(max_images + 1)]
     obj = {
       'objectType': 'note',
       'image': [{'url': url} for url in image_urls],
