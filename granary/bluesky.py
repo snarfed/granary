@@ -923,6 +923,10 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         pass
 
       if tag_type == 'hashtag':
+        max_graphemes = LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['tags']['items']['maxGraphemes']
+        if len(name) >= max_graphemes:
+          logger.warning(f'Hashtag "{name}" longer than maxGraphemes {max_graphemes}')
+          continue
         facet['features'] = [{
           '$type': 'app.bsky.richtext.facet#tag',
           'tag': name,
@@ -989,12 +993,9 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
       if not index:
         max_length = LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['tags']['maxLength']
-        max_graphemes = LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['tags']['items']['maxGraphemes']
         if tag_type == 'hashtag':
           if len(standalone_tags) >= max_length:
             logger.warning(f'More than {max} standalone hashtags, omitting "{name}"')
-          elif len(name) >= max_graphemes:
-            logger.warning(f'Hashtag "{name}" longer than maxGraphemes {max_graphemes}')
           else:
             standalone_tags.append(name)
         continue

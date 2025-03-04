@@ -1434,6 +1434,22 @@ class BlueskyTest(testutil.TestCase):
     expected['facets'][0]['index']['byteEnd'] = 18
     self.assert_equals(expected, self.from_as1(note))
 
+  def test_from_as1_tag_name_too_long(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'abc',
+      'fooOriginalText': 'abc',
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': 'abc',
+      'tags': [{
+        'displayName': '#A123456789B123456789C123456789C123456789D123456789E123456789F123456789G12345',
+        'startIndex': 1,
+        'length': 1,
+      }]
+    }))
+
   def test_from_as1_html_link(self):
     content = 'foo <a href="http://post">ba]r</a> baz'
     self.assert_equals({
