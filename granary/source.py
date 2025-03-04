@@ -545,6 +545,30 @@ class Source(object, metaclass=SourceMeta):
         if id and user_id == util.parse_tag_uri(id)[1]:
           return rsvp
 
+  def get_followers(self):
+    """Returns the current user's followers.
+
+    This will often be limited, eg to the first 10k followers,
+    depending on the silo.
+
+    Returns:
+      sequence of dict: either ActivityStreams actors
+        or dicts with just the ``id`` field
+    """
+    raise NotImplementedError()
+
+  def get_follows(self):
+    """Returns the current user's follows.
+
+    This will often be limited, eg to the first 10k followers,
+    depending on the silo.
+
+    Returns:
+      sequence of dict: either ActivityStreams actors
+        or dicts with just the ``id`` field
+    """
+    raise NotImplementedError()
+
   def get_blocklist(self):
     """Fetches and returns the current user's block list.
 

@@ -28,6 +28,7 @@ API_BLOCKS = '/api/v1/blocks?limit=100'
 API_CONTEXT = '/api/v1/statuses/%s/context'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
 API_FAVORITED_BY = '/api/v1/statuses/%s/favourited_by'
+API_FOLLOWING = '/api/v1/accounts/%s/following?limit=80'
 API_MEDIA = '/api/v1/media'
 API_NOTIFICATIONS = '/api/v1/notifications'
 API_REBLOG = '/api/v1/statuses/%s/reblog'
@@ -43,6 +44,8 @@ DEFAULT_TRUNCATE_TEXT_LENGTH = 500
 
 # https://docs.joinmastodon.org/methods/statuses/media/
 MAX_ALT_LENGTH = 420
+
+MAX_FOLLOWING = 10000
 
 # maps Mastodon media attachment type to AS1 objectType
 # https://docs.joinmastodon.org/entities/attachment/#type
@@ -94,7 +97,7 @@ class Mastodon(source.Source):
       instance (str): base URL of Mastodon instance, eg https://mastodon.social/
       user_id: (str or int): optional, current user's id (not username!) on
         this instance
-      access_token (str): optional OAuth access token
+      access_token (str): OAuth access token
       truncate_text_length (int): optional character limit for toots, overrides
         the default of 500
     """
@@ -847,6 +850,29 @@ class Mastodon(source.Source):
     # http://foo.com/@user/123, and we don't have the username here.
     return source.creation_result(
       description=f'<span class="verb">delete</span> <a href="{self.status_url(id)}">this toot</a>.')
+
+  def get_follows(self):
+    """Returns the current user's follows.
+
+    This will often be limited, eg to the first 10k followers,
+    depending on the silo.
+
+    Returns:
+      sequence of dict: either ActivityStreams actors
+        or dicts with just the ``id`` field
+    """
+    follows = []
+    url = API_FOLLOWING % self.user_id
+    while True:
+      resp = self._get(url, return_json=False)
+      follows.extend(resp.json())
+      url = resp.links.get('next', {}).get('url')
+      if len(follows) > MAX_FOLLOWING:
+        follows = follows[:MAX_FOLLOWING]
+      if not url or len(follows) >= MAX_FOLLOWING:
+        break
+
+    return follows
 
   def get_blocklist_ids(self):
     """Returns the current user's block list as a list of int account ids.

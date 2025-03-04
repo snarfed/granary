@@ -991,3 +991,35 @@ class MastodonTest(testutil.TestCase):
     })
     self.mox.ReplayAll()
     self.assert_equals([1, 2, 3, 4], self.mastodon.get_blocklist_ids())
+
+  def test_get_follows(self):
+    self.expect_get(mastodon.API_FOLLOWING % ACCOUNT['id'], [
+      {'id': 1},
+      {'id': 2},
+    ], response_headers={
+      'Link': '<http://foo.com/prev>; rel="prev", <http://foo.com/next>; rel="next"',
+    })
+    self.expect_get('/next', [
+      {'id': 3},
+      {'id': 4},
+    ], response_headers={
+      'Link': '<http://foo.com/prev>; rel="prev"',
+    })
+    self.mox.ReplayAll()
+    self.assert_equals([{'id': 1}, {'id': 2}, {'id': 3}, {'id': 4}],
+                       self.mastodon.get_follows())
+
+  def test_get_follows_max(self):
+    self.mox.StubOutWithMock(mastodon, 'MAX_FOLLOWING')
+    mastodon.MAX_FOLLOWING = 3
+
+    self.expect_get(mastodon.API_FOLLOWING % ACCOUNT['id'], [
+      {'id': 1},
+      {'id': 2},
+    ], response_headers={'Link': '<http://foo.com/next>; rel="next"'})
+    self.expect_get('/next', [
+      {'id': 3},
+      {'id': 4},
+    ])
+    self.mox.ReplayAll()
+    self.assert_equals([{'id': 1}, {'id': 2}, {'id': 3}], self.mastodon.get_follows())

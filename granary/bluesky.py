@@ -2189,6 +2189,18 @@ class Bluesky(Source):
       ret += self._recurse_replies(r)
     return ret
 
+  def get_follows(self):
+    """Returns the current user's follows.
+
+    This will often be limited, eg to the first 10k followers,
+    depending on the silo.
+
+    Returns:
+      sequence of dict: either ActivityStreams actors
+        or dicts with just the ``id`` field
+    """
+    raise NotImplementedError()
+
   def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
     """Creates a post, reply, repost, or like.
 
