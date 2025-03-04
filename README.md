@@ -293,6 +293,7 @@ Changelog
   * `from_as1`:
     * Bug fix for generating external embeds: convert HTML `content`/`summary` to plain text `description` ([bridgy-fed#1615](https://github.com/snarfed/bridgy-fed/issues/1615)).
     * Don't add `app.bsky.feed.post#tags` that are over `maxGraphemes` (64).
+    * Add new `raise_` kwarg to raise `ValueError` if a required object (eg the target of a like or repost) can't be fetched via ATProto.
   * `to_as1`:
     * Bug fix: HTML-escape `<` and `>` characters, while preserving facet indices, so that they don't disappear ([snarfed/bridgy-fed#1144](https://github.com/snarfed/bridgy-fed/issues/1144)).
 * `nostr`:

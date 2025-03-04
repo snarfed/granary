@@ -312,7 +312,7 @@ def web_url_to_at_uri(url, handle=None, did=None):
   return f'at://{id}/{collection}/{rkey}'
 
 
-def from_as1_to_strong_ref(obj, client=None, value=False):
+def from_as1_to_strong_ref(obj, client=None, value=False, raise_=False):
   """Converts an AS1 object to an ATProto ``com.atproto.repo.strongRef``.
 
   Uses AS1 ``id`` or ``url`, which should be an ``at://`` URI.
@@ -324,10 +324,15 @@ def from_as1_to_strong_ref(obj, client=None, value=False):
       to DID.
     value (bool): whether to include the record's ``value`` field in the
       returned object
+    raise_ (bool): whether to raise ``ValueError`` if ``client`` is provided and
+      we can't fetch the object's record and populate ``cid``
 
   Returns:
     dict: ATProto ``com.atproto.repo.strongRef`` record
   """
+  if not client:
+    assert not raise_
+
   id = (obj.get('id') or as1.get_url(obj)) if isinstance(obj, dict) else obj
   if match := AT_URI_PATTERN.match(id):
     at_uri = id
@@ -336,6 +341,8 @@ def from_as1_to_strong_ref(obj, client=None, value=False):
     match = AT_URI_PATTERN.match(at_uri)
 
   if not match or not client:
+    if not match and raise_:
+      raise ValueError(f"Couldn't parse {id} as ATProto URI or Bluesky URL")
     return {
       'uri': at_uri,
       'cid': '',
@@ -348,10 +355,19 @@ def from_as1_to_strong_ref(obj, client=None, value=False):
     # only replace first instance of handle in case it's also in collection or rkey
     at_uri = at_uri.replace(handle, repo, 1)
 
-  record = client.com.atproto.repo.getRecord(
-    repo=repo, collection=collection, rkey=rkey)
+  try:
+    record = client.com.atproto.repo.getRecord(
+      repo=repo, collection=collection, rkey=rkey)
+  except requests.RequestException as e:
+    logger.info(e)
+    record = {}
+
+  if not record and raise_:
+    raise ValueError(f"Couldn't load {at_uri}")
+
   if not value:
     record.pop('value', None)
+
   return record
 
 
@@ -424,7 +440,7 @@ def base_object(obj):
 
 
 def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
-             original_fields_prefix=None, as_embed=False):
+             original_fields_prefix=None, as_embed=False, raise_=False):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
@@ -453,6 +469,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     as_embed (bool): whether to render the post as an external embed (ie link
       preview) instead of a native post. This happens automatically if
       ``objectType`` is ``article``
+    raise_ (bool): whether to raise ``ValueError`` if ``client`` is provided and
+      we can't fetch an object's record
 
   Returns:
     dict: ``app.bsky.*`` object
@@ -575,7 +593,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     if not out_type or out_type == 'app.bsky.feed.repost':
       ret = {
         '$type': 'app.bsky.feed.repost',
-        'subject': from_as1_to_strong_ref(inner_obj, client=client),
+        'subject': from_as1_to_strong_ref(inner_obj, client=client, raise_=raise_),
         'createdAt': from_as1_datetime(obj.get('published')),
       }
     elif out_type == 'app.bsky.feed.defs#reasonRepost':
@@ -594,7 +612,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   elif type == 'like':
     ret = {
       '$type': 'app.bsky.feed.like',
-      'subject': from_as1_to_strong_ref(inner_obj, client=client),
+      'subject': from_as1_to_strong_ref(inner_obj, client=client, raise_=raise_),
       'createdAt': from_as1_datetime(obj.get('published')),
     }
 
@@ -619,7 +637,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       elif not post_ref or not post_ref.get('cid'):
         post_ref = {
           '$type': 'com.atproto.repo.strongRef',
-          **from_as1_to_strong_ref(inner, client=client),
+          **from_as1_to_strong_ref(inner, client=client, raise_=raise_),
         }
 
     if not (post_ref and post_ref.get('cid')) and not repo_ref:
@@ -832,7 +850,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         }
         record_record_embed = {
           '$type': f'app.bsky.embed.record',
-          'record': from_as1_to_strong_ref(att, client=client),
+          'record': from_as1_to_strong_ref(att, client=client, raise_=raise_),
         }
         full_text = QUOTE_RE_SUFFIX.sub('', full_text)
       else:
@@ -1072,7 +1090,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     reply = None
     in_reply_to = base_object(obj)
     if in_reply_to:
-      parent_ref = from_as1_to_strong_ref(in_reply_to, client=client, value=True)
+      parent_ref = from_as1_to_strong_ref(in_reply_to, client=client,
+                                          value=True, raise_=raise_)
       root_ref = (parent_ref.pop('value', {}).get('reply', {}).get('root')
                   or parent_ref)
       reply = {

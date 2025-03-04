@@ -820,6 +820,16 @@ class BlueskyTest(testutil.TestCase):
                      'com.atproto.repo.getRecord'
                      '?repo=did%3Aal%3Aice&collection=app.bsky.feed.post&rkey=bar')
 
+  @patch('requests.get', return_value=requests_response(status=404))
+  def test_from_as1_to_strong_ref_raise(self, mock_get):
+    with self.assertRaises(ValueError):
+      from_as1_to_strong_ref({'id': 'ftp://foo/bar'},
+                             client=self.bs._client, raise_=True)
+
+    with self.assertRaises(ValueError):
+      from_as1_to_strong_ref({'id': 'at://did:fo:o/x.y.z/a'},
+                             client=self.bs._client, raise_=True)
+
   def test_from_as1_missing_objectType_or_verb(self):
     for obj in [
         {'content': 'foo'},
@@ -2081,6 +2091,11 @@ class BlueskyTest(testutil.TestCase):
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
                      '?repo=did%3Aal%3Aice&collection=app.bsky.feed.post&rkey=tid')
+
+  @patch('requests.get', side_effect=requests.ConnectionError())
+  def test_from_as1_repost_raise_object_not_found(self, mock_get):
+    with self.assertRaises(ValueError):
+      self.from_as1(REPOST_AS, client=self.bs._client, raise_=True)
 
   def test_from_as1_reply(self):
     self.assert_equals(REPLY_BSKY_NO_CIDS, self.from_as1(REPLY_AS))
