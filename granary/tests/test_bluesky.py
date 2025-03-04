@@ -24,7 +24,7 @@ from ..bluesky import (
   did_web_to_url,
   from_as1,
   from_as1_to_strong_ref,
-  LEXRPC_TRUNCATE,
+  LEXRPC,
   NO_AUTHENTICATED_LABEL,
   to_as1,
   to_external_embed,
@@ -893,7 +893,7 @@ class BlueskyTest(testutil.TestCase):
     # no facet
     self.assert_equals(POST_BSKY, self.from_as1(post_as))
 
-  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=15)
   def test_from_as1_post_truncate_adds_link_embed(self):
     self.assert_equals({
@@ -927,7 +927,7 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     })['text'])
 
-  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=45)
   def test_from_as1_post_with_images_truncated_puts_original_post_link_in_text(self):
     content = 'hello hello hello hello hello hello hello hello hello'
@@ -953,7 +953,7 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my.inst/post',
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
-  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=51)
   def test_from_as1_post_with_images_video_truncated_original_post_link_in_text(self):
     content = 'lots of text adding up to longer than fifty one characters ok ok'
@@ -981,7 +981,7 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my.inst/post',
     }, blobs=blobs))
 
-  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=40)
   def test_from_as1_post_with_images_removes_facets_beyond_truncation(self):
     content = 'hello <a href="http://foo">link</a> goodbye goodbye goodbye goodbye'
@@ -1007,7 +1007,7 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my.inst/post',
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
-  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=40)
   def test_from_as1_post_with_images_truncates_facet_that_overlaps_truncation(self):
     content = '<a href="http://foo">hello link text</a> goodbye goodbye goodbye goodbye'
@@ -1043,7 +1043,7 @@ class BlueskyTest(testutil.TestCase):
       'url': 'http://my.inst/post',
     }, blobs={NEW_BLOB_URL: NEW_BLOB}))
 
-  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=15)
   def test_from_as1_post_truncate_fallback_to_id_if_no_url(self):
     self.assert_equals({
@@ -1533,7 +1533,7 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     }))
 
-  @patch.dict(LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
+  @patch.dict(LEXRPC.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=12)
   def test_from_as1_html_omit_link_facet_after_truncation(self):
     content = 'foo bar <a href="http://post">baaaaaaaz</a>'
@@ -2514,7 +2514,7 @@ class BlueskyTest(testutil.TestCase):
     }))
 
   def test_chat_from_as1_dm_long(self):
-    long = 'X' * LEXRPC_TRUNCATE.defs['chat.bsky.convo.defs#messageInput']['properties']['text']['maxGraphemes']
+    long = 'X' * LEXRPC.defs['chat.bsky.convo.defs#messageInput']['properties']['text']['maxGraphemes']
     self.assert_equals({
       '$type': 'chat.bsky.convo.defs#messageInput',
       'text': long,
@@ -3604,6 +3604,35 @@ class BlueskyTest(testutil.TestCase):
                        self.bs.get_comment(comment_id='at://i.d'))
     self.assert_call(mock_get, 'app.bsky.feed.getPostThread?uri=at%3A%2F%2Fi.d&depth=1')
 
+  @patch('granary.bluesky.MAX_FOLLOWS', new=3)
+  @patch('requests.get')
+  def test_get_follows(self, mock_get):
+    mock_get.side_effect = [
+      requests_response({
+        'follows': [
+          {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:alice'},
+          {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:bob'},
+        ],
+        'cursor': 'kerser',
+      }),
+      requests_response({
+        'follows': [
+          {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:cindy'},
+          {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:eve'},
+        ],
+      }),
+    ]
+
+    self.bs._client._validate = False
+    self.assert_equals([
+      {'objectType': 'person', 'id': 'did:alice'},
+      {'objectType': 'person', 'id': 'did:bob'},
+      {'objectType': 'person', 'id': 'did:cindy'},
+    ], self.bs.get_follows())
+
+    self.assert_call(mock_get, 'app.bsky.graph.getFollows?actor=did%3Ady%3Ad&limit=100')
+    self.assert_call(mock_get, 'app.bsky.graph.getFollows?actor=did%3Ady%3Ad&cursor=kerser&limit=100')
+
   def test_post_id(self):
     for input, expected in [
         (None, None),
@@ -3620,7 +3649,7 @@ class BlueskyTest(testutil.TestCase):
         self.assertEqual(expected, self.bs.post_id(input))
 
   @patch.dict(
-    LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text'],
+    LEXRPC.defs['app.bsky.feed.post']['record']['properties']['text'],
     maxGraphemes=20)
   def test_preview_post(self):
     for content, expected in (
@@ -3916,7 +3945,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch('requests.post')
   def test_preview_with_too_many_media(self, mock_post):
-    max_images = LEXRPC_TRUNCATE.defs['app.bsky.embed.images']['properties']['images']['maxLength']
+    max_images = LEXRPC.defs['app.bsky.embed.images']['properties']['images']['maxLength']
     image_urls = [f'http://my/picture/{i}' for i in range(max_images + 1)]
     obj = {
       'objectType': 'note',

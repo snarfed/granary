@@ -51,6 +51,8 @@ AT_MENTION_PATTERN = re.compile(r'(?:^|\s)(@' + HANDLE_REGEX + r')(?:$|\s)')
 
 MAX_MEDIA_SIZE_BYTES = 5_000_000
 
+MAX_FOLLOWS = 10000
+
 # at:// URI regexp
 # https://atproto.com/specs/at-uri-scheme#full-at-uri-syntax
 # https://atproto.com/specs/record-key#record-key-syntax
@@ -154,7 +156,7 @@ SENSITIVE_LABELS = {
 SENSITIVE_LABEL = 'graphic-media'
 
 # TODO: bring back validate? or remove?
-LEXRPC_TRUNCATE = Base(truncate=True, validate=False)
+LEXRPC = Base(truncate=True, validate=False)
 
 # TODO: html2text doesn't escape ]s in link text, which breaks this, eg
 # <a href="http://post">ba](r</a> turns into [ba](r](http://post)
@@ -554,7 +556,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     if not out_type or out_type == 'app.bsky.actor.profile':
       ret = trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
-      return LEXRPC_TRUNCATE.validate('app.bsky.actor.profile', 'record', ret)
+      return LEXRPC.validate('app.bsky.actor.profile', 'record', ret)
 
     did_web = ''
     if id and id.startswith('did:web:'):
@@ -923,7 +925,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         pass
 
       if tag_type == 'hashtag':
-        max_graphemes = LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['tags']['items']['maxGraphemes']
+        max_graphemes = LEXRPC.defs['app.bsky.feed.post']['record']['properties']['tags']['items']['maxGraphemes']
         if len(name) >= max_graphemes:
           logger.warning(f'Hashtag "{name}" longer than maxGraphemes {max_graphemes}')
           continue
@@ -992,7 +994,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       index = facet.get('index')
 
       if not index:
-        max_length = LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['tags']['maxLength']
+        max_length = LEXRPC.defs['app.bsky.feed.post']['record']['properties']['tags']['maxLength']
         if tag_type == 'hashtag':
           if len(standalone_tags) >= max_length:
             logger.warning(f'More than {max} standalone hashtags, omitting "{name}"')
@@ -1205,7 +1207,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     else:
       nsid = method
       type = 'input'
-    return LEXRPC_TRUNCATE.validate(nsid, type, ret)
+    return LEXRPC.validate(nsid, type, ret)
 
   return ret
 
@@ -2190,17 +2192,31 @@ class Bluesky(Source):
       ret += self._recurse_replies(r)
     return ret
 
-  def get_follows(self):
+  def get_follows(self, user_id=None):
     """Returns the current user's follows.
 
     This will often be limited, eg to the first 10k followers,
     depending on the silo.
 
+    Args:
+      user_id (str): the user to fetch follows for. If unset, defaults to
+        ``self.user_id``.
+
     Returns:
       sequence of dict: either ActivityStreams actors
         or dicts with just the ``id`` field
     """
-    raise NotImplementedError()
+    follows = []
+    cursor = None
+
+    while True:
+      max = LEXRPC.defs['app.bsky.graph.getFollows']['parameters']['properties']['limit']['maximum']
+      resp = self.client.app.bsky.graph.getFollows({}, actor=(user_id or self.did),
+                                                   cursor=cursor, limit=max)
+      follows.extend([to_as1(f) for f in resp['follows']])
+      cursor = resp.get('cursor')
+      if not cursor or len(follows) >= MAX_FOLLOWS:
+        return follows[:MAX_FOLLOWS]
 
   def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
     """Creates a post, reply, repost, or like.
@@ -2337,7 +2353,7 @@ class Bluesky(Source):
       else:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['post']}</span>:"
 
-      max_images = LEXRPC_TRUNCATE.defs['app.bsky.embed.images']['properties']['images']['maxLength']
+      max_images = LEXRPC.defs['app.bsky.embed.images']['properties']['images']['maxLength']
       if len(images) > max_images:
         images = images[:max_images]
         logger.warning(f'Found {len(images)} images! Only using the first {max_images}: {images!r}')
@@ -2458,11 +2474,11 @@ class Bluesky(Source):
   def truncate(self, *args, type=None, **kwargs):
     """Thin wrapper around :meth:`Source.truncate` that sets default kwargs."""
     if type == 'dm':
-      length = LEXRPC_TRUNCATE.defs['chat.bsky.convo.defs#messageInput']['properties']['text']['maxGraphemes']
+      length = LEXRPC.defs['chat.bsky.convo.defs#messageInput']['properties']['text']['maxGraphemes']
     elif type in as1.ACTOR_TYPES:
-      length = LEXRPC_TRUNCATE.defs['app.bsky.actor.profile']['record']['properties']['description']['maxGraphemes']
+      length = LEXRPC.defs['app.bsky.actor.profile']['record']['properties']['description']['maxGraphemes']
     elif type in POST_TYPES:
-      length = LEXRPC_TRUNCATE.defs['app.bsky.feed.post']['record']['properties']['text']['maxGraphemes']
+      length = LEXRPC.defs['app.bsky.feed.post']['record']['properties']['text']['maxGraphemes']
     else:
       assert False, f'unexpected type {type}'
 

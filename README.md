@@ -301,7 +301,7 @@ Changelog
   * Add new `sign` function.
 * `source`:
   * `Source.postprocess_object`: relax mention text matching with `mentions=True`, ignore server part of webfinger addresses.
-  * Add new `get_follows` and `get_followers` methods.
+  * Add new `get_follows` method, implement in Mastodon and Bluesky.
 
 ### 8.0 - 2025-01-01
 

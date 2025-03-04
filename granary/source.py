@@ -557,11 +557,15 @@ class Source(object, metaclass=SourceMeta):
     """
     raise NotImplementedError()
 
-  def get_follows(self):
+  def get_follows(self, user_id):
     """Returns the current user's follows.
 
     This will often be limited, eg to the first 10k followers,
     depending on the silo.
+
+    Args:
+      user_id (str): the user to fetch follows for. If unset, defaults to
+        the current user.
 
     Returns:
       sequence of dict: either ActivityStreams actors
