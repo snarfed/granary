@@ -851,18 +851,22 @@ class Mastodon(source.Source):
     return source.creation_result(
       description=f'<span class="verb">delete</span> <a href="{self.status_url(id)}">this toot</a>.')
 
-  def get_follows(self):
+  def get_follows(self, user_id=None):
     """Returns the current user's follows.
 
     This will often be limited, eg to the first 10k followers,
     depending on the silo.
+
+    Args:
+      user_id (str): the user to fetch follows for. If unset, defaults to
+        ``self.user_id``.
 
     Returns:
       sequence of dict: either ActivityStreams actors
         or dicts with just the ``id`` field
     """
     follows = []
-    url = API_FOLLOWING % self.user_id
+    url = API_FOLLOWING % (user_id or self.user_id)
     while True:
       resp = self._get(url, return_json=False)
       follows.extend(resp.json())
