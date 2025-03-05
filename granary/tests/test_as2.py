@@ -28,12 +28,12 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_from_as1_stop_following_object_str(self):
     self.assertEqual({
-      '@context': ['https://www.w3.org/ns/activitystreams'],
+      '@context': as2.CONTEXT,
       'type': 'Undo',
       'id': 'unfollow',
       'actor': 'alice',
       'object': {
-        '@context': ['https://www.w3.org/ns/activitystreams'],
+        '@context': tuple(as2.CONTEXT),
         'type': 'Follow',
         'actor': 'alice',
         'object': 'bob',
@@ -102,7 +102,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_from_as1_block(self):
     self.assertEqual({
-      '@context': ['https://www.w3.org/ns/activitystreams'],
+      '@context': as2.CONTEXT,
       'type': 'Block',
       'actor': 'http://alice',
       'object': 'http://bob',
@@ -116,7 +116,7 @@ class ActivityStreams2Test(testutil.TestCase):
   # https://docs.joinmastodon.org/spec/activitypub/#Flag
   def test_from_as1_flag(self):
     self.assertEqual({
-      '@context': ['https://www.w3.org/ns/activitystreams'],
+      '@context': as2.CONTEXT,
       'type': 'Flag',
       'id': 'http://flag',
       'actor': 'http://alice',
@@ -142,7 +142,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_from_as1_image(self):
     self.assertEqual({
-      '@context': ['https://www.w3.org/ns/activitystreams'],
+      '@context': as2.CONTEXT,
       'type': 'Note',
       'image': {
         'type': 'Image',
@@ -155,7 +155,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_from_as1_link_attachment(self):
     self.assertEqual({
-      '@context': ['https://www.w3.org/ns/activitystreams'],
+      '@context': as2.CONTEXT,
       'type': 'Note',
       'attachment': [{
         'type': 'Link',
@@ -217,7 +217,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_preserve_contentMap(self):
     as2_note = {
-      '@context': ['https://www.w3.org/ns/activitystreams'],
+      '@context': as2.CONTEXT,
       'type': 'Note',
       'content': 'foo',
       'contentMap': {'es': 'fooey', 'fr': 'fooeh'},
@@ -248,7 +248,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def _test_to_as1_in_reply_to(self, in_reply_to):
     as1 = as2.to_as1({
-      '@context': ['https://www.w3.org/ns/activitystreams'],
+      '@context': as2.CONTEXT,
       'type': 'Note',
       'content': 'foo bar baz',
       'inReplyTo': in_reply_to,
@@ -270,7 +270,7 @@ class ActivityStreams2Test(testutil.TestCase):
         'url': 'http://pic/ture.jpg',
       }]
     }, as2.to_as1({
-      '@context': ['https://www.w3.org/ns/activitystreams'],
+      '@context': as2.CONTEXT,
       'type': 'Note',
       'attachment': [{
         'type': 'Document',
@@ -287,7 +287,7 @@ class ActivityStreams2Test(testutil.TestCase):
         'url': 'http://pic/ture.jpg',
       }]
     }, as2.to_as1({
-      '@context': ['https://www.w3.org/ns/activitystreams'],
+      '@context': as2.CONTEXT,
       'type': 'Note',
       'attachment': [{
         'mediaType': None,
@@ -401,7 +401,7 @@ class ActivityStreams2Test(testutil.TestCase):
         'position': '+38.300400-76.507450/',
       },
     }, as2.to_as1({
-      '@context': ['https://www.w3.org/ns/activitystreams'],
+      '@context': as2.CONTEXT,
       'type': 'Note',
       'location': {
         'type': 'Place',
@@ -414,7 +414,7 @@ class ActivityStreams2Test(testutil.TestCase):
   def test_lat_lon_not_float(self):
     with self.assertRaises(ValueError):
       as2.to_as1({
-        '@context': ['https://www.w3.org/ns/activitystreams'],
+        '@context': as2.CONTEXT,
         'type': 'Note',
         'location': {
           'type': 'Place',
@@ -464,8 +464,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_from_as1_person_propertyvalue_attachment_strips_home_page_slash(self):
     self.assert_equals({
-      '@context': [
-        'https://www.w3.org/ns/activitystreams',
+      '@context': as2.CONTEXT + [
         {
           'PropertyValue': 'http://schema.org#PropertyValue',
         }, {
@@ -487,19 +486,6 @@ class ActivityStreams2Test(testutil.TestCase):
       'objectType' : 'person',
       'id': 'tag:example.com,2011:martin',
       'url': 'https://example.com/',
-    }))
-
-  def test_from_as1_sensitive(self):
-    self.assert_equals({
-      '@context': [
-        'https://www.w3.org/ns/activitystreams',
-        {'sensitive': 'as:sensitive'},
-      ],
-      'type' : 'Note',
-      'sensitive': True,
-    }, as2.from_as1({
-      'objectType' : 'note',
-      'sensitive': True,
     }))
 
   def test_from_as1_link_type_href(self):
@@ -591,7 +577,7 @@ class ActivityStreams2Test(testutil.TestCase):
       # note that this is the user being reported
       'to': [{'id': 'http://bob'}],
     }, as2.to_as1({
-      '@context': ['https://www.w3.org/ns/activitystreams'],
+      '@context': as2.CONTEXT,
       'type': 'Flag',
       'id': 'http://flag',
       'actor': 'http://alice',

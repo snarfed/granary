@@ -1,5 +1,5 @@
 {
-  "@context": ["https://www.w3.org/ns/activitystreams"],
+  "@context": ["https://www.w3.org/ns/activitystreams", "https://purl.archive.org/miscellany"],
    "id": "https://oslo.town/users/matt/statuses/108244351334928989",
    "type": "Question",
    "content": "foo?",

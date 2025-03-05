@@ -1,5 +1,5 @@
 {
-  "@context": ["https://www.w3.org/ns/activitystreams"],
+  "@context": ["https://www.w3.org/ns/activitystreams", "https://purl.archive.org/miscellany"],
   "type": "Undo",
   "id": "https://example.com/3579",
   "actor": "https://example.com,2001/alice",

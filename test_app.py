@@ -42,7 +42,7 @@ AS1_RESPONSE = {
 }
 
 AS2 = [{
-  '@context': ['https://www.w3.org/ns/activitystreams'],
+  '@context': as2.CONTEXT,
   'type': 'Create',
   'object': {
     'content': 'foo ☕ bar',
@@ -50,7 +50,7 @@ AS2 = [{
     'url': 'https://perma/link',
   }
 }, {
-  '@context': ['https://www.w3.org/ns/activitystreams'],
+  '@context': as2.CONTEXT,
   'type': 'Create',
   'object': {
     'content': 'baz baj',

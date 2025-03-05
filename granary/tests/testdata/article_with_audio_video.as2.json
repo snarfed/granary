@@ -1,5 +1,5 @@
 {
-  "@context": ["https://www.w3.org/ns/activitystreams"],
+  "@context": ["https://www.w3.org/ns/activitystreams", "https://purl.archive.org/miscellany"],
   "type": "Article",
   "name": "i'm ready to speak",
   "content": "something",

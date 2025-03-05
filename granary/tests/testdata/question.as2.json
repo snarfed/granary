@@ -1,5 +1,5 @@
 {
-  "@context": ["https://www.w3.org/ns/activitystreams"],
+  "@context": ["https://www.w3.org/ns/activitystreams", "https://purl.archive.org/miscellany"],
   "id": "https://mastodon.social/users/Dyani/statuses/109960958872631870",
   "type": "Question",
   "content": "foo?",

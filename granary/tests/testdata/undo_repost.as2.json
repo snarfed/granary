@@ -1,5 +1,5 @@
 {
-  "@context": ["https://www.w3.org/ns/activitystreams"],
+  "@context": ["https://www.w3.org/ns/activitystreams", "https://purl.archive.org/miscellany"],
   "type": "Undo",
   "id": "tag:example.com,2001:3579",
   "url": "http://example.com/undo/repost",

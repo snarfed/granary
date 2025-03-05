@@ -1,5 +1,5 @@
 {
-  "@context": ["https://www.w3.org/ns/activitystreams"],
+  "@context": ["https://www.w3.org/ns/activitystreams", "https://purl.archive.org/miscellany"],
   "id": "https://masto.foo/users/alice/statuses/123",
   "type": "Note",
   "published": "2023-03-09T14:55:03Z",

@@ -32,10 +32,12 @@ CONTENT_TYPE_LD_PROFILE = 'application/ld+json; profile="https://www.w3.org/ns/a
 CONNEG_HEADERS = {
     'Accept': f'{CONTENT_TYPE}, {CONTENT_TYPE_LD_PROFILE}',
 }
-CONTEXT = 'https://www.w3.org/ns/activitystreams'
+CONTEXT = [
+  'https://www.w3.org/ns/activitystreams',
+  # https://swicg.github.io/miscellany/
+  'https://purl.archive.org/miscellany',
+]
 MISSKEY_QUOTE_CONTEXT = {'_misskey_quote': 'https://misskey-hub.net/ns#_misskey_quote'}
-# https://swicg.github.io/miscellany/#sensitive
-SENSITIVE_CONTEXT = {'sensitive': 'as:sensitive'}
 PROPERTY_VALUE_CONTEXT = {'PropertyValue': 'http://schema.org#PropertyValue'}
 # https://codeberg.org/fediverse/fep/src/branch/main/fep/5feb/fep-5feb.md#specifying-search-indexing-consent-at-the-actor-level
 # https://docs.joinmastodon.org/spec/activitypub/#discoverable
@@ -66,12 +68,10 @@ OBJECT_TYPE_TO_TYPE = {
   'comment': 'Note',
   'event': 'Event',
   'group': 'Group',
-  # not in AS2 spec; needed for correct round trip conversion
-  'hashtag': 'Tag',
+  'hashtag': 'Tag',  # not in AS2 spec; needed for correct round trip conversion
   'image': 'Image',
   'link': 'Link',
-  # not in AS1 spec; needed to identify mentions in eg Bridgy Fed
-  'mention': 'Mention',
+  'mention': 'Mention',  # not in AS1 spec; needed to identify mentions in eg Bridgy Fed
   'note': 'Note',
   'organization': 'Organization',
   'page': 'Page',
@@ -101,6 +101,9 @@ VERB_TO_TYPE = {
   'follow': 'Follow',
   'invite': 'Invite',
   'like': 'Like',
+  # not in AS1 spec
+  # https://www.w3.org/TR/activitystreams-vocabulary/#dfn-move
+  'move': 'Move',
   'post': 'Create',
   'rsvp-maybe': 'TentativeAccept',
   'reject': 'Reject',
@@ -168,7 +171,7 @@ def set_content(obj, new_content):
         content_map[lang] = new_content
 
 
-def from_as1(obj, type=None, context=CONTEXT, top_level=True):
+def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True):
   """Converts an ActivityStreams 1 activity or object to ActivityStreams 2.
 
   Args:
@@ -417,11 +420,6 @@ def from_as1(obj, type=None, context=CONTEXT, top_level=True):
   loc = obj.get('location')
   if loc:
     obj['location'] = from_as1(loc, type='Place', context=None)
-
-  # sensitive
-  # https://swicg.github.io/miscellany/#sensitive
-  if 'sensitive' in obj:
-    util.add(obj['@context'], SENSITIVE_CONTEXT)
 
   obj = util.trim_nulls(obj)
   if list(obj.keys()) == ['url']:

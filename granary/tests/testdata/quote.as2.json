@@ -1,6 +1,7 @@
 {
   "@context": [
     "https://www.w3.org/ns/activitystreams",
+    "https://purl.archive.org/miscellany",
     {"_misskey_quote": "https://misskey-hub.net/ns#_misskey_quote"}
   ],
   "type": "Note",
