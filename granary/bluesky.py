@@ -2192,13 +2192,44 @@ class Bluesky(Source):
       ret += self._recurse_replies(r)
     return ret
 
+  def get_followers(self, user_id=None):
+    """Returns the current user's followers.
+
+    Limited to the first 10k followers.
+
+    Args:
+      user_id (str): the DID to fetch follows for. If unset, defaults to
+        ``self.user_id``.
+
+    Returns:
+      sequence of dict: either ActivityStreams actors
+        or dicts with just the ``id`` field
+    """
+    return self._get_follows_or_followers('app.bsky.graph.getFollowers', user_id=user_id)
+
   def get_follows(self, user_id=None):
+    """Returns the current user's follows.
+
+    Limited to the first 10k follows.
+
+    Args:
+      user_id (str): the DID to fetch follows for. If unset, defaults to
+        ``self.user_id``.
+
+    Returns:
+      sequence of dict: either ActivityStreams actors
+        or dicts with just the ``id`` field
+    """
+    return self._get_follows_or_followers('app.bsky.graph.getFollows', user_id=user_id)
+
+  def _get_follows_or_followers(self, method, user_id=None):
     """Returns the current user's follows.
 
     This will often be limited, eg to the first 10k followers,
     depending on the silo.
 
     Args:
+      method (str): either ``app.bsky.graph.getFollows` or ``app.bsky.graph.getFollowers``
       user_id (str): the user to fetch follows for. If unset, defaults to
         ``self.user_id``.
 
@@ -2206,13 +2237,14 @@ class Bluesky(Source):
       sequence of dict: either ActivityStreams actors
         or dicts with just the ``id`` field
     """
+    assert method in ('app.bsky.graph.getFollows', 'app.bsky.graph.getFollowers'), method
     follows = []
     cursor = None
 
     while True:
-      max = LEXRPC.defs['app.bsky.graph.getFollows']['parameters']['properties']['limit']['maximum']
-      resp = self.client.app.bsky.graph.getFollows({}, actor=(user_id or self.did),
-                                                   cursor=cursor, limit=max)
+      max = LEXRPC.defs[method]['parameters']['properties']['limit']['maximum']
+      resp = self.client.call(method, {}, actor=(user_id or self.did),
+                              cursor=cursor, limit=max)
       follows.extend([to_as1(f) for f in resp['follows']])
       cursor = resp.get('cursor')
       if not cursor or len(follows) >= MAX_FOLLOWS:

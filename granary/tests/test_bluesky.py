@@ -3604,9 +3604,15 @@ class BlueskyTest(testutil.TestCase):
                        self.bs.get_comment(comment_id='at://i.d'))
     self.assert_call(mock_get, 'app.bsky.feed.getPostThread?uri=at%3A%2F%2Fi.d&depth=1')
 
+  def test_get_follows(self):
+    self._test_get_follows_or_followers(self.bs.get_follows, 'app.bsky.graph.getFollows')
+
+  def test_get_followers(self):
+    self._test_get_follows_or_followers(self.bs.get_followers, 'app.bsky.graph.getFollowers')
+
   @patch('granary.bluesky.MAX_FOLLOWS', new=3)
   @patch('requests.get')
-  def test_get_follows(self, mock_get):
+  def _test_get_follows_or_followers(self, method, nsid, mock_get):
     mock_get.side_effect = [
       requests_response({
         'follows': [
@@ -3628,10 +3634,10 @@ class BlueskyTest(testutil.TestCase):
       {'objectType': 'person', 'id': 'did:alice'},
       {'objectType': 'person', 'id': 'did:bob'},
       {'objectType': 'person', 'id': 'did:cindy'},
-    ], self.bs.get_follows())
+    ], method())
 
-    self.assert_call(mock_get, 'app.bsky.graph.getFollows?actor=did%3Ady%3Ad&limit=100')
-    self.assert_call(mock_get, 'app.bsky.graph.getFollows?actor=did%3Ady%3Ad&cursor=kerser&limit=100')
+    self.assert_call(mock_get, f'{nsid}?actor=did%3Ady%3Ad&limit=100')
+    self.assert_call(mock_get, f'{nsid}?actor=did%3Ady%3Ad&cursor=kerser&limit=100')
 
   def test_post_id(self):
     for input, expected in [
