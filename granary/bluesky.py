@@ -1092,7 +1092,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # in reply to
     reply = None
     in_reply_to = base_object(obj)
-    if in_reply_to:
+    if in_reply_to and not is_dm:
       parent_ref = from_as1_to_strong_ref(in_reply_to, client=client,
                                           value=True, raise_=raise_)
       root_ref = (parent_ref.pop('value', {}).get('reply', {}).get('root')

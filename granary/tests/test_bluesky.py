@@ -2513,6 +2513,20 @@ class BlueskyTest(testutil.TestCase):
       'content': 'hello world',
     }))
 
+  def test_chat_from_as1_dm_ignore_inReplyTo(self):
+    self.assert_equals({
+      '$type': 'chat.bsky.convo.defs#messageInput',
+      'text': 'hello world',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'fooOriginalText': 'hello world',
+    }, self.from_as1({
+      'objectType': 'note',
+      'actor': 'did:al:ice',
+      'to': ['did:bo:b'],
+      'content': 'hello world',
+      'inReplyTo': 'at://did:plc:abc/chat.bsky.convo.defs.messageView/123',
+    }))
+
   def test_chat_from_as1_dm_long(self):
     long = 'X' * LEXRPC.defs['chat.bsky.convo.defs#messageInput']['properties']['text']['maxGraphemes']
     self.assert_equals({
