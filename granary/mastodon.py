@@ -29,6 +29,7 @@ API_CONTEXT = '/api/v1/statuses/%s/context'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
 API_FAVORITED_BY = '/api/v1/statuses/%s/favourited_by'
 API_FOLLOWING = '/api/v1/accounts/%s/following?limit=80'
+API_FOLLOWERS = '/api/v1/accounts/%s/followers?limit=80'
 API_MEDIA = '/api/v1/media'
 API_NOTIFICATIONS = '/api/v1/notifications'
 API_REBLOG = '/api/v1/statuses/%s/reblog'
@@ -851,10 +852,25 @@ class Mastodon(source.Source):
     return source.creation_result(
       description=f'<span class="verb">delete</span> <a href="{self.status_url(id)}">this toot</a>.')
 
+  def get_followers(self, user_id=None):
+    """Returns the current user's followers.
+
+    Limited to the first 10k followers.
+
+    Args:
+      user_id (str): the user to fetch followers for. If unset, defaults to
+        ``self.user_id``.
+
+    Returns:
+      sequence of dict: either ActivityStreams actors
+        or dicts with just the ``id`` field
+    """
+    return self._get_follows_or_followers(API_FOLLOWERS, user_id=user_id)
+
   def get_follows(self, user_id=None):
     """Returns the current user's follows.
 
-    This will often be limited, eg to the first 10k followers,
+    This will often be limited, eg to the first 10k follows,
     depending on the silo.
 
     Args:
@@ -865,6 +881,9 @@ class Mastodon(source.Source):
       sequence of dict: either ActivityStreams actors
         or dicts with just the ``id`` field
     """
+    return self._get_follows_or_followers(API_FOLLOWING, user_id=user_id)
+
+  def _get_follows_or_followers(self, api_url, user_id=None):
     follows = []
     url = API_FOLLOWING % (user_id or self.user_id)
     while True:

@@ -993,6 +993,12 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([1, 2, 3, 4], self.mastodon.get_blocklist_ids())
 
   def test_get_follows(self):
+    self._test_get_follows_or_followers(self.mastodon.get_follows)
+
+  def test_get_followers(self):
+    self._test_get_follows_or_followers(self.mastodon.get_followers)
+
+  def _test_get_follows_or_followers(self, method):
     self.expect_get(mastodon.API_FOLLOWING % ACCOUNT['id'], [
       {'id': 1},
       {'id': 2},
@@ -1006,10 +1012,9 @@ class MastodonTest(testutil.TestCase):
       'Link': '<http://foo.com/prev>; rel="prev"',
     })
     self.mox.ReplayAll()
-    self.assert_equals([{'id': 1}, {'id': 2}, {'id': 3}, {'id': 4}],
-                       self.mastodon.get_follows())
+    self.assert_equals([{'id': 1}, {'id': 2}, {'id': 3}, {'id': 4}], method())
 
-  def test_get_follows_max(self):
+  def _test_get_follows_or_followers_max(self):
     self.mox.StubOutWithMock(mastodon, 'MAX_FOLLOWING')
     mastodon.MAX_FOLLOWING = 3
 

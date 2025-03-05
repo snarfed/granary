@@ -2198,7 +2198,7 @@ class Bluesky(Source):
     Limited to the first 10k followers.
 
     Args:
-      user_id (str): the DID to fetch follows for. If unset, defaults to
+      user_id (str): the DID to fetch followers for. If unset, defaults to
         ``self.user_id``.
 
     Returns:
