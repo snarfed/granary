@@ -770,7 +770,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           start, end = link.span()
           # our regexp isn't perfect, so skip links that we can't extract a
           # clean URL from
-          if util.is_web(link['url']) and not link['text'].strip().startswith(('@', '#')):
+          if (util.is_web(link['url']) and util.is_url(link['url'])
+              and not link['text'].strip().startswith(('@', '#'))):
             link_tags.append({
               'objectType': 'link',
               'displayName': link['text'],
@@ -801,7 +802,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     # convert link at end of post to a quote
     attachment_urls = [att['url'] for att in attachments if 'url' in att]
-    
+
     text_end = len(full_text)
 
     for tag in link_tags:

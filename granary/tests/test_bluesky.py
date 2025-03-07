@@ -1533,6 +1533,20 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     }))
 
+
+  def test_from_as1_html_link_bad_url(self):
+    content = 'foo <a href="http://not\na\nurl">bar</a> baz'
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'foo bar baz',
+      'fooOriginalText': content,
+      # no #link facet
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': content,
+    }))
+
   @patch.dict(LEXRPC.defs['app.bsky.feed.post']['record']['properties']['text'],
               maxGraphemes=12)
   def test_from_as1_html_omit_link_facet_after_truncation(self):
