@@ -3902,6 +3902,78 @@ class BlueskyTest(testutil.TestCase):
     preview = self.bs.preview_create(REPOST_AS)
     self.assertIn('<span class="verb">repost</span> <a href="https://bsky.app/profile/alice.com/post/tid">this post</a>.', preview.description)
 
+  def test_preview_follow_profile_url(self):
+    preview = self.bs.preview_create({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': 'https://bsky.app/profile/alice.com',
+    })
+    self.assertIn('<span class="verb">follow</span> <a href="https://bsky.app/profile/alice.com">this user</a>.', preview.description)
+
+  def test_preview_follow_did(self):
+    preview = self.bs.preview_create({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': 'did:web:bob.com',
+    })
+    self.assertIn('<span class="verb">follow</span> <a href="https://bsky.app/profile/did:web:bob.com">this user</a>.', preview.description)
+
+  def test_preview_follow_missing_object(self):
+    preview = self.bs.preview_create({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': {},
+    })
+    self.assertTrue(preview.abort)
+    self.assertIn('Could not find a user to follow', preview.error_plain)
+    self.assertIn('Could not find a user to <a href="http://indiewebcamp.com/follow">follow</a>', preview.error_html)
+
+  @patch('requests.post')
+  def test_create_follow_did(self, mock_post):
+    at_uri = 'at://did:plc:me/app.bsky.graph.follow/123'
+    mock_post.return_value = requests_response({
+      'uri': at_uri,
+      'cid': 'sydddddd',
+    })
+
+    result = self.bs.create({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': 'did:web:bob.com',
+    })
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/did:web:bob.com/followers',
+    }, result.content)
+
+  @patch('requests.post')
+  def test_create_follow_at_uri(self, mock_post):
+    at_uri = 'at://did:plc:me/app.bsky.graph.follow/123'
+    mock_post.return_value = requests_response({
+      'uri': at_uri,
+      'cid': 'sydddddd',
+    })
+
+    result = self.bs.create({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': 'at://did:web:bob.com',
+    })
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/did:web:bob.com/followers',
+    }, result.content)
+
+  def test_create_follow_missing_object(self):
+    result = self.bs.create({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': {},
+    })
+    self.assertTrue(result.abort)
+    self.assertIn('Could not find a user to follow', result.error_plain)
+    self.assertIn('Could not find a user to <a href="http://indiewebcamp.com/follow">follow</a>', result.error_html)
+
   def test_preview_with_media(self):
     preview = self.bs.preview_create(POST_AS_IMAGES['object'])
     self.assertEqual('<span class="verb">post</span>:', preview.description)

@@ -412,6 +412,9 @@ def base_object(obj):
   that post object. The id in the returned object is the AT protocol URI,
   while the URL is the bsky.app web URL.
 
+  If the object is a follow or block, this returns the followed or blocked id, eg a
+  DID.
+
   Args:
     obj (dict): ActivityStreams object
 
@@ -434,6 +437,11 @@ def base_object(obj):
           return {
             'id': url,
             'url': at_uri_to_web_url(url),
+          }
+        elif url.startswith('did:'):
+          return {
+            'id': url,
+            'url': Bluesky.user_url(url),
           }
       else:  # closes for loop
         raise ValueError(f"{field} {url} doesn't look like Bluesky/ATProto")
@@ -1852,6 +1860,7 @@ class Bluesky(Source):
     'comment': 'reply',
     'repost': 'repost',
     'like': 'like',
+    'follow': 'follow',
   }
 
   _client = None
@@ -2370,6 +2379,28 @@ class Bluesky(Source):
         return creation_result({
           'id': result['uri'],
           'url': at_uri_to_web_url(repost_atp['subject']['uri']) + '/reposted-by'
+        })
+
+    elif type == 'activity' and verb == 'follow':
+      if not base_id:
+        return creation_result(
+          abort=True,
+          error_plain=f"Could not find a user to follow.",
+          error_html=f"Could not find a user to <a href=\"http://indiewebcamp.com/follow\">follow</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/follow\">u-follow-of link</a>.")
+
+      if preview:
+        preview_description += f"<span class=\"verb\">follow</span> <a href=\"{base_url}\">this user</a>."
+        return creation_result(description=preview_description)
+      else:
+        follow_atp = from_as1(obj, client=self)
+        result = self.client.com.atproto.repo.createRecord({
+          'repo': self.did,
+          'collection': follow_atp['$type'],
+          'record': follow_atp,
+        })
+        return creation_result({
+          'id': result['uri'],
+          'url': base_url + '/followers'
         })
 
     elif (type in as1.POST_TYPES or is_reply or
