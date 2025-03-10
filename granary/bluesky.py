@@ -1223,7 +1223,7 @@ def to_external_embed(obj, description=None, blobs=None):
   Returns:
     dict: Bluesky ``app.bsky.embed.external#external`` record
   """
-  url = obj.get('url') or obj.get('id')
+  url = as1.get_url(obj) or obj.get('id')
   assert url
 
   ret = {
