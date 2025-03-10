@@ -28,8 +28,9 @@ API_BLOCKS = '/api/v1/blocks?limit=100'
 API_CONTEXT = '/api/v1/statuses/%s/context'
 API_FAVORITE = '/api/v1/statuses/%s/favourite'
 API_FAVORITED_BY = '/api/v1/statuses/%s/favourited_by'
-API_FOLLOWING = '/api/v1/accounts/%s/following?limit=80'
+API_FOLLOW = '/api/v1/accounts/%s/follow'
 API_FOLLOWERS = '/api/v1/accounts/%s/followers?limit=80'
+API_FOLLOWING = '/api/v1/accounts/%s/following?limit=80'
 API_MEDIA = '/api/v1/media'
 API_NOTIFICATIONS = '/api/v1/notifications'
 API_REBLOG = '/api/v1/statuses/%s/reblog'
@@ -726,6 +727,21 @@ class Mastodon(source.Source):
           data['media_ids'] = ids
         resp = self._post(API_STATUSES, json=data)
 
+    elif type == 'activity' and verb == 'follow':
+      if not base_id:
+        ids = as1.get_ids(obj, "object")
+        user = ids[0] if ids else ''
+        msg = f'Could not find user {user} to follow.'
+        return source.creation_result(abort=True, error_plain=msg,
+                                      error_html=util.linkify(msg, pretty=True))
+
+      if preview:
+        preview_description += f'<span class="verb">follow</span> this user'
+        return source.creation_result(description=preview_description)
+      else:
+        resp = self._post(API_FOLLOW % base_id)
+        resp['type'] = 'follow'
+
     else:
       return source.creation_result(
         abort=False,
@@ -775,12 +791,13 @@ class Mastodon(source.Source):
           logger.info(f"{field} URL {url} doesn't look like Mastodon:")
           continue
 
-        for status in results.get('statuses', []):
-          if url in (status.get('url'), status.get('uri')):
-            # found it!
-            base = self.status_to_object(status)
-            base['id'] = status['id']
-            return self._postprocess_base_object(base)
+        for field, convert_fn in (('statuses', self.status_to_object),
+                                  ('accounts', self.to_as1_actor)):
+          for result in results.get(field, []):
+            if url in (result.get('url'), result.get('uri')):
+              # found it!
+              base = {**convert_fn(result), 'id': result['id']}
+              return self._postprocess_base_object(base)
 
     return {}
 

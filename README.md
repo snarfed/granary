@@ -298,6 +298,9 @@ Changelog
     * Don't convert HTML links in `content` with bad URLs to `#link` facets.
   * `to_as1`:
     * Bug fix: HTML-escape `<` and `>` characters, while preserving facet indices, so that they don't disappear ([snarfed/bridgy-fed#1144](https://github.com/snarfed/bridgy-fed/issues/1144)).
+* `mastodon`:
+  * `preview`/`create`:
+    * Add support for follows.
 * `nostr`:
   * Add new `Nostr.delete` method.
   * Add new `sign` function.

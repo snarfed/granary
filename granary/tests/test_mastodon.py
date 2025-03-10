@@ -14,6 +14,7 @@ from ..mastodon import (
   API_CONTEXT,
   API_FAVORITE,
   API_FAVORITED_BY,
+  API_FOLLOW,
   API_MEDIA,
   API_NOTIFICATIONS,
   API_REBLOG,
@@ -65,6 +66,7 @@ ACCOUNT_REMOTE = {
   'username': 'bob',
   'acct': 'bob@other.net',
   'url': 'http://other.net/@bob',
+  'uri': 'http://other.net/users/bob',
 }
 ACTOR_REMOTE = {
   'objectType': 'person',
@@ -743,6 +745,20 @@ class MastodonTest(testutil.TestCase):
       'inReplyTo': [bad, remote],
     }))
 
+  def test_base_object_account(self):
+    self.expect_get(API_SEARCH,
+                    params={'q': ACCOUNT_REMOTE['uri'], 'resolve': True},
+                    response={'accounts': [ACCOUNT_REMOTE]})
+    self.mox.ReplayAll()
+
+    expected = {
+      **ACTOR_REMOTE,
+      'id': ACCOUNT_REMOTE['id'],
+    }
+    self.assert_equals(expected, self.mastodon.base_object({
+      'object': ACCOUNT_REMOTE['uri'],
+    }))
+
   def test_embed_post(self):
     embed = self.mastodon.embed_post({'url': 'http://foo.com/bar'})
     self.assertIn('<script src="http://foo.com/embed.js"', embed)
@@ -878,6 +894,67 @@ class MastodonTest(testutil.TestCase):
     self.assertIn(
       f'<span class="verb">boost</span> <a href="{url}">this toot</a>: ',
       preview.description)
+
+  def test_create_follow(self):
+    actor_url = 'https://foo.com/@other'
+    self.expect_get(API_SEARCH, params={'q': actor_url, 'resolve': True},
+                    response={'accounts': [{'id': '23507', 'url': actor_url}]})
+    self.expect_post(API_FOLLOW % '23507', {'id': '23507', 'following': True})
+    self.mox.ReplayAll()
+
+    result = self.mastodon.create({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': {'url': actor_url},
+    })
+    self.assertEqual({
+      'type': 'follow',
+      'id': '23507',
+      'following': True,
+      'url': None,
+    }, result.content)
+
+  def test_preview_follow(self):
+    actor_url = 'https://foo.com/@other'
+    self.expect_get(API_SEARCH, params={'q': actor_url, 'resolve': True},
+                    response={'accounts': [{'id': '23507', 'url': actor_url}]})
+    self.mox.ReplayAll()
+
+    preview = self.mastodon.preview_create({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': {'url': actor_url},
+    })
+
+    self.assertEqual('<span class="verb">follow</span> this user',
+                     preview.description, preview.error_plain)
+
+  def test_create_follow_no_url(self):
+    result = self.mastodon.create({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': {},
+    })
+
+    self.assertTrue(result.abort)
+    self.assertEqual('Could not find user  to follow.', result.error_plain)
+    self.assertEqual('Could not find user  to follow.', result.error_html)
+
+  def test_create_follow_not_found(self):
+    self.expect_get(API_SEARCH,
+                    params={'q': 'https://foo.com/@nonexistent', 'resolve': True},
+                    response={'accounts': []})
+    self.mox.ReplayAll()
+
+    result = self.mastodon.create({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': {'url': 'https://foo.com/@nonexistent'},
+    })
+
+    self.assertTrue(result.abort)
+    self.assertEqual(f'Could not find user https://foo.com/@nonexistent to follow.', result.error_plain)
+    self.assertEqual(f'Could not find user <a href="https://foo.com/@nonexistent">foo.com/@nonexistent</a> to follow.', result.error_html)
 
   def test_preview_with_media(self):
     preview = self.mastodon.preview_create(MEDIA_OBJECT)
