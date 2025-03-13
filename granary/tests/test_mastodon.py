@@ -1070,26 +1070,43 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([1, 2, 3, 4], self.mastodon.get_blocklist_ids())
 
   def test_get_follows(self):
-    self._test_get_follows_or_followers(self.mastodon.get_follows)
+    self._test_get_follows_or_followers(self.mastodon.get_follows, mastodon.API_FOLLOWING)
 
   def test_get_followers(self):
-    self._test_get_follows_or_followers(self.mastodon.get_followers)
+    self._test_get_follows_or_followers(self.mastodon.get_followers, mastodon.API_FOLLOWERS)
 
-  def _test_get_follows_or_followers(self, method):
-    self.expect_get(mastodon.API_FOLLOWING % ACCOUNT['id'], [
-      {'id': 1},
-      {'id': 2},
+  def _test_get_follows_or_followers(self, method, api_url):
+    self.expect_get(api_url % ACCOUNT['id'], [
+      {'id': 1, 'username': 'alice'},
+      {'id': 2, 'username': 'bob'},
     ], response_headers={
       'Link': '<http://foo.com/prev>; rel="prev", <http://foo.com/next>; rel="next"',
     })
     self.expect_get('/next', [
-      {'id': 3},
-      {'id': 4},
+      {'id': 3, 'username': 'eve'},
     ], response_headers={
       'Link': '<http://foo.com/prev>; rel="prev"',
     })
     self.mox.ReplayAll()
-    self.assert_equals([{'id': 1}, {'id': 2}, {'id': 3}, {'id': 4}], method())
+    self.assert_equals([{
+      'objectType': 'person',
+      'id': 'tag:foo.com:alice',
+      'numeric_id': 1,
+      'username': 'alice',
+      'displayName': 'alice',
+    }, {
+      'objectType': 'person',
+      'id': 'tag:foo.com:bob',
+      'numeric_id': 2,
+      'username': 'bob',
+      'displayName': 'bob',
+    }, {
+      'objectType': 'person',
+      'id': 'tag:foo.com:eve',
+      'numeric_id': 3,
+      'username': 'eve',
+      'displayName': 'eve',
+    }], method())
 
   def _test_get_follows_or_followers_max(self):
     self.mox.StubOutWithMock(mastodon, 'MAX_FOLLOWING')

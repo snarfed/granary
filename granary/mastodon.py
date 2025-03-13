@@ -13,7 +13,6 @@ import re
 import urllib.parse
 
 from oauth_dropins.webutil import util
-from oauth_dropins.webutil.testutil import requests_response
 from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests import HTTPError, JSONDecodeError, RequestException
 
@@ -902,10 +901,10 @@ class Mastodon(source.Source):
 
   def _get_follows_or_followers(self, api_url, user_id=None):
     follows = []
-    url = API_FOLLOWING % (user_id or self.user_id)
+    url = api_url % (user_id or self.user_id)
     while True:
       resp = self._get(url, return_json=False)
-      follows.extend(resp.json())
+      follows.extend(self.to_as1_actor(user) for user in resp.json())
       url = resp.links.get('next', {}).get('url')
       if len(follows) > MAX_FOLLOWING:
         follows = follows[:MAX_FOLLOWING]

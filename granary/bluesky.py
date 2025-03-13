@@ -2212,8 +2212,7 @@ class Bluesky(Source):
         ``self.user_id``.
 
     Returns:
-      sequence of dict: either ActivityStreams actors
-        or dicts with just the ``id`` field
+      sequence of dict: ActivityStreams 1 actors
     """
     return self._get_follows_or_followers('app.bsky.graph.getFollowers', user_id=user_id)
 
@@ -2227,8 +2226,7 @@ class Bluesky(Source):
         ``self.user_id``.
 
     Returns:
-      sequence of dict: either ActivityStreams actors
-        or dicts with just the ``id`` field
+      sequence of dict: ActivityStreams 1 actors
     """
     return self._get_follows_or_followers('app.bsky.graph.getFollows', user_id=user_id)
 
@@ -2244,8 +2242,7 @@ class Bluesky(Source):
         ``self.user_id``.
 
     Returns:
-      sequence of dict: either ActivityStreams actors
-        or dicts with just the ``id`` field
+      sequence of dict: ActivityStreams 1 actors
     """
     assert method in ('app.bsky.graph.getFollows', 'app.bsky.graph.getFollowers'), method
     follows = []
@@ -2255,7 +2252,8 @@ class Bluesky(Source):
       max = LEXRPC.defs[method]['parameters']['properties']['limit']['maximum']
       resp = self.client.call(method, {}, actor=(user_id or self.did),
                               cursor=cursor, limit=max)
-      follows.extend([to_as1(f) for f in resp['follows']])
+      follows.extend(self.to_as1_actor(f)
+                     for f in (resp.get('follows') or resp.get('followers')))
       cursor = resp.get('cursor')
       if not cursor or len(follows) >= MAX_FOLLOWS:
         return follows[:MAX_FOLLOWS]

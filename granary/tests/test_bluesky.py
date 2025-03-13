@@ -3657,16 +3657,17 @@ class BlueskyTest(testutil.TestCase):
   @patch('granary.bluesky.MAX_FOLLOWS', new=3)
   @patch('requests.get')
   def _test_get_follows_or_followers(self, method, nsid, mock_get):
+    field = 'followers' if nsid == 'app.bsky.graph.getFollowers' else 'follows'
     mock_get.side_effect = [
       requests_response({
-        'follows': [
+        field: [
           {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:alice'},
           {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:bob'},
         ],
         'cursor': 'kerser',
       }),
       requests_response({
-        'follows': [
+        field: [
           {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:cindy'},
           {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:eve'},
         ],
