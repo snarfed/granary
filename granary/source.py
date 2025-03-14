@@ -836,12 +836,18 @@ class Source(object, metaclass=SourceMeta):
     id = obj.get('id')
     url = obj.get('url')
 
+    base_id = None
     if id:
-      parsed = util.parse_tag_uri(id)
-      if parsed:
-        obj['id'] = parsed[1]
-    elif url:
-      obj['id'] = cls.base_id(url)
+      if parsed := util.parse_tag_uri(id):
+        base_id = parsed[1]
+      else:
+        base_id = cls.base_id(id)
+
+    if not base_id and url:
+      base_id = cls.base_id(url)
+
+    if base_id:
+      obj['id'] = base_id
 
     return obj
 

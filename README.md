@@ -281,6 +281,16 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
+### 9.0 - unreleased
+
+_Breaking changes:_
+
+* `mastodon`:
+  * Switch AS1 actor and object ids from `tag:` URIs to the real AS2 ids.
+
+_Non-breaking changes:_
+
+
 ### 8.1 - 2025-03-13
 
 * `as2`:

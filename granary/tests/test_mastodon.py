@@ -70,7 +70,7 @@ ACCOUNT_REMOTE = {
 }
 ACTOR_REMOTE = {
   'objectType': 'person',
-  'id': 'tag:other.net:bob',
+  'id': 'http://other.net/users/bob',
   'numeric_id': '999',
   'username': 'bob',
   'displayName': 'bob@other.net',
@@ -110,13 +110,13 @@ OBJECT = {  # ActivityStreams
   'objectType': 'note',
   'author': ACTOR,
   'content': STATUS['content'],
-  'id': tag_uri('123'),
+  'id': STATUS['uri'],
   'published': STATUS['created_at'],
   'url': STATUS['url'],
   'to': [{'objectType': 'group', 'alias': '@public'}],
   'tags': [{
     'objectType': 'person',
-    'id': tag_uri('11018'),
+    'id': 'https://other/users/alice',
     'url': 'https://other/@alice',
     'displayName': 'alice',
   }, {
@@ -134,7 +134,7 @@ OBJECT = {  # ActivityStreams
 ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': STATUS['created_at'],
-  'id': tag_uri('123'),
+  'id': STATUS['uri'],
   'url': STATUS['url'],
   'actor': ACTOR,
   'object': OBJECT,
@@ -149,7 +149,7 @@ STATUS_REMOTE.update({
 })
 OBJECT_REMOTE = copy.deepcopy(OBJECT)
 OBJECT_REMOTE.update({
-  'id': tag_uri('999'),
+  'id': STATUS_REMOTE['uri'],
   'author': ACTOR_REMOTE,
   'url': 'http://other.net/@bob/888',
 })
@@ -171,13 +171,14 @@ REPLY_ACTIVITY.update({
 REBLOG_STATUS = {  # Mastodon
   'id': '789',
   'url': 'http://other.net/@bob/789',
+  'uri': 'http://other.net/users/bob/statuses/789',
   'account': ACCOUNT_REMOTE,
   'reblog': STATUS,
 }
 SHARE_ACTIVITY = {  # ActivityStreams
   'objectType': 'activity',
   'verb': 'share',
-  'id': tag_uri(789),
+  'id': REBLOG_STATUS['uri'],
   'url': 'http://other.net/@bob/789',
   'object': OBJECT,
   'actor': ACTOR_REMOTE,
@@ -240,7 +241,7 @@ MEDIA_OBJECT.update({
   },
   'attachments': [{
     'objectType': 'image',
-    'id': tag_uri(222),
+    'numeric_id': '222',
     'displayName': 'a fun image',
     'image': {
       'url': 'http://foo.com/image.jpg',
@@ -248,7 +249,7 @@ MEDIA_OBJECT.update({
     },
   }, {
     'objectType': 'video',
-    'id': tag_uri(444),
+    'numeric_id': '444',
     'displayName': 'a fun video',
     'stream': {'url': 'http://foo.com/video.mp4'},
     'image': {'url': 'http://foo.com/poster.png'},
@@ -865,7 +866,11 @@ class MastodonTest(testutil.TestCase):
     self.expect_post(API_REBLOG % '123', STATUS)
     self.mox.ReplayAll()
 
-    got = self.mastodon.create(SHARE_ACTIVITY).content
+    share = copy.deepcopy(SHARE_ACTIVITY)
+    got = self.mastodon.create({
+      **SHARE_ACTIVITY,
+      # 'id': '123',
+    }).content
     self.assert_equals('repost', got['type'])
     self.assert_equals('http://foo.com/@snarfed/123', got['url'])
 

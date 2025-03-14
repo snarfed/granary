@@ -10,7 +10,7 @@ https://docs-develop.pleroma.social/backend/API/differences_in_mastoapi_response
 import itertools
 import logging
 import re
-import urllib.parse
+from urllib.parse import urljoin
 
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import json_dumps, json_loads
@@ -118,7 +118,7 @@ class Mastodon(source.Source):
       self.user_id = creds['id']
 
   def user_url(self, username):
-    return urllib.parse.urljoin(self.instance, '@' + username)
+    return urljoin(self.instance, '@' + username)
 
   def _get(self, *args, **kwargs):
     return self._api(util.requests_get, *args, **kwargs)
@@ -133,7 +133,7 @@ class Mastodon(source.Source):
     headers = kwargs.setdefault('headers', {})
     headers['Authorization'] = 'Bearer ' + self.access_token
 
-    url = urllib.parse.urljoin(self.instance, path)
+    url = urljoin(self.instance, path)
     resp = fn(url, *args, **kwargs)
     try:
       resp.raise_for_status()
@@ -178,7 +178,7 @@ class Mastodon(source.Source):
       str: HTML
     """
     return f"""
-  <script src="{urllib.parse.urljoin(obj['url'], '/embed.js')}" async="async"></script>
+  <script src="{urljoin(obj['url'], '/embed.js')}" async="async"></script>
   <br>
   <iframe src="{obj['url']}/embed" class="{cls.NAME.lower()}-embed shadow"
           style="max-width: 100%; border: 0" width="400"
@@ -360,7 +360,7 @@ class Mastodon(source.Source):
 
     obj = {
       'objectType': 'note',
-      'id': self.tag_uri(id),
+      'id': status.get('uri') or self.tag_uri(id),
       'url': status.get('url'),
       'published': status.get('created_at'),
       'author': self.to_as1_actor(status.get('account') or {}),
@@ -375,7 +375,7 @@ class Mastodon(source.Source):
       type = media.get('type')
       desc = media.get('description')
       att = {
-        'id': self.tag_uri(media.get('id')),
+        'numeric_id': media.get('id'),
         'objectType': MEDIA_TYPES.get(type),
         'displayName': desc,
       }
@@ -402,7 +402,8 @@ class Mastodon(source.Source):
     # tags
     obj['tags'] = [{
       'objectType': 'person',
-      'id': self.tag_uri(t.get('id')),
+      # no uri in Mastodon API `mentions` objects, so construct the actor id manually
+      'id': t.get('url', '').replace('/@', '/users/') or self.tag_uri(t.get('id')),
       'url': t.get('url'),
       'displayName': t.get('username'),
     } for t in status.get('mentions', [])] + [{
@@ -444,9 +445,12 @@ class Mastodon(source.Source):
     reply_to_id = status.get('in_reply_to_id')
     if reply_to_id:
       obj['inReplyTo'] = [{
+        # TODO: ideally this should be the AS2 object id, not a tag URI, but
+        # in_reply_to_id is this instance's id for it, not necessarily its source
+        # instance's id, which we'd need to fetch via the API
         'id': self.tag_uri(reply_to_id),
         # Mastodon's in_reply_to_id is str, Pixelfed's is int.
-        'url': urllib.parse.urljoin(self.instance, '/web/statuses/' + str(reply_to_id)),
+        'url': urljoin(self.instance, '/web/statuses/' + str(reply_to_id)),
       }]
 
     # to (ie visibility)
@@ -502,7 +506,7 @@ class Mastodon(source.Source):
 
     return util.trim_nulls({
       'objectType': 'person',
-      'id': util.tag_uri(domain, username),
+      'id': account.get('uri') or util.tag_uri(domain, username),
       'numeric_id': account.get('id'),
       'username': username,
       'displayName': account.get('display_name') or acct or username,
@@ -537,6 +541,7 @@ class Mastodon(source.Source):
     label = 'favorited' if verb == 'like' else 'reblogged'
     url = status.get('url')
     account_id = account.get('id')
+
     return {
       'id': self.tag_uri(f"{status.get('id')}_{label}_by_{account_id}"),
       'url': f'{url}#{label}-by-{account_id}',
@@ -646,14 +651,14 @@ class Mastodon(source.Source):
       split = match.group(1).split('@')
       username = split[0]
       instance = ('https://' + split[1]) if len(split) > 1 else self.instance
-      url = urllib.parse.urljoin(instance, '/@' + username)
+      url = urljoin(instance, '/@' + username)
       return f'<a href="{url}">@{username}</a>'
 
     preview_content = MENTION_RE.sub(linkify_mention, content)
 
     # linkify (defaults to twitter's behavior)
     preview_content = util.linkify(preview_content, pretty=True, skip_bare_cc_tlds=True)
-    tags_url = urllib.parse.urljoin(self.instance, '/tags')
+    tags_url = urljoin(self.instance, '/tags')
     # if we ever need to revise this hashtag regexp, we could use Mastodon's:
     # https://github.com/tootsuite/mastodon/blob/915f3712ae7ae44c0cbe50c9694c25e3ee87a540/app/models/tag.rb#L28-L30
     preview_content = as1.HASHTAG_RE.sub(r'\1<a href="%s/\2">#\2</a>' % tags_url,
@@ -774,8 +779,8 @@ class Mastodon(source.Source):
       also have ``url``, ``author``, etc.
     """
     for field in ('inReplyTo', 'object', 'target'):
-      for base in util.get_list(obj, field):
-        url = util.get_url(base)
+      for base in as1.get_objects(obj, field):
+        url = util.get_url(base) or base.get('id')
         if not url:
           return {}
 
@@ -802,7 +807,7 @@ class Mastodon(source.Source):
 
   def status_url(self, id):
     """Returns the local instance URL for a status with a given id."""
-    return urllib.parse.urljoin(self.instance, f'/web/statuses/{id}')
+    return urljoin(self.instance, f'/web/statuses/{id}')
 
   def upload_media(self, media):
     """Uploads one or more images or videos from web URLs.
