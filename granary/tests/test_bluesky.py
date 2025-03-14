@@ -3374,6 +3374,15 @@ class BlueskyTest(testutil.TestCase):
       'User-Agent': util.user_agent,
     })
 
+  @patch('requests.get', return_value=requests_response({}))
+  def test_constructor_pds_url(self, mock_get):
+    bs = Bluesky('handull', pds_url='http://my.pds/')
+
+    bs.get_actor('did:plc:alice')
+    self.assertEqual(
+      ('http://my.pds/xrpc/app.bsky.actor.getProfile?actor=did%3Aplc%3Aalice',),
+      mock_get.call_args[0])
+
   @patch('requests.get')
   def test_get_activities_friends(self, mock_get):
     self.bs._client._validate = False

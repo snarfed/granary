@@ -1866,12 +1866,14 @@ class Bluesky(Source):
   _client = None
   _app_password = None
 
-  def __init__(self, handle, did=None, access_token=None, refresh_token=None,
-               app_password=None, auth=None, session_callback=None):
+  def __init__(self, handle, pds_url=None, did=None, access_token=None,
+               refresh_token=None, app_password=None, auth=None,
+               session_callback=None):
     """Constructor.
 
     Args:
       handle (str): username, eg ``snarfed.bsky.social`` or ``snarfed.org``
+      pds_url (str): base URL for the user's PDS, eg ``https://my.pds/``
       did (str): did:plc or did:web, optional
       access_token (str): optional
       refresh_token (str): optional
@@ -1887,8 +1889,8 @@ class Bluesky(Source):
     self._app_password = app_password
 
     headers = {'User-Agent': util.user_agent}
-    self._client = Client(access_token=access_token, refresh_token=refresh_token,
-                          auth=auth, headers=headers,
+    self._client = Client(pds_url, access_token=access_token,
+                          refresh_token=refresh_token, auth=auth, headers=headers,
                           session_callback=session_callback, validate=True)
 
   @property

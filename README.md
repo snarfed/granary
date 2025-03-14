@@ -290,6 +290,8 @@ _Breaking changes:_
 
 _Non-breaking changes:_
 
+* `bluesky`:
+  * Add `pds_url` kwarg to `Bluesky` constructor.
 
 ### 8.1 - 2025-03-13
 
