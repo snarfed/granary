@@ -281,7 +281,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 8.1 - unreleased
+### 8.1 - 2025-03-13
 
 * `as2`:
   * Add new `set_content` function to help keep `content` and `contentMap` in sync.
