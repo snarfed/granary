@@ -3669,17 +3669,11 @@ class BlueskyTest(testutil.TestCase):
     field = 'followers' if nsid == 'app.bsky.graph.getFollowers' else 'follows'
     mock_get.side_effect = [
       requests_response({
-        field: [
-          {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:alice'},
-          {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:bob'},
-        ],
+        field: [{'did': 'did:alice'}, {'did': 'did:bob'}],
         'cursor': 'kerser',
       }),
       requests_response({
-        field: [
-          {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:cindy'},
-          {'$type': 'app.bsky.actor.defs#profileView', 'did': 'did:eve'},
-        ],
+        field: [{'did': 'did:cindy'}, {'did': 'did:eve'}],
       }),
     ]
 

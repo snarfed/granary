@@ -2254,7 +2254,7 @@ class Bluesky(Source):
       max = LEXRPC.defs[method]['parameters']['properties']['limit']['maximum']
       resp = self.client.call(method, {}, actor=(user_id or self.did),
                               cursor=cursor, limit=max)
-      follows.extend(self.to_as1_actor(f)
+      follows.extend(self.to_as1_actor(f, type='app.bsky.actor.defs#profileView')
                      for f in (resp.get('follows') or resp.get('followers')))
       cursor = resp.get('cursor')
       if not cursor or len(follows) >= MAX_FOLLOWS:
