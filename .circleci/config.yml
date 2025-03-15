@@ -28,8 +28,8 @@ jobs:
             source local/bin/activate
             pip install -U pip flake8
             pip -V
-            # make sure we install this at head, below
-            pip uninstall -y oauth-dropins
+            # make sure we install these at head, below
+            pip uninstall -y oauth-dropins lexrpc
             pip install -U -r requirements.txt
             pip install coverage coveralls
 
