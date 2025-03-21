@@ -1067,6 +1067,20 @@ class BlueskyTest(testutil.TestCase):
       'content': 'more than ten chars long',
     }))
 
+  @patch.dict(LEXRPC.defs['app.bsky.feed.post']['record']['properties']['text'],
+              maxGraphemes=20)
+  def test_from_as1_post_truncate_non_delimited_language(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '特定の分野 で面白い動画の数は有 […]',
+      'langs': ['ja'],
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': '特定の分野 で面白い動画の数は有限なので幾つか試聴すれば消費し切',
+      'contentMap': {'ja': '特定の分野 で面白い動画の数は有限なので幾つか試聴すれば消費し切'},
+    }), ignore=['fooOriginalText', 'fooOriginalUrl'])
+
   def test_from_as1_post_preserve_whitespace_plain_text(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',

@@ -876,12 +876,18 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           },
         }
 
+    # language(s)
+    # (we steal contentMap from AS2, it's not officially part of AS1)
+    langs = [lang for lang, lang_content in obj.get('contentMap', {}).items()
+             if LANG_RE.match(lang) and lang_content == orig_content]
+
     # truncate text. if we're including a suffix, ie original post link, link
     # that with a facet
     is_dm = as1.is_dm(obj, actor=actor)
     text = Bluesky('unused').truncate(
       full_text, original_post_text_suffix, include_link=include_link,
-      punctuation=('', ''), type='dm' if is_dm else type)
+      punctuation=('', ''), type='dm' if is_dm else type, weights=False,
+      lang=langs[0] if langs else None)
     truncated = text != full_text
     if truncated:
       text_byte_end = len(text.split(ELLIPSIS, maxsplit=1)[0].encode())
@@ -1111,12 +1117,6 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         'root': root_ref,
         'parent': parent_ref,
       }
-
-    # languages
-    # (we steal contentMap from AS2, it's not officially part of AS1)
-    langs = [lang for lang, lang_content in obj.get('contentMap', {}).items()
-             if LANG_RE.match(lang)
-             and lang_content == orig_content]
 
     # convert AS1 sensitive to "nudity" label
     # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154

@@ -292,6 +292,8 @@ _Non-breaking changes:_
 
 * `bluesky`:
   * Add `pds_url` kwarg to `Bluesky` constructor.
+  * `from_as1`:
+    * If `content` is in a [language that doesn't delimit words by spaces](https://en.m.wikipedia.org/wiki/Category:Writing_systems_without_word_boundaries), truncate between any characters ([snarfed/bridgy-fed#1625](https://github.com/snarfed/bridgy-fed/issues/1625)).
 
 ### 8.1 - 2025-03-13
 
