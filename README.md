@@ -290,6 +290,8 @@ _Breaking changes:_
 
 _Non-breaking changes:_
 
+* `as1`:
+  * `prefix_urls`: handle string values.
 * `bluesky`:
   * Add `pds_url` kwarg to `Bluesky` constructor.
   * `from_as1`:

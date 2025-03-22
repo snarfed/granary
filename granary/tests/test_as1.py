@@ -631,7 +631,27 @@ class As1Test(testutil.TestCase):
           },
         }, activity)
 
-    # TODO: missing tests
+      # handle string values ok
+      obj = {'image': 'val'}
+      as1.prefix_urls(obj, 'image', 'pre-')
+      self.assert_equals({'image': 'pre-val'}, obj)
+
+      obj = {
+        'image': ['first', {'url': 'second'}],
+      }
+      as1.prefix_urls(obj, 'image', 'pre-')
+      self.assert_equals({
+        'image': ['pre-first', {'url': 'pre-second'}],
+      }, obj)
+
+      # handle non-dicts ok
+      obj = {
+        'actor': 'abc',
+        'object': 'xyz',
+      }
+      orig = copy.copy(obj)
+      as1.prefix_urls(obj, 'image', 'pre')
+      self.assert_equals(orig, obj)
 
   def test_object_urls(self):
     for expected, actor in (

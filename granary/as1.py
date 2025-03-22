@@ -594,18 +594,27 @@ def prefix_urls(activity, field, prefix):
     activity (dict): AS1 activity; modified in place
     prefix (str)
   """
+  def update(val):
+    if isinstance(val, str) and not val.startswith(prefix):
+      return prefix + val
+    else:
+      assert isinstance(val, dict)
+      if (url := val.get('url')) and not url.startswith(prefix):
+        val['url'] = prefix + url
+      return val
+
   a = activity
   for elem in ([a, a.get('object'), a.get('author'), a.get('actor')] +
                a.get('replies', {}).get('items', []) +
                a.get('attachments', []) +
                a.get('tags', [])):
-    if elem:
-      for obj in util.get_list(elem, field):
-        url = obj.get('url')
-        if url and not url.startswith(prefix):
-          # Note that url isn't URL-encoded here, that's intentional, since
-          # cloudimage.io and the caching-proxy Cloudflare worker don't decode.
-          obj['url'] = prefix + url
+    if elem and isinstance(elem, dict):
+      if val := elem.get(field):
+        if isinstance(val, (tuple, list)):
+          elem[field] = [update(e) for e in val]
+        elif isinstance(val, (str, dict)):
+          elem[field] = update(val)
+
       if elem is not a:
         prefix_urls(elem, field, prefix)
 
