@@ -3701,6 +3701,24 @@ class BlueskyTest(testutil.TestCase):
     self.assert_call(mock_get, f'{nsid}?actor=did%3Ady%3Ad&limit=100')
     self.assert_call(mock_get, f'{nsid}?actor=did%3Ady%3Ad&cursor=kerser&limit=100')
 
+  @patch('requests.get', side_effect=[
+    requests_response({
+      'follows': [{'did': 'did:alice'}],
+      'cursor': 'kerser',
+    }),
+    requests_response({
+      'follows': [],
+    }),
+  ])
+  def test_get_follows_to_end(self, mock_get):
+    self.bs._client._validate = False
+    self.assert_equals([
+      {'objectType': 'person', 'id': 'did:alice'},
+    ], self.bs.get_follows())
+
+    self.assert_call(mock_get, f'app.bsky.graph.getFollows?actor=did%3Ady%3Ad&limit=100')
+    self.assert_call(mock_get, f'app.bsky.graph.getFollows?actor=did%3Ady%3Ad&cursor=kerser&limit=100')
+
   def test_post_id(self):
     for input, expected in [
         (None, None),
