@@ -319,6 +319,7 @@ class Mastodon(source.Source):
       'verb': 'post',
       'published': obj.get('published'),
       'id': obj.get('id'),
+      'numeric_id': obj.get('numeric_id'),
       'url': obj.get('url'),
       'actor': obj.get('author'),
       'object': obj,
@@ -361,6 +362,7 @@ class Mastodon(source.Source):
     obj = {
       'objectType': 'note',
       'id': status.get('uri') or self.tag_uri(id),
+      'numeric_id': status.get('id'),
       'url': status.get('url'),
       'published': status.get('created_at'),
       'author': self.to_as1_actor(status.get('account') or {}),

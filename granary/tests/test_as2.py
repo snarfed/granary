@@ -20,11 +20,14 @@ class ActivityStreams2Test(testutil.TestCase):
     self.assertEqual({}, as2.to_as1(None))
     self.assertEqual({}, as2.to_as1({}))
 
-  def test_from_as1_context(self):
+  def test_from_as1_context_numeric_id(self):
     self.assertEqual({
       'id': 'foo',
       '@context': ['bar'],
-    }, as2.from_as1({'id': 'foo'}, context='bar'))
+    }, as2.from_as1({
+      'id': 'foo',
+      'numeric_id': '123',
+    }, context='bar'))
 
   def test_from_as1_stop_following_object_str(self):
     self.assertEqual({

@@ -200,6 +200,8 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True):
           VERB_TO_TYPE.get(verb or obj_type) or
           type)
 
+  obj.pop('numeric_id', None)
+
   obj['@context'] = []
   if context:
     if not isinstance(context, (tuple, set, list)):
@@ -317,7 +319,6 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True):
         util.add(obj['@context'], PROPERTY_VALUE_CONTEXT)
 
     attachments.extend(links.values())
-
 
   # urls
   urls = as1.object_urls(obj)

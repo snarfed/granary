@@ -111,6 +111,7 @@ OBJECT = {  # ActivityStreams
   'author': ACTOR,
   'content': STATUS['content'],
   'id': STATUS['uri'],
+  'numeric_id': STATUS['id'],
   'published': STATUS['created_at'],
   'url': STATUS['url'],
   'to': [{'objectType': 'group', 'alias': '@public'}],
@@ -135,6 +136,7 @@ ACTIVITY = {  # ActivityStreams
   'verb': 'post',
   'published': STATUS['created_at'],
   'id': STATUS['uri'],
+  'numeric_id': STATUS['id'],
   'url': STATUS['url'],
   'actor': ACTOR,
   'object': OBJECT,
@@ -150,6 +152,7 @@ STATUS_REMOTE.update({
 OBJECT_REMOTE = copy.deepcopy(OBJECT)
 OBJECT_REMOTE.update({
   'id': STATUS_REMOTE['uri'],
+  'numeric_id': STATUS_REMOTE['id'],
   'author': ACTOR_REMOTE,
   'url': 'http://other.net/@bob/888',
 })
@@ -179,6 +182,7 @@ SHARE_ACTIVITY = {  # ActivityStreams
   'objectType': 'activity',
   'verb': 'share',
   'id': REBLOG_STATUS['uri'],
+  'numeric_id': REBLOG_STATUS['id'],
   'url': 'http://other.net/@bob/789',
   'object': OBJECT,
   'actor': ACTOR_REMOTE,
@@ -866,11 +870,7 @@ class MastodonTest(testutil.TestCase):
     self.expect_post(API_REBLOG % '123', STATUS)
     self.mox.ReplayAll()
 
-    share = copy.deepcopy(SHARE_ACTIVITY)
-    got = self.mastodon.create({
-      **SHARE_ACTIVITY,
-      # 'id': '123',
-    }).content
+    got = self.mastodon.create(SHARE_ACTIVITY).content
     self.assert_equals('repost', got['type'])
     self.assert_equals('http://foo.com/@snarfed/123', got['url'])
 

@@ -11,7 +11,6 @@
   ],
   "type": "Person",
   "id": "tag:example.com,2011:martin",
-  "numeric_id": "4321",
   "url": [
     "http://example.com/martin",
     "https://example.com/4321",
