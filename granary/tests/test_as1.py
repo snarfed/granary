@@ -183,10 +183,19 @@ class As1Test(testutil.TestCase):
         self.assertTrue(as1.is_public(obj))
         self.assertTrue(as1.is_public({'object': obj}))
 
-
     self.assertFalse(as1.is_public({
       'to': [{'objectType': 'group', 'alias': '@unlisted'}],
     }, unlisted=False))
+
+    for verb in 'post', 'update', 'delete':
+      for to in None, [{'id': 'https://www.w3.org/ns/activitystreams#Public'}]:
+        with self.subTest(verb=verb, to=to):
+          self.assertFalse(as1.is_public({
+            'objectType': 'activity',
+            'verb': verb,
+            'to': to,
+            'object': {'to': ['did:bob']},
+          }))
 
 
     for obj in (

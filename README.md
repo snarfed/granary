@@ -292,6 +292,7 @@ _Non-breaking changes:_
 
 * `as1`:
   * `prefix_urls`: handle string values.
+  * `is_public`: return `False` for public CRUD activities on non-public objects.
 * `bluesky`:
   * Add `pds_url` kwarg to `Bluesky` constructor.
   * `from_as1`:

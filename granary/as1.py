@@ -255,7 +255,12 @@ def is_public(obj, unlisted=True):
     return None
 
   inner_obj = get_object(obj)
-  to = get_objects(obj, 'to') or get_objects(inner_obj, 'to') or []
+
+  if object_type(obj) in CRUD_VERBS:
+    to = get_objects(inner_obj, 'to') or []
+  else:
+    to = get_objects(obj, 'to') or get_objects(inner_obj, 'to') or []
+
   aliases = util.trim_nulls([t.get('alias') for t in to])
   object_types = util.trim_nulls([t.get('objectType') for t in to])
 
