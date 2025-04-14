@@ -190,13 +190,16 @@ class As1Test(testutil.TestCase):
     for verb in 'post', 'update', 'delete':
       for to in None, [{'id': 'https://www.w3.org/ns/activitystreams#Public'}]:
         with self.subTest(verb=verb, to=to):
-          self.assertFalse(as1.is_public({
+          activity = {
             'objectType': 'activity',
             'verb': verb,
             'to': to,
             'object': {'to': ['did:bob']},
-          }))
+          }
+          self.assertFalse(as1.is_public(activity))
 
+          activity['object']['objectType'] = 'person'
+          self.assertTrue(as1.is_public(activity))
 
     for obj in (
         {'to': []},

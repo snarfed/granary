@@ -270,7 +270,8 @@ def is_public(obj, unlisted=True):
     return None
   elif aliases:
     return False
-  elif 'to' in obj or 'to' in inner_obj:
+  elif (('to' in obj or 'to' in inner_obj)
+        and object_type(inner_obj) not in ACTOR_TYPES):
     # it does at least have some audience that doesn't include public
     return False
 
