@@ -506,7 +506,7 @@ class Mastodon(source.Source):
     if util.is_int(published) or util.is_float(published):
       published = util.maybe_timestamp_to_iso8601(published)
 
-    return util.trim_nulls({
+    ret = {
       'objectType': 'person',
       'id': account.get('uri') or util.tag_uri(domain, username),
       'numeric_id': account.get('id'),
@@ -517,7 +517,14 @@ class Mastodon(source.Source):
       'image': {'url': account.get('avatar')},
       'published': published,
       'description': account.get('note'),
-    })
+    }
+
+    if followers := account.get('followers_count'):
+      ret['followers'] = {'totalItems': followers}
+    if follows := account.get('following_count'):
+      ret['following'] = {'totalItems': follows}
+
+    return util.trim_nulls(ret)
 
   user_to_actor = to_as1_actor
   """Deprecated! Use :meth:`to_as1_actor` instead."""

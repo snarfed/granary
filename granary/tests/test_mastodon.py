@@ -40,6 +40,8 @@ ACCOUNT = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#account
   'avatar': 'http://foo.com/snarfed.png',
   'created_at': '2017-04-19T20:38:19.704Z',
   'note': 'my note',
+  'followers_count': 456,
+  'following_count': 123,
   'fields': [{
     'name': 'foo',
     'value': '<a href="https://snarfed.org" rel="me nofollow noopener" target="_blank"><span class="invisible">https://</span><span class="">snarfed.org</span></a>',
@@ -60,6 +62,8 @@ ACTOR = {  # ActivityStreams
   'image': {'url': 'http://foo.com/snarfed.png'},
   'description': 'my note',
   'published': '2017-04-19T20:38:19.704Z',
+  'followers': {'totalItems': 456},
+  'following': {'totalItems': 123},
 }
 ACCOUNT_REMOTE = {
   'id': '999',

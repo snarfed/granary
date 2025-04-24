@@ -298,6 +298,10 @@ _Non-breaking changes:_
   * Convert `followersCount`/`followsCount` in `app.bsky.actor.defs#profileViewDetailed` to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).
   * `from_as1`:
     * If `content` is in a [language that doesn't delimit words by spaces](https://en.m.wikipedia.org/wiki/Category:Writing_systems_without_word_boundaries), truncate between any characters ([snarfed/bridgy-fed#1625](https://github.com/snarfed/bridgy-fed/issues/1625)).
+* `mastodon`:
+  * Convert `followers_count`/`following_count` in Mastodon accounts to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).
+
+
 
 ### 8.1 - 2025-03-13
 
