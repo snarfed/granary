@@ -593,9 +593,13 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       'handle': handle,
       'avatar': avatar,
       'banner': banner,
+      # these collections aren't not in AS1, they're borrowed from ActivityPub:
+      # https://www.w3.org/TR/activitypub/#followers
+      'followersCount': obj.get('followers', {}).get('totalItems'),
+      'followsCount': obj.get('following', {}).get('totalItems'),
     })
-    # WARNING: this includes description, which isn't technically in this
-    # #profileViewBasic. hopefully clients should just ignore it!
+    # WARNING: this includes a few fields that aren't in #profileViewBasic, eg
+    # description, followersCount, followsCount
     # https://atproto.com/specs/lexicon#authority-and-control
     ret = trim_nulls(ret, ignore=('did', 'handle'))
 
@@ -1378,6 +1382,13 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
           'objectType': 'group',
           'alias': '@unlisted',
         }]
+
+    # follow/follower counts. convert to followers/following collections, not in AS1,
+    # borrowed from ActivityPub: https://www.w3.org/TR/activitypub/#followers
+    if followers := obj.get('followersCount'):
+      ret['followers'] = {'totalItems': followers}
+    if follows := obj.get('followsCount'):
+      ret['following'] = {'totalItems': follows}
 
   elif type in ('app.bsky.feed.post',
                 'chat.bsky.convo.defs#messageInput',

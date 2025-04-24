@@ -41,6 +41,11 @@ ACTOR_AS = {
   'url': 'https://alice.com/',
   'summary': 'hi there',
 }
+ACTOR_AS_FOLLOW_COLLECTIONS = {
+  **ACTOR_AS,
+  'followers': {'totalItems': 456},
+  'following': {'totalItems': 123},
+}
 ACTOR_PROFILE_VIEW_BSKY = {
   '$type': 'app.bsky.actor.defs#profileView',
   'did': 'did:web:alice.com',
@@ -50,6 +55,12 @@ ACTOR_PROFILE_VIEW_BSKY = {
   'description': 'hi there',
   'fooOriginalDescription': 'hi there',
   'fooOriginalUrl': 'https://alice.com/',
+}
+ACTOR_PROFILE_VIEW_DETAILED_BSKY = {
+  **ACTOR_PROFILE_VIEW_BSKY,
+  '$type': 'app.bsky.actor.defs#profileViewDetailed',
+  'followersCount': 456,
+  'followsCount': 123,
 }
 NEW_BLOB = {  # new blob format: https://atproto.com/specs/data-model#blob-type
   '$type': 'blob',
@@ -1792,6 +1803,11 @@ class BlueskyTest(testutil.TestCase):
         '$type': type,
       }, self.from_as1(ACTOR_AS, out_type=type))
 
+  def test_from_as1_actor_profileViewDetailed(self):
+    got = self.from_as1(ACTOR_AS_FOLLOW_COLLECTIONS,
+                        out_type='app.bsky.actor.defs#profileViewDetailed')
+    self.assert_equals(ACTOR_PROFILE_VIEW_DETAILED_BSKY, got)
+
   def test_from_as1_actor_handle(self):
     for expected, fields in (
         ('', {}),
@@ -2658,6 +2674,11 @@ class BlueskyTest(testutil.TestCase):
       **ACTOR_PROFILE_VIEW_BSKY,
         'description': 'ᵖᵒᵉᵗʳʸ • ᵃʳᵗ ♡︎ －\n📩 hi＠gmail.com ',
     }), ignore=('url', 'urls', 'username'))
+
+  def test_to_as1_profile_view_detailed(self):
+    self.assert_equals(ACTOR_AS_FOLLOW_COLLECTIONS,
+                       to_as1(ACTOR_PROFILE_VIEW_DETAILED_BSKY),
+                       ignore=('url', 'urls', 'username'))
 
   def test_to_as1_profile_no_repo_did_handle_or_pds(self):
     self.assert_equals({
