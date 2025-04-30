@@ -3137,6 +3137,48 @@ class BlueskyTest(testutil.TestCase):
        }],
     }))
 
+  def test_to_as1_facet_bad_index_inside_unicode_code_point_with_HTML_chars(self):
+    # at://did:plc:tzqzv6rqydqmyz5pobqzz77z/app.bsky.feed.post/3lo222q6csc2k
+    # https://console.cloud.google.com/errors/detail/CI-Jko6N4cGi5wE?project=bridgy-federated
+    self.assert_equals({
+      'content': '5월은 무슨 달?🧐\n롯데월드가 가정의 달 혜택을 가득 채운 달💕\n5월 할인혜택을 지금 확인해 보세요!!\ninstagram.com/p/DJDX-RkhyrG/…\n\n🏵️&lt;포켓몬 월드 어드벤처:스프링 캠프&gt;🏵️\n🏵️기간: 25.03.02 ~ 05.25\n\n#롯데월드포켓몬 #포켓몬월드어드벤처 #롯데월드봄시즌',
+      'objectType': 'note',
+      'published': '2025-04-30T14:48:08.109Z',
+      'tags': [{
+        'displayName': '롯데월드포켓몬',
+        'objectType': 'hashtag',
+        'startIndex': 142,
+        'url': 'https://bsky.app/search?q=%23%EB%A1%AF%EB%8D%B0%EC%9B%94%EB%93%9C%ED%8F%AC%EC%BC%93%EB%AA%AC',
+      }, {
+        'displayName': '포켓몬월드어드벤처',
+        'objectType': 'hashtag',
+        'url': 'https://bsky.app/search?q=%23%ED%8F%AC%EC%BC%93%EB%AA%AC%EC%9B%94%EB%93%9C%EC%96%B4%EB%93%9C%EB%B2%A4%EC%B2%98',
+      }]
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': '5월은 무슨 달?🧐\n롯데월드가 가정의 달 혜택을 가득 채운 달💕\n5월 할인혜택을 지금 확인해 보세요!!\ninstagram.com/p/DJDX-RkhyrG/…\n\n🏵️<포켓몬 월드 어드벤처:스프링 캠프>🏵️\n🏵️기간: 25.03.02 ~ 05.25\n\n#롯데월드포켓몬 #포켓몬월드어드벤처 #롯데월드봄시즌',
+      'createdAt': '2025-04-30T14:48:08.109Z',
+      'facets': [{
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#tag',
+          'tag': '롯데월드포켓몬',
+        }],
+        'index': {
+          'byteEnd': 285,
+          'byteStart': 263,
+        }
+      }, {
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#tag',
+          'tag': '포켓몬월드어드벤처',
+        }],
+        'index': {
+          'byteEnd': 314,
+          'byteStart': 286,
+        }
+      }],
+    }))
+
   def test_to_as1_follow(self):
     self.assertEqual(FOLLOW_AS, to_as1(FOLLOW_BSKY, repo_did='did:al:ice'))
 

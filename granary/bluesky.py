@@ -1452,8 +1452,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       # shuffle indices
       added = len(entity) - 1
       for tag in tags:
-        start = tag['startIndex']
-        end = tag['startIndex'] + tag['length']  # exclusive
+        start = tag.get('startIndex', 0)
+        end = start + tag.get('length', 0)  # exclusive
         if end <= pos:
           continue
         elif start <= pos:
