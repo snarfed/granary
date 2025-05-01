@@ -530,8 +530,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # avatar and banner. banner is featured image, if available
     avatar = util.get_url(obj, 'image')
     banner = None
-    for img in util.get_list(obj, 'image'):
-      url = img.get('url')
+    for img in as1.get_objects(obj, 'image'):
+      url = util.get_url(img)
       if img.get('objectType') == 'featured' and url:
         banner = url
         break

@@ -1849,6 +1849,16 @@ class BlueskyTest(testutil.TestCase):
       'summary': 'Some\n  plain  text\n\nok?',
     }))
 
+  def test_from_as1_actor_inline_string_image(self):
+    summary = '<p>Some <br> <em>HTML</em></p>  ok?'
+    self.assertEqual({
+      '$type': 'app.bsky.actor.profile',
+      'avatar': BLOB,
+    }, self.from_as1({
+      'objectType': 'person',
+      'image': 'http://foo/pic',
+    }, blobs={'http://foo/pic': BLOB}))
+
   def test_from_as1_composite_url(self):
     self.assertEqual({
       '$type': 'app.bsky.actor.defs#profileView',
