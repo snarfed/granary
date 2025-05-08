@@ -296,6 +296,7 @@ _Non-breaking changes:_
 * `bluesky`:
   * Add `pds_url`, `**requests_kwargs` kwargs to `Bluesky` constructor.
   * Convert `followersCount`/`followsCount` in `app.bsky.actor.defs#profileViewDetailed` to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).
+  * Switch `getFollows`/`getFollowers` calls from PDS to AppView. (These requests to Bluesky PDSes were timing out connection from Google Cloud IPs as of 2025-05-08.)
   * `from_as1`:
     * If `content` is in a [language that doesn't delimit words by spaces](https://en.m.wikipedia.org/wiki/Category:Writing_systems_without_word_boundaries), truncate between any characters ([snarfed/bridgy-fed#1625](https://github.com/snarfed/bridgy-fed/issues/1625)).
     * Bug fix: handle bare string `image`.

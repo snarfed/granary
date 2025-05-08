@@ -1905,6 +1905,8 @@ class Bluesky(Source):
                           refresh_token=refresh_token, auth=auth, headers=headers,
                           session_callback=session_callback, validate=True,
                           **requests_kwargs)
+    self._appview = Client(DEFAULT_APPVIEW, headers=headers, validate=True,
+                           **requests_kwargs)
 
   @property
   def client(self):
@@ -2269,8 +2271,8 @@ class Bluesky(Source):
 
     while True:
       max = LEXRPC.defs[method]['parameters']['properties']['limit']['maximum']
-      resp = self.client.call(method, {}, actor=(user_id or self.did),
-                              cursor=cursor, limit=max)
+      resp = self._appview.call(method, {}, actor=(user_id or self.did),
+                                cursor=cursor, limit=max)
       follows.extend(self.to_as1_actor(f, type='app.bsky.actor.defs#profileView')
                      for f in (resp.get('follows') or resp.get('followers') or []))
       cursor = resp.get('cursor')

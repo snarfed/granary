@@ -7,6 +7,7 @@ import os
 from io import BytesIO
 from unittest import skip
 from unittest.mock import ANY, patch
+from urllib.parse import urljoin
 
 from multiformats import CID
 from oauth_dropins.webutil import testutil, util
@@ -15,6 +16,7 @@ from oauth_dropins.webutil.util import HTTP_TIMEOUT, trim_nulls
 import requests
 from requests.auth import HTTPBasicAuth
 
+from .. import bluesky
 from ..bluesky import (
   AT_URI_PATTERN,
   at_uri_to_web_url,
@@ -620,15 +622,22 @@ class BlueskyTest(testutil.TestCase):
   def assert_equals(self, expected, actual, **kwargs):
     return super().assert_equals(expected, actual, in_order=True, **kwargs)
 
-  def assert_call(self, mock, method, json=None, headers=None, auth=None):
+  def assert_call(self, mock, method, json=None, service=bluesky.DEFAULT_PDS,
+                  headers=None, auth=None):
     if headers is None:
       headers = {
-        'Authorization': 'Bearer towkin',
         'Content-Type': 'application/json',
         'User-Agent': util.user_agent,
       }
-    mock.assert_any_call(f'https://bsky.social/xrpc/{method}', data=None,
-                         json=json, auth=auth, headers=headers)
+      if service == bluesky.DEFAULT_PDS:
+        headers['Authorization'] = 'Bearer towkin'
+
+    auth_kwarg = {}
+    if service == bluesky.DEFAULT_PDS:
+      auth_kwarg = {'auth': auth}
+
+    mock.assert_any_call(urljoin(service, f'/xrpc/{method}'), data=None,
+                         json=json, headers=headers, **auth_kwarg)
 
   @staticmethod
   def from_as1(obj, **kwargs):
@@ -3764,15 +3773,17 @@ class BlueskyTest(testutil.TestCase):
       }),
     ]
 
-    self.bs._client._validate = False
+    self.bs._appview._validate = False
     self.assert_equals([
       {'objectType': 'person', 'id': 'did:alice'},
       {'objectType': 'person', 'id': 'did:bob'},
       {'objectType': 'person', 'id': 'did:cindy'},
     ], method())
 
-    self.assert_call(mock_get, f'{nsid}?actor=did%3Ady%3Ad&limit=100')
-    self.assert_call(mock_get, f'{nsid}?actor=did%3Ady%3Ad&cursor=kerser&limit=100')
+    self.assert_call(mock_get, f'{nsid}?actor=did%3Ady%3Ad&limit=100',
+                     service=bluesky.DEFAULT_APPVIEW)
+    self.assert_call(mock_get, f'{nsid}?actor=did%3Ady%3Ad&cursor=kerser&limit=100',
+                     service=bluesky.DEFAULT_APPVIEW)
 
   @patch('requests.get', side_effect=[
     requests_response({
@@ -3784,13 +3795,18 @@ class BlueskyTest(testutil.TestCase):
     }),
   ])
   def test_get_follows_to_end(self, mock_get):
-    self.bs._client._validate = False
+    self.bs._appview._validate = False
     self.assert_equals([
       {'objectType': 'person', 'id': 'did:alice'},
     ], self.bs.get_follows())
 
-    self.assert_call(mock_get, f'app.bsky.graph.getFollows?actor=did%3Ady%3Ad&limit=100')
-    self.assert_call(mock_get, f'app.bsky.graph.getFollows?actor=did%3Ady%3Ad&cursor=kerser&limit=100')
+    self.assert_call(
+      mock_get, f'app.bsky.graph.getFollows?actor=did%3Ady%3Ad&limit=100',
+      service=bluesky.DEFAULT_APPVIEW)
+    self.assert_call(
+      mock_get,
+      f'app.bsky.graph.getFollows?actor=did%3Ady%3Ad&cursor=kerser&limit=100',
+      service=bluesky.DEFAULT_APPVIEW)
 
   def test_post_id(self):
     for input, expected in [
