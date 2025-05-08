@@ -2196,7 +2196,8 @@ class Bluesky(Source):
     thread = resp.get('thread')
     if thread:
       ret = self._recurse_replies(thread)
-    return sorted(ret, key = lambda thread: thread.get('post', {}).get('record', {}).get('createdAt') or '')
+    return sorted(ret, key = lambda thread:
+                    thread.get('post', {}).get('record', {}).get('createdAt') or '')
 
   # TODO this ought to take a depth limit. hellthread, anyone?
   def _recurse_replies(self, thread):
@@ -2227,7 +2228,8 @@ class Bluesky(Source):
     Returns:
       sequence of dict: ActivityStreams 1 actors
     """
-    return self._get_follows_or_followers('app.bsky.graph.getFollowers', user_id=user_id)
+    return self._get_follows_or_followers('app.bsky.graph.getFollowers',
+                                          user_id=user_id)
 
   def get_follows(self, user_id=None):
     """Returns the current user's follows.
@@ -2250,14 +2252,16 @@ class Bluesky(Source):
     depending on the silo.
 
     Args:
-      method (str): either ``app.bsky.graph.getFollows` or ``app.bsky.graph.getFollowers``
+      method (str): either ``app.bsky.graph.getFollows`
+        or ``app.bsky.graph.getFollowers``
       user_id (str): the user to fetch follows for. If unset, defaults to
         ``self.user_id``.
 
     Returns:
       sequence of dict: ActivityStreams 1 actors
     """
-    assert method in ('app.bsky.graph.getFollows', 'app.bsky.graph.getFollowers'), method
+    assert method in ('app.bsky.graph.getFollows', 'app.bsky.graph.getFollowers'), \
+      method
     follows = []
     cursor = None
 
@@ -2301,7 +2305,8 @@ class Bluesky(Source):
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, preview=None, include_link=OMIT_LINK, ignore_formatting=False):
+  def _create(self, obj, preview=None, include_link=OMIT_LINK,
+              ignore_formatting=False):
     assert preview in (False, True)
     assert self.did
     type = obj.get('objectType')
