@@ -74,6 +74,7 @@ class Mastodon(source.Source):
     instance (str): base URL of Mastodon instance, eg ``https://mastodon.social/``
     user_id (int): optional, current user's id (not username!) on this instance
     access_token (str): optional, OAuth access token
+    requests_kwargs (dict): passed to :func:`requests.get`/:func:`requests.post`
   """
   DOMAIN = 'N/A'
   BASE_URL = 'N/A'
@@ -89,7 +90,7 @@ class Mastodon(source.Source):
   TRUNCATE_URL_LENGTH = 23
 
   def __init__(self, instance, access_token, user_id=None,
-               truncate_text_length=None):
+               truncate_text_length=None, **requests_kwargs):
     """Constructor.
 
     If ``user_id`` is not provided, it will be fetched via the API.
@@ -101,11 +102,13 @@ class Mastodon(source.Source):
       access_token (str): OAuth access token
       truncate_text_length (int): optional character limit for toots, overrides
         the default of 500
+      requests_kwargs (dict): passed to :func:`requests.get`/:func:`requests.post`
     """
     assert instance
     self.instance = self.BASE_URL = instance
     assert access_token
     self.access_token = access_token
+    self.requests_kwargs = requests_kwargs
     self.TRUNCATE_TEXT_LENGTH = (
       truncate_text_length if truncate_text_length is not None
       else DEFAULT_TRUNCATE_TEXT_LENGTH)
@@ -134,6 +137,7 @@ class Mastodon(source.Source):
     headers['Authorization'] = 'Bearer ' + self.access_token
 
     url = urljoin(self.instance, path)
+    kwargs = {**self.requests_kwargs, **kwargs}
     resp = fn(url, *args, **kwargs)
     try:
       resp.raise_for_status()

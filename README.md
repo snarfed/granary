@@ -294,7 +294,7 @@ _Non-breaking changes:_
   * `prefix_urls`: handle string values.
   * `is_public`: return `False` for public CRUD activities on non-public objects.
 * `bluesky`:
-  * Add `pds_url` kwarg to `Bluesky` constructor.
+  * Add `pds_url`, `**requests_kwargs` kwargs to `Bluesky` constructor.
   * Convert `followersCount`/`followsCount` in `app.bsky.actor.defs#profileViewDetailed` to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).
   * `from_as1`:
     * If `content` is in a [language that doesn't delimit words by spaces](https://en.m.wikipedia.org/wiki/Category:Writing_systems_without_word_boundaries), truncate between any characters ([snarfed/bridgy-fed#1625](https://github.com/snarfed/bridgy-fed/issues/1625)).
@@ -303,6 +303,7 @@ _Non-breaking changes:_
     * Bug fix, handle facets with bad indices (in the middle of Unicode code points) interacting with HTML characters.
 * `mastodon`:
   * Convert `followers_count`/`following_count` in Mastodon accounts to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).
+  * Add `**requests_kwargs` to `Bluesky` constructor.
 
 
 

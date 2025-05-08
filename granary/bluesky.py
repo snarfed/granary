@@ -1879,7 +1879,7 @@ class Bluesky(Source):
 
   def __init__(self, handle, pds_url=None, did=None, access_token=None,
                refresh_token=None, app_password=None, auth=None,
-               session_callback=None):
+               session_callback=None, **requests_kwargs):
     """Constructor.
 
     Args:
@@ -1892,6 +1892,7 @@ class Bluesky(Source):
       auth (requests.auth.AuthBase): optional, used to authenticate XRPC requests
       session_callback (callable, dict => None): passed to :class:`lexrpc.Client`
         constructor, called when a new session is created or refreshed
+      requests_kwargs (dict): passed to :func:`requests.get`/:func:`requests.post`
     """
     assert not ((access_token or refresh_token) and auth)
 
@@ -1902,7 +1903,8 @@ class Bluesky(Source):
     headers = {'User-Agent': util.user_agent}
     self._client = Client(pds_url, access_token=access_token,
                           refresh_token=refresh_token, auth=auth, headers=headers,
-                          session_callback=session_callback, validate=True)
+                          session_callback=session_callback, validate=True,
+                          **requests_kwargs)
 
   @property
   def client(self):
