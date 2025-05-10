@@ -363,6 +363,15 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_string_url_attachment(self):
+    self.assertEqual({
+      'objectType': 'note',
+      'attachments': ['http://foo/bar'],
+    }, as2.to_as1({
+      'type': 'Note',
+      'attachment': ['http://foo/bar'],
+    }))
+
   def test_is_public(self):
     publics = list(PUBLICS)
     for result, input in (

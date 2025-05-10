@@ -293,6 +293,9 @@ _Non-breaking changes:_
 * `as1`:
   * `prefix_urls`: handle string values.
   * `is_public`: return `False` for public CRUD activities on non-public objects.
+* `as2`:
+  * `to_as1`:
+    * Handle bare string `attachment` values.
 * `bluesky`:
   * Add `pds_url`, `**requests_kwargs` kwargs to `Bluesky` constructor.
   * Convert `followersCount`/`followsCount` in `app.bsky.actor.defs#profileViewDetailed` to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).

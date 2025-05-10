@@ -492,7 +492,7 @@ def to_as1(obj, use_type=True):
   # level up, in the parent's object, because its data goes into the parent's
   # url/urls fields
   names = {}
-  attachments = util.get_list(obj, 'attachment')
+  attachments = as1.get_objects(obj, 'attachment')
   for att in attachments:
     name = att.get('name')
     value = att.get('value')
