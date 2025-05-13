@@ -1,5 +1,6 @@
 .coverage
 /build/
+.claude/
 /docs/_build/
 /dist/
 /.eggs/
