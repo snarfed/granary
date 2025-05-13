@@ -240,8 +240,7 @@ class ActivityStreams2Test(testutil.TestCase):
           fn(bad)
 
     with self.assertRaises(ValueError):
-      # wrongly trying to parse mf2 JSON as AS2
-      as2.to_as1({'type': ['h-card']})
+      as2.to_as1({'type': 3})
 
   def test_to_as1_in_reply_to_string(self):
     self._test_to_as1_in_reply_to('http://x.y/z')
@@ -599,6 +598,18 @@ class ActivityStreams2Test(testutil.TestCase):
       ],
       'content': 'Please take a look at this user and their posts',
       'to': ['http://bob'],
+    }))
+
+  def test_to_as1_multiple_types(self):
+    # https://places.pub/node/588146912
+    self.assertEqual({
+      'objectType': 'place',
+      'id': 'https://places.pub/node/588146912',
+      'displayName': 'Golden Gate Park Bike & Skate',
+    }, as2.to_as1({
+      'type': ['Place', 'geojson:Feature'],
+      'id': 'https://places.pub/node/588146912',
+      'name': 'Golden Gate Park Bike & Skate',
     }))
 
   def test_to_as1_update_string_object(self):

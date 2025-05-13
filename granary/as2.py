@@ -457,8 +457,11 @@ def to_as1(obj, use_type=True):
   # type to objectType + verb
   type = obj.pop('type', None)
   if use_type:
-    if type and not isinstance(type, str):
-      raise ValueError(f'Expected type to be string, got {type!r}')
+    if type:
+      if isinstance(type, (list, tuple)):
+        type = type[0]
+      elif not isinstance(type, str):
+        raise ValueError(f'Expected type to be string, got {type!r}')
     obj['objectType'] = TYPE_TO_OBJECT_TYPE.get(type)
     obj['verb'] = TYPE_TO_VERB.get(type)
     inner_obj = as1.get_object(obj)
