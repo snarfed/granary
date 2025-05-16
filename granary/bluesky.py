@@ -1390,6 +1390,18 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     if follows := obj.get('followsCount'):
       ret['following'] = {'totalItems': follows}
 
+    # convert pinnedPost to featured ActivityStreams collection
+    # https://docs.joinmastodon.org/spec/activitypub/#featured
+    if pinned_post_uri := obj.get('pinnedPost', {}).get('uri'):
+      ret['featured'] = {
+        'type': 'OrderedCollection',
+        'totalItems': 1,
+        'items': [{
+          'id': pinned_post_uri,
+          'url': at_uri_to_web_url(pinned_post_uri),
+        }],
+      }
+
   elif type in ('app.bsky.feed.post',
                 'chat.bsky.convo.defs#messageInput',
                 'chat.bsky.convo.defs#messageView',

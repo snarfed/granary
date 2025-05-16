@@ -695,6 +695,27 @@ class BlueskyTest(testutil.TestCase):
       'summary': 'hi there',
     }, Bluesky.to_as1_actor(ACTOR_PROFILE_BSKY))
 
+  def test_to_as1_actor_with_pinned_post(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'displayName': 'Alice',
+      'summary': 'hi there',
+      'featured': {
+        'type': 'OrderedCollection',
+        'totalItems': 1,
+        'items': [{
+          'id': 'at://did:web:alice.com/app.bsky.feed.post/pinned-post-id',
+          'url': 'https://bsky.app/profile/did:web:alice.com/post/pinned-post-id',
+        }],
+      },
+    }, Bluesky.to_as1_actor({
+      **ACTOR_PROFILE_BSKY,
+      'pinnedPost': {
+        'uri': 'at://did:web:alice.com/app.bsky.feed.post/pinned-post-id',
+        'cid': 'bafyrei...',
+      },
+    }))
+
   def test_post_url(self):
     self.assertEqual('https://bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
                      Bluesky.post_url('snarfed.org', '3jv3wdw2hkt25'))
@@ -2579,7 +2600,7 @@ class BlueskyTest(testutil.TestCase):
       'sensitive': True,
     }))
 
-  def test_chat_from_as1_dm(self):
+  def test_from_as1_dm(self):
     self.assert_equals({
       '$type': 'chat.bsky.convo.defs#messageInput',
       'text': 'hello world',
