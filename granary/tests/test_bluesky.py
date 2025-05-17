@@ -701,12 +701,8 @@ class BlueskyTest(testutil.TestCase):
       'displayName': 'Alice',
       'summary': 'hi there',
       'featured': {
-        'type': 'OrderedCollection',
         'totalItems': 1,
-        'items': [{
-          'id': 'at://did:web:alice.com/app.bsky.feed.post/pinned-post-id',
-          'url': 'https://bsky.app/profile/did:web:alice.com/post/pinned-post-id',
-        }],
+        'items': ['at://did:web:alice.com/app.bsky.feed.post/pinned-post-id'],
       },
     }, Bluesky.to_as1_actor({
       **ACTOR_PROFILE_BSKY,
