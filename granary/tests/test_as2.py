@@ -712,6 +712,23 @@ class ActivityStreams2Test(testutil.TestCase):
       },
     }))
 
+  def test_to_as1_featured_collection_no_type(self):
+    # https://github.com/snarfed/bridgy-fed/issues/1374
+    # https://docs.joinmastodon.org/spec/activitypub/#featured
+    self.assert_equals({
+      'objectType': 'person',
+      'featured': {
+        'totalItems': 1,
+        'items': ['http://foo'],
+      },
+    }, as2.to_as1({
+      'type': 'Person',
+      'featured': {
+        'totalItems': 1,
+        'orderedItems': ['http://foo'],
+      },
+    }))
+
   def test_link_tags_no_indices(self):
     # no indices, should be a noop
     obj = {

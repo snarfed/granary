@@ -294,6 +294,7 @@ _Non-breaking changes:_
   * `prefix_urls`: handle string values.
   * `is_public`: return `False` for public CRUD activities on non-public objects.
 * `as2`:
+  * Add support for pinned posts via the `featured` collection.
   * `to_as1`:
     * Handle bare string `attachment` values.
     * Handle multiply-valued `type`.

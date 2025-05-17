@@ -583,7 +583,7 @@ def to_as1(obj, use_type=True):
   # https://www.w3.org/TR/activitypub/#actor-objects
   preferred_username = obj.pop('preferredUsername', None)
   displayName = obj.pop('name', None) or preferred_username
-  if not displayName and obj.get('objectType') in as1.ACTOR_TYPES:
+  if not displayName and type in ACTOR_TYPES:
     displayName = address(obj)
 
   # attachments, tags
@@ -643,8 +643,8 @@ def to_as1(obj, use_type=True):
 
   # pinned posts
   # https://docs.joinmastodon.org/spec/activitypub/#featured
-  if feat := as1.get_object(obj, 'featured'):
-    feat.pop('type')
+  if type in ACTOR_TYPES and (feat := as1.get_object(obj, 'featured')):
+    feat.pop('type', None)
     feat['items'] = feat.pop('orderedItems', None)
 
   obj.update({
