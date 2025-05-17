@@ -4,7 +4,8 @@ Most of the tests are in testdata/. This is just a few things that are too small
 for full testdata tests.
 """
 import copy
-from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import testutil, util
+from unittest.mock import patch
 
 from .. import as2
 from ..as2 import is_public, PUBLICS
@@ -713,8 +714,6 @@ class ActivityStreams2Test(testutil.TestCase):
     }))
 
   def test_to_as1_featured_collection_no_type(self):
-    # https://github.com/snarfed/bridgy-fed/issues/1374
-    # https://docs.joinmastodon.org/spec/activitypub/#featured
     self.assert_equals({
       'objectType': 'person',
       'featured': {
@@ -728,6 +727,28 @@ class ActivityStreams2Test(testutil.TestCase):
         'orderedItems': ['http://foo'],
       },
     }))
+
+  @patch('requests.get', return_value=testutil.requests_response({
+    'type': 'OrderedCollection',
+    'totalItems': 1,
+    'orderedItems': ['http://foo'],
+  }, headers={'Content-Type': as2.CONTENT_TYPE}))
+  def test_to_as1_featured_collection_fetch(self, mock_get):
+    util.set_user_agent('foo')
+
+    self.assert_equals({
+      'objectType': 'person',
+      'featured': {
+        'totalItems': 1,
+        'items': ['http://foo'],
+      },
+    }, as2.to_as1({
+      'type': 'Person',
+      'featured': 'http://actor/featured',
+    }))
+
+    mock_get.assert_called_with('http://actor/featured', timeout=15, stream=True,
+                                headers={**as2.CONNEG_HEADERS, 'User-Agent': 'foo'})
 
   def test_link_tags_no_indices(self):
     # no indices, should be a noop

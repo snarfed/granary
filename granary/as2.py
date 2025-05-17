@@ -438,6 +438,9 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True):
 def to_as1(obj, use_type=True):
   """Converts an ActivityStreams 2 activity or object to ActivityStreams 1.
 
+  May make external HTTP requests, eg to fetch the ``featured`` collection.
+  https://docs.joinmastodon.org/spec/activitypub/#featured
+
   Args:
     obj (dict): AS2 activity or object
     use_type (bool): whether to include ``objectType`` and ``verb``
@@ -644,6 +647,11 @@ def to_as1(obj, use_type=True):
   # pinned posts
   # https://docs.joinmastodon.org/spec/activitypub/#featured
   if type in ACTOR_TYPES and (feat := as1.get_object(obj, 'featured')):
+    if set(feat.keys()) == {'id'}:
+      # fetch collection
+      resp = util.requests_get(feat['id'], headers=CONNEG_HEADERS)
+      if resp.ok and resp.headers.get('Content-Type') in CONTENT_TYPES:
+        feat = obj['featured'] = resp.json()
     feat.pop('type', None)
     feat['items'] = feat.pop('orderedItems', None)
 
