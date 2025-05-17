@@ -194,6 +194,24 @@ class ActivityStreams2Test(testutil.TestCase):
       }]
     }), ignore=['@context'])
 
+  def test_from_as1_featured_collection_pinned_posts(self):
+    # https://github.com/snarfed/bridgy-fed/issues/1374
+    # https://docs.joinmastodon.org/spec/activitypub/#featured
+    self.assert_equals({
+      'type': 'Person',
+      'featured': {
+        'type': 'OrderedCollection',
+        'totalItems': 1,
+        'orderedItems': ['http://foo'],
+      },
+    }, as2.from_as1({
+      'objectType': 'person',
+      'featured': {
+        'totalItems': 1,
+        'items': ['http://foo'],
+      },
+    }), ignore=['@context', 'discoverable', 'indexable'])
+
   def test_from_as1_quote_post_contentMap_html(self):
     self.assert_equals({
       'content': 'foo<br><br>RE: <a href="http://the/url">http://the/url</a>',
@@ -675,6 +693,24 @@ class ActivityStreams2Test(testutil.TestCase):
       'url': 'https://open.audio/api/v1/listen/123',
       'duration': 3305,
      }))
+
+  def test_to_as1_featured_collection_pinned_posts(self):
+    # https://github.com/snarfed/bridgy-fed/issues/1374
+    # https://docs.joinmastodon.org/spec/activitypub/#featured
+    self.assert_equals({
+      'objectType': 'person',
+      'featured': {
+        'totalItems': 1,
+        'items': ['http://foo'],
+      },
+    }, as2.to_as1({
+      'type': 'Person',
+      'featured': {
+        'type': 'OrderedCollection',
+        'totalItems': 1,
+        'orderedItems': ['http://foo'],
+      },
+    }))
 
   def test_link_tags_no_indices(self):
     # no indices, should be a noop

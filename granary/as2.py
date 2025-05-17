@@ -320,6 +320,12 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True):
 
     attachments.extend(links.values())
 
+    # pinned posts
+    # https://docs.joinmastodon.org/spec/activitypub/#featured
+    if feat := as1.get_object(obj, 'featured'):
+      feat['type'] = 'OrderedCollection'
+      feat['orderedItems'] = feat.pop('items', None)
+
   # urls
   urls = as1.object_urls(obj)
   if len(urls) == 1:
@@ -634,6 +640,12 @@ def to_as1(obj, use_type=True):
           'url': quote_url,
         })
         quote_urls.append(quote_url)
+
+  # pinned posts
+  # https://docs.joinmastodon.org/spec/activitypub/#featured
+  if feat := as1.get_object(obj, 'featured'):
+    feat.pop('type')
+    feat['items'] = feat.pop('orderedItems', None)
 
   obj.update({
     'displayName': displayName,
