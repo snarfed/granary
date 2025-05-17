@@ -1889,7 +1889,7 @@ class BlueskyTest(testutil.TestCase):
       'image': 'http://foo/pic',
     }, blobs={'http://foo/pic': BLOB}))
 
-  def test_from_as1_composite_url(self):
+  def test_from_as1_actor_composite_url(self):
     self.assertEqual({
       '$type': 'app.bsky.actor.defs#profileView',
       'did': 'did:web:rodentdisco.co.uk',
@@ -1902,6 +1902,62 @@ class BlueskyTest(testutil.TestCase):
         "value": "https://rodentdisco.co.uk/author/dan/"
       },
     }, out_type='app.bsky.actor.defs#profileView'))
+
+  def test_from_as1_actor_pinned_post_no_client(self):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+      'pinnedPost': {
+        'uri': 'at://did:fo:o/app.bsky.feed.post/bar',
+      },
+    }, self.from_as1({
+      'objectType': 'person',
+      'featured': {
+        'type': 'OrderedCollection',
+        'orderedItems': [
+          'at://did:fo:o/app.bsky.feed.post/bar',
+          'at://did:fo:o/app.bsky.feed.post/baz',
+        ],
+      },
+    }))
+
+  @patch('requests.get', return_value=requests_response({
+    'uri': 'at://did:fo:o/app.bsky.feed.post/bar',
+    'cid': 'sydddddd',
+    'value': {'x': 'y'},
+  }))
+  def test_from_as1_actor_pinned_post(self, mock_get):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+      'pinnedPost': {
+        'uri': 'at://did:fo:o/app.bsky.feed.post/bar',
+        'cid': 'sydddddd',
+      },
+    }, self.from_as1({
+      'objectType': 'person',
+      'featured': {
+        'type': 'OrderedCollection',
+        'orderedItems': [
+          'at://did:fo:o/app.bsky.feed.post/bar',
+          'at://did:fo:o/app.bsky.feed.post/baz',
+        ],
+      },
+    }, client=self.bs))
+    self.assert_call(mock_get, 'com.atproto.repo.getRecord'
+                     '?repo=did%3Afo%3Ao&collection=app.bsky.feed.post&rkey=bar')
+
+  @patch('requests.get', return_value=requests_response(status=404))
+  def test_from_as1_actor_pinned_post_fetch_fails(self, mock_get):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+    }, self.from_as1({
+      'objectType': 'person',
+      'featured': {
+        'type': 'Collection',
+        'items': ['at://did:fo:o/app.bsky.feed.post/bar'],
+      },
+    }, client=self.bs))
+    self.assert_call(mock_get, 'com.atproto.repo.getRecord'
+                     '?repo=did%3Afo%3Ao&collection=app.bsky.feed.post&rkey=bar')
 
   def test_from_as1_embed(self):
     self.assert_equals(POST_BSKY_EMBED, self.from_as1(POST_AS_EMBED))

@@ -536,6 +536,14 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         banner = url
         break
 
+    # extract pinned post from featured collection
+    pinned_post = None
+    if featured := as1.get_object(obj, 'featured'):
+      if first := (util.get_first(featured, 'orderedItems')
+                   or util.get_first(featured, 'items')
+                   or featured.get('id')):
+        pinned_post = from_as1_to_strong_ref(first, client=client, raise_=raise_)
+
     summary = orig_summary = obj.get('summary') or ''
     is_html = (bool(BeautifulSoup(summary, 'html.parser').find())
                or HTML_ENTITY_RE.search(summary))
@@ -555,6 +563,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       'description': summary,
       'avatar': blobs.get(avatar),
       'banner': blobs.get(banner),
+      'pinnedPost': pinned_post,
     }
     if original_fields_prefix:
       ret.update({
