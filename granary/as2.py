@@ -435,15 +435,19 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True):
   return obj
 
 
-def to_as1(obj, use_type=True):
+def to_as1(obj, use_type=True, get_fn=None):
   """Converts an ActivityStreams 2 activity or object to ActivityStreams 1.
 
-  May make external HTTP requests, eg to fetch the ``featured`` collection.
-  https://docs.joinmastodon.org/spec/activitypub/#featured
+  May make external HTTP requests if ``get_fn`` is provided, eg to fetch the
+  ``featured`` collection. https://docs.joinmastodon.org/spec/activitypub/#featured
 
   Args:
     obj (dict): AS2 activity or object
     use_type (bool): whether to include ``objectType`` and ``verb``
+    get_fn (callable, str URL => :class:`requests.Response`) used to make HTTP GET
+      requests to fetch AS2 objects when necessary, eg the ``featured`` collection.
+      HTTP requests should usually be signed to satisfy many fediverse servers'
+      authorized fetch requirement.
 
   Returns:
     dict: AS1 activity or object
@@ -647,9 +651,9 @@ def to_as1(obj, use_type=True):
   # pinned posts
   # https://docs.joinmastodon.org/spec/activitypub/#featured
   if type in ACTOR_TYPES and (feat := as1.get_object(obj, 'featured')):
-    if set(feat.keys()) == {'id'}:
+    if set(feat.keys()) == {'id'} and get_fn:
       # fetch collection
-      resp = util.requests_get(feat['id'], headers=CONNEG_HEADERS)
+      resp = get_fn(feat['id'])
       if resp.ok and resp.headers.get('Content-Type') in CONTENT_TYPES:
         feat = obj['featured'] = resp.json()
     feat.pop('type', None)

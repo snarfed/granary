@@ -1269,8 +1269,7 @@ def to_external_embed(obj, description=None, blobs=None):
 
   return ret
 
-def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
-           pds=DEFAULT_PDS):
+def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
   """Converts a Bluesky object to an AS1 object.
 
   Args:

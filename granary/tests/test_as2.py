@@ -5,7 +5,7 @@ for full testdata tests.
 """
 import copy
 from oauth_dropins.webutil import testutil, util
-from unittest.mock import patch
+from unittest.mock import MagicMock
 
 from .. import as2
 from ..as2 import is_public, PUBLICS
@@ -728,13 +728,13 @@ class ActivityStreams2Test(testutil.TestCase):
       },
     }))
 
-  @patch('requests.get', return_value=testutil.requests_response({
-    'type': 'OrderedCollection',
-    'totalItems': 1,
-    'orderedItems': ['http://foo'],
-  }, headers={'Content-Type': as2.CONTENT_TYPE}))
-  def test_to_as1_featured_collection_fetch(self, mock_get):
-    util.set_user_agent('foo')
+  def test_to_as1_featured_collection_fetch(self):
+    mock_get = MagicMock()
+    mock_get.return_value = testutil.requests_response({
+      'type': 'OrderedCollection',
+      'totalItems': 1,
+      'orderedItems': ['http://foo'],
+    }, headers={'Content-Type': as2.CONTENT_TYPE})
 
     self.assert_equals({
       'objectType': 'person',
@@ -745,10 +745,9 @@ class ActivityStreams2Test(testutil.TestCase):
     }, as2.to_as1({
       'type': 'Person',
       'featured': 'http://actor/featured',
-    }))
+    }, get_fn=mock_get))
 
-    mock_get.assert_called_with('http://actor/featured', timeout=15, stream=True,
-                                headers={**as2.CONNEG_HEADERS, 'User-Agent': 'foo'})
+    mock_get.assert_called_with('http://actor/featured')
 
   def test_link_tags_no_indices(self):
     # no indices, should be a noop
