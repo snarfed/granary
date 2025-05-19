@@ -1955,6 +1955,19 @@ class BlueskyTest(testutil.TestCase):
     self.assert_call(mock_get, 'com.atproto.repo.getRecord'
                      '?repo=did%3Afo%3Ao&collection=app.bsky.feed.post&rkey=bar')
 
+  def test_from_as1_actor_pinned_post_empty_featured_collection(self):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+    }, self.from_as1({
+      'objectType': 'person',
+      'featured': {
+        'id': 'https://planet.moe/users/alice/collections/featured',
+        'type': 'OrderedCollection',
+        'totalItems': 0,
+        'orderedItems': [],
+      },
+    }, client=self.bs, raise_=True))
+
   def test_from_as1_embed(self):
     self.assert_equals(POST_BSKY_EMBED, self.from_as1(POST_AS_EMBED))
 
