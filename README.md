@@ -294,6 +294,8 @@ _Non-breaking changes:_
   * `prefix_urls`: handle string values.
   * `is_public`: return `False` for public CRUD activities on non-public objects.
   * `is_dm`/`recipient_if_dm`: allow DMs with recipient in `cc` instead of `to`; evidently [NeoDB](https://neodb.net/) sends DMs like this.
+  * `targets`: add quoted posts, ie attachments with `objectType: note`.
+  * Add new `quoted_posts` function.
 * `as2`:
   * Add support for pinned posts via the `featured` collection.
   * `to_as1`:

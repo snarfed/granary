@@ -810,6 +810,12 @@ class As1Test(testutil.TestCase):
           'id': 'a',
           'object': {'id': 'b', 'inReplyTo': 'x'},
         }),
+        (['x'], {'attachments': [{'objectType': 'note', 'id': 'x'}]}),
+        (['x'], {
+          'verb': 'post',
+          'id': 'a',
+          'object': {'attachments': [{'objectType': 'note', 'id': 'x'}]},
+        }),
         (['x'], {
           'verb': 'share',
           'id': 'a',
@@ -839,3 +845,44 @@ class As1Test(testutil.TestCase):
     ):
       with self.subTest(expected=expected, obj=obj):
         self.assertEqual(expected, as1.get_url(obj))
+
+  def test_quoted_posts(self):
+    for obj in (
+        {},
+        {'attachments': [{
+          'objectType': 'note',
+        }]},
+        {'attachments': [{
+          'objectType': 'image',
+          'id': 'x',
+        }]},
+    ):
+      self.assertEqual([], as1.quoted_posts(obj))
+
+    for obj in (
+        {'attachments': [{
+          'objectType': 'note',
+          'id': 'x',
+        }]},
+        {'verb': 'post',
+         'object': {
+           'attachments': [{
+             'objectType': 'note',
+             'id': 'x',
+           }]},
+         },
+    ):
+      self.assertEqual(['x'], as1.quoted_posts(obj))
+
+    self.assertEqual(['x', 'z'], as1.quoted_posts({
+      'attachments': [{
+        'objectType': 'note',
+        'id': 'x',
+      }, {
+        'objectType': 'article',
+        'id': 'y',
+      }, {
+        'objectType': 'note',
+        'id': 'z',
+      }],
+    }))

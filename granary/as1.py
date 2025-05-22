@@ -646,6 +646,7 @@ def targets(obj):
   * the post it's replying to
   * the post it's sharing
   * the post it's reacting to
+  * the post it's quoting
   * the actor or other object it's tagging
   * the event it's inviting someone to
   * the event it's RSVPing to
@@ -667,7 +668,8 @@ def targets(obj):
   for o in [obj] + get_objects(obj):
     targets.extend(get_ids(o, 'inReplyTo') +
                    get_ids(o, 'tags') +
-                   util.get_urls(o, 'tags'))
+                   util.get_urls(o, 'tags') +
+                   quoted_posts(o))
 
     verb = o.get('verb')
     if verb in VERBS_WITH_OBJECT:
@@ -679,3 +681,21 @@ def targets(obj):
         logger.warning(f'{verb} missing target id/URL')
 
   return util.dedupe_urls(targets)
+
+
+def quoted_posts(obj):
+  """Returns the ids that an object or activity is quoting.
+
+  In AS1, we define quoted posts as attachments with ``objectType: note``.
+
+  Arg:
+    obj (dict): AS1 object or activity
+
+  Returns:
+    sequence of string ids, possibly empty
+  """
+  if obj.get('verb') in CRUD_VERBS:
+    obj = get_object(obj)
+
+  return [a['id'] for a in get_objects(obj, 'attachments')
+          if a.get('id') and a.get('objectType') == 'note']
