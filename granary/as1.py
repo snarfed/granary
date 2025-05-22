@@ -699,3 +699,23 @@ def quoted_posts(obj):
 
   return [a['id'] for a in get_objects(obj, 'attachments')
           if a.get('id') and a.get('objectType') == 'note']
+
+
+def mentions(obj):
+  """Returns the URLs that an object or activity is quoting.
+
+  Conservatively, these are tags with ``objectType: mention``. Their ``url`` fields
+  are extracted and returned, not ``id`, but in the common case the values are
+  interpreted as ids.
+
+  Arg:
+    obj (dict): AS1 object or activity
+
+  Returns:
+    sequence of string URLs, possibly empty
+  """
+  if obj.get('verb') in CRUD_VERBS:
+    obj = get_object(obj)
+
+  return [t['url'] for t in get_objects(obj, 'tags')
+          if t.get('url') and t.get('objectType') == 'mention']

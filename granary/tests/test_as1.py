@@ -886,3 +886,44 @@ class As1Test(testutil.TestCase):
         'id': 'z',
       }],
     }))
+
+  def test_mentions(self):
+    for obj in (
+        {},
+        {'tags': [{
+          'objectType': 'mention',
+        }]},
+        {'tags': [{
+          'objectType': 'image',
+          'url': 'x',
+        }]},
+    ):
+      self.assertEqual([], as1.mentions(obj))
+
+    for obj in (
+        {'tags': [{
+          'objectType': 'mention',
+          'url': 'x',
+        }]},
+        {'verb': 'post',
+         'object': {
+           'tags': [{
+             'objectType': 'mention',
+             'url': 'x',
+           }]},
+         },
+    ):
+      self.assertEqual(['x'], as1.mentions(obj))
+
+    self.assertEqual(['x', 'z'], as1.mentions({
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'x',
+      }, {
+        'objectType': 'article',
+        'url': 'y',
+      }, {
+        'objectType': 'mention',
+        'url': 'z',
+      }],
+    }))
