@@ -256,13 +256,16 @@ def is_public(obj, unlisted=True):
 
   inner_obj = get_object(obj)
 
-  if object_type(obj) in CRUD_VERBS:
-    to = get_objects(inner_obj, 'to') or []
-  else:
-    to = get_objects(obj, 'to') or get_objects(inner_obj, 'to') or []
+  def get_to_cc(o):
+    return get_objects(o, 'to') + get_objects(o, 'cc')
 
-  aliases = util.trim_nulls([t.get('alias') for t in to])
-  object_types = util.trim_nulls([t.get('objectType') for t in to])
+  if object_type(obj) in CRUD_VERBS:
+    to_cc = get_to_cc(inner_obj)
+  else:
+    to_cc = get_to_cc(obj) or get_to_cc(inner_obj)
+
+  aliases = util.trim_nulls([t.get('alias') for t in to_cc])
+  object_types = util.trim_nulls([t.get('objectType') for t in to_cc])
 
   if '@public' in aliases or ('@unlisted' in aliases and unlisted):
     return True
@@ -270,8 +273,7 @@ def is_public(obj, unlisted=True):
     return None
   elif aliases:
     return False
-  elif (('to' in obj or 'to' in inner_obj)
-        and object_type(inner_obj) not in ACTOR_TYPES):
+  elif to_cc and object_type(inner_obj) not in ACTOR_TYPES:
     # it does at least have some audience that doesn't include public
     return False
 
@@ -306,10 +308,8 @@ def recipient_if_dm(obj, actor=None):
   if not obj or object_type(obj) not in (None, 'note', 'comment'):
     return None
 
-  tos = util.get_list(obj, 'to')
-  others = (util.get_list(obj, 'cc')
-            + util.get_list(obj, 'bto')
-            + util.get_list(obj, 'bcc'))
+  tos = util.get_list(obj, 'to') + util.get_list(obj, 'cc')
+  others = util.get_list(obj, 'bto') + util.get_list(obj, 'bcc')
   if not (len(tos) == 1 and len(others) == 0):
     return None
 
