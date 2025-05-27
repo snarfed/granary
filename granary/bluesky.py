@@ -1399,11 +1399,15 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None, pds=DEFAUL
 
     # convert pinnedPost to featured ActivityStreams collection
     # https://docs.joinmastodon.org/spec/activitypub/#featured
-    if pinned_post_uri := obj.get('pinnedPost', {}).get('uri'):
-      ret['featured'] = {
-        'totalItems': 1,
-        'items': [pinned_post_uri],
-      }
+    if pinned_post := obj.get('pinnedPost'):
+      # sometimes this is a str. not sure why, that's invalid based on the schema,
+      # pinnedPost has always been an object, but we still see it occasionally, eg
+      # https://console.cloud.google.com/errors/detail/CKevsI3gyqrAdw?project=bridgy-federated
+      if isinstance(pinned_post, dict):
+        ret['featured'] = {
+          'totalItems': 1,
+          'items': [pinned_post['uri']],
+        }
 
   elif type in ('app.bsky.feed.post',
                 'chat.bsky.convo.defs#messageInput',

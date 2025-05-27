@@ -712,6 +712,16 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
+  def test_to_as1_actor_with_pinned_post_str_instead_of_dict(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'displayName': 'Alice',
+      'summary': 'hi there',
+    }, Bluesky.to_as1_actor({
+      **ACTOR_PROFILE_BSKY,
+      'pinnedPost': 'at://did:web:alice.com/app.bsky.feed.post/pinned-post-id',
+    }))
+
   def test_post_url(self):
     self.assertEqual('https://bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
                      Bluesky.post_url('snarfed.org', '3jv3wdw2hkt25'))
