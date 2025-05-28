@@ -808,15 +808,21 @@ def link_tags(obj):
     # apps (and others?) need class="hashtag" to do it for hashtags
     # https://github.com/snarfed/bridgy-fed/issues/887#issuecomment-2452141758
     # https://github.com/snarfed/bridgy-fed/issues/1634#issuecomment-2577519871
-    cls = ('class="mention" ' if tag.get('type') == 'Mention'
-           else 'class="hashtag" ' if tag.get('type') in ('Hashtag', 'Tag')
-           else '')
+    #
+    # ...and rel="tag" to prevent generating link previews for hashtag links
+    # https://discord.com/channels/1100160301254590525/1116486604945625168/1377255511849828503
+    attrs = ''
+    if tag.get('type') == 'Mention':
+      attrs = 'class="mention" '
+    elif tag.get('type') in ('Hashtag', 'Tag'):
+      attrs = 'class="hashtag" rel="tag" '
+
     start = tag['startIndex']
     if start < last_end:
       logger.warning(f'tag indices overlap! skipping {url}')
       continue
     end = start + tag['length']
-    linked = f"{linked}{orig[last_end:start]}<a {cls}href=\"{url}\">{orig[start:end]}</a>"
+    linked = f"{linked}{orig[last_end:start]}<a {attrs}href=\"{url}\">{orig[start:end]}</a>"
     last_end = end
     obj['content_is_html'] = True
     del tag['startIndex']

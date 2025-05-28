@@ -825,7 +825,7 @@ foo
     }
     as2.link_tags(obj)
     self.assert_equals({
-      'content': 'foo <a class="hashtag" href="http://bar">#bar</a> <a class="hashtag" href="http://baz">#baz</a> biff',
+      'content': 'foo <a class="hashtag" rel="tag" href="http://bar">#bar</a> <a class="hashtag" rel="tag" href="http://baz">#baz</a> biff',
       'content_is_html': True,
       'tag': [
         {'href': 'http://bar', 'type': 'Tag'},
