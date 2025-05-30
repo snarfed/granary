@@ -3,9 +3,12 @@ from contextlib import contextmanager
 from datetime import timedelta
 import logging
 import secrets
+from unittest.mock import patch
 
 from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil.testutil import requests_response
+import requests
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
 from .. import nostr
@@ -479,6 +482,44 @@ class NostrTest(testutil.TestCase):
 
     self.assertEqual(follow, to_as1(event))
     self.assertEqual(event, from_as1(follow))
+
+  @patch('requests.get', return_value=requests_response({'names': {'alice': 'b0635d'}}))
+  def test_nip05_to_npub(self, _):
+    npub = nostr.nip05_to_npub('alice@example.com')
+    self.assertEqual('npub1kp346yk70h6', npub)
+
+  @patch('requests.get', return_value=requests_response({'names': {'_': 'b0635d'}}))
+  def test_nip05_to_npub_underscore_username(self, _):
+    npub = nostr.nip05_to_npub('_@example.com')
+    self.assertEqual('npub1kp346yk70h6', npub)
+
+  @patch('requests.get', return_value=requests_response({'names': {'_': 'b0635d'}}))
+  def test_nip05_to_npub_bare_domain(self, _):
+    npub = nostr.nip05_to_npub('example.com')
+    self.assertEqual('npub1kp346yk70h6', npub)
+
+  @patch('requests.get', return_value=requests_response({'names': {'bob': 'b0635d'}}))
+  def test_nip05_to_npub_user_not_found(self, _):
+    with self.assertRaises(ValueError) as cm:
+      nostr.nip05_to_npub('alice@example.com')
+
+    self.assertEqual('User alice not found at example.com', str(cm.exception))
+
+  @patch('requests.get', return_value=requests_response('', status=404))
+  def test_nip05_to_npub_http_error(self, _):
+    with self.assertRaises(requests.HTTPError):
+      nostr.nip05_to_npub('alice@example.com')
+
+  @patch('requests.get', return_value=requests_response('not json'))
+  def test_nip05_to_npub_invalid_json(self, _):
+    with self.assertRaises(ValueError):
+      nostr.nip05_to_npub('alice@example.com')
+
+  def test_nip05_to_npub_invalid_input(self):
+    for bad in ('', 'too@many@ats', 'alice@', '@example.com'):
+      with self.subTest(nip05=bad):
+        with self.assertRaises(ValueError):
+          nostr.nip05_to_npub(bad)
 
 
 class ClientTest(testutil.TestCase):

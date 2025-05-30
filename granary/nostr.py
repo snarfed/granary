@@ -144,6 +144,46 @@ def id_to_uri(prefix, id):
   return 'nostr:' + bech32.bech32_encode(prefix, data)
 
 
+def nip05_to_npub(nip05):
+  """Converts a NIP-05 identifier or domain to an npub (bech32-encoded public key).
+
+  https://nips.nostr.com/5
+
+  Args:
+    nip05 (str): NIP-05 identifier, e.g. "alice@example.com" or "_@example.com"
+
+  Returns:
+    str: npub bech32-encoded public key
+
+  Raises:
+    ValueError: if nip05 is invalid format or user not found
+    requests.HTTPError: if HTTP request fails
+  """
+  parts = nip05.split('@')
+  if len(parts) == 1:
+    domain = parts[0]
+    user = '_'
+  elif len(parts) == 2:
+    user, domain = parts
+  else:
+    raise ValueError(f'Invalid NIP-05 identifier: {nip05}')
+
+  if not user or not domain:
+    raise ValueError(f'Invalid NIP-05 identifier: {nip05}')
+
+  url = f'https://{domain}/.well-known/nostr.json?name={user}'
+
+  resp = util.requests_get(url, timeout=HTTP_TIMEOUT)
+  resp.raise_for_status()
+  data = resp.json()
+
+  if not (pubkey := data.get('names', {}).get(user)):
+    raise ValueError(f'User {user} not found at {domain}')
+
+  # convert hex pubkey to npub
+  return id_to_uri('npub', pubkey).removeprefix('nostr:')
+
+
 def sign(event, privkey):
   """Signs a Nostr event, in place.
 

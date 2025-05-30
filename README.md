@@ -316,7 +316,8 @@ _Non-breaking changes:_
 * `mastodon`:
   * Convert `followers_count`/`following_count` in Mastodon accounts to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).
   * Add `**requests_kwargs` to `Bluesky` constructor.
-
+* `nostr`:
+  * Add new `nip05_to_npub` function to resolve [NIP-05](https://nips.nostr.com/5) identifiers.
 
 
 ### 8.1 - 2025-03-13
