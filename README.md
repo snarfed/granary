@@ -318,6 +318,8 @@ _Non-breaking changes:_
   * Add `**requests_kwargs` to `Bluesky` constructor.
 * `nostr`:
   * Add new `nip05_to_npub` function to resolve [NIP-05](https://nips.nostr.com/5) identifiers.
+  * `Nostr`:
+    * Add new `user_url` method.
 
 
 ### 8.1 - 2025-03-13

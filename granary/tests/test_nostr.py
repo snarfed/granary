@@ -783,3 +783,9 @@ class ClientTest(testutil.TestCase):
                       ) as ws:
       with self.assertRaises(ConnectionClosedError):
         self.nostr.query(ws, {})
+
+  def test_user_url(self):
+    self.assertEqual('https://coracle.social/people/nprofile123',
+                     self.nostr.user_url('nprofile123'))
+    self.assertEqual('https://coracle.social/people/nprofile123',
+                     self.nostr.user_url('nostr:nprofile123'))

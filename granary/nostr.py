@@ -491,6 +491,12 @@ class Nostr(Source):
     self.relays = relays
     self.pubkey = uri_to_id(pubkey)
 
+  @classmethod
+  def user_url(cls, nprofile):
+    nprofile = nprofile.removeprefix('nostr:')
+    assert nprofile.startswith('nprofile')
+    return f'https://coracle.social/people/{nprofile}'
+
   def get_actor(self, user_id=None):
     """Fetches and returns a Nostr user profile.
 
