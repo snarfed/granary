@@ -36,7 +36,7 @@ TODO:
 * 46: "Nostr Connect," signing proxy that holds user's keys
 * 65: user relays. what would this be in AS1? anything?
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from hashlib import sha256
 import logging
 import secrets
@@ -458,7 +458,7 @@ def to_as1(event):
   # common fields
   created_at = event.get('created_at')
   if created_at:
-    obj['published'] = datetime.fromtimestamp(created_at).isoformat()
+    obj['published'] = datetime.fromtimestamp(created_at, tz=timezone.utc).isoformat()
 
   if isinstance(obj.get('object'), list) and len(obj['object']) == 1:
     obj['object'] = obj['object'][0]

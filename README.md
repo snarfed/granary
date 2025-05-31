@@ -318,6 +318,7 @@ _Non-breaking changes:_
   * Add `**requests_kwargs` to `Bluesky` constructor.
 * `nostr`:
   * Add new `nip05_to_npub` function to resolve [NIP-05](https://nips.nostr.com/5) identifiers.
+  * `from_as1`: when converting `created_at` to `published`, include UTC timezone.
   * `Nostr`:
     * Add new `user_url` method.
 
