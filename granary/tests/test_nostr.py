@@ -161,6 +161,9 @@ class NostrTest(testutil.TestCase):
       'sig': SIG,
     }))
 
+  def test_pubkey_from_privkey(self):
+    self.assertEqual(PUBKEY, nostr.pubkey_from_privkey(PRIVKEY))
+
   def test_to_from_as1_profile(self):
     person = {
       'objectType': 'person',

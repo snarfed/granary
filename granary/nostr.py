@@ -274,6 +274,28 @@ def verify(event):
   return pubkey.schnorr_verify(bytes.fromhex(id), bytes.fromhex(sig), None, raw=True)
 
 
+def pubkey_from_privkey(privkey):
+  """Returns the hex-encoded public key for a hex-encoded private key.
+
+  Removes the leading 0x02 or 0x03 byte prefix that secp256k1-py includes.
+  Background:
+  https://github.com/snarfed/bridgy-fed/issues/446#issuecomment-2925960330
+
+  Note that :func:`verify` does the inverse; it adds a 0x02 prefix internally, which
+  secp256k1-py needs to load the public key.
+
+  Args:
+    privkey (str): hex secp256k1 private key
+
+  Returns:
+    str: corresponding hex secp256k1 public key
+  """
+  privkey = secp256k1.PrivateKey(bytes.fromhex(privkey), raw=True)
+  pubkey = privkey.pubkey.serialize().hex()[2:]
+  assert len(pubkey) == 64
+  return pubkey
+
+
 def from_as1(obj, privkey=None):
   """Converts an ActivityStreams 1 activity or object to a Nostr event.
 
