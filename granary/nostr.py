@@ -85,8 +85,13 @@ def id_for(event):
     according to NIP-01
   """
   event.setdefault('tags', [])
-  assert event.keys() >= set(('content', 'created_at', 'kind', 'pubkey', 'tags')), \
-    event.keys()
+  event.setdefault('created_at', int(util.now(tz=timezone.utc).timestamp()))
+
+  missing = set(('content', 'created_at', 'kind', 'pubkey', 'tags')) - event.keys()
+  assert not missing, f'missing {missing}'
+
+  # don't escape Unicode chars!
+  # https://github.com/nostr-protocol/nips/issues/354
   return sha256(json_dumps([
     0,
     event['pubkey'],
@@ -94,7 +99,7 @@ def id_for(event):
     event['kind'],
     event['tags'],
     event['content'],
-  ]).encode()).hexdigest()
+  ], ensure_ascii=False).encode()).hexdigest()
 
 
 def is_bech32(id):
@@ -110,38 +115,70 @@ def is_bech32(id):
 def uri_to_id(uri):
   """Converts a nostr: URI with bech32-encoded id to a hex sha256 hash id.
 
-  Based on NIP-19 and NIP-21.
+  Based on NIP-21.
 
   Args:
     uri (str)
 
   Returns:
-    str:
+    str: hex
   """
-  if not uri or not is_bech32(uri):
+  if not uri:
     return uri
 
-  prefix, data = bech32.bech32_decode(uri.removeprefix('nostr:'))
-  return bytes(bech32.convertbits(data, 5, 8, pad=False)).hex()
+  return bech32_decode(uri.removeprefix('nostr:'))
 
 
 def id_to_uri(prefix, id):
   """Converts a hex sha256 hash id to a nostr: URI with bech32-encoded id.
 
-  Based on NIP-19 and NIP-21.
+  Based on NIP-21.
 
   Args:
     prefix (str)
-    id (str)
+    id (str): hex
 
   Returns:
-    str:
+    str: bech32-encoded
   """
-  if not id:
-    return id
+  return 'nostr:' + bech32_encode(prefix, id)
 
-  data = bech32.convertbits(bytes.fromhex(id), 8, 5)
-  return 'nostr:' + bech32.bech32_encode(prefix, data)
+
+def bech32_decode(val):
+  """Converts a bech32-encoded string to its corresponding hex string.
+
+  Based on NIP-19.
+
+  Args:
+    val (str): bech32
+
+  Returns:
+    str: hex
+  """
+  if not val or not is_bech32(val):
+    return val
+
+  prefix, data = bech32.bech32_decode(val)
+  return bytes(bech32.convertbits(data, 5, 8, pad=False)).hex()
+
+
+def bech32_encode(prefix, hex):
+  """Converts a hex string to a bech32-encoded string.
+
+  Based on NIP-19.
+
+  Args:
+    prefix (str)
+    hex (str)
+
+  Returns:
+    str: bech32
+  """
+  if not hex:
+    return hex
+
+  data = bech32.convertbits(bytes.fromhex(hex), 8, 5)
+  return bech32.bech32_encode(prefix, data)
 
 
 def nip05_to_npub(nip05):
@@ -195,8 +232,10 @@ def sign(event, privkey):
     dict: event, populated with a ``sig`` field with the hex-encoded secp256k1
       Schnorr signature of the ``id`` field
   """
+  assert privkey.startswith('nsec'), privkey
+  privkey = bech32_decode(privkey)
   assert len(privkey) == 64, privkey
-  assert event.get('id'), event
+  assert event.get('id') == id_for(event), event
   assert 'sig' not in event, event
 
   key = secp256k1.PrivateKey(privkey=privkey, raw=False)
@@ -204,20 +243,52 @@ def sign(event, privkey):
   return event
 
 
-def from_as1(obj):
+def verify(event):
+  """Verifies a Nostr event's signature using the key in its ``pubkey`` field.
+
+  Args:
+    event (dict)
+
+  Returns:
+    bool: True if the signature is valid, False otherwise, eg if the signature is
+      invalid, or if the ``id`` or ``sig`` or ``pubkey`` fields are missing, or if
+      ``id`` is not the event's correct hash
+  """
+  if (not (sig := event.get('sig'))
+      or not (id := event.get('id'))
+      or not (pubkey := event.get('pubkey'))):
+    return False
+
+  if id != id_for(event):
+    return False
+
+  # secp256k1-py generates and expects 33-byte public keys, not 32. the difference
+  # seems to be a prefix byte that's always either 0x02 or 0x03. not sure why, but it
+  # doesn't seem to matter, we can just arbitrarily tack 0x02 onto a 32-byte key and
+  # it still generates and verifies signatures fine.
+  # https://github.com/snarfed/bridgy-fed/issues/446#issuecomment-2925960330
+  assert len(pubkey) == 64, pubkey
+  pubkey = '02' + pubkey
+
+  pubkey = secp256k1.PublicKey(bytes.fromhex(pubkey), raw=True)
+  return pubkey.schnorr_verify(bytes.fromhex(id), bytes.fromhex(sig), None, raw=True)
+
+
+def from_as1(obj, privkey=None):
   """Converts an ActivityStreams 1 activity or object to a Nostr event.
 
   Args:
     obj (dict): AS1 activity or object
+    privkey (str): optional bech32-encoded private key to sign the event with
 
   Returns:
     dict: Nostr event
   """
   type = as1.object_type(obj)
   inner_obj = as1.get_object(obj)
+  pubkey = uri_to_id(as1.get_owner(obj))
   event = {
-    'id': uri_to_id(obj.get('id')),
-    'pubkey': uri_to_id(as1.get_owner(obj)),
+    'pubkey': pubkey,
     'content': obj.get('content') or obj.get('summary') or obj.get('displayName') or '',
     'tags': [],
   }
@@ -233,14 +304,19 @@ def from_as1(obj):
       nip05 = f'_@{nip05}'
     event.update({
       'kind': 0,
-      'pubkey': event['id'],
+      # don't escape Unicode chars!
+      # https://github.com/nostr-protocol/nips/issues/354
       'content': json_dumps({
         'name': obj.get('displayName'),
         'about': obj.get('description'),
         'picture': util.get_url(obj, 'image'),
         'nip05': nip05,
-      }, sort_keys=True),
+      }, sort_keys=True, ensure_ascii=False),
     })
+
+    if id := obj.get('id'):
+      event['pubkey'] = uri_to_id(id)
+
     for url in as1.object_urls(obj):
       for platform, base_url in PLATFORMS.items():
         # we don't known which URLs might be Mastodon, so don't try to guess
@@ -292,7 +368,7 @@ def from_as1(obj):
 
     if inner_obj:
       orig_event = from_as1(inner_obj)
-      event['content'] = json_dumps(orig_event, sort_keys=True)
+      event['content'] = json_dumps(orig_event, sort_keys=True, ensure_ascii=False)
       event['tags'] = [
         ['e', orig_event.get('id'), 'TODO relay', 'mention'],
         ['p', orig_event.get('pubkey')],
@@ -329,7 +405,14 @@ def from_as1(obj):
   else:
     raise NotImplementedError(f'Unsupported activity/object type: {type}')
 
-  return util.trim_nulls(event, ignore=['tags'])
+  event = util.trim_nulls(event, ignore=['tags', 'content'])
+
+  if pubkey:
+    event['id'] = id_for(event)
+    if privkey:
+      sign(event, privkey.removeprefix('nostr:'))
+
+  return event
 
 
 def to_as1(event):
@@ -344,13 +427,13 @@ def to_as1(event):
   if not event:
     return {}
 
+  obj = {}
+  if id := event.get('id'):
+    obj['id'] = id_to_uri('nevent', id)
+
   kind = event['kind']
-  id = event.get('id')
   tags = event.get('tags', [])
   content = event.get('content')
-  obj = {
-    'id': id_to_uri('nevent', id)
-  }
 
   if kind == 0:  # profile
     content = json_loads(content) or {}
@@ -376,11 +459,13 @@ def to_as1(event):
   elif kind in (1, 30023):  # note, article
     obj.update({
       'objectType': 'note' if kind == 1 else 'article',
-      'id': id_to_uri('note', id),
       # TODO: render Markdown to HTML
       'content': event.get('content'),
       'tags': [],
     })
+
+    if id:
+      obj['id'] = id_to_uri('note', id)
 
     pubkey = event.get('pubkey')
     if pubkey:
@@ -463,8 +548,8 @@ def to_as1(event):
   if isinstance(obj.get('object'), list) and len(obj['object']) == 1:
     obj['object'] = obj['object'][0]
 
-  if obj.get('objectType') == 'activity':
-    obj['actor'] = id_to_uri('npub', event.get('pubkey'))
+  if obj.get('objectType') == 'activity' and (pubkey := event.get('pubkey')):
+    obj['actor'] = id_to_uri('npub', pubkey)
 
   return util.trim_nulls(Source.postprocess_object(obj))
 
@@ -475,17 +560,18 @@ class Nostr(Source):
   Attributes:
     relays (sequence of str): relay hostnames
   """
-
   DOMAIN = None
   BASE_URL = None
   NAME = 'Nostr'
 
-  def __init__(self, relays, pubkey=None):
+  def __init__(self, relays, privkey=None, pubkey=None):
     """Constructor.
 
     Args:
       relays (sequence of str)
-      pubkey (str): bech32-encoded pubkey of the current user. May be a ``nostr:`` URI.
+      privkey (str): optional bech32-encoded private key of the current user.
+        Required by :meth:`create` in order to sign events.
+      pubkey (str): optional bech32-encoded private key of the current user.
     """
     assert relays
     self.relays = relays
@@ -656,17 +742,18 @@ class Nostr(Source):
     prefer_content = type == 'note' or (base_url and is_reply)
 
     event = from_as1(obj)
-    event.setdefault('pubkey', self.pubkey)
-    event['created_at'] = int(util.now().timestamp())
-
     content = self._content_for_create(
       obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content) or ''
     if include_link == INCLUDE_LINK and url:
       content += '\n' + url
     event['content'] = content
 
-    # TODO: override
-    event.setdefault('id', id_for(event))
+    event.setdefault('pubkey', self.pubkey)
+    event['id'] = id_for(event)
+
+    missing = (set(('content', 'created_at', 'kind', 'id', 'pubkey', 'tags'))
+               - event.keys())
+    assert not missing, f'missing {missing}'
 
     with connect(self.relays[0],
                  open_timeout=HTTP_TIMEOUT,
@@ -696,4 +783,5 @@ class Nostr(Source):
       'objectType': 'activity',
       'verb': 'delete',
       'object': id,
+      'published': util.now(tz=timezone.utc).isoformat(),
     })

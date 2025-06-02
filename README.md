@@ -318,9 +318,15 @@ _Non-breaking changes:_
   * Add `**requests_kwargs` to `Bluesky` constructor.
 * `nostr`:
   * Add new `nip05_to_npub` function to resolve [NIP-05](https://nips.nostr.com/5) identifiers.
-  * `from_as1`: when converting `created_at` to `published`, include UTC timezone.
+  * Add new `bech32_decode` and `bech32_encode` functions.
+  * Add new `verify` function to verify event signatures.
+  * `from_as1`:
+    * Add optional new `privkey` kwarg to sign output events with.
+    * When converting `created_at` to `published`, include UTC timezone.
+    * Don't escape Unicode characters ([background](https://github.com/nostr-protocol/nips/issues/354)).
   * `Nostr`:
     * Add new `user_url` method.
+    * Add optional new `privkey` kwarg to constructor to sign events with.
 
 
 ### 8.1 - 2025-03-13
