@@ -303,6 +303,7 @@ _Non-breaking changes:_
   * `to_as1`:
     * Handle bare string `attachment` values.
     * Handle multiply-valued `type`.
+  * `is_server_actor`: return `False` for id URLs with query parameters.
 * `bluesky`:
   * Add `pds_url`, `**requests_kwargs` kwargs to `Bluesky` constructor.
   * Convert `followersCount`/`followsCount` in `app.bsky.actor.defs#profileViewDetailed` to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).

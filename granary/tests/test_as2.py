@@ -844,5 +844,6 @@ foo
         (False, ''),
         (False, '/me'),
         (False, '/users/me'),
+        (False, '/?author=1'),  # WordPress
     ):
       self.assertEqual(expected, as2.is_server_actor({'id': id}))

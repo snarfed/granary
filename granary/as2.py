@@ -855,4 +855,5 @@ def is_server_actor(actor):
   if not id:
     return False
 
-  return urlparse(id).path in SERVER_ACTOR_PREFIXES
+  parsed = urlparse(id)
+  return parsed.path in SERVER_ACTOR_PREFIXES and not parsed.query
