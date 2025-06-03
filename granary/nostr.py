@@ -35,6 +35,7 @@ TODO:
 * 32: tag activities
 * 46: "Nostr Connect," signing proxy that holds user's keys
 * 65: user relays. what would this be in AS1? anything?
+* 73: external content ids
 """
 from datetime import datetime, timezone
 from hashlib import sha256
@@ -111,6 +112,23 @@ def is_bech32(id):
   for prefix in BECH32_PREFIXES:
     if id.startswith(prefix):
       return True
+
+
+def bech32_prefix_for(event):
+  """Returns the bech32 prefix for a given event, based on its kind.
+
+  Defined by NIP-19: https://nips.nostr.com/19
+
+  Args:
+    event (dict): Nostr event
+
+  Returns:
+    str: bech32 prefix
+  """
+  return {
+    1: 'note',      # NIP-10
+    0: 'nprofile',  # NIP-01
+  }.get(event['kind'], 'nevent')
 
 
 def uri_to_id(uri):
