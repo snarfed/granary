@@ -214,6 +214,17 @@ class NostrTest(testutil.TestCase):
       'displayName': 'Alice',
     }))
 
+  def test_from_as1_username_not_user_at_domain_no_nip05(self):
+    self.assert_equals({
+      'kind': 0,
+      'content': json_dumps({'name': 'Alice'}),
+      'tags': [],
+    }, from_as1({
+      'objectType': 'person',
+      'displayName': 'Alice',
+      'username': 'foo',
+    }))
+
   def test_from_as1_actor_privkey_sets_pubkey(self):
     self.assert_equals({
       'kind': 0,

@@ -348,9 +348,6 @@ def from_as1(obj, privkey=None):
 
   # types
   if type in as1.ACTOR_TYPES:
-    nip05 = obj.get('username', '')
-    if re.fullmatch(util.DOMAIN_RE, nip05):
-      nip05 = f'_@{nip05}'
     event.update({
       'kind': 0,
       # don't escape Unicode chars!
@@ -359,9 +356,14 @@ def from_as1(obj, privkey=None):
         'name': obj.get('displayName'),
         'about': obj.get('description'),
         'picture': util.get_url(obj, 'image'),
-        'nip05': nip05,
       }), sort_keys=True, ensure_ascii=False),
     })
+
+    if username := obj.get('username'):
+      if '@' in username:
+        event['nip05'] = username
+      elif re.fullmatch(util.DOMAIN_RE, username):
+        event['nip05'] = f'_@{username}'
 
     if id := obj.get('id'):
       event['pubkey'] = uri_to_id(id)
