@@ -328,12 +328,12 @@ def from_as1(obj, privkey=None):
       'kind': 0,
       # don't escape Unicode chars!
       # https://github.com/nostr-protocol/nips/issues/354
-      'content': json_dumps({
+      'content': json_dumps(util.trim_nulls({
         'name': obj.get('displayName'),
         'about': obj.get('description'),
         'picture': util.get_url(obj, 'image'),
         'nip05': nip05,
-      }, sort_keys=True, ensure_ascii=False),
+      }), sort_keys=True, ensure_ascii=False),
     })
 
     if id := obj.get('id'):
