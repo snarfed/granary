@@ -204,14 +204,17 @@ class NostrTest(testutil.TestCase):
     del event['tags'][2]
     self.assert_equals(event, from_as1(person))
 
-  def test_to_from_as1_minimal(self):
-    self.assert_equals({
-      'kind': 0,
-      'content': json_dumps({'name': 'Alice'}),
-    }, from_as1({
+  def test_from_as1_minimal(self):
+    person = {
       'objectType': 'person',
       'displayName': 'Alice',
-    }))
+    }
+    event = {
+      'kind': 0,
+      'content': json_dumps({'name': 'Alice'}),
+      'tags': [],
+    }
+    self.assert_equals(event, from_as1(person))
 
   def test_to_as1_profile_bad_nip05(self):
     self.assert_equals({

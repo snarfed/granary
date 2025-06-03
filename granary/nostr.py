@@ -39,6 +39,7 @@ TODO:
 from datetime import datetime, timezone
 from hashlib import sha256
 import logging
+import re
 import secrets
 
 import bech32
@@ -322,7 +323,7 @@ def from_as1(obj, privkey=None):
   # types
   if type in as1.ACTOR_TYPES:
     nip05 = obj.get('username', '')
-    if '@' not in nip05:
+    if re.fullmatch(util.DOMAIN_RE, nip05):
       nip05 = f'_@{nip05}'
     event.update({
       'kind': 0,
