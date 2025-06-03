@@ -205,16 +205,18 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(event, from_as1(person))
 
   def test_from_as1_minimal(self):
-    person = {
-      'objectType': 'person',
-      'displayName': 'Alice',
-    }
-    event = {
+    self.assert_equals({
       'kind': 0,
+      'id': '8be34ca85471dcb2306ca005182d4468eede8e3a979f84b80f1a9616e84f4c74',
+      'pubkey': PUBKEY,
       'content': json_dumps({'name': 'Alice'}),
       'tags': [],
-    }
-    self.assert_equals(event, from_as1(person))
+      'sig': '54173e03ea1608c1c99b40532a68c824c3e2558628286d13271277f8811d08823484d4708a299182310c2a5480aa3966772c99214531937437fc900a361288f0',
+      'created_at': NOW_TS,
+    }, from_as1({
+      'objectType': 'person',
+      'displayName': 'Alice',
+    }, privkey=NSEC_URI))
 
   def test_to_as1_profile_bad_nip05(self):
     self.assert_equals({
@@ -268,6 +270,12 @@ class NostrTest(testutil.TestCase):
       })
 
   def test_from_as1_sign_with_privkey(self):
+    self.assert_equals({
+      **NOTE_NOSTR,
+      'sig': SIG,
+    }, from_as1(NOTE_AS1, NSEC_URI))
+
+  def test_from_as1_privkey_sets_pubkey(self):
     self.assert_equals({
       **NOTE_NOSTR,
       'sig': SIG,

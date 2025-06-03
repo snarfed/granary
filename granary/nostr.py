@@ -302,7 +302,9 @@ def from_as1(obj, privkey=None):
 
   Args:
     obj (dict): AS1 activity or object
-    privkey (str): optional bech32-encoded private key to sign the event with
+    privkey (str): optional bech32-encoded private key to sign the event with. Also
+      used to set the output event's ``pubkey`` field if ``obj`` doesn't have an
+      ``nsec`` id
 
   Returns:
     dict: Nostr event
@@ -310,6 +312,12 @@ def from_as1(obj, privkey=None):
   type = as1.object_type(obj)
   inner_obj = as1.get_object(obj)
   pubkey = uri_to_id(as1.get_owner(obj))
+
+  if privkey:
+    privkey = privkey.removeprefix('nostr:')
+    if not pubkey:
+      pubkey = pubkey_from_privkey(uri_to_id(privkey))
+
   event = {
     'pubkey': pubkey,
     'content': obj.get('content') or obj.get('summary') or obj.get('displayName') or '',
@@ -433,7 +441,7 @@ def from_as1(obj, privkey=None):
   if pubkey:
     event['id'] = id_for(event)
     if privkey:
-      sign(event, privkey.removeprefix('nostr:'))
+      sign(event, privkey)
 
   return event
 

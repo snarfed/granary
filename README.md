@@ -322,7 +322,7 @@ _Non-breaking changes:_
   * Add new `verify` function to verify event signatures.
   * `from_as1`:
     * When converting actors to kind 0 Nostr events, remove unset fields from content instead of setting them to null, and only use `_` NIP-05 username with full domains.
-    * Add optional new `privkey` kwarg to sign output events with.
+    * Add optional new `privkey` kwarg to sign output events and populate `pubkey` with.
     * When converting `created_at` to `published`, include UTC timezone.
     * Don't escape Unicode characters ([background](https://github.com/nostr-protocol/nips/issues/354)).
   * `Nostr`:
