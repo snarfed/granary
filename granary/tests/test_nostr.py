@@ -207,6 +207,16 @@ class NostrTest(testutil.TestCase):
   def test_from_as1_minimal(self):
     self.assert_equals({
       'kind': 0,
+      'content': json_dumps({'name': 'Alice'}),
+      'tags': [],
+    }, from_as1({
+      'objectType': 'person',
+      'displayName': 'Alice',
+    }))
+
+  def test_from_as1_actor_privkey_sets_pubkey(self):
+    self.assert_equals({
+      'kind': 0,
       'id': '8be34ca85471dcb2306ca005182d4468eede8e3a979f84b80f1a9616e84f4c74',
       'pubkey': PUBKEY,
       'content': json_dumps({'name': 'Alice'}),
