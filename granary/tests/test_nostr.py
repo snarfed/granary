@@ -51,6 +51,7 @@ NOTE_NOSTR = {
   'content': 'Something to say',
   'tags': [],
   'created_at': 1641092645,
+  'sig': SIG,
 }
 NOTE_AS1 = {
   'objectType': 'note',
@@ -142,24 +143,25 @@ class NostrTest(testutil.TestCase):
 
   def test_sign(self):
     event = copy.deepcopy(NOTE_NOSTR)
-    nostr.sign(event, bech32_encode('nsec', PRIVKEY))
+    del event['sig']
+    nostr.sign(event, NSEC_URI)
     self.assertEqual(SIG, event['sig'])
 
   def test_verify(self):
+    missing_sig = copy.copy(NOTE_NOSTR)
+    del missing_sig['sig']
+
     for bad in (
         {},
-        NOTE_NOSTR,  # no sig
+        missing_sig,
+        {**NOTE_NOSTR, 'sig': None},
         {**NOTE_NOSTR, 'id': 'bad', 'sig': SIG},
         {**NOTE_NOSTR, 'pubkey': 'bad', 'sig': SIG},
     ):
       with self.subTest(event=bad):
         self.assertFalse(nostr.verify(bad))
 
-    self.assertTrue(nostr.verify({
-      **NOTE_NOSTR,
-      'pubkey': PUBKEY,
-      'sig': SIG,
-    }))
+    self.assertTrue(nostr.verify(NOTE_NOSTR))
 
   def test_pubkey_from_privkey(self):
     self.assertEqual(PUBKEY, nostr.pubkey_from_privkey(PRIVKEY))
@@ -273,14 +275,14 @@ class NostrTest(testutil.TestCase):
       'objectType': 'activity',
       'verb': 'post',
       'object': NOTE_AS1,
-    }))
+    }), ignore=['sig'])
 
   def test_from_as1_update_activity(self):
     self.assert_equals(NOTE_NOSTR, from_as1({
       'objectType': 'activity',
       'verb': 'update',
       'object': NOTE_AS1,
-    }))
+    }), ignore=['sig'])
 
   def test_from_as1_reject_activity_not_implemented(self):
     with self.assertRaises(NotImplementedError):
@@ -290,17 +292,14 @@ class NostrTest(testutil.TestCase):
         'object': NOTE_AS1,
       })
 
-  def test_from_as1_sign_with_privkey(self):
-    self.assert_equals({
-      **NOTE_NOSTR,
-      'sig': SIG,
-    }, from_as1(NOTE_AS1, NSEC_URI))
+  def test_from_as1_with_privkey(self):
+    self.assert_equals(NOTE_NOSTR, from_as1(NOTE_AS1, NSEC_URI))
 
   def test_from_as1_privkey_sets_pubkey(self):
-    self.assert_equals({
-      **NOTE_NOSTR,
-      'sig': SIG,
-    }, from_as1(NOTE_AS1, NSEC_URI))
+    self.assert_equals(NOTE_NOSTR, from_as1({
+      **NOTE_AS1,
+      'author': None,
+    }, NSEC_URI))
 
   def test_to_from_as1_note_subject_tag(self):
     note = {
@@ -637,16 +636,21 @@ class ClientTest(testutil.TestCase):
     self.assertEqual([['not', 'reached']], FakeConnection.to_receive)
 
   def test_user_id(self):
-    events = [{
-      **NOTE_NOSTR,
-      'id': str(i) * 4,
-      'content': f"It's {i}",
-    } for i in range(3)]
+    events = []
+    for i in range(3):
+      event = {
+        **NOTE_NOSTR,
+        'content': f"It's {i}",
+        'sig': None,
+      }
+      event['id'] = id_for(event)
+      events.append(nostr.sign(event, NSEC_URI))
+
     notes = [{
       **NOTE_AS1,
-      'id': id_to_uri('note', str(i) * 4),
+      'id': id_to_uri('note', event['id']),
       'content': f"It's {i}",
-    } for i in range(3)]
+    } for i, event in enumerate(events)]
 
     FakeConnection.to_receive = \
       [['EVENT', 'towkin 1', e] for e in events] + [['EOSE', 'towkin 1']]
@@ -672,21 +676,24 @@ class ClientTest(testutil.TestCase):
   def test_fetch_replies(self):
     reply_nostr = {
       'kind': 1,
-      'id': ID,
       'pubkey': PUBKEY,
       'content': 'I hereby reply',
       'tags': [['e', NOTE_NOSTR['id'], 'TODO relay', 'reply']],
     }
+    reply_nostr['id'] = id_for(reply_nostr)
+    nostr.sign(reply_nostr, NSEC_URI)
+
     reply_as1 = {
       'objectType': 'note',
-      'id': URI,
+      'id': id_to_uri('note', reply_nostr['id']),
       'author': NPUB_URI,
       'content': 'I hereby reply',
       'inReplyTo': id_to_uri('nevent', NOTE_NOSTR['id']),
+      'published': NOW_ISO,
     }
+
     FakeConnection.to_receive = [
       ['EVENT', 'towkin 1', NOTE_NOSTR],
-      ['EVENT', 'towkin 1', {**NOTE_NOSTR, 'id': '12ab'}],
       ['EOSE', 'towkin 1'],
       ['EVENT', 'towkin 2', reply_nostr],
       ['EVENT', 'towkin 2', reply_nostr],
@@ -695,30 +702,33 @@ class ClientTest(testutil.TestCase):
 
     self.assert_equals([
       {**NOTE_AS1, 'replies': {'totalItems': 2, 'items': [reply_as1] * 2}},
-      {**NOTE_AS1, 'id': 'nostr:note1z24swknlsf'},
     ], self.nostr.get_activities(user_id=PUBKEY, fetch_replies=True))
 
     self.assertEqual('ws://relay', FakeConnection.relay)
     self.assert_equals([
       ['REQ', 'towkin 1', {'authors': [PUBKEY], 'limit': 20}],
       ['CLOSE', 'towkin 1'],
-      ['REQ', 'towkin 2', {'#e': [NOTE_NOSTR['id'], '12ab'], 'limit': 20}],
+      ['REQ', 'towkin 2', {'#e': [NOTE_NOSTR['id']], 'limit': 20}],
       ['CLOSE', 'towkin 2'],
     ], FakeConnection.sent)
 
   def test_fetch_shares(self):
     repost_nostr = {
       'kind': 6,
-      'id': ID,
       'pubkey': PUBKEY,
+      'content': None,
       'tags': [['e', NOTE_NOSTR['id'], 'TODO relay', 'mention']],
     }
+    repost_nostr['id'] = id_for(repost_nostr)
+    nostr.sign(repost_nostr, NSEC_URI)
+
     repost_as1 = {
       'objectType': 'activity',
       'actor': NPUB_URI,
       'verb': 'share',
-      'id': id_to_uri('nevent', ID),
+      'id': id_to_uri('nevent', repost_nostr['id']),
       'object': id_to_uri('note', NOTE_NOSTR['id']),
+      'published': NOW_ISO,
     }
 
     FakeConnection.to_receive = [
@@ -782,6 +792,8 @@ class ClientTest(testutil.TestCase):
       'created_at': NOW_TS,
     }
     expected['id'] = id_for(expected)
+    nostr.sign(expected, NSEC_URI)
+
     FakeConnection.to_receive = [
       ['OK', expected['id'], True],
     ]
@@ -793,23 +805,27 @@ class ClientTest(testutil.TestCase):
   def test_get_actor_npub(self):
     profile = {
       'kind': 0,
-      'id': '12ab',
-      'pubkey': '12ab',
+      'pubkey': PUBKEY,
       'content': json_dumps({
         'name': 'Alice',
         'nip05': '_@alice.com',
       }, sort_keys=True),
     }
-    person = {
-      'objectType': 'person',
-      'id': 'nostr:npub1z24szqzphd',
-      'displayName': 'Alice',
-      'username': 'alice.com',
-    }
+    profile['id'] = id_for(profile)
+    nostr.sign(profile, NSEC_URI)
+
     FakeConnection.to_receive = [
       ['EVENT', 'towkin 1', profile],
       ['EOSE', 'towkin 1'],
     ]
+
+    person = {
+      'objectType': 'person',
+      'id': NPUB_URI,
+      'displayName': 'Alice',
+      'username': 'alice.com',
+      'published': NOW_ISO,
+    }
 
     self.assert_equals(person, self.nostr.get_actor(user_id='nostr:npub1z24szqzphd'))
     self.assert_equals([
@@ -860,6 +876,29 @@ class ClientTest(testutil.TestCase):
                       ) as ws:
       with self.assertRaises(ConnectionClosedError):
         self.nostr.query(ws, {})
+
+  def test_query_signature_verification(self):
+    no_sig = copy.deepcopy(NOTE_NOSTR)
+    del no_sig['sig']
+
+    no_pubkey = copy.deepcopy(NOTE_NOSTR)
+    del no_pubkey['pubkey']
+
+    FakeConnection.to_receive = [
+      ['EVENT', 'towkin 1', NOTE_NOSTR],
+      ['EVENT', 'towkin 1', {**NOTE_NOSTR, 'sig': 'badd'}],
+      ['EVENT', 'towkin 1', no_sig],
+      ['EVENT', 'towkin 1', no_pubkey],
+      ['EOSE', 'towkin 1'],
+    ]
+
+    with fake_connect('wss://my-relay',
+                      open_timeout=HTTP_TIMEOUT,
+                      close_timeout=HTTP_TIMEOUT,
+                      ) as ws:
+      events = self.nostr.query(ws, {})
+      # Only the valid event should be returned
+      self.assert_equals([NOTE_NOSTR], events)
 
   def test_user_url(self):
     self.assertEqual('https://coracle.social/people/nprofile123',

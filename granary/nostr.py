@@ -201,7 +201,7 @@ def bech32_encode(prefix, hex):
 
 
 def nip05_to_npub(nip05):
-  """Converts a NIP-05 identifier or domain to an npub (bech32-encoded public key).
+  """Resolves a NIP-05 identifier or domain to a bech32-encoded npub public key.
 
   https://nips.nostr.com/5
 
@@ -209,7 +209,7 @@ def nip05_to_npub(nip05):
     nip05 (str): NIP-05 identifier, e.g. "alice@example.com" or "_@example.com"
 
   Returns:
-    str: npub bech32-encoded public key
+    str: bech32-encoded npub public key
 
   Raises:
     ValueError: if nip05 is invalid format or user not found
@@ -251,11 +251,11 @@ def sign(event, privkey):
     dict: event, populated with a ``sig`` field with the hex-encoded secp256k1
       Schnorr signature of the ``id`` field
   """
-  assert privkey.startswith('nsec'), privkey
-  privkey = bech32_decode(privkey)
+  assert privkey.startswith('nsec') or privkey.startswith('nostr:nsec'), privkey
+  privkey = uri_to_id(privkey)
   assert len(privkey) == 64, privkey
   assert event.get('id') == id_for(event), event
-  assert 'sig' not in event, event
+  assert not event.get('sig'), event
 
   key = secp256k1.PrivateKey(privkey=privkey, raw=False)
   event['sig'] = key.schnorr_sign(bytes.fromhex(event['id']), None, raw=True).hex()
@@ -628,7 +628,14 @@ class Nostr(Source):
     """
     assert relays
     self.relays = relays
-    self.pubkey = uri_to_id(pubkey)
+
+    if privkey:
+      assert is_bech32(privkey), privkey
+    self.privkey = privkey
+
+    if pubkey:
+      assert is_bech32(pubkey), pubkey
+    self.pubkey = pubkey
 
   @classmethod
   def user_url(cls, nprofile):
@@ -769,7 +776,11 @@ class Nostr(Source):
       if resp[:3] == ['OK', subscription, False]:
         return events
       elif resp[:2] == ['EVENT', subscription]:
-        events.append(resp[2])
+        event = resp[2]
+        if verify(event):
+          events.append(event)
+        else:
+          logger.warning(f'Invalid signature for event {event.get("id")}')
       elif len(events) >= limit or resp[:2] == ['EOSE', subscription]:
         break
 
@@ -787,6 +798,7 @@ class Nostr(Source):
 
     See :meth:`Source.create` docstring for details.
     """
+    assert self.privkey
     type = as1.object_type(obj)
     url = obj.get('url')
     is_reply = type == 'comment' or obj.get('inReplyTo')
@@ -794,7 +806,7 @@ class Nostr(Source):
     base_url = base_obj.get('url')
     prefer_content = type == 'note' or (base_url and is_reply)
 
-    event = from_as1(obj)
+    event = from_as1(obj, privkey=self.privkey)
     content = self._content_for_create(
       obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content) or ''
     if include_link == INCLUDE_LINK and url:

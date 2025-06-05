@@ -681,6 +681,7 @@ not RSS!
       **test_nostr.NOTE_NOSTR,
       'tags': [],
     }
+    del expected['sig']
     self.assert_equals({'items': [expected]}, resp.json)
 
   def test_url_nostr_to_as1(self):
