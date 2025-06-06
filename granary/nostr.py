@@ -781,6 +781,19 @@ class Nostr(Source):
           events.append(event)
         else:
           logger.warning(f'Invalid signature for event {event.get("id")}')
+      elif resp[0] == 'AUTH' and len(resp) >= 2:
+        challenge = {
+          'kind': 22242,
+          'pubkey': uri_to_id(self.pubkey),
+          'content': '',
+          'tags': [
+            ['relay', f'wss://{websocket.remote_address[0]}/'],
+            ['challenge', resp[1]],
+          ],
+        }
+        challenge['id'] = id_for(challenge)
+        sign(challenge, self.privkey)
+        websocket.send(json_dumps(['AUTH', challenge]))
       elif len(events) >= limit or resp[:2] == ['EOSE', subscription]:
         break
 

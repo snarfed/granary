@@ -330,7 +330,9 @@ _Non-breaking changes:_
     * Add new `user_url` method.
     * Add optional new `privkey` kwarg to constructor to sign events with.
     * `create` now signs activities before sending to relays. Now requires the `privkey` member attribute to be set.
-    * `query` now verifies signatures and discards events with invalid signatures.
+    * `query`:
+      * Verify signatures; discard events with invalid signatures.
+      * Add [NIP-42](https://nips.nostr.com/42) support; reply to `AUTH` challenges with signatures from the stored `privkey`.
 
 
 ### 8.1 - 2025-03-13

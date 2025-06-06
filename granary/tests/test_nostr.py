@@ -5,6 +5,7 @@ from datetime import timedelta
 import logging
 import secrets
 from unittest.mock import patch
+from urllib.parse import urlparse
 
 from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 from oauth_dropins.webutil import testutil
@@ -105,6 +106,7 @@ def fake_connect(uri, open_timeout=None, close_timeout=None):
   assert open_timeout == HTTP_TIMEOUT
   assert close_timeout == HTTP_TIMEOUT
   FakeConnection.relay = uri
+  FakeConnection.remote_address = (urlparse(uri).netloc, 'port')
   yield FakeConnection
 
 
@@ -897,8 +899,42 @@ class ClientTest(testutil.TestCase):
                       close_timeout=HTTP_TIMEOUT,
                       ) as ws:
       events = self.nostr.query(ws, {})
-      # Only the valid event should be returned
-      self.assert_equals([NOTE_NOSTR], events)
+
+    # Only the valid event should be returned
+    self.assert_equals([NOTE_NOSTR], events)
+
+  def test_query_nip_42_auth(self):
+    challenge = {
+      'kind': 22242,
+      'pubkey': PUBKEY,
+      'content': '',
+      'tags': [
+        ['relay', 'wss://my-relay/'],
+        ['challenge', 'chall-lunge'],
+      ],
+    }
+    challenge['id'] = id_for(challenge)
+    nostr.sign(challenge, NSEC_URI)
+
+    FakeConnection.to_receive = [
+      ['AUTH', 'chall-lunge'],
+      ['OK', challenge['id'], True, ''],
+      ['EVENT', 'towkin 1', NOTE_NOSTR],
+      ['EOSE', 'towkin 1'],
+    ]
+
+    with fake_connect('wss://my-relay',
+                      open_timeout=HTTP_TIMEOUT,
+                      close_timeout=HTTP_TIMEOUT,
+                      ) as ws:
+      events = self.nostr.query(ws, {})
+
+    self.assert_equals([NOTE_NOSTR], events)
+    self.assert_equals([
+      ['AUTH', challenge],
+      ['REQ', 'towkin 1', {'limit': 20}],
+      ['CLOSE', 'towkin 1'],
+    ], FakeConnection.sent)
 
   def test_user_url(self):
     self.assertEqual('https://coracle.social/people/nprofile123',
