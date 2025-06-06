@@ -630,9 +630,9 @@ class Nostr(Source):
 
     if privkey:
       assert is_bech32(privkey), privkey
-    self.privkey = privkey
 
-    self.hex_pubkey = pubkey_from_privkey(uri_to_id(self.privkey))
+    self.privkey = privkey
+    self.hex_pubkey = pubkey_from_privkey(uri_to_id(privkey)) if privkey else None
 
   @classmethod
   def user_url(cls, nprofile):

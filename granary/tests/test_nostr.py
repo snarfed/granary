@@ -621,6 +621,9 @@ class ClientTest(testutil.TestCase):
     self.last_token += 1
     return f'towkin {self.last_token}'
 
+  def test_constructor_without_privkey(self):
+    nostr.Nostr(['ws://relay'])  # just check that we don't crash
+
   def test_activity_id(self):
     FakeConnection.to_receive = [
       ['EVENT', 'towkin 1', NOTE_NOSTR],
