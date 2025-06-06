@@ -328,7 +328,7 @@ _Non-breaking changes:_
     * Don't escape Unicode characters ([background](https://github.com/nostr-protocol/nips/issues/354)).
   * `Nostr`:
     * Add new `user_url` method.
-    * Add optional new `privkey` kwarg to constructor to sign events with.
+    * Add optional new `privkey` kwarg to constructor to sign events with; remove `pubkey` kwarg.
     * `create` now signs activities before sending to relays. Now requires the `privkey` member attribute to be set.
     * `query`:
       * Verify signatures; discard events with invalid signatures.

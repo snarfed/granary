@@ -615,7 +615,7 @@ class ClientTest(testutil.TestCase):
 
     nostr.connect = fake_connect
 
-    self.nostr = nostr.Nostr(['ws://relay'], privkey=NSEC_URI, pubkey=NPUB_URI)
+    self.nostr = nostr.Nostr(['ws://relay'], privkey=NSEC_URI)
 
   def token(self, length):
     self.last_token += 1
@@ -763,6 +763,19 @@ class ClientTest(testutil.TestCase):
     self.assert_equals([['EVENT', 'towkin 1', NOTE_NOSTR]], FakeConnection.to_receive)
 
   def test_create_note(self):
+    FakeConnection.to_receive = [
+      ['OK', NOTE_NOSTR['id'], True],
+    ]
+
+    expected = {
+      **NOTE_NOSTR,
+      'created_at': NOW_TS,
+    }
+    result = self.nostr.create(NOTE_AS1)
+    self.assert_equals(expected, result.content)
+    self.assert_equals([['EVENT', expected]], FakeConnection.sent)
+
+  def test_create_note_default_pubkey(self):
     FakeConnection.to_receive = [
       ['OK', NOTE_NOSTR['id'], True],
     ]

@@ -617,14 +617,13 @@ class Nostr(Source):
   BASE_URL = None
   NAME = 'Nostr'
 
-  def __init__(self, relays, privkey=None, pubkey=None):
+  def __init__(self, relays, privkey=None):
     """Constructor.
 
     Args:
       relays (sequence of str)
       privkey (str): optional bech32-encoded private key of the current user.
         Required by :meth:`create` in order to sign events.
-      pubkey (str): optional bech32-encoded private key of the current user.
     """
     assert relays
     self.relays = relays
@@ -633,9 +632,7 @@ class Nostr(Source):
       assert is_bech32(privkey), privkey
     self.privkey = privkey
 
-    if pubkey:
-      assert is_bech32(pubkey), pubkey
-    self.pubkey = pubkey
+    self.hex_pubkey = pubkey_from_privkey(uri_to_id(self.privkey))
 
   @classmethod
   def user_url(cls, nprofile):
@@ -784,7 +781,7 @@ class Nostr(Source):
       elif resp[0] == 'AUTH' and len(resp) >= 2:
         challenge = {
           'kind': 22242,
-          'pubkey': uri_to_id(self.pubkey),
+          'pubkey': self.hex_pubkey,
           'content': '',
           'tags': [
             ['relay', f'wss://{websocket.remote_address[0]}/'],
@@ -826,7 +823,7 @@ class Nostr(Source):
       content += '\n' + url
     event['content'] = content
 
-    event.setdefault('pubkey', self.pubkey)
+    event.setdefault('pubkey', self.hex_pubkey)
     event['id'] = id_for(event)
 
     missing = (set(('content', 'created_at', 'kind', 'id', 'pubkey', 'tags'))
