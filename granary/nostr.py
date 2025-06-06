@@ -66,6 +66,19 @@ BECH32_PREFIXES = (
   'nsec',
 )
 
+# Event kinds
+# https://github.com/nostr-protocol/nips#event-kinds
+KIND_PROFILE = 0          # NIP-01: user profile metadata
+KIND_NOTE = 1             # NIP-01: text note
+KIND_CONTACTS = 3         # NIP-02: contact list / followings
+KIND_DELETE = 5           # NIP-09: event deletion
+KIND_REPOST = 6           # NIP-18: repost
+KIND_REACTION = 7         # NIP-25: reactions (likes, dislikes, emojis)
+KIND_GENERIC_REPOST = 16  # NIP-18: generic repost
+KIND_AUTH = 22242         # NIP-42: client authentication
+KIND_ARTICLE = 30023      # NIP-23: long-form content
+KIND_RELAYS = 10002       # NIP-65: user relays
+
 # NIP-39
 # https://github.com/nostr-protocol/nips/blob/master/39.md#claim-types
 # maps NIP-39 platform to base URL
@@ -126,8 +139,8 @@ def bech32_prefix_for(event):
     str: bech32 prefix
   """
   return {
-    1: 'note',      # NIP-10
-    0: 'nprofile',  # NIP-01
+    KIND_NOTE: 'note',      # NIP-10
+    KIND_PROFILE: 'nprofile',  # NIP-01
   }.get(event['kind'], 'nevent')
 
 
@@ -356,7 +369,7 @@ def from_as1(obj, privkey=None):
         nip05 = f'_@{username}'
 
     event.update({
-      'kind': 0,
+      'kind': KIND_PROFILE,
       # don't escape Unicode chars!
       # https://github.com/nostr-protocol/nips/issues/354
       'content': json_dumps(util.trim_nulls({
@@ -382,7 +395,7 @@ def from_as1(obj, privkey=None):
 
   elif type in ('article', 'note'):
     event.update({
-      'kind': 1 if type == 'note' else 30023,
+      'kind': KIND_NOTE if type == 'note' else KIND_ARTICLE,
     })
     # TODO: convert HTML to Markdown
 
@@ -416,7 +429,7 @@ def from_as1(obj, privkey=None):
 
   elif type == 'share':
     event.update({
-      'kind': 6,
+      'kind': KIND_REPOST,
     })
 
     if inner_obj:
@@ -430,7 +443,7 @@ def from_as1(obj, privkey=None):
   elif type in ('like', 'dislike', 'react'):
     liked = inner_obj.get('id')
     event.update({
-      'kind': 7,
+      'kind': KIND_REACTION,
       'content': '+' if type == 'like'
                  else '-' if type == 'dislike'
                  else obj.get('content'),
@@ -439,7 +452,7 @@ def from_as1(obj, privkey=None):
 
   elif type == 'delete':
     event.update({
-      'kind': 5,
+      'kind': KIND_DELETE,
       # TODO: include kind of the object being deleted, in a `k` tag. we'd have
       # to fetch it first. :/
       'tags': [['e', uri_to_id(as1.get_object(obj).get('id'))]],
@@ -447,7 +460,7 @@ def from_as1(obj, privkey=None):
 
   elif type == 'follow':
     event.update({
-      'kind': 3,
+      'kind': KIND_CONTACTS,
       'tags': [
         ['p', uri_to_id(o['id']), 'TODO relay', o.get('displayName') or '']
         for o in as1.get_objects(obj)
@@ -488,7 +501,7 @@ def to_as1(event):
   tags = event.get('tags', [])
   content = event.get('content')
 
-  if kind == 0:  # profile
+  if kind == KIND_PROFILE:  # profile
     content = json_loads(content) or {}
     nip05_domain = (content['nip05'].removeprefix('_@')
                     if isinstance(content.get('nip05'), str)
@@ -509,9 +522,9 @@ def to_as1(event):
         if base_url:
           obj['urls'].append(base_url + identity)
 
-  elif kind in (1, 30023):  # note, article
+  elif kind in (KIND_NOTE, KIND_ARTICLE):  # note, article
     obj.update({
-      'objectType': 'note' if kind == 1 else 'article',
+      'objectType': 'note' if kind == KIND_NOTE else 'article',
       # TODO: render Markdown to HTML
       'content': event.get('content'),
       'tags': [],
@@ -538,7 +551,7 @@ def to_as1(event):
       elif type == 'location':
         obj['location'] = {'displayName': tag[1]}
 
-  elif kind in (6, 16):  # repost
+  elif kind in (KIND_REPOST, KIND_GENERIC_REPOST):  # repost
     obj.update({
       'objectType': 'activity',
       'verb': 'share',
@@ -549,7 +562,7 @@ def to_as1(event):
     if content and content.startswith('{'):
       obj['object'] = to_as1(json_loads(content))
 
-  elif kind == 7:  # like/reaction
+  elif kind == KIND_REACTION:  # like/reaction
     obj.update({
       'objectType': 'activity',
     })
@@ -566,7 +579,7 @@ def to_as1(event):
       if tag[0] == 'e':
         obj['object'] = id_to_uri('nevent', tag[1])
 
-  elif kind == 5:  # delete
+  elif kind == KIND_DELETE:  # delete
     obj.update({
       'objectType': 'activity',
       'verb': 'delete',
@@ -579,7 +592,7 @@ def to_as1(event):
       if tag[0] == 'e':
         obj['object'].append(id_to_uri('nevent', tag[1]))
 
-  elif kind == 3:  # follow
+  elif kind == KIND_CONTACTS:  # follow
     obj.update({
       'objectType': 'activity',
       'verb': 'follow',
@@ -661,7 +674,7 @@ class Nostr(Source):
                  ) as websocket:
       events = self.query(websocket, {
         'authors': [id],
-        'kinds': [0],
+        'kinds': [KIND_PROFILE],
       })
 
     if events:
@@ -777,7 +790,7 @@ class Nostr(Source):
             logger.warning(f'Invalid signature for event {event.get("id")}')
         elif resp[0] == 'AUTH' and len(resp) >= 2:
           challenge = {
-            'kind': 22242,
+            'kind': KIND_AUTH,
             'pubkey': self.hex_pubkey,
             'content': '',
             'tags': [

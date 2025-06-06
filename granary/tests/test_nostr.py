@@ -22,6 +22,14 @@ from ..nostr import (
   id_for,
   id_to_uri,
   is_bech32,
+  KIND_ARTICLE,
+  KIND_AUTH,
+  KIND_CONTACTS,
+  KIND_DELETE,
+  KIND_NOTE,
+  KIND_PROFILE,
+  KIND_REACTION,
+  KIND_REPOST,
   to_as1,
   uri_to_id,
 )
@@ -46,7 +54,7 @@ NSEC_URI = 'nostr:nsec1r7m4ngfpanj7ytdy3jeqnzvp8lwlexegj6jwqgrmfl7ang9arzdsv9gn7
 SIG = '65b42db33486f669fa4dff3dba2ed914dcda886d47177a747e5e574e1a87cd4da23b54350dba758ecd91d48625f5345c8516458c76bebf60b0de89d12fa76a11'
 
 NOTE_NOSTR = {
-  'kind': 1,
+  'kind': KIND_NOTE,
   'id': '4a57c7a1dde3bfe13076db485c4f09756e54447f6389dbf6864d4139bc40a214',
   'pubkey': PUBKEY,
   'content': 'Something to say',
@@ -120,7 +128,7 @@ class NostrTest(testutil.TestCase):
     event = {
         'pubkey': 'fed987',
         'created_at': NOW_TS,
-        'kind': 1,
+        'kind': KIND_NOTE,
         'content': 'My plain text',
     }
     id = '9adfa2330b391539f46548ff2e088ea964a2f7374898c7335a86e914cbf2e769'
@@ -185,7 +193,7 @@ class NostrTest(testutil.TestCase):
       'published': NOW_ISO,
     }
     event = {
-      'kind': 0,
+      'kind': KIND_PROFILE,
       'pubkey': PUBKEY,
       'id': '18f9c6ab11467e7c6dac6c125112205e136cbb9f7c73f328679201418eaeea53',
       'content': json_dumps({
@@ -210,7 +218,7 @@ class NostrTest(testutil.TestCase):
 
   def test_from_as1_minimal(self):
     self.assert_equals({
-      'kind': 0,
+      'kind': KIND_PROFILE,
       'content': json_dumps({'name': 'Alice'}),
       'tags': [],
     }, from_as1({
@@ -220,7 +228,7 @@ class NostrTest(testutil.TestCase):
 
   def test_from_as1_username_not_user_at_domain_no_nip05(self):
     self.assert_equals({
-      'kind': 0,
+      'kind': KIND_PROFILE,
       'content': json_dumps({'name': 'Alice'}),
       'tags': [],
     }, from_as1({
@@ -231,7 +239,7 @@ class NostrTest(testutil.TestCase):
 
   def test_from_as1_actor_privkey_sets_pubkey(self):
     self.assert_equals({
-      'kind': 0,
+      'kind': KIND_PROFILE,
       'id': '8be34ca85471dcb2306ca005182d4468eede8e3a979f84b80f1a9616e84f4c74',
       'pubkey': PUBKEY,
       'content': json_dumps({'name': 'Alice'}),
@@ -248,7 +256,7 @@ class NostrTest(testutil.TestCase):
       'objectType': 'person',
       'id': NPUB_URI,
     }, to_as1({
-      'kind': 0,
+      'kind': KIND_PROFILE,
       'pubkey': PUBKEY,
       'content': '{"nip05": {}}',
     }))
@@ -262,7 +270,7 @@ class NostrTest(testutil.TestCase):
       'published': NOW_ISO,
     }
     event = {
-      'kind': 1,
+      'kind': KIND_NOTE,
       'id': '4a57c7a1dde3bfe13076db485c4f09756e54447f6389dbf6864d4139bc40a214',
       'pubkey': PUBKEY,
       'content': 'Something to say',
@@ -310,7 +318,7 @@ class NostrTest(testutil.TestCase):
       'title': 'my thing',
     }
     event = {
-      'kind': 1,
+      'kind': KIND_NOTE,
       'content': 'Something to say',
       'tags': [
         ['title', 'my thing'],
@@ -336,7 +344,7 @@ class NostrTest(testutil.TestCase):
       }],
     }
     event = {
-      'kind': 1,
+      'kind': KIND_NOTE,
       'id': 'aff5813b667be4a7e4a4d5d3196b8987150f67331bcb9822549b5ebbe6a843ef',
       'pubkey': PUBKEY,
       'content': 'Something to say',
@@ -361,7 +369,7 @@ class NostrTest(testutil.TestCase):
       },
     }
     event = {
-      'kind': 1,
+      'kind': KIND_NOTE,
       'id': 'b6fef17709ae65ed97fa57a9705fcf0d88948d65935989584516d8e89a5ac0c7',
       'pubkey': PUBKEY,
       'content': 'Something to say',
@@ -384,7 +392,7 @@ class NostrTest(testutil.TestCase):
       'published': NOW_ISO,
     }
     event = {
-      'kind': 30023,
+      'kind': KIND_ARTICLE,
       'id': 'a2564d986d34e8fd1106d684cb67d2886418d3f3e79a9c2473f7f56688a9d46a',
       'pubkey': PUBKEY,
       'content': 'Something to say',
@@ -410,7 +418,7 @@ class NostrTest(testutil.TestCase):
       'inReplyTo': 'nostr:nevent1xnxsm5fasn',
     }
     event = {
-      'kind': 1,
+      'kind': KIND_NOTE,
       'id': '14d763d79cddc5005e9a35c7ca24525951872f6c2e7b79c6de1928d929353dce',
       'pubkey': PUBKEY,
       'content': 'I hereby reply',
@@ -440,9 +448,9 @@ class NostrTest(testutil.TestCase):
 
     post_id = '20cfe6420adaddecc0ce4a2d90af3e03e431a5d30e19bb59e378bd941d8bfa6c'
     event = {
-      'kind': 6,
+      'kind': KIND_REPOST,
       'content': json_dumps({
-        'kind': 1,
+        'kind': KIND_NOTE,
         'id': post_id,
         'pubkey': PUBKEY,
         'content': 'The orig post',
@@ -473,7 +481,7 @@ class NostrTest(testutil.TestCase):
       'object': 'nostr:nevent1xnxsm5fasn',
     }
     event = {
-      'kind': 7,
+      'kind': KIND_REACTION,
       'content': '+',
       'tags': [['e', '34cd']],
       'created_at': NOW_TS,
@@ -490,7 +498,7 @@ class NostrTest(testutil.TestCase):
       'object': 'nostr:nevent1xnxsm5fasn',
     }
     event = {
-      'kind': 7,
+      'kind': KIND_REACTION,
       'content': '-',
       'tags': [['e', '34cd']],
       'created_at': NOW_TS,
@@ -508,7 +516,7 @@ class NostrTest(testutil.TestCase):
       'object': 'nostr:nevent1xnxsm5fasn',
     }
     event = {
-      'kind': 7,
+      'kind': KIND_REACTION,
       'content': '😀',
       'tags': [['e', '34cd']],
       'created_at': NOW_TS,
@@ -526,7 +534,7 @@ class NostrTest(testutil.TestCase):
       'content': 'a note about the delete',
     }
     event = {
-      'kind': 5,
+      'kind': KIND_DELETE,
       'content': 'a note about the delete',
       'tags': [['e', '34cd']],
       'created_at': NOW_TS,
@@ -549,7 +557,7 @@ class NostrTest(testutil.TestCase):
       'content': 'not important',
     }
     event = {
-      'kind': 3,
+      'kind': KIND_CONTACTS,
       'id': 'f2f88164566ef7f1d95517c5d1f7ae0c4c2b348acded5e240833b5e0536baef1',
       'pubkey': PUBKEY,
       'content': 'not important',
@@ -680,7 +688,7 @@ class ClientTest(testutil.TestCase):
 
   def test_fetch_replies(self):
     reply_nostr = {
-      'kind': 1,
+      'kind': KIND_NOTE,
       'pubkey': PUBKEY,
       'content': 'I hereby reply',
       'tags': [['e', NOTE_NOSTR['id'], 'TODO relay', 'reply']],
@@ -719,7 +727,7 @@ class ClientTest(testutil.TestCase):
 
   def test_fetch_shares(self):
     repost_nostr = {
-      'kind': 6,
+      'kind': KIND_REPOST,
       'pubkey': PUBKEY,
       'content': None,
       'tags': [['e', NOTE_NOSTR['id'], 'TODO relay', 'mention']],
@@ -804,7 +812,7 @@ class ClientTest(testutil.TestCase):
     id = 'nostr:npub1z24szqzphd'
     expected = {
       'pubkey': PUBKEY,
-      'kind': 5,
+      'kind': KIND_DELETE,
       'tags': [['e', uri_to_id(id)]],
       'content': '',
       'created_at': NOW_TS,
@@ -822,7 +830,7 @@ class ClientTest(testutil.TestCase):
 
   def test_get_actor_npub(self):
     profile = {
-      'kind': 0,
+      'kind': KIND_PROFILE,
       'pubkey': PUBKEY,
       'content': json_dumps({
         'name': 'Alice',
@@ -847,7 +855,7 @@ class ClientTest(testutil.TestCase):
 
     self.assert_equals(person, self.nostr.get_actor(user_id='nostr:npub1z24szqzphd'))
     self.assert_equals([
-      ['REQ', 'towkin 1', {'authors': ['12ab'], 'kinds': [0], 'limit': 20}],
+      ['REQ', 'towkin 1', {'authors': ['12ab'], 'kinds': [KIND_PROFILE], 'limit': 20}],
       ['CLOSE', 'towkin 1'],
     ], FakeConnection.sent)
 
@@ -921,7 +929,7 @@ class ClientTest(testutil.TestCase):
 
   def test_query_nip_42_auth(self):
     challenge = {
-      'kind': 22242,
+      'kind': KIND_AUTH,
       'pubkey': PUBKEY,
       'content': '',
       'tags': [
