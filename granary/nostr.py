@@ -762,42 +762,37 @@ class Nostr(Source):
       return []
 
     events = []
-    while True:
-      try:
-        msg = websocket.recv(timeout=HTTP_TIMEOUT)
-      except ConnectionClosedOK as err:
-        logger.warning(err)
-        return events
-
-      resp = json_loads(msg)
-      if resp[:3] == ['OK', subscription, False]:
-        return events
-      elif resp[:2] == ['EVENT', subscription]:
-        event = resp[2]
-        if verify(event):
-          events.append(event)
-        else:
-          logger.warning(f'Invalid signature for event {event.get("id")}')
-      elif resp[0] == 'AUTH' and len(resp) >= 2:
-        challenge = {
-          'kind': 22242,
-          'pubkey': self.hex_pubkey,
-          'content': '',
-          'tags': [
-            ['relay', f'wss://{websocket.remote_address[0]}/'],
-            ['challenge', resp[1]],
-          ],
-        }
-        challenge['id'] = id_for(challenge)
-        sign(challenge, self.privkey)
-        websocket.send(json_dumps(['AUTH', challenge]))
-      elif len(events) >= limit or resp[:2] == ['EOSE', subscription]:
-        break
-
-    close = ['CLOSE', subscription]
-
     try:
-      websocket.send(json_dumps(close))
+      while True:
+        msg = websocket.recv(timeout=HTTP_TIMEOUT)
+
+        resp = json_loads(msg)
+        if resp[:3] == ['OK', subscription, False]:
+          return events
+        elif resp[:2] == ['EVENT', subscription]:
+          event = resp[2]
+          if verify(event):
+            events.append(event)
+          else:
+            logger.warning(f'Invalid signature for event {event.get("id")}')
+        elif resp[0] == 'AUTH' and len(resp) >= 2:
+          challenge = {
+            'kind': 22242,
+            'pubkey': self.hex_pubkey,
+            'content': '',
+            'tags': [
+              ['relay', f'wss://{websocket.remote_address[0]}/'],
+              ['challenge', resp[1]],
+            ],
+          }
+          challenge['id'] = id_for(challenge)
+          sign(challenge, self.privkey)
+          websocket.send(json_dumps(['AUTH', challenge]))
+        elif len(events) >= limit or resp[:2] == ['EOSE', subscription]:
+          break
+
+      websocket.send(json_dumps(['CLOSE', subscription]))
+
     except ConnectionClosedOK as err:
       logger.warning(err)
 
