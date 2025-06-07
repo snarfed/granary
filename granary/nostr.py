@@ -253,23 +253,22 @@ def nip05_to_npub(nip05):
   return id_to_uri('npub', pubkey).removeprefix('nostr:')
 
 
-def sign(event, privkey):
-  """Signs a Nostr event, in place.
+def id_and_sign(event, privkey):
+  """Populates a Nostr event's id and signature, in place.
 
   Args:
     event (dict)
     privkey (str): bech32-encoded nsec private key
 
   Returns:
-    dict: event, populated with a ``sig`` field with the hex-encoded secp256k1
-      Schnorr signature of the ``id`` field
+    dict: event, populated with ``id`` and ``sig`` fields
   """
   assert privkey.startswith('nsec') or privkey.startswith('nostr:nsec'), privkey
   privkey = uri_to_id(privkey)
   assert len(privkey) == 64, privkey
-  assert event.get('id') == id_for(event), event
-  assert not event.get('sig'), event
+  assert not event.get('id') and not event.get('sig'), event
 
+  event['id'] = id_for(event)
   key = secp256k1.PrivateKey(privkey=privkey, raw=False)
   event['sig'] = key.schnorr_sign(bytes.fromhex(event['id']), None, raw=True).hex()
   return event
@@ -473,10 +472,10 @@ def from_as1(obj, privkey=None):
 
   event = util.trim_nulls(event, ignore=['tags', 'content'])
 
-  if pubkey:
+  if privkey:
+    id_and_sign(event, privkey)
+  elif pubkey:
     event['id'] = id_for(event)
-    if privkey:
-      sign(event, privkey)
 
   return event
 
@@ -789,7 +788,7 @@ class Nostr(Source):
           else:
             logger.warning(f'Invalid signature for event {event.get("id")}')
         elif resp[0] == 'AUTH' and len(resp) >= 2:
-          challenge = {
+          challenge = id_and_sign({
             'kind': KIND_AUTH,
             'pubkey': self.hex_pubkey,
             'content': '',
@@ -797,9 +796,7 @@ class Nostr(Source):
               ['relay', f'wss://{websocket.remote_address[0]}/'],
               ['challenge', resp[1]],
             ],
-          }
-          challenge['id'] = id_for(challenge)
-          sign(challenge, self.privkey)
+          }, self.privkey)
           websocket.send(json_dumps(['AUTH', challenge]))
         elif len(events) >= limit or resp[:2] == ['EOSE', subscription]:
           break

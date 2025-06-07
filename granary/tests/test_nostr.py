@@ -7,9 +7,10 @@ import secrets
 from unittest.mock import patch
 from urllib.parse import urlparse
 
-from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 from oauth_dropins.webutil import testutil
 from oauth_dropins.webutil.testutil import requests_response
+from oauth_dropins.webutil import util
+from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 import requests
 from secp256k1 import PrivateKey, PublicKey
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
@@ -151,10 +152,11 @@ class NostrTest(testutil.TestCase):
     self.assertFalse(is_bech32('abc'))
     self.assertFalse(is_bech32(None))
 
-  def test_sign(self):
+  def test_id_and_asign(self):
     event = copy.deepcopy(NOTE_NOSTR)
+    del event['id']
     del event['sig']
-    nostr.sign(event, NSEC_URI)
+    nostr.id_and_sign(event, NSEC_URI)
     self.assertEqual(SIG, event['sig'])
 
   def test_verify(self):
@@ -649,15 +651,12 @@ class ClientTest(testutil.TestCase):
     self.assertEqual([['not', 'reached']], FakeConnection.to_receive)
 
   def test_user_id(self):
-    events = []
-    for i in range(3):
-      event = {
+    events = [nostr.id_and_sign({
         **NOTE_NOSTR,
         'content': f"It's {i}",
+        'id': None,
         'sig': None,
-      }
-      event['id'] = id_for(event)
-      events.append(nostr.sign(event, NSEC_URI))
+      } , NSEC_URI) for i in range(3)]
 
     notes = [{
       **NOTE_AS1,
@@ -687,14 +686,12 @@ class ClientTest(testutil.TestCase):
     ], FakeConnection.sent)
 
   def test_fetch_replies(self):
-    reply_nostr = {
+    reply_nostr = nostr.id_and_sign({
       'kind': KIND_NOTE,
       'pubkey': PUBKEY,
       'content': 'I hereby reply',
       'tags': [['e', NOTE_NOSTR['id'], 'TODO relay', 'reply']],
-    }
-    reply_nostr['id'] = id_for(reply_nostr)
-    nostr.sign(reply_nostr, NSEC_URI)
+    }, NSEC_URI)
 
     reply_as1 = {
       'objectType': 'note',
@@ -726,14 +723,12 @@ class ClientTest(testutil.TestCase):
     ], FakeConnection.sent)
 
   def test_fetch_shares(self):
-    repost_nostr = {
+    repost_nostr = nostr.id_and_sign({
       'kind': KIND_REPOST,
       'pubkey': PUBKEY,
       'content': None,
       'tags': [['e', NOTE_NOSTR['id'], 'TODO relay', 'mention']],
-    }
-    repost_nostr['id'] = id_for(repost_nostr)
-    nostr.sign(repost_nostr, NSEC_URI)
+    } , NSEC_URI)
 
     repost_as1 = {
       'objectType': 'activity',
@@ -810,15 +805,13 @@ class ClientTest(testutil.TestCase):
 
   def test_delete_note(self):
     id = 'nostr:npub1z24szqzphd'
-    expected = {
+    expected = nostr.id_and_sign({
       'pubkey': PUBKEY,
       'kind': KIND_DELETE,
       'tags': [['e', uri_to_id(id)]],
       'content': '',
       'created_at': NOW_TS,
-    }
-    expected['id'] = id_for(expected)
-    nostr.sign(expected, NSEC_URI)
+    }, NSEC_URI)
 
     FakeConnection.to_receive = [
       ['OK', expected['id'], True],
@@ -829,16 +822,14 @@ class ClientTest(testutil.TestCase):
     self.assert_equals([['EVENT', expected]], FakeConnection.sent)
 
   def test_get_actor_npub(self):
-    profile = {
+    profile = nostr.id_and_sign({
       'kind': KIND_PROFILE,
       'pubkey': PUBKEY,
       'content': json_dumps({
         'name': 'Alice',
         'nip05': '_@alice.com',
       }, sort_keys=True),
-    }
-    profile['id'] = id_for(profile)
-    nostr.sign(profile, NSEC_URI)
+    } , NSEC_URI)
 
     FakeConnection.to_receive = [
       ['EVENT', 'towkin 1', profile],
@@ -928,7 +919,7 @@ class ClientTest(testutil.TestCase):
     self.assert_equals([NOTE_NOSTR], events)
 
   def test_query_nip_42_auth(self):
-    challenge = {
+    challenge = nostr.id_and_sign({
       'kind': KIND_AUTH,
       'pubkey': PUBKEY,
       'content': '',
@@ -936,9 +927,7 @@ class ClientTest(testutil.TestCase):
         ['relay', 'wss://my-relay/'],
         ['challenge', 'chall-lunge'],
       ],
-    }
-    challenge['id'] = id_for(challenge)
-    nostr.sign(challenge, NSEC_URI)
+    }, NSEC_URI)
 
     FakeConnection.to_receive = [
       ['AUTH', 'chall-lunge'],
