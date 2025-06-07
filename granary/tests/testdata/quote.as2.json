@@ -6,7 +6,7 @@
   ],
   "type": "Note",
   "url": "https://quote/",
-  "content": "I hereby quote<br><br>RE: <a href=\"https://bsky.app/orig/post\">https://bsky.app/orig/post</a>",
+  "content": "I hereby quote<span class=\"quote-inline\"><br><br>RE: <a href=\"https://bsky.app/orig/post\">https://bsky.app/orig/post</a></span>",
   "published": "2007-07-07T03:04:05",
   "attributedTo": {
     "type": "Person",

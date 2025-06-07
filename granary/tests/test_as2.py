@@ -177,7 +177,7 @@ class ActivityStreams2Test(testutil.TestCase):
     # https://github.com/snarfed/bridgy-fed/issues/461#issuecomment-2176620836
     self.assert_equals({
       'type': 'Note',
-      'content': 'RE: <a href="http://the/url">http://the/url</a>',
+      'content': '<span class="quote-inline">RE: <a href="http://the/url">http://the/url</a></span>',
       'tag': [{
         'type': 'Link',
         'mediaType': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
@@ -215,9 +215,9 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_from_as1_quote_post_contentMap_html(self):
     self.assert_equals({
-      'content': 'foo<br><br>RE: <a href="http://the/url">http://the/url</a>',
+      'content': 'foo<span class="quote-inline"><br><br>RE: <a href="http://the/url">http://the/url</a></span>',
       'contentMap': {
-        'xyz': 'foo<br><br>RE: <a href="http://the/url">http://the/url</a>',
+        'xyz': 'foo<span class="quote-inline"><br><br>RE: <a href="http://the/url">http://the/url</a></span>',
       },
       'tag': [{
         'type': 'Link',

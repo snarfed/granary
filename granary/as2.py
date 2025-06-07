@@ -268,10 +268,9 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True):
         util.add(obj['@context'], MISSKEY_QUOTE_CONTEXT)
         content = obj.get('content') or ''
         if not QUOTE_RE_SUFFIX.search(html_to_text(content)):
-          if content:
-            content += '<br><br>'
+          newlines = '<br><br>' if content else ''
           url = url or id
-          content += f'RE: <a href="{url}">{url}</a>'
+          content += f'<span class="quote-inline">{newlines}RE: <a href="{url}">{url}</a></span>'
           set_content(obj, content)
           # don't set content_is_html to True here because that blocks eg link_tags()
           quote['name'] = f'RE: {url}'
@@ -624,7 +623,7 @@ def to_as1(obj, use_type=True, get_fn=None):
       # https://socialhub.activitypub.rocks/t/fep-e232-object-links/2722/29
       obj.setdefault('content', '')
       obj['content'] = re.sub(
-        fr'(\s|(<br>)+)?RE: (</span>)?(<a href="{url}">)?<?{url}>?(</a>)?\s?$', '',
+        fr'(<span[^>]*>)?(\s|(<br>)+)?RE: (</span>)?(<a href="{url}">)?<?{url}>?(</a>)?(</span>)?\s?$', '',
         obj['content'])
       continue
 
