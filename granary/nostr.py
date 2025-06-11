@@ -642,7 +642,7 @@ class Nostr(Source):
   BASE_URL = None
   NAME = 'Nostr'
 
-  def __init__(self, relays, privkey=None):
+  def __init__(self, relays=(), privkey=None):
     """Constructor.
 
     Args:
@@ -650,7 +650,6 @@ class Nostr(Source):
       privkey (str): optional bech32-encoded private key of the current user.
         Required by :meth:`create` in order to sign events.
     """
-    assert relays
     self.relays = relays
 
     if privkey:
