@@ -877,3 +877,8 @@ class Nostr(Source):
       'object': id,
       'published': util.now(tz=timezone.utc).isoformat(),
     })
+
+  @classmethod
+  def _postprocess_base_object(cls, obj):
+    # don't mess with ids
+    return obj
