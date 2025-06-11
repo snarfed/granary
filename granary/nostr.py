@@ -39,6 +39,7 @@ TODO:
 """
 from datetime import datetime, timezone
 from hashlib import sha256
+import itertools
 import logging
 import re
 import secrets
@@ -327,7 +328,7 @@ def pubkey_from_privkey(privkey):
   return pubkey
 
 
-def from_as1(obj, privkey=None):
+def from_as1(obj, privkey=None, remote_relay=''):
   """Converts an ActivityStreams 1 activity or object to a Nostr event.
 
   Args:
@@ -335,6 +336,9 @@ def from_as1(obj, privkey=None):
     privkey (str): optional bech32-encoded private key to sign the event with. Also
       used to set the output event's ``pubkey`` field if ``obj`` doesn't have an
       ``nsec`` id
+    remote_relays (sequence of str): optional sequence of remote relays where the
+      "target" of this object - followee, in-reply-to, repost-of, etc - can be
+      fetched.
 
   Returns:
     dict: Nostr event
@@ -401,7 +405,15 @@ def from_as1(obj, privkey=None):
     in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
       id = uri_to_id(in_reply_to.get('id'))
-      event['tags'].append(['e', id, 'TODO relay', 'reply'])
+      # https://nips.nostr.com/10
+      # Kind 1 events with e tags are replies to other kind 1 events. Kind 1 replies MUST NOT be used to reply to other kinds, use NIP-22 instead.
+      # ["e", <event-id>, <relay-url>, <marker>, <pubkey>]
+      # Where:
+      #     <event-id> is the id of the event being referenced.
+      #     <relay-url> is the URL of a recommended relay associated with the reference. Clients SHOULD add a valid <relay-url> field, but may instead leave it as "".
+      #     <marker> is optional and if present is one of "reply", "root".
+      #     <pubkey> is optional, SHOULD be the pubkey of the author of the referenced event
+      event['tags'].append(['e', id, remote_relay, 'reply'])
       author = as1.get_object(in_reply_to, 'author').get('id')
       if author:
         event['tags'].append(['p', uri_to_id(orig_event.get('pubkey'))])
@@ -435,7 +447,9 @@ def from_as1(obj, privkey=None):
       orig_event = from_as1(inner_obj)
       event['content'] = json_dumps(orig_event, sort_keys=True, ensure_ascii=False)
       event['tags'] = [
-        ['e', orig_event.get('id'), 'TODO relay', 'mention'],
+        # https://nips.nostr.com/18
+        # "The repost event MUST include an e tag with the id of the note that is being reposted. That tag MUST include a relay URL as its third entry to indicate where it can be fetched."
+        ['e', orig_event.get('id'), remote_relay, 'mention'],
         ['p', orig_event.get('pubkey')],
       ]
 
@@ -460,11 +474,10 @@ def from_as1(obj, privkey=None):
   elif type == 'follow':
     event.update({
       'kind': KIND_CONTACTS,
-      'tags': [
-        ['p', uri_to_id(o['id']), 'TODO relay', o.get('displayName') or '']
-        for o in as1.get_objects(obj)
-        if o.get('id')
-      ],
+      # https://nips.nostr.com/2
+      # Each tag entry should contain the key for the profile, a relay URL where events from that key can be found (can be set to an empty string if not needed), and a local name (or "petname") for that profile (can also be set to an empty string or not provided), i.e., ["p", <32-bytes hex key>, <main relay URL>, <petname>].
+      'tags': [['p', uri_to_id(o['id']), remote_relay, o.get('displayName') or '']
+               for o in as1.get_objects(obj) if o.get('id')]
     })
 
   else:

@@ -413,7 +413,7 @@ class NostrTest(testutil.TestCase):
   def test_to_from_as1_reply(self):
     reply = {
       'objectType': 'note',
-      'id': 'nostr:note1zntk84uumhzsqh56xhru5fzjt9gcwtmv9eahn3k7ry5dj2f48h8q449j7q',
+      'id': 'nostr:note1nrjs3nf6lqjt69z3wm3sw99vm8m3yqpafut866prz2c9wmhjckcq87dgct',
       'author': NPUB_URI,
       'published': NOW_ISO,
       'content': 'I hereby reply',
@@ -421,17 +421,22 @@ class NostrTest(testutil.TestCase):
     }
     event = {
       'kind': KIND_NOTE,
-      'id': '14d763d79cddc5005e9a35c7ca24525951872f6c2e7b79c6de1928d929353dce',
+      'id': '98e508cd3af824bd145176e30714acd9f712003d4f167d682312b0576ef2c5b0',
       'pubkey': PUBKEY,
       'content': 'I hereby reply',
       'tags': [
-        ['e', '34cd', 'TODO relay', 'reply'],
+        ['e', '34cd', '', 'reply'],
       ],
       'created_at': NOW_TS,
     }
 
     self.assert_equals(reply, to_as1(event))
     self.assert_equals(event, from_as1(reply))
+
+    event['tags'] = [
+        ['e', '34cd', 'reelaay', 'reply'],
+    ]
+    self.assert_equals(event, from_as1(reply, remote_relay='reelaay'), ignore=['id'])
 
   def test_to_from_as1_repost(self):
     note_uri = 'nostr:note1yr87vss2mtw7esxwfgkepte7q0jrrfwnpcvmkk0r0z7eg8vtlfkq8t0m83'
@@ -460,7 +465,7 @@ class NostrTest(testutil.TestCase):
         'tags': [],
       }, sort_keys=True),
       'tags': [
-        ['e', post_id, 'TODO relay', 'mention'],
+        ['e', post_id, '', 'mention'],
         ['p', PUBKEY],
       ],
       'created_at': NOW_TS,
@@ -469,11 +474,14 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(repost, to_as1(event))
     self.assert_equals(event, from_as1(repost))
 
+    event['tags'][0:1] = [
+        ['e', post_id, 'reelaay', 'mention'],
+    ]
+    self.assert_equals(event, from_as1(repost, remote_relay='reelaay'), ignore=['id'])
+
     del event['content']
-    self.assert_equals({
-      **repost,
-      'object': note_uri,
-    }, to_as1(event))
+    repost['object'] = note_uri
+    self.assert_equals(repost, to_as1(event))
 
   def test_to_from_as1_like(self):
     like = {
@@ -549,7 +557,7 @@ class NostrTest(testutil.TestCase):
     follow = {
       'objectType': 'activity',
       'verb': 'follow',
-      'id': 'nostr:nevent17tugzezkdmmlrk24zlzaraawp3xzkdy2ehk4ufqgxw67q5mt4mcs9u5evh',
+      'id': 'nostr:nevent16kakmkwdchnc9xf0r076zzup0lcvjj2pnk5myxka75qftvtd4vdqnvqcvt',
       'actor': NPUB_URI,
       'published': NOW_ISO,
       'object': [
@@ -560,18 +568,24 @@ class NostrTest(testutil.TestCase):
     }
     event = {
       'kind': KIND_CONTACTS,
-      'id': 'f2f88164566ef7f1d95517c5d1f7ae0c4c2b348acded5e240833b5e0536baef1',
+      'id': 'd5bb6dd9cdc5e782992f1bfda10b817ff0c949419da9b21addf50095b16dab1a',
       'pubkey': PUBKEY,
       'content': 'not important',
       'tags': [
-        ['p', PUBKEY, 'TODO relay', ''],
-        ['p', PUBKEY, 'TODO relay', 'bob'],
+        ['p', PUBKEY, '', ''],
+        ['p', PUBKEY, '', 'bob'],
       ],
       'created_at': NOW_TS,
     }
 
     self.assert_equals(follow, to_as1(event))
     self.assert_equals(event, from_as1(follow))
+
+    event['tags'] = [
+        ['p', PUBKEY, 'reelaay', ''],
+        ['p', PUBKEY, 'reelaay', 'bob'],
+    ]
+    self.assert_equals(event, from_as1(follow, remote_relay='reelaay'), ignore=['id'])
 
   @patch('requests.get', return_value=requests_response({'names': {'alice': 'b0635d'}}))
   def test_nip05_to_npub(self, _):
