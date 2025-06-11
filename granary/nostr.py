@@ -679,6 +679,7 @@ class Nostr(Source):
     id = uri_to_id(user_id)
 
     # query for activities
+    logger.debug(f'connecting to {self.relays[0]}')
     with connect(self.relays[0],
                  open_timeout=HTTP_TIMEOUT,
                  close_timeout=HTTP_TIMEOUT,
@@ -726,9 +727,9 @@ class Nostr(Source):
       filter['search'] = search_query
 
     events = []
-    logger.info(f'Connecting to {self.relays[0]}')
 
     # query for activities
+    logger.debug(f'connecting to {self.relays[0]}')
     with connect(self.relays[0],
                  open_timeout=HTTP_TIMEOUT,
                  close_timeout=HTTP_TIMEOUT,
@@ -780,6 +781,7 @@ class Nostr(Source):
     req = ['REQ', subscription, filter]
 
     try:
+      logger.debug(f'{websocket.remote_address} <= {req}')
       websocket.send(json_dumps(req))
     except ConnectionClosedOK as err:
       logger.warning(err)
@@ -789,6 +791,7 @@ class Nostr(Source):
     try:
       while True:
         msg = websocket.recv(timeout=HTTP_TIMEOUT)
+        logger.debug(f'{websocket.remote_address} => {msg}')
 
         resp = json_loads(msg)
         if resp[:3] == ['OK', subscription, False]:
@@ -800,7 +803,7 @@ class Nostr(Source):
           else:
             logger.warning(f'Invalid signature for event {event.get("id")}')
         elif resp[0] == 'AUTH' and len(resp) >= 2:
-          challenge = id_and_sign({
+          auth = ['AUTH', id_and_sign({
             'kind': KIND_AUTH,
             'pubkey': self.hex_pubkey,
             'content': '',
@@ -808,12 +811,15 @@ class Nostr(Source):
               ['relay', f'wss://{websocket.remote_address[0]}/'],
               ['challenge', resp[1]],
             ],
-          }, self.privkey)
-          websocket.send(json_dumps(['AUTH', challenge]))
+          }, self.privkey)]
+          logger.debug(f'{websocket.remote_address} <= {auth}')
+          websocket.send(json_dumps(auth))
         elif len(events) >= limit or resp[:2] == ['EOSE', subscription]:
           break
 
-      websocket.send(json_dumps(['CLOSE', subscription]))
+      close = ['CLOSE', subscription]
+      logger.debug(f'{websocket.remote_address} <= {close}')
+      websocket.send(json_dumps(close))
 
     except ConnectionClosedOK as err:
       logger.warning(err)
@@ -847,11 +853,13 @@ class Nostr(Source):
                - event.keys())
     assert not missing, f'missing {missing}'
 
+    logger.debug(f'connecting to {self.relays[0]}')
     with connect(self.relays[0],
                  open_timeout=HTTP_TIMEOUT,
                  close_timeout=HTTP_TIMEOUT,
                  ) as websocket:
       create = ['EVENT', event]
+      logger.debug(f'{websocket.remote_address} <= {create}')
       try:
         websocket.send(json_dumps(create))
         msg = websocket.recv(timeout=HTTP_TIMEOUT)
