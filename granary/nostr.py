@@ -52,7 +52,7 @@ from websockets.exceptions import ConnectionClosedOK
 from websockets.sync.client import connect
 
 from . import as1
-from .source import creation_result, FRIENDS, INCLUDE_LINK, OMIT_LINK, Source
+from .source import creation_result, FRIENDS, html_to_text, INCLUDE_LINK, OMIT_LINK, Source
 
 logger = logging.getLogger(__name__)
 
@@ -352,9 +352,11 @@ def from_as1(obj, privkey=None, remote_relay=''):
     if not pubkey:
       pubkey = pubkey_from_privkey(uri_to_id(privkey))
 
+  content = (html_to_text(obj.get('content') or obj.get('summary'))
+             or obj.get('displayName') or '')
   event = {
     'pubkey': pubkey,
-    'content': obj.get('content') or obj.get('summary') or obj.get('displayName') or '',
+    'content': content,
     'tags': [],
   }
 
@@ -400,7 +402,6 @@ def from_as1(obj, privkey=None, remote_relay=''):
     event.update({
       'kind': KIND_NOTE if type == 'note' else KIND_ARTICLE,
     })
-    # TODO: convert HTML to Markdown
 
     in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
@@ -537,7 +538,7 @@ def to_as1(event):
   elif kind in (KIND_NOTE, KIND_ARTICLE):  # note, article
     obj.update({
       'objectType': 'note' if kind == KIND_NOTE else 'article',
-      # TODO: render Markdown to HTML
+      # TODO: render Markdown to HTML?
       'content': event.get('content'),
       'tags': [],
     })

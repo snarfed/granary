@@ -282,6 +282,15 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(note, to_as1(event))
     self.assert_equals(event, from_as1(note))
 
+  def test_to_from_as1_note_html_content(self):
+    self.assert_equals({
+      **NOTE_NOSTR,
+      'content': 'hi _there_\n\n  * 1\n  * 2\n',
+    }, from_as1({
+      **NOTE_AS1,
+      'content': '<p>hi <em>there</em></p><ul><li>1<li>2</ul>',
+    }), ignore=['id', 'sig'])
+
   def test_from_as1_post_activity(self):
     self.assert_equals(NOTE_NOSTR, from_as1({
       'objectType': 'activity',

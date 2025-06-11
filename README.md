@@ -326,6 +326,7 @@ _Non-breaking changes:_
     * Add optional new `privkey` kwarg to sign output events and populate `pubkey` with.
     * When converting `created_at` to `published`, include UTC timezone.
     * Don't escape Unicode characters ([background](https://github.com/nostr-protocol/nips/issues/354)).
+    * Convert HTML `content` to Markdown plain text.
   * `Nostr`:
     * Add new `user_url` method.
     * Add optional new `privkey` kwarg to constructor to sign events with; remove `pubkey` kwarg.
