@@ -178,15 +178,23 @@ class NostrTest(testutil.TestCase):
   def test_pubkey_from_privkey(self):
     self.assertEqual(PUBKEY, nostr.pubkey_from_privkey(PRIVKEY))
 
-  def test_to_from_as1_profile(self):
+  def test_to_from_as1_actor_profile(self):
     person = {
       'objectType': 'person',
       'id': NPUB_URI,
       'displayName': 'Alice',
-      'description': 'It me',
-      'image': 'http://alice/pic',
+      'summary': 'It me',
+      'image': [
+        'http://alice/pic',
+        {
+          'url': 'http://ban/ner',
+          'objectType': 'featured',
+        },
+      ],
       'username': 'alice.com',
+      'url': 'http://ali/ce',
       'urls': [
+        'http://ali/ce',
         'https://github.com/semisol',
         'https://twitter.com/semisol_public',
         'https://bitcoinhackers.org/@semisol',
@@ -197,12 +205,15 @@ class NostrTest(testutil.TestCase):
     event = {
       'kind': KIND_PROFILE,
       'pubkey': PUBKEY,
-      'id': '18f9c6ab11467e7c6dac6c125112205e136cbb9f7c73f328679201418eaeea53',
+      'id': '5c3dbf8540d62ceee2b8c6f4dde6c732ec13f795f4ad8b46aff5b653a6265a51',
       'content': json_dumps({
         'name': 'Alice',
         'about': 'It me',
         'picture': 'http://alice/pic',
         'nip05': '_@alice.com',
+        # https://nips.nostr.com/24
+        'banner': 'http://ban/ner',
+        'website': 'http://ali/ce',
       }, sort_keys=True),
       'tags': [
         ['i', 'github:semisol', '-'],

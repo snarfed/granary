@@ -17,6 +17,7 @@ NIPS implemented:
 * 19: bech32-encoded ids
 * 21: nostr: URI scheme
 * 23: articles
+* 24: extra fields
 * 25: likes, emoji reactions
 * 27: text notes
 * 39: external identities
@@ -366,23 +367,30 @@ def from_as1(obj, privkey=None, remote_relay=''):
 
   # types
   if type in as1.ACTOR_TYPES:
-    nip05 = None
+
+    content = {
+      'name': obj.get('displayName'),
+      'about': obj.get('summary'),
+      'website': obj.get('url') or util.get_first(obj, 'urls'),
+    }
+
     if username := obj.get('username'):
       if '@' in username:
-        nip05 = username
+        content['nip05'] = username
       elif re.fullmatch(util.DOMAIN_RE, username):
-        nip05 = f'_@{username}'
+        content['nip05'] = f'_@{username}'
+
+    for img in as1.get_objects(obj, 'image'):
+      if url := img.get('url') or img.get('id'):
+        field = 'banner' if img.get('objectType') == 'featured' else 'picture'
+        content.setdefault(field, url)
 
     event.update({
       'kind': KIND_PROFILE,
       # don't escape Unicode chars!
       # https://github.com/nostr-protocol/nips/issues/354
-      'content': json_dumps(util.trim_nulls({
-        'name': obj.get('displayName'),
-        'about': obj.get('description'),
-        'picture': util.get_url(obj, 'image'),
-        'nip05': nip05,
-      }), sort_keys=True, ensure_ascii=False),
+      'content': json_dumps(util.trim_nulls(content), sort_keys=True,
+                            ensure_ascii=False),
     })
 
     if id := obj.get('id'):
@@ -522,12 +530,22 @@ def to_as1(event):
     obj.update({
       'objectType': 'person',
       'id': id_to_uri('npub', event['pubkey']),
-      'displayName': content.get('name'),
-      'description': content.get('about'),
-      'image': content.get('picture'),
+      'displayName': content.get('display_name') or content.get('name'),
+      'summary': content.get('about'),
       'username': nip05_domain,
       'urls': [],
     })
+
+    obj['image'] = []
+    if picture := content.get('picture'):
+      obj['image'].append(picture)
+    if banner := content.get('banner'):
+      obj['image'].append({'url': banner, 'objectType': 'featured'})
+
+    if website := content.get('website'):
+      obj['url'] = website
+      obj['urls'].append(website)
+
     for tag in tags:
       if tag[0] == 'i':
         platform, identity = tag[1].split(':')

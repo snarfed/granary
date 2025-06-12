@@ -321,6 +321,7 @@ _Non-breaking changes:_
   * Add new `nip05_to_npub` function to resolve [NIP-05](https://nips.nostr.com/5) identifiers.
   * Add new `bech32_decode`, `bech32_encode`, `bech32_prefix_for`, `pubkey_from_privkey` functions.
   * Add new `verify` function to verify event signatures.
+  * Add [NIP-24](https://nips.nostr.com/24) support for additional tags and fields in profiles.
   * `from_as1`:
     * When converting actors to kind 0 Nostr events, remove unset fields from content instead of setting them to null, and only use `_` NIP-05 username with full domains.
     * Add optional new `privkey` kwarg to sign output events and populate `pubkey` with.
