@@ -17,6 +17,7 @@ from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 
 from .. import nostr
 from ..nostr import (
+  BECH32_RE,
   bech32_decode,
   bech32_encode,
   from_as1,
@@ -988,3 +989,8 @@ class ClientTest(testutil.TestCase):
                      self.nostr.user_url('nprofile123'))
     self.assertEqual('https://coracle.social/people/nprofile123',
                      self.nostr.user_url('nostr:nprofile123'))
+
+  def test_bech32_re(self):
+    self.assertIsNone(BECH32_RE.match(ID))
+    self.assertIsNone(BECH32_RE.match(URI))
+    self.assertIsNotNone(BECH32_RE.match(URI.removeprefix('nostr:')))

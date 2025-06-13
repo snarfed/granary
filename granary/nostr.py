@@ -67,6 +67,7 @@ BECH32_PREFIXES = (
   'nrelay',
   'nsec',
 )
+BECH32_RE = re.compile(f'^({"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,70}}$')
 
 # Event kinds
 # https://github.com/nostr-protocol/nips#event-kinds
