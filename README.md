@@ -323,9 +323,10 @@ _Non-breaking changes:_
   * Add new `verify` function to verify event signatures.
   * Add [NIP-24](https://nips.nostr.com/24) support for additional tags and fields in profiles.
   * `from_as1`:
-    * When converting actors to kind 0 Nostr events, remove unset fields from content instead of setting them to null, and only use `_` NIP-05 username with full domains.
     * Add optional new `privkey` kwarg to sign output events and populate `pubkey` with.
+    * Add optional new `from_protocol` kwarg for setting [NIP-48](https://nips.nostr.com/48) `proxy` tags in output events.
     * When converting `created_at` to `published`, include UTC timezone.
+    * When converting actors to kind 0 Nostr events, remove unset fields from content instead of setting them to null, and only use `_` NIP-05 username with full domains.
     * Don't escape Unicode characters ([background](https://github.com/nostr-protocol/nips/issues/354)).
     * Convert HTML `content` to Markdown plain text.
   * `Nostr`:

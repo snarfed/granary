@@ -21,6 +21,7 @@ NIPS implemented:
 * 25: likes, emoji reactions
 * 27: text notes
 * 39: external identities
+* 48: proxy tags
 * 50: search
 
 TODO:
@@ -330,7 +331,7 @@ def pubkey_from_privkey(privkey):
   return pubkey
 
 
-def from_as1(obj, privkey=None, remote_relay=''):
+def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
   """Converts an ActivityStreams 1 activity or object to a Nostr event.
 
   Args:
@@ -341,12 +342,16 @@ def from_as1(obj, privkey=None, remote_relay=''):
     remote_relays (sequence of str): optional sequence of remote relays where the
       "target" of this object - followee, in-reply-to, repost-of, etc - can be
       fetched.
+    from_protocol (str): optional source protocol for NIP-48 proxy tag. Supported
+      values: 'activitypub', 'atproto', 'web'
 
   Returns:
     dict: Nostr event
   """
   type = as1.object_type(obj)
+  id = obj.get('id')
   inner_obj = as1.get_object(obj)
+  inner_hex_id = uri_to_id(inner_obj.get('id'))
   pubkey = uri_to_id(as1.get_owner(obj))
 
   if privkey:
@@ -365,6 +370,10 @@ def from_as1(obj, privkey=None, remote_relay=''):
   published = obj.get('published')
   if published:
     event['created_at'] = int(util.parse_iso8601(published).timestamp())
+
+  # NIP-48 proxy tag
+  if from_protocol and id and not id.startswith('nostr:'):
+    event['tags'].append(['proxy', id, from_protocol])
 
   # types
   if type in as1.ACTOR_TYPES:
@@ -394,7 +403,7 @@ def from_as1(obj, privkey=None, remote_relay=''):
                             ensure_ascii=False),
     })
 
-    if id := obj.get('id'):
+    if id:
       event['pubkey'] = uri_to_id(id)
 
     for url in as1.object_urls(obj):
@@ -405,7 +414,8 @@ def from_as1(obj, privkey=None, remote_relay=''):
               ['i', f'{platform}:{url.removeprefix(base_url)}', '-'])
 
   elif type in ('post', 'update'):
-    return from_as1(inner_obj)
+    return from_as1(inner_obj, privkey=privkey, remote_relay=remote_relay,
+                    from_protocol=from_protocol)
 
   elif type in ('article', 'note'):
     event.update({
@@ -454,7 +464,7 @@ def from_as1(obj, privkey=None, remote_relay=''):
     })
 
     if inner_obj:
-      orig_event = from_as1(inner_obj)
+      orig_event = from_as1(inner_obj, from_protocol=from_protocol)
       event['content'] = json_dumps(orig_event, sort_keys=True, ensure_ascii=False)
       event['tags'] = [
         # https://nips.nostr.com/18
@@ -464,13 +474,12 @@ def from_as1(obj, privkey=None, remote_relay=''):
       ]
 
   elif type in ('like', 'dislike', 'react'):
-    liked = inner_obj.get('id')
     event.update({
       'kind': KIND_REACTION,
       'content': '+' if type == 'like'
                  else '-' if type == 'dislike'
                  else obj.get('content'),
-      'tags': [['e', uri_to_id(liked)]],
+      'tags': [['e', inner_hex_id]],
     })
 
   elif type == 'delete':
@@ -478,7 +487,7 @@ def from_as1(obj, privkey=None, remote_relay=''):
       'kind': KIND_DELETE,
       # TODO: include kind of the object being deleted, in a `k` tag. we'd have
       # to fetch it first. :/
-      'tags': [['e', uri_to_id(as1.get_object(obj).get('id'))]],
+      'tags': [['e', inner_hex_id]],
     })
 
   elif type == 'follow':
