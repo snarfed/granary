@@ -319,7 +319,7 @@ _Non-breaking changes:_
   * Add `**requests_kwargs` to `Bluesky` constructor.
 * `nostr`:
   * Add new `nip05_to_npub` function to resolve [NIP-05](https://nips.nostr.com/5) identifiers.
-  * Add new `bech32_decode`, `bech32_encode`, `bech32_prefix_for`, `pubkey_from_privkey` functions.
+  * Add new `bech32_decode`, `bech32_encode`, `bech32_prefix_for`, `pubkey_from_privkey`, `uri_for` functions.
   * Add new `verify` function to verify event signatures.
   * Add [NIP-24](https://nips.nostr.com/24) support for additional tags and fields in profiles.
   * `from_as1`:

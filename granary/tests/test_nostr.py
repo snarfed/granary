@@ -33,6 +33,7 @@ from ..nostr import (
   KIND_REACTION,
   KIND_REPOST,
   to_as1,
+  uri_for,
   uri_to_id,
 )
 
@@ -139,6 +140,14 @@ class NostrTest(testutil.TestCase):
 
     event['sig'] = 'foo'
     self.assertEqual(id, id_for(event))
+
+  def test_uri_for(self):
+    self.assertEqual('nostr:note14vfqpdvxk8',
+                     uri_for({'kind': KIND_NOTE, 'id': 'ab12'}))
+    self.assertEqual('nostr:nprofile14vfql8g7xk',
+                     uri_for({'kind': KIND_PROFILE, 'id': 'ab12'}))
+    self.assertEqual('nostr:nevent14vfqwk95np',
+                     uri_for({'kind': KIND_DELETE, 'id': 'ab12'}))
 
   def test_id_to_uri(self):
     self.assertEqual(URI, id_to_uri('note', ID))

@@ -121,6 +121,26 @@ def id_for(event):
   ], ensure_ascii=False).encode()).hexdigest()
 
 
+def uri_for(event):
+  """Generates a NIP-19 nostr: URI for a Nostr event.
+
+  Args:
+    event (dict): Nostr event
+
+  Returns:
+    str: NIP-19 nostr: URI, based on the event's id and kind
+  """
+  id = event.get('id')
+  kind = event.get('kind')
+  assert id and kind is not None, event
+
+  prefix = ('note' if kind == KIND_NOTE
+            else 'nprofile' if kind == KIND_PROFILE
+            else 'nevent')
+
+  return id_to_uri(prefix, id)
+
+
 def is_bech32(id):
   if not id:
     return False
