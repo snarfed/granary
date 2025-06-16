@@ -111,7 +111,7 @@ class FakeConnection:
 
 
 @contextmanager
-def fake_connect(uri, open_timeout=None, close_timeout=None):
+def fake_connect(uri, open_timeout=None, close_timeout=None, **kwargs):
   """Fake of :func:`websockets.sync.client.connect`."""
   assert open_timeout == HTTP_TIMEOUT
   assert close_timeout == HTTP_TIMEOUT
