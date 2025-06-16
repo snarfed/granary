@@ -302,11 +302,14 @@ def verify(event):
   # doesn't seem to matter, we can just arbitrarily tack 0x02 onto a 32-byte key and
   # it still generates and verifies signatures fine.
   # https://github.com/snarfed/bridgy-fed/issues/446#issuecomment-2925960330
-  assert len(pubkey) == 64, pubkey
-  pubkey = '02' + pubkey
+  if len(pubkey) != 64:
+    return False
 
-  pubkey = secp256k1.PublicKey(bytes.fromhex(pubkey), raw=True)
-  return pubkey.schnorr_verify(bytes.fromhex(id), bytes.fromhex(sig), None, raw=True)
+  try:
+    key = secp256k1.PublicKey(bytes.fromhex('02' + pubkey), raw=True)
+    return key.schnorr_verify(bytes.fromhex(id), bytes.fromhex(sig), None, raw=True)
+  except (TypeError, ValueError):
+    return False
 
 
 def pubkey_from_privkey(privkey):
