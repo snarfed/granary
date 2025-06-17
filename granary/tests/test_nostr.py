@@ -103,8 +103,7 @@ class FakeConnection:
 
     if not cls.to_receive:
       closed = True
-      assert cls.recv_err
-      raise cls.recv_err
+      raise cls.recv_err or ConnectionClosedOK(None, None)
 
     msg = cls.to_receive.pop(0)
     logger.info(msg)
