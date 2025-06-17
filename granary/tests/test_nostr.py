@@ -283,6 +283,15 @@ class NostrTest(testutil.TestCase):
       'content': '{"nip05": {}}',
     }))
 
+  def test_to_as1_profile_no_content(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': NPUB_URI,
+    }, to_as1({
+      'kind': KIND_PROFILE,
+      'pubkey': PUBKEY,
+    }))
+
   def test_to_from_as1_note(self):
     note = {
       'objectType': 'note',

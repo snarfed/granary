@@ -556,7 +556,7 @@ def to_as1(event):
   content = event.get('content')
 
   if kind == KIND_PROFILE:  # profile
-    content = json_loads(content) or {}
+    content = json_loads(content) if content else {}
     nip05_domain = (content['nip05'].removeprefix('_@')
                     if isinstance(content.get('nip05'), str)
                     else '')
