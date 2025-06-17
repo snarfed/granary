@@ -82,7 +82,7 @@ class FakeConnection:
 
   @classmethod
   def reset(cls):
-    cls.relay = None
+    cls.relays = []
     cls.sent = []
     cls.to_receive = []
     cls.closed = False
@@ -115,7 +115,7 @@ def fake_connect(uri, open_timeout=None, close_timeout=None, **kwargs):
   """Fake of :func:`websockets.sync.client.connect`."""
   assert open_timeout == HTTP_TIMEOUT
   assert close_timeout == HTTP_TIMEOUT
-  FakeConnection.relay = uri
+  FakeConnection.relays.append(uri)
   FakeConnection.remote_address = (urlparse(uri).netloc, 'port')
   yield FakeConnection
 
@@ -721,7 +721,7 @@ class ClientTest(testutil.TestCase):
 
     self.assert_equals([NOTE_AS1], self.nostr.get_activities(activity_id='ab12'))
 
-    self.assertEqual('ws://relay', FakeConnection.relay)
+    self.assertEqual(['ws://relay'], FakeConnection.relays)
     self.assert_equals([
       ['REQ', 'towkin 1', {'ids': ['ab12'], 'limit': 20}],
       ['CLOSE', 'towkin 1'],
@@ -792,7 +792,7 @@ class ClientTest(testutil.TestCase):
       {**NOTE_AS1, 'replies': {'totalItems': 2, 'items': [reply_as1] * 2}},
     ], self.nostr.get_activities(user_id=PUBKEY, fetch_replies=True))
 
-    self.assertEqual('ws://relay', FakeConnection.relay)
+    self.assertEqual(['ws://relay'], FakeConnection.relays)
     self.assert_equals([
       ['REQ', 'towkin 1', {'authors': [PUBKEY], 'limit': 20}],
       ['CLOSE', 'towkin 1'],
@@ -829,7 +829,7 @@ class ClientTest(testutil.TestCase):
       {**NOTE_AS1, 'tags': [repost_as1, repost_as1]},
     ], self.nostr.get_activities(user_id=PUBKEY, fetch_shares=True))
 
-    self.assertEqual('ws://relay', FakeConnection.relay)
+    self.assertEqual(['ws://relay'], FakeConnection.relays)
     self.assert_equals([
       ['REQ', 'towkin 1', {'authors': [PUBKEY], 'limit': 20}],
       ['CLOSE', 'towkin 1'],
