@@ -298,6 +298,7 @@ _Non-breaking changes:_
   * Add new `quoted_posts`, `mentions` functions.
 * `as2`:
   * Add support for pinned posts via the `featured` collection.
+  * Handle `replies` as a collection in both `from_as1` and `to_as1`.
   * `from_as1`:
     * Add `rel="tag"` to hashtag HTML links in `content` to prevent Mastodon from generating link previews for them.
   * `to_as1`:

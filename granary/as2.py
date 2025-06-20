@@ -86,8 +86,14 @@ TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
 ACTOR_TYPES = {as2_type for as1_type, as2_type in OBJECT_TYPE_TO_TYPE.items()
                if as1_type in as1.ACTOR_TYPES}
 # https://www.w3.org/TR/activitystreams-vocabulary/#object-types
-URL_AS2_TYPES = ['Article', 'Audio', 'Image', 'Mention', 'Video']
-LINK_AS1_TYPES = ['hashtag', 'link', 'mention']
+URL_AS2_TYPES = ('Article', 'Audio', 'Image', 'Mention', 'Video')
+LINK_AS1_TYPES = ('hashtag', 'link', 'mention')
+COLLECTION_TYPES = (
+  'Collection',
+  'OrderedCollection',
+  'CollectionPage',
+  'OrderedCollectionPage',
+)
 
 VERB_TO_TYPE = {
   'accept': 'Accept',
@@ -182,6 +188,16 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True):
   Returns:
     dict: AS2 activity or object
   """
+  def from_as1_collection(field):
+    coll = as1.get_object(obj, field)
+    if coll.keys() == {'id'}:
+      return coll['id']
+    elif coll.get('objectType') in ('collection', None):
+      ret = from_as1(coll, context=None)
+      ret['items'] = [from_as1(elem, context=None)
+                      for elem in util.get_list(ret, 'items')]
+      return ret
+
   if not obj:
     return {}
   elif isinstance(obj, str):
@@ -223,8 +239,6 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True):
       'actor': actor.get('id') if isinstance(actor, dict) else actor,
       'object': inner_objs.get('id') if isinstance(inner_objs, dict) else inner_objs,
     }
-
-  replies = obj.get('replies', {})
 
   # to/cc audience, all ids, special caste public/unlisted
   to = sorted(as1.get_ids(obj, 'to'))
@@ -348,7 +362,7 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True):
     'preferredUsername': obj.pop('username', None),
     'url': urls,
     'urls': None,
-    'replies': from_as1(replies, context=None),
+    'replies': from_as1_collection('replies'),
     'mediaType': obj.pop('mimeType', None),
     'to': to,
     'cc': cc,
@@ -454,6 +468,15 @@ def to_as1(obj, use_type=True, get_fn=None):
   def all_to_as1(field):
     return [to_as1(elem) for elem in util.pop_list(obj, field)
             if not (type in ACTOR_TYPES and elem.get('type') == 'PropertyValue')]
+
+  def collection_to_as1(field):
+    coll = as1.get_object(obj, field)
+    if coll.keys() == {'id'}:
+      return coll['id']
+    elif coll.get('type') in COLLECTION_TYPES + (None,):
+      ret = to_as1(coll)
+      ret['items'] = [to_as1(elem) for elem in util.get_list(ret, 'items')]
+      return ret
 
   if not obj:
     return {}
@@ -673,7 +696,7 @@ def to_as1(obj, use_type=True, get_fn=None):
     'cc': as1_cc,
     # question (poll) responses
     'options': all_to_as1('anyOf') + all_to_as1('oneOf'),
-    'replies': to_as1(obj.get('replies')),
+    'replies': collection_to_as1('replies'),
     'url': urls[0] if urls else None,
     'urls': urls if len(urls) > 1 else None,
   })

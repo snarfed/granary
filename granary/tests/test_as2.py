@@ -749,6 +749,73 @@ class ActivityStreams2Test(testutil.TestCase):
 
     mock_get.assert_called_with('http://actor/featured')
 
+  def test_to_from_as1_replies_collection(self):
+    coll_as1 = {
+      'objectType': 'note',
+      'content': 'foo',
+      'replies': {
+        'objectType': 'collection',
+        'totalItems': 2,
+        'items': [{
+          'objectType': 'note',
+          'id': 'foo',
+        }, {
+          'objectType': 'note',
+          'id': 'bar',
+        }],
+      },
+    }
+    coll_as2 = {
+      '@context': as2.CONTEXT,
+      'type': 'Note',
+      'content': 'foo',
+      'replies': {
+        'type': 'Collection',
+        'totalItems': 2,
+        'items': [{
+          'type': 'Note',
+          'id': 'foo',
+        }, {
+          'type': 'Note',
+          'id': 'bar',
+        }],
+      },
+    }
+    self.assert_equals(coll_as1, as2.to_as1(coll_as2))
+    self.assert_equals(coll_as2, as2.from_as1(coll_as1))
+
+  def test_to_from_as1_replies_id(self):
+    coll_as1 = {
+      'objectType': 'note',
+      'content': 'foo',
+      'replies': 'https://an/id',
+    }
+    coll_as2 = {
+      '@context': as2.CONTEXT,
+      'type': 'Note',
+      'content': 'foo',
+      'replies': 'https://an/id',
+    }
+    self.assert_equals(coll_as1, as2.to_as1(coll_as2))
+    self.assert_equals(coll_as2, as2.from_as1(coll_as1))
+
+  def test_to_as1_replies_list(self):
+    # AS2 replies is supposed to be a collection, but some projects like PieFed
+    # serve it as a list instead :/
+    # https://codeberg.org/rimu/pyfedi/issues/897
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'foo',
+    }, as2.to_as1({
+      '@context': as2.CONTEXT,
+      'type': 'Note',
+      'content': 'foo',
+      'replies': [{
+          'type': 'Note',
+          'id': 'foo',
+      }],
+    }))
+
   def test_link_tags_no_indices(self):
     # no indices, should be a noop
     obj = {
