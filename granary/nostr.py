@@ -23,6 +23,7 @@ NIPS implemented:
 * 39: external identities
 * 48: proxy tags
 * 50: search
+* 92/94: image, video, audio attachments
 
 TODO:
 
@@ -482,7 +483,9 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
       event['tags'].append(['location', location])
 
     # imeta tags for images, video, audio
-    for img in as1.get_objects(obj, 'image'):
+    video_audio = [as1.get_object(att, 'stream')
+                   for att in as1.get_objects(obj, 'attachments')]
+    for img in as1.get_objects(obj, 'image') + video_audio:
       if url := img.get('url') or img.get('id'):
         tag = ['imeta', f'url {url}']
         if alt := img.get('displayName'):
@@ -605,6 +608,7 @@ def to_as1(event):
       # TODO: render Markdown to HTML?
       'content': event.get('content'),
       'image': [],
+      'attachments': [],
       'tags': [],
     })
 
@@ -632,15 +636,27 @@ def to_as1(event):
         metas = dict(val.split(maxsplit=1) for val in tag[1:])
         if url := metas.get('url'):
           mime = metas.get('m') or mimetypes.guess_type(url, strict=False)[0]
-          if mime.split('/')[0] == 'image':
+          type = mime.split('/')[0]
+          if type == 'image':
             obj['image'].append({
               'objectType': 'image',
               'url': url,
               'mimeType': mime,
               'displayName': metas.get('alt'),
             })
-            # remove from text content
-            obj['content'] = obj['content'].replace(url, '').rstrip()
+          elif type in ('video', 'audio'):
+            obj['attachments'].append({
+              'objectType': type,
+              'displayName': metas.get('alt'),
+              'stream': {
+                'url': url,
+                'mimeType': mime,
+              },
+            })
+          else:
+            continue
+          # remove from text content
+          obj['content'] = obj['content'].replace(url, '').rstrip()
 
   elif kind in (KIND_REPOST, KIND_GENERIC_REPOST):  # repost
     obj.update({

@@ -454,6 +454,46 @@ class NostrTest(testutil.TestCase):
     }
     self.assert_equals(note, to_as1(event))
 
+  def test_to_from_as1_note_with_video_audio(self):
+    note = {
+      'objectType': 'note',
+      'id': 'nostr:note1pp5kxadk3fa7vscpa6wr9yvmls2c2u3rr7n7wm6sx86g4eng0k3s9a78rl',
+      'author': NPUB_URI,
+      'content': 'Something to say',
+      'published': NOW_ISO,
+      'attachments': [{
+        'objectType': 'audio',
+        'stream': {'url': 'http://a/podcast.mp3'},
+      }, {
+        'objectType': 'video',
+        # TODO
+        # 'displayName': 'my alt text',
+        'stream': {'url': 'http://a/vidjo.mov'},
+      }],
+    }
+    event = {
+      'kind': KIND_NOTE,
+      'id': '08696375b68a7be64301ee9c32919bfc158572231fa7e76f5031f48ae6687da3',
+      'pubkey': PUBKEY,
+      'content': 'Something to say http://a/podcast.mp3 http://a/vidjo.mov',
+      'created_at': NOW_TS,
+      'tags': [[
+        'imeta',
+        'url http://a/podcast.mp3',
+        'm audio/mpeg',
+      ], [
+        'imeta',
+        'url http://a/vidjo.mov',
+        'm video/quicktime',
+      ]],
+    }
+
+    self.assert_equals(event, from_as1(note))
+
+    note['attachments'][0]['stream']['mimeType'] = 'audio/mpeg'
+    note['attachments'][1]['stream']['mimeType'] = 'video/quicktime'
+    self.assert_equals(note, to_as1(event))
+
   def test_to_from_as1_note_with_location(self):
     note = {
       'objectType': 'note',

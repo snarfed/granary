@@ -323,7 +323,7 @@ _Non-breaking changes:_
   * Add new `bech32_decode`, `bech32_encode`, `bech32_prefix_for`, `pubkey_from_privkey`, `uri_for` functions.
   * Add new `verify` function to verify event signatures.
   * Add [NIP-24](https://nips.nostr.com/24) support for additional tags and fields in profiles.
-  * Add [NIP-92](https://nips.nostr.com/92)/[94](https://nips.nostr.com/94) support for `imeta` tags for images.
+  * Add [NIP-92](https://nips.nostr.com/92)/[94](https://nips.nostr.com/94) support for `imeta` tags for images, video, audio.
   * `from_as1`:
     * Add optional new `privkey` kwarg to sign output events and populate `pubkey` with.
     * Add optional new `from_protocol` kwarg for setting [NIP-48](https://nips.nostr.com/48) `proxy` tags in output events.
