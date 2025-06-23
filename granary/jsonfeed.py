@@ -76,7 +76,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None, home_page_url=No
 
     for att in obj.get('attachments', []):
       url = util.get_url(att, 'stream') or util.get_url(att, 'image')
-      mime = mimetypes.guess_type(url)[0] if url else None
+      mime = mimetypes.guess_type(url, strict=False)[0] if url else None
       if (att.get('objectType') in ATTACHMENT_TYPES or
           mime and mime.split('/')[0] in ATTACHMENT_TYPES):
         item['attachments'].append({

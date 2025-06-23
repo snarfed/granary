@@ -150,7 +150,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None,
         continue
 
       url = stream.get('url') or ''
-      mime = mimetypes.guess_type(url)[0] or ''
+      mime = mimetypes.guess_type(url, strict=False)[0] or ''
       if (att.get('objectType') in ('audio', 'video') or
           mime and mime.split('/')[0] in ('audio', 'video')):
         if item_has_stream_enclosure:
@@ -166,7 +166,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None,
 
     for img in as1.get_objects(obj, 'image'):
       if url := img.get('url'):
-        mime = img.get('mimeType') or mimetypes.guess_type(url)[0] or ''
+        mime = img.get('mimeType') or mimetypes.guess_type(url, strict=False)[0] or ''
         length = obj.get('length', 0)
         item.enclosure(url, type=mime, length=length)
 
@@ -234,7 +234,7 @@ def to_as1(rss):
     for e in entry.get('enclosures', []):
       url = e.get('href')
       if url:
-        mime = e.get('type') or mimetypes.guess_type(url)[0] or ''
+        mime = e.get('type') or mimetypes.guess_type(url, strict=False)[0] or ''
         type = mime.split('/')[0]
         if type in ('audio', 'video'):
           attachments.append({

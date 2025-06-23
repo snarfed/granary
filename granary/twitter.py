@@ -1037,7 +1037,7 @@ class Twitter(source.Source):
     """
     type = resp.headers.get('Content-Type')
     if not type:
-      type, _ = mimetypes.guess_type(url)
+      type, _ = mimetypes.guess_type(url, strict=False)
     if type and type not in types:
       msg = f'Twitter only supports {label}; {util.pretty_link(url)} looks like {type}'
       return source.creation_result(abort=True, error_plain=msg, error_html=msg)
