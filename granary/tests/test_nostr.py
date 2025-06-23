@@ -410,6 +410,50 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(note, to_as1(event))
     self.assert_equals(event, from_as1(note))
 
+  def test_to_from_as1_note_with_image(self):
+    note = {
+      'objectType': 'note',
+      'id': 'nostr:note1jxrmjm4etr7h8g4kxtfg90y487z2fnwdkvgr3n4hjcexgchjzw6sqyvauu',
+      'author': NPUB_URI,
+      'content': 'Something to say',
+      'published': NOW_ISO,
+      'image': [
+        'http://pic/1.png',
+        {
+          'objectType': 'image',
+          'url': 'http://pic/2',
+          'mimeType': 'image/jpeg',
+          'displayName': 'my alt text',
+        },
+      ],
+    }
+    event = {
+      'kind': KIND_NOTE,
+      'id': '9187b96eb958fd73a2b632d282bc953f84a4cdcdb31038ceb796326462f213b5',
+      'pubkey': PUBKEY,
+      'content': 'Something to say http://pic/1.png http://pic/2',
+      'created_at': NOW_TS,
+      'tags': [[
+        'imeta',
+        'url http://pic/1.png',
+        'm image/png',
+      ], [
+        'imeta',
+        'url http://pic/2',
+        'm image/jpeg',
+        'alt my alt text',
+      ]],
+    }
+
+    self.assert_equals(event, from_as1(note))
+
+    note['image'][0] = {
+      'objectType': 'image',
+      'url': 'http://pic/1.png',
+      'mimeType': 'image/png',
+    }
+    self.assert_equals(note, to_as1(event))
+
   def test_to_from_as1_note_with_location(self):
     note = {
       'objectType': 'note',

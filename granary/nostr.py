@@ -43,6 +43,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 import itertools
 import logging
+import mimetypes
 import re
 import secrets
 
@@ -400,7 +401,6 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
 
   # types
   if type in as1.ACTOR_TYPES:
-
     content = {
       'name': obj.get('displayName'),
       'about': obj.get('summary'),
@@ -480,6 +480,19 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
 
     if location := as1.get_object(obj, 'location').get('displayName'):
       event['tags'].append(['location', location])
+
+    # imeta tags for images, video, audio
+    for img in as1.get_objects(obj, 'image'):
+      if url := img.get('url') or img.get('id'):
+        tag = ['imeta', f'url {url}']
+        if alt := img.get('displayName'):
+          tag.append(f'alt {alt}')
+        if mime := img.get('mimeType') or mimetypes.guess_type(url, strict=False)[0]:
+          tag.append(f'm {mime}')
+        event['tags'].append(tag)
+        # add to text content if necessary
+        if url not in event['content']:
+          event['content'] += ' ' + url
 
   elif type == 'share':
     event.update({
@@ -591,6 +604,7 @@ def to_as1(event):
       'objectType': 'note' if kind == KIND_NOTE else 'article',
       # TODO: render Markdown to HTML?
       'content': event.get('content'),
+      'image': [],
       'tags': [],
     })
 
@@ -614,6 +628,19 @@ def to_as1(event):
         obj.setdefault('title', tag[1])
       elif type == 'location':
         obj['location'] = {'displayName': tag[1]}
+      elif type == 'imeta':
+        metas = dict(val.split(maxsplit=1) for val in tag[1:])
+        if url := metas.get('url'):
+          mime = metas.get('m') or mimetypes.guess_type(url, strict=False)[0]
+          if mime.split('/')[0] == 'image':
+            obj['image'].append({
+              'objectType': 'image',
+              'url': url,
+              'mimeType': mime,
+              'displayName': metas.get('alt'),
+            })
+            # remove from text content
+            obj['content'] = obj['content'].replace(url, '').rstrip()
 
   elif kind in (KIND_REPOST, KIND_GENERIC_REPOST):  # repost
     obj.update({
