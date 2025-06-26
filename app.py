@@ -260,7 +260,7 @@ def url():
   if mf2:
     logger.debug(f'Got mf2: {json_dumps(mf2, indent=2)}')
     def fetch_mf2_func(url):
-      if util.domain_or_parent_in(urllib.parse.urlparse(url).netloc, SILO_DOMAINS):
+      if util.domain_or_parent_in(url, SILO_DOMAINS):
         return {'items': [{'type': ['h-card'], 'properties': {'url': [url]}}]}
       return util.fetch_mf2(url, gateway=True)
 
