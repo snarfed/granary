@@ -27,7 +27,6 @@ NIPS implemented:
 
 TODO:
 
-* 05: DNS verification
 * 11: relay info (like nodeinfo)
 * 12: tag queries
 * 16, 33: ephemeral/replaceable events
