@@ -23,7 +23,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apt-get -y install virtualenv pkg-config
+            apt-get -y install automake libtool pkg-config virtualenv
             virtualenv local
             source local/bin/activate
             pip install -U pip flake8
