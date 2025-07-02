@@ -536,12 +536,14 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         banner = url
         break
 
-    # extract pinned post from featured collection
+    # extract pinned post from featured collection.
+    # note that we skip pinned post ids that aren't at:// URIs!
     pinned_post = None
     if featured := as1.get_object(obj, 'featured'):
       if first := (util.get_first(featured, 'orderedItems')
                    or util.get_first(featured, 'items')):
-        pinned_post = from_as1_to_strong_ref(first, client=client, raise_=raise_)
+        if first.startswith('at://'):
+          pinned_post = from_as1_to_strong_ref(first, client=client, raise_=raise_)
 
     summary = orig_summary = obj.get('summary') or ''
     is_html = (bool(BeautifulSoup(summary, 'html.parser').find())

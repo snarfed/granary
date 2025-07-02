@@ -1965,6 +1965,17 @@ class BlueskyTest(testutil.TestCase):
     self.assert_call(mock_get, 'com.atproto.repo.getRecord'
                      '?repo=did%3Afo%3Ao&collection=app.bsky.feed.post&rkey=bar')
 
+  def test_from_as1_actor_skip_pinned_post_not_atproto(self):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+    }, self.from_as1({
+      'objectType': 'person',
+      'featured': {
+        'type': 'Collection',
+        'items': ['http://foo/bar'],
+      },
+    }, client=self.bs, raise_=True))
+
   def test_from_as1_actor_pinned_post_empty_featured_collection(self):
     self.assert_equals({
       '$type': 'app.bsky.actor.profile',
