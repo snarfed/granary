@@ -1951,6 +1951,31 @@ class BlueskyTest(testutil.TestCase):
     self.assert_call(mock_get, 'com.atproto.repo.getRecord'
                      '?repo=did%3Afo%3Ao&collection=app.bsky.feed.post&rkey=bar')
 
+  @patch('requests.get', return_value=requests_response({
+    'uri': 'at://did:fo:o/app.bsky.feed.post/bar',
+    'cid': 'sydddddd',
+    'value': {'x': 'y'},
+  }))
+  def test_from_as1_actor_pinned_post_object(self, mock_get):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+      'pinnedPost': {
+        'uri': 'at://did:fo:o/app.bsky.feed.post/bar',
+        'cid': 'sydddddd',
+      },
+    }, self.from_as1({
+      'objectType': 'person',
+      'featured': {
+        'type': 'OrderedCollection',
+        'orderedItems': [
+          {'id': 'at://did:fo:o/app.bsky.feed.post/bar'},
+          'at://did:fo:o/app.bsky.feed.post/baz',
+        ],
+      },
+    }, client=self.bs))
+    self.assert_call(mock_get, 'com.atproto.repo.getRecord'
+                     '?repo=did%3Afo%3Ao&collection=app.bsky.feed.post&rkey=bar')
+
   @patch('requests.get', return_value=requests_response(status=404))
   def test_from_as1_actor_pinned_post_fetch_fails(self, mock_get):
     self.assert_equals({

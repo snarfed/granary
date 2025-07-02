@@ -540,8 +540,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # note that we skip pinned post ids that aren't at:// URIs!
     pinned_post = None
     if featured := as1.get_object(obj, 'featured'):
-      if first := (util.get_first(featured, 'orderedItems')
-                   or util.get_first(featured, 'items')):
+      if first := (as1.get_id(featured, 'orderedItems')
+                   or as1.get_id(featured, 'items')):
         if first.startswith('at://'):
           pinned_post = from_as1_to_strong_ref(first, client=client, raise_=raise_)
 
