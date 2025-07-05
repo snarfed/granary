@@ -152,6 +152,9 @@ SERVER_ACTOR_PREFIXES = (
   '/wp-json/activitypub/1.0/application',
 )
 
+# a basic, incomplete pattern for fediverse URLs and AP ids
+URL_RE = re.compile(r'^https?://(?P<server>.+)/(users/|profile/|@)(?P<username>[^/?]+)')
+
 
 def get_urls(obj, key='url'):
   """Returns ``link['href']`` or ``link``, for each ``link`` in ``obj[key]``."""
@@ -792,9 +795,9 @@ def address(actor):
 
   for url in urls:
     if url:
-      match = re.match(r'^https?://(.+)/(users/|profile/|@)(.+)$', url)
+      match = URL_RE.match(url)
       if match:
-        return match.expand(r'@\3@\1')
+        return match.expand(r'@\g<username>@\g<server>')
 
 
 def link_tags(obj):
