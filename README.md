@@ -319,6 +319,8 @@ _Non-breaking changes:_
 * `mastodon`:
   * Convert `followers_count`/`following_count` in Mastodon accounts to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).
   * Add `**requests_kwargs` to `Bluesky` constructor.
+* `microformats2`:
+  * `to_as1`: bug fix: handle `u-bookmark-of h-cite` ([#918](github.com/snarfed/granary/issues/918)).
 * `nostr`:
   * Add new `nip05_to_npub` function to resolve [NIP-05](https://nips.nostr.com/5) identifiers.
   * Add new `bech32_decode`, `bech32_encode`, `bech32_prefix_for`, `pubkey_from_privkey`, `uri_for` functions.

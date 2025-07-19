@@ -1024,6 +1024,29 @@ foo bar
         },
       }))
 
+  def test_to_as1_bookmark_hcite(self):
+    # github.com/snarfed/granary/issues/918
+    self.assert_equals({
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'bookmark',
+        'targetUrl': 'http://book/marked',
+      },
+    }, microformats2.to_as1({
+      'type': ['h-entry'],
+      'properties': {
+        'bookmark-of': [{
+          'type': ['h-cite'],
+          'properties': {
+            'name': ['a title'],
+            'url': ['http://book/marked']
+          },
+          'value': 'http://book/marked',
+        }]
+      },
+    }))
+
   def test_hfeed_to_as1(self):
     self.assert_equals([{
       'objectType': 'activity',

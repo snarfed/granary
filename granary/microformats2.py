@@ -640,8 +640,7 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
           t['id'] = t.get('url')
         t['objectType'] = 'event'
       elif mf2_type == 'bookmark':
-        t = {'objectType': 'bookmark', 'targetUrl': util.get_url(t) or t}
-
+        t = {'objectType': 'bookmark', 'targetUrl': get_text(target)}
 
       # eliminate duplicates from redundant backcompat properties
       if t not in objects:
