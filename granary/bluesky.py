@@ -1650,7 +1650,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None, pds=DEFAUL
 
   elif type == 'app.bsky.embed.record':
     at_uri = to_as1(obj.get('record'), type='com.atproto.repo.strongRef', **kwargs)
-    if not at_uri:
+    if not at_uri or not isinstance(at_uri, str):
       return None
     ret = {
       'objectType': 'note',

@@ -316,6 +316,7 @@ _Non-breaking changes:_
     * Bug fix: handle bare string `image`.
   * `to_as1`:
     * Bug fix, handle facets with bad indices (in the middle of Unicode code points) interacting with HTML characters.
+    * Better error handling when embed record `$type` is invalid.
 * `mastodon`:
   * Convert `followers_count`/`following_count` in Mastodon accounts to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).
   * Add `**requests_kwargs` to `Bluesky` constructor.

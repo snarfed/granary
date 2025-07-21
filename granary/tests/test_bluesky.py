@@ -3167,6 +3167,25 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
+  def test_to_as1_embed_record_bad_type(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'something to say',
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': 'something to say',
+      'embed': {
+        '$type': 'app.bsky.embed.record',
+        'record': {
+          # this is invalid, but we've seen it
+          # https://console.cloud.google.com/errors/detail/CPe62PPy19yl0QE?project=bridgy-federated
+          '$type': 'app.bsky.feed.defs#postView',
+          'uri': 'at://did:al:ice/app.bsky.feed.post/tid',
+          'cid': 'sydddddd',
+        },
+      },
+    }))
+
   def test_to_as1_embed_record_with_media(self):
     self.assert_equals({
       'objectType': 'note',
