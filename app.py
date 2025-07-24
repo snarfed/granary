@@ -148,7 +148,11 @@ util.set_user_agent('granary (https://granary.io/)')
 @app.route('/')
 def front_page():
   """Renders and serves the front page."""
-  vars = dict(request.args)
+  vars = {
+    **dict(request.args),
+    'request': request,
+    'util': util,
+  }
   vars.setdefault('output', vars.get('format'))
 
   key = vars.get('auth_entity')
