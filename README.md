@@ -317,6 +317,7 @@ _Non-breaking changes:_
   * `to_as1`:
     * Bug fix, handle facets with bad indices (in the middle of Unicode code points) interacting with HTML characters.
     * Better error handling when embed record `$type` is invalid.
+  * `web_url_to_at_uri` and `BSKY_APP_URL_RE`: tighten validation, check authority and rkey for allowed characters.
 * `mastodon`:
   * Convert `followers_count`/`following_count` in Mastodon accounts to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).
   * Add `**requests_kwargs` to `Bluesky` constructor.

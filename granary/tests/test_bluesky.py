@@ -786,7 +786,8 @@ class BlueskyTest(testutil.TestCase):
         web_url_to_at_uri('https://bsky.app/profile/foo.com',
                           handle='alice.com', did='did:plc:foo'))
 
-    for url in ('at://foo', 'http://not/bsky.app', 'https://bsky.app/x'):
+    for url in ('at://foo', 'http://not/bsky.app', 'https://bsky.app/x',
+                'https://bsky.app/profile/foo.bsky.social,[object%20Object]'):
       with self.assertRaises(ValueError):
         web_url_to_at_uri(url)
 

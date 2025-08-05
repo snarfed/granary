@@ -58,15 +58,16 @@ MAX_FOLLOWS = 10000
 # https://atproto.com/specs/record-key#record-key-syntax
 # https://atproto.com/specs/nsid
 # also see arroba.util.parse_at_uri
-_CHARS = 'a-zA-Z0-9-.:'
+AUTHORITY_CHARS = 'a-zA-Z0-9-.:'
+RKEY_CHARS = f'{AUTHORITY_CHARS}~_'
 # TODO: add query and fragment? they're currently unused in the protocol
 # https://atproto.com/specs/at-uri-scheme#structure
 # NOTE: duplicated in lexrpc.base!
 AT_URI_PATTERN = re.compile(rf"""
     ^at://
-     (?P<repo>[{_CHARS}]+)
+     (?P<repo>[{AUTHORITY_CHARS}]+)
       (?:/(?P<collection>[a-zA-Z0-9-.]+)
-       (?:/(?P<rkey>[{_CHARS}~_]+))?)?
+       (?:/(?P<rkey>[{RKEY_CHARS}]+))?)?
     $""", re.VERBOSE)
 
 # Maps AT Protocol NSID collections to path elements in bsky.app URLs.
@@ -119,11 +120,11 @@ FROM_AS1_TYPES = {
   ),
 }
 
-BSKY_APP_URL_RE = re.compile(r"""
+BSKY_APP_URL_RE = re.compile(fr"""
   ^https://(staging\.)?bsky\.app
-  /profile/(?P<id>[^/]+)
+  /profile/(?P<id>[{AUTHORITY_CHARS}]+)
   (/(?P<type>post|feed)
-   /(?P<tid>[^?]+))?$
+   /(?P<tid>[{RKEY_CHARS}]+))?$
   """, re.VERBOSE)
 
 DEFAULT_PDS_DOMAIN = 'bsky.social'
