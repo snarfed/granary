@@ -834,11 +834,11 @@ def link_tags(obj):
     # https://github.com/snarfed/bridgy-fed/issues/887#issuecomment-2452141758
     # https://github.com/snarfed/bridgy-fed/issues/1634#issuecomment-2577519871
     #
-    # ...and rel="tag" to prevent generating link previews for hashtag links
-    # https://discord.com/channels/1100160301254590525/1116486604945625168/1377255511849828503
+    # ...and rel="tag"/class="h-card" to prevent generating link previews for hashtag
+    # links and mentions. https://github.com/mastodon/mastodon/issues/35717
     attrs = ''
     if tag.get('type') == 'Mention':
-      attrs = 'class="mention" '
+      attrs = 'class="mention h-card" '
     elif tag.get('type') in ('Hashtag', 'Tag'):
       attrs = 'class="hashtag" rel="tag" '
 

@@ -871,7 +871,7 @@ foo
     self.assert_equals({
       'content': """\
 foo
-<a class="mention" href="http://bar">bar</a>
+<a class="mention h-card" href="http://bar">bar</a>
 <a href="http://baz">baz</a>
 """,
       'content_is_html': True,
