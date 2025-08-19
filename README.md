@@ -322,6 +322,7 @@ _Non-breaking changes:_
   * Convert `followers_count`/`following_count` in Mastodon accounts to the non-standard `followers` and `following` AS1 collections (borrowed from ActivityPub).
   * Add `**requests_kwargs` to `Bluesky` constructor.
 * `microformats2`:
+  * `from_as1`: for quote posts (note attachments), populate their `id` into `url`, not `uid` ([bridgy-fed#2045](https://github.com/snarfed/bridgy-fed/issues/2045)).
   * `to_as1`: bug fix: handle `u-bookmark-of h-cite` ([#918](github.com/snarfed/granary/issues/918)).
 * `nostr`:
   * Add new `nip05_to_npub` function to resolve [NIP-05](https://nips.nostr.com/5) identifiers.

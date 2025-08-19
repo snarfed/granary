@@ -606,6 +606,17 @@ foo bar
 </article>
 """, html)
 
+  def test_attachments_to_children_quote_post_note_id_becomes_url(self):
+    obj = {'attachments': [{'objectType': 'note', 'id': 'http://p'}]}
+
+    self.assert_equals([{
+      'type': ['u-quotation-of', 'h-cite'],
+      'properties': {
+        'uid': ['http://p'],
+        'url': ['http://p'],
+      },
+    }], microformats2.from_as1(obj)['children'])
+
   def test_from_as1_reaction(self):
     self.assert_equals({
       'type': ['h-entry'],

@@ -265,10 +265,13 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
   # attachments to children
   children = []
   for att_type, atts in attachments.items():
-    mf2_types = AS_ATTACHMENT_TO_MF2_TYPE.get(att_type)
-    if mf2_types:
-      children.extend(object_to_json(a, trim_nulls=False, entry_class=mf2_types)
-                      for a in atts if 'startIndex' not in a)
+    if mf2_types := AS_ATTACHMENT_TO_MF2_TYPE.get(att_type):
+      for att in atts:
+        if 'startIndex' not in att:
+          child = object_to_json(att, trim_nulls=False, entry_class=mf2_types)
+          if att_type == 'note' and (id := att.get('id')):
+            child['properties']['url'] = [id]
+          children.append(child)
 
   # construct mf2!
   ret = {
