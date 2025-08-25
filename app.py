@@ -8,6 +8,7 @@ import urllib.parse
 from xml.etree import ElementTree
 
 from flask import abort, Flask, redirect, render_template, request
+import flask_caching
 import flask_gae_static
 from google.cloud import ndb
 import mf2util
@@ -124,7 +125,10 @@ XML_TEMPLATE = """\
 <response>%s</response>
 """
 
-CACHE_CONTROL = {'Cache-Control': 'public, max-age=600'}
+CACHE_EXPIRATION = datetime.timedelta(minutes=5)
+CACHE_CONTROL = {
+  'Cache-Control': f'public, max-age={CACHE_EXPIRATION.total_seconds()}',
+}
 
 
 app = Flask(__name__, static_folder=None)
@@ -141,6 +145,8 @@ if appengine_info.DEBUG or appengine_info.LOCAL_SERVER:
 
 app.wsgi_app = flask_util.ndb_context_middleware(
     app.wsgi_app, client=appengine_config.ndb_client)
+
+cache = flask_caching.Cache(app)
 
 util.set_user_agent('granary (https://granary.io/)')
 
@@ -203,6 +209,7 @@ def demo():
 
 @app.route('/url', methods=('GET', 'HEAD'))
 @flask_util.headers(CACHE_CONTROL)
+@flask_util.cached(cache, timeout=CACHE_EXPIRATION, http_5xx=True)
 def url():
   """Handles URL requests from the interactive demo form on the front page.
 
