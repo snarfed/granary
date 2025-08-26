@@ -371,6 +371,23 @@ Watching  \t waves
     self.assert_equals(obj, Source.postprocess_object(obj))
     self.assert_equals(obj_with_tag, Source.postprocess_object(obj, mentions=True))
 
+  def test_postprocess_object_mentions_at_at(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo">@bar@inst</a>',
+    }
+    obj_with_tag = {  # because postprocess_object modifies obj
+      **obj,
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'http://foo',
+        'displayName': '@bar@inst',
+      }],
+    }
+
+    self.assert_equals(obj, Source.postprocess_object(obj))
+    self.assert_equals(obj_with_tag, Source.postprocess_object(obj, mentions=True))
+
   def test_postprocess_object_mention_existing_tag(self):
     obj = {
       'objectType': 'note',

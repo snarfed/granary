@@ -1394,6 +1394,16 @@ class BlueskyTest(testutil.TestCase):
       }],
     }))
 
+  def test_from_as1_tag_mention_no_displayName(self):
+    self.assertNotIn('facets', self.from_as1({
+      'objectType': 'note',
+      'content': 'foo @you.com bar',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'https://bsky.app/profile/did:plc:foo',
+      }],
+    }))
+
   def test_from_as1_tag_mention_html_content_guess_index(self):
     content = '<p>foo <a href="https://bsky.app/profile/did:plc:foo">@you.com</a> bar</p>'
     self.assert_equals({

@@ -733,9 +733,10 @@ class Source(object, metaclass=SourceMeta):
         href = a.get('href')
         text = a.get_text('').strip()
         if text.startswith('@'):
+          at_user = text
           if text.count('@') == 2:
-            text = text.rsplit('@', maxsplit=1)[0]
-          if href and text not in existing_tags_with_urls:
+            at_user = text.rsplit('@', maxsplit=1)[0]
+          if href and at_user not in existing_tags_with_urls:
             obj.setdefault('tags', []).append({
               'objectType': 'mention',
               'url': href,
