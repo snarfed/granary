@@ -42,6 +42,15 @@ class Microformats2Test(testutil.TestCase):
       'properties': {'url': ['not a url']},
     }))
 
+  def test_to_as1_acct_url(self):
+    self.assertEqual({
+      'objectType': 'note',
+      'url': 'acct:foo@bar.com',
+    }, microformats2.to_as1({
+      'type': ['h-entry'],
+      'properties': {'url': ['acct:foo@bar.com']},
+    }))
+
   def test_to_as1_html_content_and_summary(self):
     for expected_content, expected_summary, value in (
         ('my html', 'my val', {'value': 'my val', 'html': 'my html'}),
