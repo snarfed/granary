@@ -14,7 +14,7 @@ from .. import microformats2
 
 class Microformats2Test(testutil.TestCase):
 
-  def test_post_type_discovery(self):
+  def test_to_as1_post_type_discovery(self):
     for prop, verb in ('like-of', 'like'), ('repost-of', 'share'):
       obj = microformats2.to_as1(
         {'type': ['h-entry'],
@@ -22,19 +22,27 @@ class Microformats2Test(testutil.TestCase):
       self.assertEqual('activity', obj['objectType'])
       self.assertEqual(verb, obj['verb'])
 
-  def test_verb_require_of_suffix(self):
+  def test_to_as1_verb_require_of_suffix(self):
     for prop in 'like', 'repost':
       obj = microformats2.to_as1(
         {'type': ['h-entry'],
          'properties': {prop: ['http://foo/bar']}})
       self.assertNotIn('verb', obj)
 
-  def test_ignore_h_as(self):
+  def test_to_as1_ignore_h_as(self):
     """https://github.com/snarfed/bridgy/issues/635"""
     obj = microformats2.to_as1({'type': ['h-entry', 'h-as-article']})
     self.assertEqual('note', obj['objectType'])
 
-  def test_html_content_and_summary(self):
+  def test_to_as1_ignore_bad_url(self):
+    self.assertEqual({
+      'objectType': 'note',
+    }, microformats2.to_as1({
+      'type': ['h-entry'],
+      'properties': {'url': ['not a url']},
+    }))
+
+  def test_to_as1_html_content_and_summary(self):
     for expected_content, expected_summary, value in (
         ('my html', 'my val', {'value': 'my val', 'html': 'my html'}),
         ('my html', None, {'html': 'my html'}),
@@ -55,14 +63,14 @@ class Microformats2Test(testutil.TestCase):
     obj = microformats2.to_as1(mf2)
     self.assertEqual([{'url': 'http://example.com/image.jpg'}], obj['image'])
 
-  def test_photo_property_has_no_url(self):
+  def test_to_as1_photo_property_has_no_url(self):
     """handle the case where the photo property is *only* text, not a url"""
     mf2 = {'properties':
            {'photo': ['the caption', 'alternate text']}}
     obj = microformats2.to_as1(mf2)
     self.assertFalse(obj.get('image'))
 
-  def test_video_stream(self):
+  def test_to_as1_video_stream(self):
     """handle the case where someone (incorrectly) marks up the caption
     with p-photo
     """
@@ -71,7 +79,7 @@ class Microformats2Test(testutil.TestCase):
     obj = microformats2.to_as1(mf2)
     self.assertEqual([{'url': 'http://example.com/video.mp4'}], obj['stream'])
 
-  def test_nested_compound_url_object(self):
+  def test_to_as1_nested_compound_url_object(self):
     mf2 = {'properties': {
              'repost-of': [{
                'type': ['h-outer'],

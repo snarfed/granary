@@ -511,11 +511,12 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   # urls, with displayName if available in rel_urls
   urls = []
   for u in get_string_urls(props.get('url')):
-    rel = rel_urls.get(u, {}) if rel_urls else {}
-    urls.append({
-      'value': u,
-      'displayName': (rel.get('text') or rel.get('title') or '').strip(),
-    })
+    if util.is_url(u):
+      rel = rel_urls.get(u, {}) if rel_urls else {}
+      urls.append({
+        'value': u,
+        'displayName': (rel.get('text') or rel.get('title') or '').strip(),
+      })
 
   # quotations: https://indieweb.org/quotation#How_to_markup
   attachments = [

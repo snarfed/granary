@@ -323,7 +323,9 @@ _Non-breaking changes:_
   * Add `**requests_kwargs` to `Bluesky` constructor.
 * `microformats2`:
   * `from_as1`: for quote posts (note attachments), populate their `id` into `url`, not `uid` ([bridgy-fed#2045](https://github.com/snarfed/bridgy-fed/issues/2045)).
-  * `to_as1`: bug fix: handle `u-bookmark-of h-cite` ([#918](github.com/snarfed/granary/issues/918)).
+  * `to_as1`:
+    * Bug fix: handle `u-bookmark-of h-cite` ([#918](github.com/snarfed/granary/issues/918)).
+    * Only populate `u-url` into `url` if it's a valid URL.
 * `nostr`:
   * Add new `nip05_to_npub` function to resolve [NIP-05](https://nips.nostr.com/5) identifiers.
   * Add new `bech32_decode`, `bech32_encode`, `bech32_prefix_for`, `pubkey_from_privkey`, `uri_for` functions.
