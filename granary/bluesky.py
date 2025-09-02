@@ -1030,7 +1030,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         max_length = LEXRPC.defs['app.bsky.feed.post']['record']['properties']['tags']['maxLength']
         if tag_type == 'hashtag':
           if len(standalone_tags) >= max_length:
-            logger.warning(f'More than {max} standalone hashtags, omitting "{name}"')
+            logger.warning(f'More than {max_length} standalone hashtags, omitting "{name}"')
           else:
             standalone_tags.append(name)
         continue
