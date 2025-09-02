@@ -2780,6 +2780,33 @@ class BlueskyTest(testutil.TestCase):
       'content': long,
     }))
 
+  def test_from_as1_ignore_relative_urls(self):
+    self.assertEqual({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'tags': ['tweets'],
+      'text': '32 Funniest Tweets Origin',
+    }, from_as1({
+      'objectType': 'note',
+      'url': '/funny-may-tweets-online-msn/',
+      'content': '32 Funniest Tweets <a href="/funny-tweets/">Origin</a>',
+      'attachments': [{
+          'url': '/blog/foo',
+          'objectType': 'image',
+          'mimeType': 'image/png',
+        }],
+      'image': [{
+          'url': '/pic/bar',
+          'mimeType': 'image/png',
+          'objectType': 'image',
+        }],
+      'tags': [{
+          'url': 'https://mastodon.social/tags/tweets',
+          'displayName': '#tweets',
+        }],
+      'author': '/actor/Funny',
+    }))
+
   def test_truncate(self):
     short = 'x' * 63
     long = 'x' * 65
