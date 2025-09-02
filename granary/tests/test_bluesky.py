@@ -2708,6 +2708,24 @@ class BlueskyTest(testutil.TestCase):
       mock_get,
       'com.atproto.repo.getRecord?repo=did%3Ax%3Ay&collection=app.bsky.feed.post&rkey=3kzrdhahdcbc2')
 
+  def test_from_as1_last_line_bsky_profile_link_is_not_quote(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'https://bsky.app/profile/alice.bsky.social',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'https://bsky.app/profile/alice.bsky.social',
+        }],
+        'index': {'byteStart': 0, 'byteEnd': 42},
+      }],
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': '<a href="https://bsky.app/profile/alice.bsky.social">https://bsky.app/profile/alice.bsky.social</a>',
+    }, client=self.bs._client, raise_=True), ignore=['fooOriginalText', 'fooOriginalUrl'])
+
   def test_from_as1_sensitive(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',

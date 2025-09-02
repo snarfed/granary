@@ -835,7 +835,10 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         continue
 
       # check the link is to a bluesky post and not already in attachments
-      if (tag['url'].startswith('at://') or tag['url'].startswith(Bluesky.BASE_URL)) and not tag['url'] in attachment_urls:
+      if ((tag['url'].startswith('at://')
+           or ((match := BSKY_APP_URL_RE.match(tag['url']))
+               and match.group('type') == 'post'))
+          and not tag['url'] in attachment_urls):
         start_index = tag['startIndex'] + index_offset
 
         # check link is on its own line

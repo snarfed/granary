@@ -314,6 +314,7 @@ _Non-breaking changes:_
   * `from_as1`:
     * If `content` is in a [language that doesn't delimit words by spaces](https://en.m.wikipedia.org/wiki/Category:Writing_systems_without_word_boundaries), truncate between any characters ([snarfed/bridgy-fed#1625](https://github.com/snarfed/bridgy-fed/issues/1625)).
     * Bug fix: handle bare string `image`.
+    * Bug fix for when last line of content is a bsky.app URL that's not a post ([bridgy-fed#2064](https://github.com/snarfed/bridgy-fed/issues/2064)).
   * `to_as1`:
     * Bug fix, handle facets with bad indices (in the middle of Unicode code points) interacting with HTML characters.
     * Better error handling when embed record `$type` is invalid.
