@@ -347,6 +347,8 @@ _Non-breaking changes:_
     * `query`:
       * Verify signatures; discard events with invalid signatures.
       * Add [NIP-42](https://nips.nostr.com/42) support; reply to `AUTH` challenges with signatures from the stored `privkey`.
+* `rss`:
+  * `to_as1`: handle UNIX timestamp `dcterms:modified` values without overflowing.
 
 
 ### 8.1 - 2025-03-13

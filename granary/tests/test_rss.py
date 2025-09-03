@@ -322,3 +322,34 @@ The original post]]></description>
 </channel>
 </rss>
 """)[0]['object'])
+
+  def test_to_as1_overflow_date(self):
+    """Test handling dates that cause OverflowError in dateutil.parser.
+
+    Some RSS feeds have dcterms:modified values that are Unix timestamps
+    in milliseconds, but dateutil.parser tries to parse them as years,
+    causing OverflowError.
+
+    https://console.cloud.google.com/errors/detail/CJSO5amVvMDSJQ;locations=global;time=P30D?project=bridgy-federated
+    """
+    self.assert_equals({
+      'objectType': 'article',
+      'id': 'http://example.com/post',
+      'url': 'http://example.com/post',
+      'content': 'Test content',
+      'displayName': 'Test Post',
+      'published': '2025-09-03T14:20:35+00:00',
+    }, rss.to_as1("""\
+<?xml version='1.0' encoding='UTF-8'?>
+<rss version="2.0" xmlns:dcterms="http://purl.org/dc/terms/">
+<channel>
+  <item>
+    <link>http://example.com/post</link>
+    <title>Test Post</title>
+    <description>Test content</description>
+    <pubDate>Wed, 3 Sep 2025 14:20:35 +0000</pubDate>
+    <dcterms:modified>1756909235000</dcterms:modified>
+  </item>
+</channel>
+</rss>
+""")[0]['object'])

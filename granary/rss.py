@@ -219,7 +219,7 @@ def to_as1(rss):
     if field in entry:
       try:
         return dateutil.parser.parse(entry[field]).isoformat()
-      except (TypeError, dateutil.parser.ParserError):
+      except (TypeError, dateutil.parser.ParserError, OverflowError, ValueError):
         return None
 
   def as_int(val):
