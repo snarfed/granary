@@ -17,7 +17,7 @@ git+https://github.com/snarfed/secp256k1-py.git@setup-requires-pycparser#egg=sec
 
 # required for mox3, not prod
 fixtures==4.2.4.post1
-pbr==6.1.1
+pbr==7.0.1
 
 async-timeout==5.0.1
 attrs==25.3.0
