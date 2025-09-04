@@ -16,7 +16,7 @@ git+https://github.com/snarfed/oauth-dropins.git#egg=oauth_dropins
 git+https://github.com/snarfed/secp256k1-py.git@setup-requires-pycparser#egg=secp256k1
 
 # required for mox3, not prod
-fixtures==4.2.4.post1
+fixtures==4.2.6
 pbr==7.0.1
 
 async-timeout==5.0.1
