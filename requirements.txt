@@ -79,7 +79,7 @@ prawcore==2.4.0
 proto-plus==1.26.1
 protobuf==6.31.1
 pyasn1==0.6.1
-pyasn1-modules==0.4.1
+pyasn1-modules==0.4.2
 pymemcache==4.0.0
 pyparsing==3.2.3
 python-dateutil==2.9.0.post0
