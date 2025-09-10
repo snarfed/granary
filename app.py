@@ -167,6 +167,9 @@ def front_page():
     if vars['entity']:
       vars.setdefault('site', vars['entity'].site_name().lower())
 
+  if vars.get('site') in ('mastodon', 'pixelfed') and not vars.get('entity'):
+    raise BadRequest('missing auth_entity')
+
   vars.update({
     silo + '_html': module.Start.button_html(
       f'/{silo}/start_auth',

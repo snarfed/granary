@@ -190,6 +190,12 @@ class AppTest(testutil.TestCase):
   def expect_requests_get(self, *args, **kwargs):
     return super(AppTest, self).expect_requests_get(*args, stream=True, **kwargs)
 
+  def test_front_page_mastodon_pixelfed_without_auth_entity(self):
+    for site in 'mastodon', 'pixelfed':
+      with self.subTest(site=site):
+        resp = client.get(f'/?site={site}')
+        self.assert_equals(400, resp.status_code)
+
   def test_url_as1_to_mf2_json(self):
     self.expect_requests_get('http://my/posts.json', AS1)
     self.mox.ReplayAll()
