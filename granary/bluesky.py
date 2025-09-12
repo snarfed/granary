@@ -135,7 +135,7 @@ DEFAULT_APPVIEW = 'https://api.bsky.app'
 # https://bsky.app/profile/safety.bsky.app/post/3khhw7s3rtx2s
 # https://docs.bsky.app/docs/advanced-guides/resolving-identities#for-backend-services
 # https://github.com/bluesky-social/atproto/blob/main/packages/api/docs/labels.md#label-behaviors
-NO_AUTHENTICATED_LABEL = '!no-unauthenticated'
+NO_UNAUTHENTICATED_LABEL = '!no-unauthenticated'
 
 # Bluesky => AS1 labels
 #
@@ -1390,7 +1390,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None, pds=DEFAUL
                 if type == 'app.bsky.actor.profile'
               else obj.get('labels', []))
     for label in labels:
-      if label.get('val') == NO_AUTHENTICATED_LABEL and not label.get('neg'):
+      if label.get('val') == NO_UNAUTHENTICATED_LABEL and not label.get('neg'):
         ret['to'] = [{
           'objectType': 'group',
           'alias': '@unlisted',

@@ -27,7 +27,7 @@ from ..bluesky import (
   from_as1,
   from_as1_to_strong_ref,
   LEXRPC,
-  NO_AUTHENTICATED_LABEL,
+  NO_UNAUTHENTICATED_LABEL,
   to_as1,
   to_external_embed,
   url_to_did_web,
@@ -2918,7 +2918,7 @@ class BlueskyTest(testutil.TestCase):
           'neg' : False,
           'src' : 'did:...',
           'uri' : 'at://did:.../app.bsky.actor.profile/self',
-          'val' : NO_AUTHENTICATED_LABEL,
+          'val' : NO_UNAUTHENTICATED_LABEL,
         }],
       },
     }))
@@ -2927,7 +2927,7 @@ class BlueskyTest(testutil.TestCase):
     got = to_as1({
       **ACTOR_PROFILE_VIEW_BSKY,
       'labels': [{
-        'val': NO_AUTHENTICATED_LABEL,
+        'val': NO_UNAUTHENTICATED_LABEL,
       }],
     })
     self.assert_equals([{
