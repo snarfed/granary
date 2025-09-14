@@ -281,7 +281,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 9.0 - unreleased
+### 9.0 - 2025-09-13
 
 _Breaking changes:_
 
