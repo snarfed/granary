@@ -512,7 +512,7 @@ class Mastodon(source.Source):
 
     ret = {
       'objectType': 'person',
-      'id': account.get('uri') or util.tag_uri(domain, username),
+      'id': self.actor_id(account) or util.tag_uri(domain, username),
       'numeric_id': account.get('id'),
       'username': username,
       'displayName': account.get('display_name') or acct or username,
@@ -532,6 +532,23 @@ class Mastodon(source.Source):
 
   user_to_actor = to_as1_actor
   """Deprecated! Use :meth:`to_as1_actor` instead."""
+
+  def actor_id(self, user):
+    """Returns the ActivityPub actor id for an API user object.
+
+    In Mastodon, the AP actor id is in the ``uri`` field.
+
+    Unfortunately, it's much more complicated in some other Mastodon API
+    implementations, eg Pixelfed:
+    https://github.com/pixelfed/pixelfed/discussions/6182
+
+    Args:
+      user (dict): user API object: https://docs.joinmastodon.org/methods/accounts/#get
+
+    Returns:
+      str or None
+    """
+    return user.get('uri')
 
   def _make_like(self, status, account):
     return self._make_like_or_share(status, account, 'like')

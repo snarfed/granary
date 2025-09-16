@@ -8,17 +8,25 @@ from .. import mastodon, pixelfed
 from . import test_mastodon
 
 
-ACCOUNT = copy.deepcopy(test_mastodon.ACCOUNT)
-ACCOUNT.update({
+ACCOUNT = {
+  **test_mastodon.ACCOUNT,
   'fields': None,
   'created_at': 1492634299.704,
-})
-
-ACTOR = copy.deepcopy(test_mastodon.ACTOR)
-ACTOR['urls'] = [{'value': 'http://foo.com/@snarfed'}]
-
-REPLY_STATUS = copy.deepcopy(test_mastodon.REPLY_STATUS)
-REPLY_STATUS['in_reply_to_id'] = int(REPLY_STATUS['in_reply_to_id'])
+}
+ACTOR = {
+  **test_mastodon.ACTOR,
+  'id': 'http://foo.com/users/snarfed',
+  'urls': [{'value': 'http://foo.com/@snarfed'}],
+}
+REPLY_STATUS = {
+  **test_mastodon.REPLY_STATUS,
+  'in_reply_to_id': int(test_mastodon.REPLY_STATUS['in_reply_to_id']),
+}
+REPLY_OBJECT = copy.deepcopy(test_mastodon.REPLY_OBJECT)
+REPLY_OBJECT['author']['id'] = 'http://foo.com/users/snarfed'
+REPLY_ACTIVITY = copy.deepcopy(test_mastodon.REPLY_ACTIVITY)
+REPLY_ACTIVITY['actor']['id'] = 'http://foo.com/users/snarfed'
+REPLY_ACTIVITY['object'] = REPLY_OBJECT
 
 
 class PixelfedTest(testutil.TestCase):
@@ -32,8 +40,7 @@ class PixelfedTest(testutil.TestCase):
     self.assertEqual(ACTOR, self.pixelfed.to_as1_actor(ACCOUNT))
 
   def test_reply_status_to_object(self):
-    self.assert_equals(test_mastodon.REPLY_OBJECT,
-                       self.pixelfed.status_to_object(REPLY_STATUS))
+    self.assert_equals(REPLY_OBJECT, self.pixelfed.status_to_object(REPLY_STATUS))
 
   def test_user_url(self):
     self.assert_equals('http://foo.com/bar', self.pixelfed.user_url('bar'))
@@ -51,5 +58,27 @@ class PixelfedTest(testutil.TestCase):
       content_type='application/json')
     self.mox.ReplayAll()
 
-    self.assert_equals([test_mastodon.REPLY_ACTIVITY],
+    self.assert_equals([REPLY_ACTIVITY],
                        self.pixelfed.get_activities(fetch_mentions=True))
+
+  def test_actor_id(self):
+    local_user = {
+      'id': '123',
+      'url': 'https://foo.com/alice',  # self.pixelfed.instance is https://foo.com
+      'username': 'alice',
+      'acct': 'alice',
+    }
+    self.assertEqual('https://foo.com/users/alice',
+                     self.pixelfed.actor_id(local_user))
+
+    remote_user = {
+      'id': '456',
+      'url': 'https://oth.er/users/bob',
+      'username': 'bob',
+      'acct': 'bob@oth.er',
+    }
+    self.assertEqual('https://oth.er/users/bob',
+                     self.pixelfed.actor_id(remote_user))
+
+    self.assertIsNone(self.pixelfed.actor_id({}))
+

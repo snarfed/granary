@@ -281,12 +281,18 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
+### 10.0 - unreleased
+
+* `pixelfed`:
+  * Switch AS1 actor and object ids from `tag:` URIs to the real ActivityPub ids.
+
+
 ### 9.0 - 2025-09-13
 
 _Breaking changes:_
 
 * `mastodon`:
-  * Switch AS1 actor and object ids from `tag:` URIs to the real AS2 ids.
+  * Switch AS1 actor and object ids from `tag:` URIs to the real ActivityPub ids.
 
 _Non-breaking changes:_
 

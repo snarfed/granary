@@ -623,6 +623,17 @@ class MastodonTest(testutil.TestCase):
         'acct': 'eve@xyz',
       })
 
+  def test_actor_id(self):
+    user = {
+      'id': 'aye dee',
+      'uri': 'yew arr aye',
+      'url': 'yew arr ell',
+    }
+    self.assertEqual('yew arr aye', self.mastodon.actor_id(user))
+
+    del user['uri']
+    self.assertIsNone(self.mastodon.actor_id(user))
+
   def test_make_like(self):
     self.assert_equals(LIKE, self.mastodon._make_like(STATUS, ACCOUNT))
 
