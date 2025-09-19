@@ -323,6 +323,27 @@ The original post]]></description>
 </rss>
 """)[0]['object'])
 
+  def test_to_as1_multiple_categories(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'tags': [{
+        'displayName': 'a',
+      }, {
+        'displayName': 'b',
+      }],
+    }, rss.to_as1(
+"""\
+<?xml version='1.0' encoding='UTF-8'?>
+<rss version="2.0">
+<channel>
+  <item>
+    <category>a</category>
+    <category>b</category>
+  </item>
+</channel>
+</rss>
+""")[0]['object'])
+
   def test_to_as1_overflow_date(self):
     """Test handling dates that cause OverflowError in dateutil.parser.
 

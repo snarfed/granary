@@ -284,7 +284,9 @@ Changelog
 ### 10.0 - unreleased
 
 * `pixelfed`:
-  * Switch AS1 actor and object ids from `tag:` URIs to the real ActivityPub ids.
+  * Switch AS1 actor and object ids from `tag:` URIs to the real ActivityPub ids
+* `rss`:
+  * `to_as1`: bug fix for multiple categories.
 
 
 ### 9.0 - 2025-09-13

@@ -299,7 +299,7 @@ def to_as1(rss):
         'updated': iso_datetime('updated'),
         'author': author,
         'image': images,
-        'tags': [{'displayName': tag.get('term') for tag in entry.get('tags', [])}],
+        'tags': [{'displayName': tag.get('term')} for tag in entry.get('tags', [])],
         'attachments': attachments,
         'stream': [a['stream'] for a in attachments],
       },
