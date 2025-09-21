@@ -8,7 +8,6 @@
 #
 # Use this to bust that cache: gcloud -q beta app deploy --no-cache ...
 
-git+https://github.com/dvska/gdata-python3.git#egg=gdata
 git+https://github.com/kylewm/brevity.git#egg=brevity
 git+https://github.com/snarfed/lexrpc.git#egg=lexrpc
 git+https://github.com/snarfed/mox3.git#egg=mox3
