@@ -1781,27 +1781,34 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None, pds=DEFAUL
     return obj['did']
 
   elif type == 'app.bsky.graph.list':
-      ret = {
-        'objectType': 'collection',
-        'id': uri,
-        'url': uri_bsky_url,
-        'displayName': obj.get('name'),
-        'summary': obj.get('description'),
-        'published': obj.get('createdAt'),
-      }
-      if repo_did and pds:
-        ret['image'] = blob_to_url(blob=obj.get('avatar'), repo_did=repo_did, pds=pds)
+    ret = {
+      'objectType': 'collection',
+      'id': uri,
+      'url': uri_bsky_url,
+      'displayName': obj.get('name'),
+      'summary': obj.get('description'),
+      'published': obj.get('createdAt'),
+    }
+    if repo_did and pds:
+      ret['image'] = blob_to_url(blob=obj.get('avatar'), repo_did=repo_did, pds=pds)
 
   elif type == 'app.bsky.graph.listitem':
-      ret = {
-        'objectType': 'activity',
-        'verb': 'add',
-        'id': uri,
-        'actor': repo_did,
-        'object': obj.get('subject'),
-        'target': obj.get('list'),
-        'published': obj.get('createdAt'),
-      }
+    ret = {
+      'objectType': 'activity',
+      'verb': 'add',
+      'id': uri,
+      'actor': repo_did,
+      'object': obj.get('subject'),
+      'target': obj.get('list'),
+      'published': obj.get('createdAt'),
+    }
+
+  elif type == 'community.lexicon.payments.webMonetization':
+    # not a real AS1 object, just a stub so that we minimally support these records
+    # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
+    ret = {
+      'monetization': obj.get('address'),
+    }
 
   else:
     raise ValueError(f'Bluesky object has unknown $type: {type}')

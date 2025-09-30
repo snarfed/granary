@@ -3633,6 +3633,14 @@ class BlueskyTest(testutil.TestCase):
       'sentAt': '2001-02-03T04:05:06.000Z',
     }))
 
+  def test_to_as1_webMonetization(self):
+    self.assert_equals({
+      'monetization': 'http://wal/let',
+    }, to_as1({
+      '$type': 'community.lexicon.payments.webMonetization',
+      'address': 'http://wal/let',
+    }))
+
   def test_constructor_access_token(self):
     bs = Bluesky('handull', access_token='towkin')
     self.assertEqual({

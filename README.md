@@ -283,8 +283,16 @@ Changelog
 
 ### 10.0 - unreleased
 
+_Breaking changes:_
+
 * `pixelfed`:
   * Switch AS1 actor and object ids from `tag:` URIs to the real ActivityPub ids
+
+_Non-breaking changes:_
+
+* `bluesky`:
+  * `to_as1`:
+    * Support `community.lexicon.payments.webMonetization` records. Only returns a single-element dict with key `monetization`, not a real AS1 object.
 * `rss`:
   * `to_as1`: bug fix for multiple categories.
 
