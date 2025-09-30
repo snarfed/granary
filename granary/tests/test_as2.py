@@ -518,6 +518,15 @@ class ActivityStreams2Test(testutil.TestCase):
       'url': 'https://example.com/',
     }))
 
+  def test_from_as1_person_monetization(self):
+    self.assert_equals({
+      'type': 'Person',
+      'monetization': 'http://wal/let',
+    }, as2.from_as1({
+      'objectType' : 'person',
+      'monetization': 'http://wal/let',
+    }), ignore=['@context', 'discoverable', 'indexable'])
+
   def test_from_as1_link_type_href(self):
     self.assert_equals({
       'type': 'Tag',
@@ -748,6 +757,15 @@ class ActivityStreams2Test(testutil.TestCase):
     }, get_fn=mock_get))
 
     mock_get.assert_called_with('http://actor/featured')
+
+  def test_to_as1_person_monetization(self):
+    self.assert_equals({
+      'objectType' : 'person',
+      'monetization': 'http://wal/let',
+    }, as2.to_as1({
+      'type': 'Person',
+      'monetization': 'http://wal/let',
+    }))
 
   def test_to_from_as1_replies_collection(self):
     coll_as1 = {
