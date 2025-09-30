@@ -291,8 +291,8 @@ _Breaking changes:_
 _Non-breaking changes:_
 
 * `bluesky`:
-  * `to_as1`:
-    * Support `community.lexicon.payments.webMonetization` records. Only returns a single-element dict with key `monetization`, not a real AS1 object.
+  * Support [Web Monetization](https://webmonetization.org/). Convert the [AS2 `monetization` field](https://webmonetization.org/developers/activity-streams/) in actors to/from [`community.lexicon.payments.webMonetization` records](https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments). `to_as1` only returns a single-element dict with key `monetization`, not a real AS1 object.
+  * `to_as1`: add new `repo_did` and `client` kwargs, paralleling the existing ones in `from_as1`.
 * `rss`:
   * `to_as1`: bug fix for multiple categories.
 

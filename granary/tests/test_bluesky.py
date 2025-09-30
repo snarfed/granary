@@ -722,6 +722,28 @@ class BlueskyTest(testutil.TestCase):
       'pinnedPost': 'at://did:web:alice.com/app.bsky.feed.post/pinned-post-id',
     }))
 
+  @patch('requests.get', return_value=requests_response({
+    'uri': 'at://did:plc:foo/community.lexicon.payments.webMonetization/self',
+    'value': {
+      '$type': 'community.lexicon.payments.webMonetization',
+      'address': 'http://wal/let',
+    },
+  }))
+  def test_to_as1_actor_with_webMonetization(self, mock_get):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'did:plc:foo',
+      'displayName': 'Alice',
+      'monetization': 'http://wal/let',
+    }, Bluesky.to_as1_actor({
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+    }, client=self.bs._client, repo_did='did:plc:foo'))
+
+    self.assert_call(
+      mock_get,
+      'com.atproto.repo.getRecord?repo=did%3Aplc%3Afoo&collection=community.lexicon.payments.webMonetization&rkey=self')
+
   def test_post_url(self):
     self.assertEqual('https://bsky.app/profile/snarfed.org/post/3jv3wdw2hkt25',
                      Bluesky.post_url('snarfed.org', '3jv3wdw2hkt25'))

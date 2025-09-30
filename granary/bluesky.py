@@ -1274,7 +1274,8 @@ def to_external_embed(obj, description=None, blobs=None):
 
   return ret
 
-def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None, pds=DEFAULT_PDS):
+def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
+           pds=DEFAULT_PDS, client=None):
   """Converts a Bluesky object to an AS1 object.
 
   Args:
@@ -1288,6 +1289,9 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None, pds=DEFAUL
     repo_handle (str): optional handle of the user whose repo this object is from
     pds (str): base URL of the PDS that currently serves this object's repo.
       Required to generate image URLs. Defaults to ``https://bsky.social/``.
+    client (Bluesky or lexrpc.Client): optional; if provided, this will be used
+      to make API calls to PDSes to fetch secondary records needed for conversion,
+      eg ``community.lexicon.payments.webMonetization`` for profiles
 
   Returns:
     dict: AS1 object, or None if the record doesn't correspond to an AS1 object,
@@ -1375,8 +1379,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None, pds=DEFAUL
     })
 
     # avatar and banner are blobs in app.bsky.actor.profile; convert to URLs
+    repo_did = repo_did or did
     if type in ('app.bsky.actor.profile', 'app.bsky.feed.generator'):
-      repo_did = repo_did or did
       if repo_did and pds:
         for img in ret['image']:
           img['url'] = blob_to_url(blob=img['url'], repo_did=repo_did, pds=pds)
@@ -1414,6 +1418,14 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None, pds=DEFAUL
           'totalItems': 1,
           'items': [pinned_post['uri']],
         }
+
+    # Web Monetization wallet address, if any
+    # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
+    if client and repo_did:
+      if wallet := client.com.atproto.repo.getRecord(
+          repo=repo_did, collection='community.lexicon.payments.webMonetization',
+          rkey='self'):
+        ret['monetization'] = wallet['value']['address']
 
   elif type in ('app.bsky.feed.post',
                 'chat.bsky.convo.defs#messageInput',
