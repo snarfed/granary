@@ -666,10 +666,11 @@ def targets(obj):
   targets = []
 
   for o in [obj] + get_objects(obj):
-    targets.extend(get_ids(o, 'inReplyTo') +
-                   get_ids(o, 'tags') +
-                   util.get_urls(o, 'tags') +
-                   quoted_posts(o))
+    targets.extend(get_ids(o, 'inReplyTo') + quoted_posts(o))
+
+    for tag in get_objects(o, 'tags'):
+      if tag.get('objectType') not in ('tag', 'hashtag'):
+        targets += [tag.get('id'), tag.get('url')]
 
     verb = o.get('verb')
     if verb in VERBS_WITH_OBJECT:

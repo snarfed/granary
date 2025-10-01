@@ -830,6 +830,11 @@ class As1Test(testutil.TestCase):
         (['x', 'y'], {'tags': [{'id': 'x'}, {'url': 'y'}]}),
         (['x', 'y'], {'tags': [{'id': 'x'}, {'url': 'y'}]}),
         (['x'], {'tags': [{'url': 'x', 'objectType': 'mention'}]}),
+        ([], {'tags': [{'url': 'x', 'objectType': 'tag'}]}),
+        ([], {'tags': [{'url': 'x', 'objectType': 'hashtag'}]}),
+        (['x', 'y'], {'verb': 'post', 'tags': ['x', 'y']}),
+        (['x', 'y'], {'verb': 'update', 'tags': ['x', 'y']}),
+        (['x', 'y'], {'verb': 'delete', 'tags': ['x', 'y']}),
     ]:
       with self.subTest(expected=expected, obj=obj):
         self.assertCountEqual(expected, as1.targets(obj))
