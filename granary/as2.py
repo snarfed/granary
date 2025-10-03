@@ -112,6 +112,7 @@ VERB_TO_TYPE = {
   'move': 'Move',
   'post': 'Create',
   'rsvp-maybe': 'TentativeAccept',
+  'remove': 'Remove',
   'reject': 'Reject',
   'rsvp-no': 'Reject',
   'rsvp-yes': 'Accept',
