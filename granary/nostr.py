@@ -456,10 +456,13 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
       #     <relay-url> is the URL of a recommended relay associated with the reference. Clients SHOULD add a valid <relay-url> field, but may instead leave it as "".
       #     <marker> is optional and if present is one of "reply", "root".
       #     <pubkey> is optional, SHOULD be the pubkey of the author of the referenced event
-      event['tags'].append(['e', id, remote_relay, 'reply'])
+      e = ['e', id, remote_relay, 'reply']
+      event['tags'].append(e)
       author = as1.get_object(in_reply_to, 'author').get('id')
       if author:
-        event['tags'].append(['p', uri_to_id(orig_event.get('pubkey'))])
+        if author_key := uri_to_id(author):
+          e.append(author_key)
+          event['tags'].append(['p', author_key])
 
     if type == 'article' and published:
       event['tags'].append(['published_at', str(event['created_at'])])

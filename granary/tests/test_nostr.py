@@ -586,6 +586,31 @@ class NostrTest(testutil.TestCase):
     ]
     self.assert_equals(event, from_as1(reply, remote_relay='reelaay'), ignore=['id'])
 
+  def test_from_as1_reply_with_author(self):
+    reply = {
+      'objectType': 'note',
+      'id': 'nostr:note1nrjs3nf6lqjt69z3wm3sw99vm8m3yqpafut866prz2c9wmhjckcq87dgct',
+      'author': NPUB_URI,
+      'published': NOW_ISO,
+      'content': 'I hereby reply',
+      'inReplyTo': {
+        'id': 'nostr:nevent1xnxsm5fasn',
+        'author': 'nostr:npub1z24szqzphd'
+      },
+    }
+    event = {
+      'kind': KIND_NOTE,
+      'id': '96466552f3254702d8abc0b1d110972e43ecd01ab74ffda6b3ac3b9723dfac6d',
+      'pubkey': PUBKEY,
+      'content': 'I hereby reply',
+      'tags': [
+        ['e', '34cd', '', 'reply', '12ab'],
+        ['p', '12ab'],
+      ],
+      'created_at': NOW_TS,
+    }
+    self.assert_equals(event, from_as1(reply))
+
   def test_to_from_as1_repost(self):
     note_uri = 'nostr:note1yr87vss2mtw7esxwfgkepte7q0jrrfwnpcvmkk0r0z7eg8vtlfkq8t0m83'
     repost = {
