@@ -441,9 +441,11 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
                     from_protocol=from_protocol)
 
   elif type in ('article', 'comment', 'note'):
-    event.update({
-      'kind': KIND_ARTICLE if type == 'article' else KIND_NOTE,
-    })
+    if type == 'article':
+      event['kind'] = KIND_ARTICLE
+      event['tags'].append(['d', id])
+    else:
+      event['kind'] = KIND_NOTE
 
     in_reply_to = as1.get_object(obj, 'inReplyTo')
     if in_reply_to:
@@ -623,6 +625,8 @@ def to_as1(event):
 
     for tag in tags:
       type = tag[0]
+      if type == 'd' and len(tag) >= 2:
+        obj['id'] = tag[1] if util.is_web(tag[1]) else f'nostr:{tag[1]}'
       if type == 'e' and tag[-1] == 'reply':
         obj['inReplyTo'] = id_to_uri('nevent', tag[1])
       elif type == 't' and len(tag) >= 2:
