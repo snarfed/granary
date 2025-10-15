@@ -440,9 +440,9 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
     return from_as1(inner_obj, privkey=privkey, remote_relay=remote_relay,
                     from_protocol=from_protocol)
 
-  elif type in ('article', 'note'):
+  elif type in ('article', 'comment', 'note'):
     event.update({
-      'kind': KIND_NOTE if type == 'note' else KIND_ARTICLE,
+      'kind': KIND_ARTICLE if type == 'article' else KIND_NOTE,
     })
 
     in_reply_to = as1.get_object(obj, 'inReplyTo')

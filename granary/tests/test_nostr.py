@@ -579,7 +579,9 @@ class NostrTest(testutil.TestCase):
     }
 
     self.assert_equals(reply, to_as1(event))
-    self.assert_equals(event, from_as1(reply))
+
+    for type in 'note', 'comment':
+      self.assert_equals(event, from_as1({**reply, 'objectType': type}))
 
     event['tags'] = [
         ['e', '34cd', 'reelaay', 'reply'],
