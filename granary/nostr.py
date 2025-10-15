@@ -758,7 +758,7 @@ class Nostr(Source):
   @classmethod
   def user_url(cls, nprofile):
     nprofile = nprofile.removeprefix('nostr:')
-    assert nprofile.startswith('nprofile')
+    assert nprofile.startswith('nprofile') or nprofile.startswith('nevent'), nprofile
     return f'https://coracle.social/people/{nprofile}'
 
   def get_actor(self, user_id=None):

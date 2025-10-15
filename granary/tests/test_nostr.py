@@ -1160,6 +1160,8 @@ class ClientTest(testutil.TestCase):
                      self.nostr.user_url('nprofile123'))
     self.assertEqual('https://coracle.social/people/nprofile123',
                      self.nostr.user_url('nostr:nprofile123'))
+    self.assertEqual('https://coracle.social/people/nevent123',
+                     self.nostr.user_url('nostr:nevent123'))
 
   def test_bech32_re(self):
     self.assertIsNone(BECH32_RE.match(ID))
