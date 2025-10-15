@@ -625,8 +625,8 @@ def to_as1(event):
 
     for tag in tags:
       type = tag[0]
-      if type == 'd' and len(tag) >= 2:
-        obj['id'] = tag[1] if util.is_web(tag[1]) else f'nostr:{tag[1]}'
+      if type == 'd' and len(tag) >= 2 and tag[1] and not is_bech32(tag[1]):
+        obj['id'] = tag[1]
       if type == 'e' and tag[-1] == 'reply':
         obj['inReplyTo'] = id_to_uri('nevent', tag[1])
       elif type == 't' and len(tag) >= 2:
