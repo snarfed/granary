@@ -290,6 +290,7 @@ _Breaking changes:_
 
 _Non-breaking changes:_
 
+* Switch from pillow to pymediainfo for extracting image metadata in `Bluesky.upload_media`.
 * `as1`:
   * `targets`: exclude hashtags in `tags`.
 * `bluesky`:

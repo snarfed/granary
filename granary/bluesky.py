@@ -14,7 +14,6 @@ import re
 import string
 import urllib.parse
 
-
 from bs4 import BeautifulSoup
 from lexrpc import Client
 from lexrpc.base import Base, LANG_RE, NSID_RE
@@ -22,7 +21,7 @@ from multiformats import CID
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
 import requests
-from PIL import Image
+from pymediainfo import MediaInfo
 from io import BytesIO
 
 from . import as1
@@ -2574,6 +2573,13 @@ class Bluesky(Source):
     return base_object(obj)
 
   def upload_media(self, media):
+    """
+    Args:
+      media (sequence of dict AS1 objects)
+
+    Returns:
+      (dict mapping string URL to dict blob, dict mapping string URL to (int width, int height)) tuple:
+    """
     blobs = {}
     aspects = {}
 
@@ -2587,8 +2593,10 @@ class Bluesky(Source):
         data = BytesIO(util.FileLimiter(fetch.raw, MAX_MEDIA_SIZE_BYTES).read())
         content_type = fetch.headers.get('Content-Type', '')
         if content_type.startswith("image/"):
-          with Image.open(data) as image:
-            aspects[url] = image.size
+          media_info = MediaInfo.parse(data)
+          tracks = media_info.video_tracks or media_info.image_tracks
+          if tracks:
+            aspects[url] = (tracks[0].width, tracks[0].height)
           data.seek(0)
         upload = self.client.com.atproto.repo.uploadBlob(
           input=data,
