@@ -4,6 +4,7 @@ import copy
 from datetime import timedelta
 import logging
 import secrets
+from threading import Semaphore
 from unittest.mock import patch
 from urllib.parse import urlparse
 
@@ -73,12 +74,12 @@ NOTE_AS1 = {
   'published': '2022-01-02T03:04:05+00:00',
 }
 
-
 logger = logging.getLogger(__name__)
 
 
 class FakeConnection:
   """Fake of :class:`websockets.sync.client.ClientConnection`."""
+  connected = Semaphore(0)
 
   @classmethod
   def reset(cls):
@@ -87,6 +88,7 @@ class FakeConnection:
     cls.to_receive = []
     cls.closed = False
     cls.recv_err = cls.send_err = None
+    cls.connected = Semaphore(0)
 
   @classmethod
   def send(cls, msg):
@@ -117,6 +119,7 @@ def fake_connect(uri, open_timeout=None, close_timeout=None, **kwargs):
   assert close_timeout == HTTP_TIMEOUT
   FakeConnection.relays.append(uri)
   FakeConnection.remote_address = (urlparse(uri).netloc, 'port')
+  FakeConnection.connected.release()
   yield FakeConnection
 
 
