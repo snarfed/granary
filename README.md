@@ -301,6 +301,7 @@ _Non-breaking changes:_
   * `from_as1`:
     * Bug fix for when `inReplyTo` is an object with an `author` field.
     * Support `objectType: comment`.
+  * `user_url`: expect `npub` as input, not `nprofile`.
 * `rss`:
   * `to_as1`: bug fix for multiple categories.
 

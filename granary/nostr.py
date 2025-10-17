@@ -760,10 +760,10 @@ class Nostr(Source):
     self.hex_pubkey = pubkey_from_privkey(uri_to_id(privkey)) if privkey else None
 
   @classmethod
-  def user_url(cls, nprofile):
-    nprofile = nprofile.removeprefix('nostr:')
-    assert nprofile.startswith('nprofile') or nprofile.startswith('nevent'), nprofile
-    return f'https://coracle.social/people/{nprofile}'
+  def user_url(cls, npub):
+    npub = npub.removeprefix('nostr:')
+    assert npub.startswith('npub'), npub
+    return f'https://coracle.social/people/{npub}'
 
   def get_actor(self, user_id=None):
     """Fetches and returns a Nostr user profile.
