@@ -565,7 +565,6 @@ class NostrTest(testutil.TestCase):
   def test_to_from_as1_reply(self):
     reply = {
       'objectType': 'note',
-      'id': 'nostr:note1nrjs3nf6lqjt69z3wm3sw99vm8m3yqpafut866prz2c9wmhjckcq87dgct',
       'author': NPUB_URI,
       'published': NOW_ISO,
       'content': 'I hereby reply',
@@ -573,7 +572,6 @@ class NostrTest(testutil.TestCase):
     }
     event = {
       'kind': KIND_NOTE,
-      'id': '98e508cd3af824bd145176e30714acd9f712003d4f167d682312b0576ef2c5b0',
       'pubkey': PUBKEY,
       'content': 'I hereby reply',
       'tags': [
@@ -582,14 +580,16 @@ class NostrTest(testutil.TestCase):
       'created_at': NOW_TS,
     }
 
-    self.assert_equals(reply, to_as1(event))
+    self.assert_equals(reply, to_as1(event), ignore=['id'])
 
+    event['tags'][0][3] = 'root'
+    self.assert_equals(reply, to_as1(event), ignore=['id'])
+
+    event['tags'][0] = ['e', '34cd', '']
     for type in 'note', 'comment':
-      self.assert_equals(event, from_as1({**reply, 'objectType': type}))
+      self.assert_equals(event, from_as1({**reply, 'objectType': type}), ignore=['id'])
 
-    event['tags'] = [
-        ['e', '34cd', 'reelaay', 'reply'],
-    ]
+    event['tags'][0][-1] = 'reelaay'
     self.assert_equals(event, from_as1(reply, remote_relay='reelaay'), ignore=['id'])
 
   def test_from_as1_reply_with_author(self):
@@ -606,11 +606,11 @@ class NostrTest(testutil.TestCase):
     }
     event = {
       'kind': KIND_NOTE,
-      'id': '96466552f3254702d8abc0b1d110972e43ecd01ab74ffda6b3ac3b9723dfac6d',
+      'id': '05f8e159bc93bf7d4421b70f63e7dbdf772b3a6bd0b10c8223cc55ceb45c4f0d',
       'pubkey': PUBKEY,
       'content': 'I hereby reply',
       'tags': [
-        ['e', '34cd', '', 'reply', '12ab'],
+        ['e', '34cd', '', '', '12ab'],
         ['p', '12ab'],
       ],
       'created_at': NOW_TS,

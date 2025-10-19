@@ -458,12 +458,12 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
       #     <relay-url> is the URL of a recommended relay associated with the reference. Clients SHOULD add a valid <relay-url> field, but may instead leave it as "".
       #     <marker> is optional and if present is one of "reply", "root".
       #     <pubkey> is optional, SHOULD be the pubkey of the author of the referenced event
-      e = ['e', id, remote_relay, 'reply']
+      e = ['e', id, remote_relay]
       event['tags'].append(e)
       author = as1.get_object(in_reply_to, 'author').get('id')
       if author:
         if author_key := uri_to_id(author):
-          e.append(author_key)
+          e.extend(['', author_key])
           event['tags'].append(['p', author_key])
 
     if type == 'article' and published:
@@ -627,7 +627,7 @@ def to_as1(event):
       type = tag[0]
       if type == 'd' and len(tag) >= 2 and tag[1] and not is_bech32(tag[1]):
         obj['id'] = tag[1]
-      if type == 'e' and tag[-1] == 'reply':
+      if type == 'e' and len(tag) >= 4 and tag[3] in ('reply', 'root'):
         obj['inReplyTo'] = id_to_uri('nevent', tag[1])
       elif type == 't' and len(tag) >= 2:
         obj['tags'].extend({'objectType': 'hashtag', 'displayName': t}
