@@ -70,6 +70,7 @@ BECH32_PREFIXES = (
   'nsec',
 )
 BECH32_RE = re.compile(f'^({"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,70}}$')
+ID_RE = re.compile(r'^[0-9a-f]{64}$')
 
 # Event kinds
 # https://github.com/nostr-protocol/nips#event-kinds
@@ -198,7 +199,7 @@ def id_to_uri(prefix, id):
   Returns:
     str: bech32-encoded
   """
-  return 'nostr:' + bech32_encode(prefix, id)
+  return 'nostr:' + bech32_encode(prefix, id.removeprefix('nostr:'))
 
 
 def bech32_decode(val):
@@ -555,21 +556,35 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
   return event
 
 
-def to_as1(event):
+def to_as1(event, id_format='hex', nostr_uri_ids=True):
   """Converts a Nostr event to an ActivityStreams 2 activity or object.
 
   Args:
     event (dict):  Nostr event
+    id_format (str, either 'hex' or 'bech32'): which format to use in id fields.
+      Defaults to `hex`.
+    nostr_uri_ids (bool): whether to prefix ids with `nostr:`. This is NIP-21
+      for `bech32` ids, non-standard for `hex` ids. Defaults to True.
 
   Returns:
     dict: AS1 activity or object
   """
+  assert id_format in ('hex', 'bech32')
+
+  def make_id(id, prefix):
+    assert ID_RE.match(id)
+    if id_format == 'bech32':
+      id = bech32_encode(prefix, id)
+    if nostr_uri_ids:
+      id = 'nostr:' + id
+    return id
+
   if not event:
     return {}
 
   obj = {}
   if id := event.get('id'):
-    obj['id'] = id_to_uri('nevent', id)
+    obj['id'] = make_id(id, bech32_prefix_for(event))
 
   kind = event['kind']
   tags = event.get('tags', [])
@@ -582,7 +597,7 @@ def to_as1(event):
                     else '')
     obj.update({
       'objectType': 'person',
-      'id': id_to_uri('npub', event['pubkey']),
+      'id': make_id(event['pubkey'], 'npub'),
       'displayName': content.get('display_name') or content.get('name'),
       'summary': content.get('about'),
       'username': nip05_domain,
@@ -617,18 +632,18 @@ def to_as1(event):
     })
 
     if id:
-      obj['id'] = id_to_uri('note', id)
+      obj['id'] = make_id(id, 'note')
 
     pubkey = event.get('pubkey')
     if pubkey:
-      obj['author'] = id_to_uri('npub', pubkey)
+      obj['author'] = make_id(pubkey, 'npub')
 
     for tag in tags:
       type = tag[0]
       if type == 'd' and len(tag) >= 2 and tag[1] and not is_bech32(tag[1]):
         obj['id'] = tag[1]
-      if type == 'e' and len(tag) >= 4 and tag[3] in ('reply', 'root'):
-        obj['inReplyTo'] = id_to_uri('nevent', tag[1])
+      if type == 'e' and len(tag) >= 2:
+        obj['inReplyTo'] = make_id(tag[1], 'nevent')
       elif type == 't' and len(tag) >= 2:
         obj['tags'].extend({'objectType': 'hashtag', 'displayName': t}
                            for t in tag[1:])
@@ -671,7 +686,7 @@ def to_as1(event):
     })
     for tag in tags:
       if tag[0] == 'e' and tag[-1] == 'mention':
-        obj['object'] = id_to_uri('note', tag[1])
+        obj['object'] = make_id(tag[1], 'note')
     if content and content.startswith('{'):
       obj['object'] = to_as1(json_loads(content))
 
@@ -690,7 +705,7 @@ def to_as1(event):
 
     for tag in tags:
       if tag[0] == 'e':
-        obj['object'] = id_to_uri('nevent', tag[1])
+        obj['object'] = make_id(tag[1], 'nevent')
 
   elif kind == KIND_DELETE:  # delete
     obj.update({
@@ -703,7 +718,7 @@ def to_as1(event):
     for tag in tags:
       # TODO: support NIP-33 'a' tags
       if tag[0] == 'e':
-        obj['object'].append(id_to_uri('nevent', tag[1]))
+        obj['object'].append(make_id(tag[1], 'nevent'))
 
   elif kind == KIND_CONTACTS:  # follow
     obj.update({
@@ -716,7 +731,7 @@ def to_as1(event):
     for tag in tags:
       if tag[0] == 'p':
         name = tag[3] if len(tag) >= 4 else None
-        id = id_to_uri('npub', tag[1])
+        id = make_id(tag[1], 'npub')
         obj['object'].append({'id': id, 'displayName': name} if name else id)
 
   # common fields
@@ -728,7 +743,7 @@ def to_as1(event):
     obj['object'] = obj['object'][0]
 
   if obj.get('objectType') == 'activity' and (pubkey := event.get('pubkey')):
-    obj['actor'] = id_to_uri('npub', pubkey)
+    obj['actor'] = make_id(pubkey, 'npub')
 
   return util.trim_nulls(Source.postprocess_object(obj))
 
@@ -896,7 +911,7 @@ class Nostr(Source):
 
         resp = json_loads(msg)
         if resp[:3] == ['OK', subscription, False]:
-          return events
+          break
         elif resp[:2] == ['EVENT', subscription]:
           event = resp[2]
           if verify(event):
