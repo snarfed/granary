@@ -940,7 +940,7 @@ class ClientTest(testutil.TestCase):
       'id': f'nostr:{reply_nostr["id"]}',
       'author': PUBKEY_URI,
       'content': 'I hereby reply',
-      'inReplyTo': f'nostr:{NOTE_NOSTR['id']}',
+      'inReplyTo': f'nostr:{NOTE_NOSTR["id"]}',
       'published': NOW_ISO,
     }
 
