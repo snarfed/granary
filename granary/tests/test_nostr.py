@@ -69,7 +69,7 @@ NOTE_NOSTR = {
   'pubkey': PUBKEY,
   'content': 'Something to say',
   'tags': [],
-  'created_at': 1641092645,
+  'created_at': NOW_TS,
   'sig': SIG,
 }
 NOTE_AS1 = {
@@ -259,7 +259,7 @@ class NostrTest(testutil.TestCase):
     }, from_as1({
       'objectType': 'person',
       'displayName': 'Alice',
-    }))
+    }), ignore=['created_at'])
 
   def test_from_as1_username_not_user_at_domain_no_nip05(self):
     self.assert_equals({
@@ -270,7 +270,7 @@ class NostrTest(testutil.TestCase):
       'objectType': 'person',
       'displayName': 'Alice',
       'username': 'foo',
-    }))
+    }), ignore=['created_at'])
 
   def test_from_as1_actor_privkey_sets_pubkey(self):
     self.assert_equals({
@@ -403,7 +403,7 @@ class NostrTest(testutil.TestCase):
       ],
     }
     self.assert_equals(note, to_as1(event))
-    self.assert_equals(event, from_as1(note))
+    self.assert_equals(event, from_as1(note), ignore=['created_at'])
 
   def test_to_from_as1_note_with_hashtag(self):
     id = 'aff5813b667be4a7e4a4d5d3196b8987150f67331bcb9822549b5ebbe6a843ef'
@@ -651,17 +651,17 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(event, from_as1(reply))
 
   def test_to_from_as1_repost(self):
-    post_id = '20cfe6420adaddecc0ce4a2d90af3e03e431a5d30e19bb59e378bd941d8bfa6c'
+    post_id = 'd00989ef1d71950617fd933d564b091b525f94cff082758e0ebe814559443a62'
     repost = {
       'objectType': 'activity',
       'verb': 'share',
-      'published': NOW_ISO,
+      'published': THEN_ISO,
       'object': {
         'objectType': 'note',
         'id': f'nostr:{post_id}',
         'author': PUBKEY_URI,
         'content': 'The orig post',
-        'published': THEN_ISO,
+        'published': NOW_ISO,
       },
     }
     event = {
@@ -671,23 +671,29 @@ class NostrTest(testutil.TestCase):
         'id': post_id,
         'pubkey': PUBKEY,
         'content': 'The orig post',
-        'created_at': THEN_TS,
+        # TODO: preserve published time from inner object
+        'created_at': NOW_TS,
         'tags': [],
       }, sort_keys=True),
       'tags': [
         ['e', post_id, '', 'mention'],
         ['p', PUBKEY],
       ],
-      'created_at': NOW_TS,
+      'created_at': THEN_TS,
     }
 
     self.assert_equals(repost, to_as1(event))
-    self.assert_equals(event, from_as1(repost))
+
+    expected_event = {
+      **event,
+      'created_at': NOW_TS,
+    }
+    self.assert_equals(expected_event, from_as1(repost))
 
     event['tags'][0:1] = [
         ['e', post_id, 'reelaay', 'mention'],
     ]
-    self.assert_equals(event, from_as1(repost, remote_relay='reelaay'))
+    self.assert_equals(expected_event, from_as1(repost, remote_relay='reelaay'))
 
     del event['content']
     repost['object'] = f'nostr:{post_id}'

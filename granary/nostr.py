@@ -390,11 +390,10 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
     'pubkey': pubkey,
     'content': content,
     'tags': [],
+    # ideally we'd use obj['published'], but some relays check created_at and require
+    # it to be now, not backdated
+    'created_at': int(util.now(tz=timezone.utc).timestamp()),
   }
-
-  published = obj.get('published')
-  if published:
-    event['created_at'] = int(util.parse_iso8601(published).timestamp())
 
   # NIP-48 proxy tag
   if from_protocol and id and not id.startswith('nostr:'):
@@ -467,8 +466,10 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
           e.extend(['', author_key])
           event['tags'].append(['p', author_key])
 
-    if type == 'article' and published:
-      event['tags'].append(['published_at', str(event['created_at'])])
+    if type == 'article':
+      if published := obj.get('published'):
+        published_at = str(int(util.parse_iso8601(published).timestamp()))
+        event['tags'].append(['published_at', published_at])
 
     if title := obj.get('title'):
       event['tags'].extend([
@@ -960,10 +961,10 @@ class Nostr(Source):
       obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content) or ''
     if include_link == INCLUDE_LINK and url:
       content += '\n' + url
-    event['content'] = content
 
     event.setdefault('pubkey', self.hex_pubkey)
     event['id'] = id_for(event)
+    event['content'] = content
 
     missing = (set(('content', 'created_at', 'kind', 'id', 'pubkey', 'tags'))
                - event.keys())
