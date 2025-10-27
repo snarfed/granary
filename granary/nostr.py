@@ -590,6 +590,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
   kind = event['kind']
   tags = event.get('tags', [])
   content = event.get('content')
+  pubkey = event.get('pubkey')
 
   if kind == KIND_PROFILE:  # profile
     content = json_loads(content) if content else {}
@@ -625,6 +626,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
   elif kind in (KIND_NOTE, KIND_ARTICLE):  # note, article
     obj.update({
       'objectType': 'note' if kind == KIND_NOTE else 'article',
+      'author': make_id(pubkey, 'npub'),
       # TODO: render Markdown to HTML?
       'content': event.get('content'),
       'image': [],
@@ -634,10 +636,6 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
 
     if id:
       obj['id'] = make_id(id, 'note')
-
-    pubkey = event.get('pubkey')
-    if pubkey:
-      obj['author'] = make_id(pubkey, 'npub')
 
     for tag in tags:
       type = tag[0]
@@ -734,6 +732,11 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
         name = tag[3] if len(tag) >= 4 else None
         id = make_id(tag[1], 'npub')
         obj['object'].append({'id': id, 'displayName': name} if name else id)
+
+  elif kind == KIND_RELAYS:
+    # not really converting this to anything meaningful, just including author
+    # so we know who it's for
+    obj['author'] = make_id(pubkey, 'npub')
 
   # common fields
   created_at = event.get('created_at')

@@ -307,6 +307,7 @@ _Non-breaking changes:_
   * `to_as1`:
     * Add new `id_format` kwarg for choosing between hex and bech32-encoded ids.
     * Add new `nostr_uri_ids` boolean kwarg for whether to prefix ids with `nostr:`.
+    * Add `author` when converting user relays events (kind 10002).
   * `user_url`: expect `npub` as input, not `nprofile`.
 * `rss`:
   * `to_as1`: bug fix for multiple categories.

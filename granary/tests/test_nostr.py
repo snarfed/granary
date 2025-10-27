@@ -32,6 +32,7 @@ from ..nostr import (
   KIND_NOTE,
   KIND_PROFILE,
   KIND_REACTION,
+  KIND_RELAYS,
   KIND_REPOST,
   to_as1,
   uri_for,
@@ -391,11 +392,13 @@ class NostrTest(testutil.TestCase):
   def test_to_from_as1_note_subject_tag(self):
     note = {
       'objectType': 'note',
+      'author': PUBKEY_URI,
       'content': 'Something to say',
       'title': 'my thing',
     }
     event = {
       'kind': KIND_NOTE,
+      'pubkey': PUBKEY,
       'content': 'Something to say',
       'tags': [
         ['title', 'my thing'],
@@ -403,7 +406,7 @@ class NostrTest(testutil.TestCase):
       ],
     }
     self.assert_equals(note, to_as1(event))
-    self.assert_equals(event, from_as1(note), ignore=['created_at'])
+    self.assert_equals(event, from_as1(note), ignore=['id', 'created_at'])
 
   def test_to_from_as1_note_with_hashtag(self):
     id = 'aff5813b667be4a7e4a4d5d3196b8987150f67331bcb9822549b5ebbe6a843ef'
@@ -573,6 +576,19 @@ class NostrTest(testutil.TestCase):
     }
     self.assert_equals(note, to_as1(event))
     self.assert_equals(event, from_as1(note))
+
+  def test_to_as1_relays(self):
+    self.assert_equals({
+      'id': f'nostr:{ID}',
+      'author': PUBKEY_URI,
+    }, to_as1({
+      'id': ID,
+      'kind': KIND_RELAYS,
+      'pubkey': PUBKEY,
+      'tags': [
+        ['r', 'wss://nostr.onsats.org/'],
+      ],
+    }))
 
   def test_from_as1_with_proxy_tag(self):
     self.assert_equals({
