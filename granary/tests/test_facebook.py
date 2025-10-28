@@ -2826,6 +2826,20 @@ http://b http://c""",
   <img class="profile u-photo" src="https://graph.facebook.com/v4.0/212038/picture?type=large" width="32px" /> Ryan Barrett</a>:
 cc Sam G, Michael M<br />""", preview.description)
 
+  def test_preview_like_comment_sanitizes_html(self):
+    like = copy.deepcopy(LIKE_OBJS[0])
+    like['object']['url'] = 'https://www.facebook.com/foo/posts/135?reply_comment_id=79'
+    self.expect_urlopen('135_79', {
+      **COMMENTS[0],
+      'message': 'hello <script>alert("xss")</script> world',
+    })
+    self.mox.ReplayAll()
+
+    preview = self.fb.preview_create(like)
+    self.assertIn('hello world', preview.description)
+    self.assertNotIn('<script>', preview.description)
+    self.assertNotIn('alert', preview.description)
+
   def test_create_rsvp(self):
     for endpoint in 'attending', 'declined', 'maybe':
       self.expect_urlopen(API_EVENT % '234', EVENT)

@@ -732,7 +732,9 @@ class Facebook(source.Source):
           author = comment.get('author', '')
           if author:
             author = self.embed_actor(author) + ':\n'
-          desc += f"<a href=\"{base_url}\">this comment</a>:\n<br /><br />{author}{comment.get('content')}<br />"
+          content = html.unescape(comment.get('content', ''))
+          safe_content = util.parse_html(content).get_text(' ', strip=True)
+          desc += f"<a href=\"{base_url}\">this comment</a>:\n<br /><br />{author}{safe_content}<br />"
         else:
           desc += f'<a href="{base_url}">this post</a>:\n<br /><br />{self.embed_post(base_obj)}<br />'
         return source.creation_result(description=desc)

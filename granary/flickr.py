@@ -237,11 +237,12 @@ class Flickr(source.Source):
           error_html='No <a href="https://indieweb.org/tags">tags</a> found (with p-category) in <a href="https://indieweb.org/tag-reply#How_to_post_a_tag-reply">tag-of post</a>.')
 
       if preview:
+        safe_tags = [util.parse_html(tag).get_text(' ', strip=True) for tag in tags]
         return source.creation_result(
           content=content,
           description='add the tag%s %s to <a href="%s">this photo</a>.' %
             ('s' if len(tags) > 1 else '',
-             ', '.join('<em>%s</em>' % tag for tag in tags), base_url))
+             ', '.join('<em>%s</em>' % tag for tag in safe_tags), base_url))
 
       resp = self.call_api_method('flickr.photos.addTags', {
         'photo_id': base_id,

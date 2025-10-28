@@ -1068,6 +1068,19 @@ class FlickrTest(testutil.TestCase):
       'tags': ['bar', 'foo'],
     }, self.flickr.create(TAG_REPLY_ACTIVITY).content)
 
+  def test_preview_tag_reply_sanitizes_html(self):
+    preview = self.flickr.preview_create({
+      **TAG_REPLY_ACTIVITY,
+      'object': [
+        {'displayName': 'safe'},
+        {'displayName': '<em>tag</em><script>alert("xss")</script>'},
+      ],
+    })
+    self.assertIn('safe', preview.description)
+    self.assertIn('tag', preview.description)
+    self.assertNotIn('<script>', preview.description)
+    self.assertNotIn('alert', preview.description)
+
   def test_delete(self):
     self.expect_call_api_method('flickr.photos.delete', {'photo_id': '789'}, '')
     self.expect_call_api_method(

@@ -1147,6 +1147,54 @@ class GitHubTest(testutil.TestCase):
       'add label <span class="verb">one</span> to <a href="https://github.com/foo/bar/issues/456">foo/bar#456</a>.',
       preview.description, preview)
 
+  def test_preview_sanitizes_comment_body_html(self):
+    self.expect_rest(REST_COMMENT % ('foo', 'bar', 'issues', 456), {
+      **COMMENT_REST,
+      'body': 'hello <script>alert("xss")</script> world',
+    })
+    self.mox.ReplayAll()
+
+    preview = self.gh.preview_create(COMMENT_REACTION_OBJ_INPUT)
+    self.assertIn('hello world', preview.description)
+    self.assertNotIn('<script>', preview.description)
+    self.assertNotIn('alert', preview.description)
+
+  def test_preview_sanitizes_issue_title_html(self):
+    self.expect_graphql(json={
+      'query': github.GRAPHQL_ISSUE_OR_PR % {
+        'owner': 'foo',
+        'repo': 'bar',
+        'number': 123,
+      },
+    }, response={
+      'repository': {
+        'issueOrPullRequest': {
+          **ISSUE_GRAPHQL,
+          'title': 'title <em>with</em> <script>alert("xss")</script> html',
+        },
+      },
+    })
+    rendered = self.expect_markdown_render('i have something to say here')
+    self.mox.ReplayAll()
+
+    preview = self.gh.preview_create(COMMENT_OBJ)
+    self.assertIn('title with html', preview.description)
+    self.assertNotIn('<script>', preview.description)
+    self.assertNotIn('alert', preview.description)
+
+  def test_preview_sanitizes_label_html(self):
+    self.expect_graphql_get_labels(['<em>safe</em><script>xss</script>', 'other'])
+    self.mox.ReplayAll()
+
+    preview = self.gh.preview_create({
+      **TAG_ACTIVITY,
+      'object': [{'displayName': '<em>safe</em><script>xss</script>'}],
+    })
+    self.assertIn('safe', preview.description)
+    self.assertNotIn('<script>', preview.description)
+    self.assertNotIn('alert', preview.description)
+    self.assertNotIn('<em>', preview.description)
+
   def test_create_add_label_no_tags(self):
     activity = copy.deepcopy(TAG_ACTIVITY)
     activity['object'] = []

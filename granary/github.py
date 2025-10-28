@@ -611,15 +611,16 @@ class GitHub(source.Source):
       is_reaction = orig_content in REACTIONS_GRAPHQL
       if preview:
         if comment_id:
-          comment = self.rest(REST_COMMENT % (owner, repo, comment_type,
-                                                  comment_id))
-          target_link = f"<a href=\"{base_url}\">a comment on {owner}/{repo}#{number}, <em>{util.ellipsize(comment['body'])}</em></a>"
+          comment = self.rest(REST_COMMENT % (owner, repo, comment_type, comment_id))
+          comment_body = util.parse_html(comment['body']).get_text(' ', strip=True)
+          target_link = f"<a href=\"{base_url}\">a comment on {owner}/{repo}#{number}, <em>{util.ellipsize(comment_body)}</em></a>"
         else:
           resp = self.graphql(GRAPHQL_ISSUE_OR_PR, locals())
-          issue = (resp.get('repository') or {}).get('issueOrPullRequest')
+          title = ''
+          if issue := (resp.get('repository') or {}).get('issueOrPullRequest'):
+            title = util.parse_html(issue['title']).get_text(' ', strip=True)
           target_link = '<a href="%s">%s/%s#%s%s</a>' % (
-            base_url, owner, repo, number,
-            (', <em>%s</em>' % issue['title']) if issue else '')
+            base_url, owner, repo, number, (', <em>%s</em>' % title) if title else '')
 
         if is_reaction:
           preview_content = None
@@ -699,13 +700,19 @@ class GitHub(source.Source):
       labels = sorted(tags & existing_labels)
       issue_link = f'<a href="{base_url}">{owner}/{repo}#{number}</a>'
       if not labels:
+        safe_tags = ', '.join(util.parse_html(t).get_text(' ', strip=True)
+                              for t in sorted(tags))
+        safe_labels = ', '.join(util.parse_html(l).get_text(' ', strip=True)
+                                for l in sorted(existing_labels))
         return source.creation_result(
           abort=True,
-          error_html=f"No tags in [{', '.join(sorted(tags))}] matched {issue_link}'s existing labels [{', '.join(sorted(existing_labels))}].")
+          error_html=f"No tags in [{safe_tags}] matched {issue_link}'s existing labels [{safe_labels}].")
 
       if preview:
+        safe_label_list = ', '.join(util.parse_html(l).get_text(' ', strip=True)
+                                    for l in labels)
         return source.creation_result(
-          description=f"add label{'s' if len(labels) > 1 else ''} <span class=\"verb\">{', '.join(labels)}</span> to {issue_link}.")
+          description=f"add label{'s' if len(labels) > 1 else ''} <span class=\"verb\">{safe_label_list}</span> to {issue_link}.")
 
       resp = self.rest(REST_ISSUE_LABELS % (owner, repo, number), labels)
       return source.creation_result({
@@ -729,7 +736,8 @@ class GitHub(source.Source):
         preview_content = f'<b>{title}</b><hr>{self.render_markdown(content, owner, repo)}'
         preview_labels = ''
         if labels:
-          preview_labels = f" and attempt to add label{'s' if len(labels) > 1 else ''} <span class=\"verb\">{', '.join(labels)}</span>"
+          safe_label_list = ', '.join(util.parse_html(l).get_text(' ', strip=True) for l in labels)
+          preview_labels = f" and attempt to add label{'s' if len(labels) > 1 else ''} <span class=\"verb\">{safe_label_list}</span>"
         return source.creation_result(content=preview_content, description=f"""<span class="verb">create a new issue</span> on <a href="{base_url}">{owner}/{repo}</a>{preview_labels}:""")
       else:
         resp = self.rest(REST_CREATE_ISSUE % (owner, repo), {

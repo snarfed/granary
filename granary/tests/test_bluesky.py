@@ -4343,6 +4343,18 @@ class BlueskyTest(testutil.TestCase):
       f'My original post<br /><br /><img src="{NEW_BLOB_URL}" alt="my alt text" />',
       preview.content)
 
+  def test_preview_with_media_sanitizes_html(self):
+    preview = self.bs.preview_create({
+      **POST_AS['object'],
+      'image': [{
+        'url': NEW_BLOB_URL,
+        'displayName': 'alt <script>alert("xss")</script> text',
+      }],
+    })
+    self.assertIn('alt text', preview.content)
+    self.assertNotIn('<script>', preview.content)
+    self.assertNotIn('alert', preview.content)
+
   @patch('requests.post')
   @patch('requests.get')
   def test_create_with_media(self, mock_get, mock_post):

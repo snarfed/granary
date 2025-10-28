@@ -786,9 +786,10 @@ class Source(object, metaclass=SourceMeta):
   @classmethod
   def embed_actor(cls, actor):
     """Returns the HTML string for embedding an actor object."""
+    name = util.parse_html(actor.get('displayName', '')).get_text(' ', strip=True)
     return f"""
 <a class="h-card" href="{actor.get('url')}">
- <img class="profile u-photo" src="{actor.get('image', {}).get('url')}" width="32px" /> {actor.get('displayName')}</a>"""
+ <img class="profile u-photo" src="{actor.get('image', {}).get('url')}" width="32px" /> {name}</a>"""
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""

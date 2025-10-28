@@ -2487,7 +2487,7 @@ class Bluesky(Source):
 
       if preview:
         media_previews = [
-          f"<img src=\"{util.get_url(img)}\" alt=\"{img.get('displayName') or ''}\" />"
+          f"<img src=\"{util.get_url(img)}\" alt=\"{util.parse_html(img.get('displayName') or '').get_text(' ', strip=True)}\" />"
           for img in images
         ]
         if media_previews:

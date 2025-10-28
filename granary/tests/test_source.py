@@ -496,3 +496,13 @@ Watching  \t waves
   def test_html_to_text_empty(self):
     self.assertEqual('', html_to_text(None))
     self.assertEqual('', html_to_text(''))
+
+  def test_embed_actor_sanitizes_html(self):
+    result = Source.embed_actor({
+      'url': 'https://example.com/user',
+      'image': {'url': 'https://example.com/pic.jpg'},
+      'displayName': 'Name <script>alert("xss")</script> Here',
+    })
+    self.assertIn('Name Here', result)
+    self.assertNotIn('<script>', result)
+    self.assertNotIn('alert', result)
