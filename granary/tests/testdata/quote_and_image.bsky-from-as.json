@@ -7,7 +7,7 @@
     "$type": "app.bsky.embed.record",
     "record" : {
       "cid": "",
-      "uri": "at://did/app.bsky.feed.post/orig-post-tid"
+      "uri": "at://did:plc:user/app.bsky.feed.post/orig-post-tid"
     }
   }
 }

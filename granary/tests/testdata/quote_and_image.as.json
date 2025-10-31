@@ -3,8 +3,8 @@
   "content": "I hereby quote",
   "attachments": [{
     "objectType": "note",
-    "id": "at://did/app.bsky.feed.post/orig-post-tid",
-    "url": "https://bsky.app/profile/did/post/orig-post-tid",
+    "id": "at://did:plc:user/app.bsky.feed.post/orig-post-tid",
+    "url": "https://bsky.app/profile/did:plc:user/post/orig-post-tid",
     "content": "An original post"
   }],
   "image": [{

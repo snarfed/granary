@@ -9,6 +9,7 @@ from unittest import skip
 from unittest.mock import ANY, patch
 from urllib.parse import urljoin
 
+from lexrpc.base import AT_URI_RE
 from multiformats import CID
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.testutil import NOW, requests_response
@@ -18,7 +19,6 @@ from requests.auth import HTTPBasicAuth
 
 from .. import bluesky
 from ..bluesky import (
-  AT_URI_PATTERN,
   at_uri_to_web_url,
   blob_cid,
   blob_to_url,
@@ -643,26 +643,6 @@ class BlueskyTest(testutil.TestCase):
   def from_as1(obj, **kwargs):
     return from_as1(obj, original_fields_prefix='foo', **kwargs)
 
-  def test_at_uri_pattern(self):
-    for input, expected in [
-        ('', False),
-        ('foo', False),
-        ('http://bar', False),
-        ('at://', False),
-        ('at:////', False),
-        ('at://x/y/z', True),
-        ('at://x / y/z', False),
-        (' at://x/y/z ', False),
-        ('at://did:plc:foo/a.b/123', True),
-        # TODO: allow this? eg at://did:bo:b/chat.bsky.convo.defs#messageView/xyz
-        # I don't think these actually happen in the wild yet. would need to
-        # revise at_uri_to_web_url to handle it.
-        # https://atproto.com/specs/nsid#nsid-syntax-variations
-        ('at://did:plc:foo/a.b#c/123', False),
-    ]:
-      with self.subTest(input=input):
-        self.assertEqual(expected, AT_URI_PATTERN.match(input) is not None)
-
   def test_url_to_did_web(self):
     for bad in None, '', 'foo', 'did:web:bar.com':
       with self.assertRaises(ValueError):
@@ -816,17 +796,17 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_to_strong_ref(self):
     for obj, at_uri in (
         ('', ''),
-        ('at://foo/bar/baz', 'at://foo/bar/baz'),
+        ('at://f.oo/b.ar.xY/baz', 'at://f.oo/b.ar.xY/baz'),
         ('at://did:fo:o/app.bsky.actor.profile/self',
          'at://did:fo:o/app.bsky.actor.profile/self'),
         ('https://bsky.app/profile/foo/post/bar', 'at://foo/app.bsky.feed.post/bar'),
         ('baz biff', ''),
         ({}, ''),
         ({'id': 'foo'}, ''),
-        ({'id': 'at://foo/bar/baz'}, 'at://foo/bar/baz'),
-        ({'url': 'https://bsky.app/profile/foo/post/bar'},
-         'at://foo/app.bsky.feed.post/bar'),
-        ({'url': ['at://foo/bar/baz', 'xyz']}, 'at://foo/bar/baz'),
+        ({'id': 'at://f.oo/b.ar.xY/baz'}, 'at://f.oo/b.ar.xY/baz'),
+        ({'url': 'https://bsky.app/profile/f.oo/post/bar'},
+         'at://f.oo/app.bsky.feed.post/bar'),
+        ({'url': ['at://f.oo/b.ar.xY/baz', 'xyz']}, 'at://f.oo/b.ar.xY/baz'),
     ):
       with self.subTest(obj=obj):
         self.assertEqual({'uri': at_uri, 'cid': ''}, from_as1_to_strong_ref(obj))
@@ -3438,7 +3418,7 @@ class BlueskyTest(testutil.TestCase):
     }, to_as1({
       '$type': 'app.bsky.graph.block',
       'subject': 'did:ev:e',
-      'createdAt': '2022-01-02T03:04:05.000Z'
+      'createdAt': '2022-01-02T03:04:05.000Z',
     }))
 
   def test_to_as1_blockedPost(self):
@@ -4053,7 +4033,7 @@ class BlueskyTest(testutil.TestCase):
         ('http://foo', None),
         ('https://bsky.app/profile/foo', None),
         ('at://did:plc:foo', None),
-        ('at://did:dy:d/post/tid', 'at://did:dy:d/post/tid'),
+        ('at://did:dy:d/po.s.t/tid', 'at://did:dy:d/po.s.t/tid'),
         ('https://bsky.app/profile/did:dy:d/post/tid',
          'at://did:dy:d/app.bsky.feed.post/tid'),
     ]:

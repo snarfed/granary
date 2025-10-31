@@ -14,7 +14,7 @@
           "$type" : "app.bsky.embed.record",
           "record": {
             "cid": "",
-            "uri": "at://did/app.bsky.feed.post/orig-post-tid"
+            "uri": "at://did:plc:user/app.bsky.feed.post/orig-post-tid"
           }
         },
         "media": {
@@ -35,7 +35,7 @@
         "$type": "app.bsky.embed.record#view",
         "record": {
           "$type": "app.bsky.embed.record#viewRecord",
-          "uri": "at://did/app.bsky.feed.post/orig-post-tid",
+          "uri": "at://did:plc:user/app.bsky.feed.post/orig-post-tid",
           "cid": "",
           "indexedAt": "2022-01-02T03:04:05+00:00",
           "value": {

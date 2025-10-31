@@ -16,7 +16,7 @@ import urllib.parse
 
 from bs4 import BeautifulSoup
 from lexrpc import Client
-from lexrpc.base import Base, LANG_RE, NSID_RE
+from lexrpc.base import AT_URI_RE, Base, LANG_RE, NSID_RE
 from multiformats import CID
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
@@ -51,23 +51,6 @@ AT_MENTION_PATTERN = re.compile(r'(?:^|\s)(@' + HANDLE_REGEX + r')(?:$|\s)')
 MAX_MEDIA_SIZE_BYTES = 5_000_000
 
 MAX_FOLLOWS = 10000
-
-# at:// URI regexp
-# https://atproto.com/specs/at-uri-scheme#full-at-uri-syntax
-# https://atproto.com/specs/record-key#record-key-syntax
-# https://atproto.com/specs/nsid
-# also see arroba.util.parse_at_uri
-AUTHORITY_CHARS = 'a-zA-Z0-9-.:'
-RKEY_CHARS = f'{AUTHORITY_CHARS}~_'
-# TODO: add query and fragment? they're currently unused in the protocol
-# https://atproto.com/specs/at-uri-scheme#structure
-# NOTE: duplicated in lexrpc.base!
-AT_URI_PATTERN = re.compile(rf"""
-    ^at://
-     (?P<repo>[{AUTHORITY_CHARS}]+)
-      (?:/(?P<collection>[a-zA-Z0-9-.]+)
-       (?:/(?P<rkey>[{RKEY_CHARS}]+))?)?
-    $""", re.VERBOSE)
 
 # Maps AT Protocol NSID collections to path elements in bsky.app URLs.
 # Used in at_uri_to_web_url.
@@ -119,6 +102,8 @@ FROM_AS1_TYPES = {
   ),
 }
 
+AUTHORITY_CHARS = 'a-zA-Z0-9-.:'
+RKEY_CHARS = f'{AUTHORITY_CHARS}~_'
 BSKY_APP_URL_RE = re.compile(fr"""
   ^https://(staging\.)?bsky\.app
   /profile/(?P<id>[{AUTHORITY_CHARS}]+)
@@ -336,11 +321,11 @@ def from_as1_to_strong_ref(obj, client=None, value=False, raise_=False):
     assert not raise_
 
   id = (obj.get('id') or as1.get_url(obj)) if isinstance(obj, dict) else obj
-  if match := AT_URI_PATTERN.match(id):
+  if match := AT_URI_RE.match(id):
     at_uri = id
   else:
     at_uri = Bluesky.post_id(id) or ''
-    match = AT_URI_PATTERN.match(at_uri)
+    match = AT_URI_RE.match(at_uri)
 
   if not match or not client:
     if not match and raise_:
@@ -350,7 +335,7 @@ def from_as1_to_strong_ref(obj, client=None, value=False, raise_=False):
       'cid': '',
     }
 
-  repo, collection, rkey = match.groups()
+  repo = match['repo']
   if not repo.startswith('did:'):
     handle = repo
     repo = client.com.atproto.identity.resolveHandle(handle=handle)['did']
@@ -359,7 +344,7 @@ def from_as1_to_strong_ref(obj, client=None, value=False, raise_=False):
 
   try:
     record = client.com.atproto.repo.getRecord(
-      repo=repo, collection=collection, rkey=rkey)
+      repo=repo, collection=match['collection'], rkey=match['rkey'])
   except requests.RequestException as e:
     logger.info(e)
     record = {}
@@ -972,7 +957,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         if tag_url.startswith('did:'):
           did = tag_url
         else:
-          if match := AT_URI_PATTERN.match(tag_url):
+          if match := AT_URI_RE.match(tag_url):
             did = match.group('repo')
           elif match := BSKY_APP_URL_RE.match(tag_url):
             did = match.group('id')
@@ -1311,7 +1296,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     uri_bsky_url = at_uri_to_web_url(uri)
     if not uri.startswith('at://'):
       raise ValueError('Expected at:// uri, got {uri}')
-    if parsed := AT_URI_PATTERN.match(uri):
+    if parsed := AT_URI_RE.match(uri):
       uri_repo = parsed.group(1)
 
   # for nested to_as1 calls, if necessary
@@ -1908,7 +1893,7 @@ class Bluesky(Source):
   BASE_URL = 'https://bsky.app'
   NAME = 'Bluesky'
   TRUNCATE_TEXT_LENGTH = None  # different for post text vs profile description
-  POST_ID_RE = AT_URI_PATTERN
+  POST_ID_RE = AT_URI_RE
   TYPE_LABELS = {
     'post': 'post',
     'comment': 'reply',
@@ -2017,7 +2002,7 @@ class Bluesky(Source):
     if not url:
       return None
 
-    if not AT_URI_PATTERN.match(url):
+    if not AT_URI_RE.match(url):
       try:
         url = web_url_to_at_uri(url)
       except ValueError:
@@ -2542,15 +2527,14 @@ class Bluesky(Source):
     Returns:
       CreationResult: content is dict with ``url`` and ``id`` fields
     """
-    match = AT_URI_PATTERN.match(at_uri)
+    match = AT_URI_RE.match(at_uri)
     if not match:
       raise ValueError(f'Expected at:// URI, got {at_uri}')
 
-    authority, collection, rkey = match.groups()
     self.client.com.atproto.repo.deleteRecord({
-      'repo': authority,
-      'collection': collection,
-      'rkey': rkey,
+      'repo': match['repo'],
+      'collection': match['collection'],
+      'rkey': match['rkey'],
     })
     return creation_result({
       'id': at_uri,
