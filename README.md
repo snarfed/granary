@@ -299,6 +299,7 @@ _Non-breaking changes:_
   * `targets`: exclude hashtags in `tags`.
 * `bluesky`:
   * Support [Web Monetization](https://webmonetization.org/). Convert the [AS2 `monetization` field](https://webmonetization.org/developers/activity-streams/) in actors to/from [`community.lexicon.payments.webMonetization` records](https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments). `to_as1` only returns a single-element dict with key `monetization`, not a real AS1 object.
+  * Convert AS1 `block` of `app.bsky.graph.list` `at://` URI to/from `app.bsky.graph.listblock` record.
   * `to_as1`: add new `client` kwarg, paralleling the existing one in `from_as1`.
 * `nostr`:
   * Add support for `d` (id) tags with kind 30023 (article) events.

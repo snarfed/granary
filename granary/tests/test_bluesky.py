@@ -2504,6 +2504,18 @@ class BlueskyTest(testutil.TestCase):
       'object': 'https://bsky.app/profile/did:ev:e',
     }))
 
+  def test_from_as1_listblock(self):
+    self.assert_equals({
+      '$type': 'app.bsky.graph.listblock',
+      'subject': 'at://did:us:er/app.bsky.graph.list/123',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, self.from_as1({
+      'objectType': 'activity',
+      'verb': 'block',
+      'actor': 'http://alice',
+      'object': 'at://did:us:er/app.bsky.graph.list/123',
+    }))
+
   # https://docs.joinmastodon.org/spec/activitypub/#Flag
   @patch('requests.get', return_value=requests_response({
     'uri': 'at://did:al:ice/app.bsky.feed.post/tid',
@@ -3420,6 +3432,19 @@ class BlueskyTest(testutil.TestCase):
       'subject': 'did:ev:e',
       'createdAt': '2022-01-02T03:04:05.000Z',
     }))
+
+  def test_to_as1_listblock(self):
+    self.assert_equals({
+      'objectType': 'activity',
+      'verb': 'block',
+      'id': 'at://did:al:ice/app.bsky.graph.listblock/123',
+      'object': 'at://did:us:er/app.bsky.graph.list/456',
+      'actor': 'did:al:ice',
+    }, to_as1({
+      '$type': 'app.bsky.graph.listblock',
+      'subject': 'at://did:us:er/app.bsky.graph.list/456',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, uri='at://did:al:ice/app.bsky.graph.listblock/123', repo_did='did:al:ice'))
 
   def test_to_as1_blockedPost(self):
     self.assert_equals({

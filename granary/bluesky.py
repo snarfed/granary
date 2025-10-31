@@ -85,6 +85,7 @@ FROM_AS1_TYPES = {
   ),
   ('block',): (
     'app.bsky.graph.block',
+    'app.bsky.graph.listblock',
   ),
   ('flag',): (
     'com.atproto.moderation.createReport#input',
@@ -628,9 +629,16 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   elif type in ('follow', 'block'):
     if not inner_obj:
       raise ValueError('follow activity requires actor and object')
+
+    obj_id = inner_obj.get('id')
+    lexicon = f'app.bsky.graph.{type}'
+    if match := AT_URI_RE.match(obj_id):
+      if match.group('collection') == 'app.bsky.graph.list':
+        lexicon = 'app.bsky.graph.listblock'
+
     ret = {
-      '$type': f'app.bsky.graph.{type}',
-      'subject': inner_obj.get('id'),  # DID
+      '$type': lexicon,
+      'subject': obj_id,  # DID or list at:// URI
       'createdAt': from_as1_datetime(obj.get('published')),
     }
 
@@ -1688,10 +1696,11 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
                         type='app.bsky.actor.defs#profileViewBasic', **kwargs),
       }
 
-  elif type in ('app.bsky.graph.follow', 'app.bsky.graph.block'):
+  elif type in ('app.bsky.graph.follow', 'app.bsky.graph.block',
+                'app.bsky.graph.listblock'):
     ret = {
       'objectType': 'activity',
-      'verb': type.split('.')[-1],
+      'verb': 'follow' if type == 'app.bsky.graph.follow' else 'block',
       'id': uri,
       'url': at_uri_to_web_url(uri),
       'object': obj.get('subject'),
