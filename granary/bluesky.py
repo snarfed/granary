@@ -108,7 +108,7 @@ RKEY_CHARS = f'{AUTHORITY_CHARS}~_'
 BSKY_APP_URL_RE = re.compile(fr"""
   ^https://(staging\.)?bsky\.app
   /profile/(?P<id>[{AUTHORITY_CHARS}]+)
-  (/(?P<type>post|feed)
+  (/(?P<type>{"|".join(COLLECTION_TO_BSKY_APP_TYPE.values())})
    /(?P<tid>[{RKEY_CHARS}]+))?$
   """, re.VERBOSE)
 

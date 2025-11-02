@@ -751,6 +751,7 @@ class BlueskyTest(testutil.TestCase):
       'https://bsky.app/profile/did:plc:asdf/lists/123',
       at_uri_to_web_url('at://did:plc:asdf/app.bsky.graph.list/123'))
 
+
     with self.assertRaises(ValueError):
       at_uri_to_web_url('http://not/at/uri')
 
@@ -765,8 +766,15 @@ class BlueskyTest(testutil.TestCase):
          'at://did:plc:foo/app.bsky.feed.post/3jv3wdw2hkt25'),
         ('https://bsky.app/profile/bsky.app/feed/mutuals',
          'at://bsky.app/app.bsky.feed.generator/mutuals'),
+        ('https://bsky.app/profile/bsky.app/feed/mutuals',
+         'at://bsky.app/app.bsky.feed.generator/mutuals'),
+        ('https://bsky.app/profile/did:plc:123/lists/abc',
+         'at://did:plc:123/app.bsky.graph.list/abc'),
+        ('https://bsky.app/profile/foo.com/lists/abc',
+         'at://foo.com/app.bsky.graph.list/abc'),
     ):
-      self.assertEqual(expected, web_url_to_at_uri(url))
+      with self.subTest(url=url):
+        self.assertEqual(expected, web_url_to_at_uri(url))
 
       self.assertEqual(
         'at://did:plc:foo/app.bsky.actor.profile/self',
