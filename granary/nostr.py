@@ -69,6 +69,12 @@ BECH32_PREFIXES = (
   'nrelay',
   'nsec',
 )
+BECH32_TLV_PREFIXES = (
+  'naddr',
+  'nevent',
+  'nprofile',
+  'nrelay',
+)
 BECH32_RE = re.compile(f'^({"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,}}$')
 ID_RE = re.compile(r'^[0-9a-f]{64}$')
 
@@ -216,8 +222,25 @@ def bech32_decode(val):
   if not val or not is_bech32(val):
     return val
 
-  prefix, data = bech32.bech32_decode(val)
-  return bytes(bech32.convertbits(data, 5, 8, pad=False)).hex()
+  prefix, bits = bech32.bech32_decode(val)
+  data = bytes(bech32.convertbits(bits, 5, 8, pad=False))
+
+  if prefix in BECH32_TLV_PREFIXES:
+    # TLV! find the type 0 value, it's (usually) the id
+    while len(data) > 32:
+      type, length = data[:2]
+      assert type in (0, 1, 2, 3), type
+      if type == 0:
+        assert length == 32, length
+        data = data[2:34]
+        break
+
+      data = data[length + 2:]
+
+    if len(data) != 32:
+      return None
+
+  return data.hex()
 
 
 def bech32_encode(prefix, hex):

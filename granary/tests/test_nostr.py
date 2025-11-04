@@ -167,6 +167,13 @@ class NostrTest(testutil.TestCase):
     self.assertEqual(ID, uri_to_id(URI))
     self.assertEqual('http://not/nostr', uri_to_id('http://not/nostr'))
 
+    # bech-32 with TLV, should ignore the TLVs other than hex id
+    id = '0a9b254077729866b0ae7ab70c353807c4f802e9f0db8df7d5f27ed7cc7055bd'
+    assert BECH32_RE.match('nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu')
+    self.assertEqual(id, uri_to_id('nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu'))
+    # same contents, TLVs are just in a different order
+    self.assertEqual(id, uri_to_id('nevent1qgs2ggm7ggxdkzejx8ghrl58n09wx73dk74l9uf2xdaew5ehvxxr4ssrqsqqqqqpqqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0g06gpj8'))
+
   def test_is_bech32(self):
     self.assertTrue(is_bech32('nostr:npubabc'))
     self.assertTrue(is_bech32('neventabc'))
