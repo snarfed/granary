@@ -506,17 +506,19 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
   elif type == 'share':
     event.update({
       'kind': KIND_REPOST,
+      'content': '',
     })
 
     if inner_obj:
-      orig_event = from_as1(inner_obj, from_protocol=from_protocol)
-      event['content'] = json_dumps(orig_event, sort_keys=True, ensure_ascii=False)
       event['tags'] = [
         # https://nips.nostr.com/18
         # "The repost event MUST include an e tag with the id of the note that is being reposted. That tag MUST include a relay URL as its third entry to indicate where it can be fetched."
-        ['e', orig_event.get('id'), remote_relay, 'mention'],
-        ['p', orig_event.get('pubkey')],
+        ['e', inner_hex_id, remote_relay, 'mention'],
       ]
+      if set(inner_obj.keys()) > {'id'}:
+        orig_event = from_as1(inner_obj, from_protocol=from_protocol)
+        event['content'] = json_dumps(orig_event, sort_keys=True, ensure_ascii=False)
+        event['tags'].append(['p', orig_event.get('pubkey')])
 
   elif type in ('like', 'dislike', 'react'):
     event.update({
@@ -545,7 +547,7 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
     })
 
   else:
-    raise NotImplementedError(f'Unsupported activity/object type: {type}')
+    raise NotImplementedError(f'Unsupported activity/object type: {type} {id}')
 
   event = util.trim_nulls(event, ignore=['tags', 'content'])
 

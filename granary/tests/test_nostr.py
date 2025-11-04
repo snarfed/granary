@@ -716,6 +716,18 @@ class NostrTest(testutil.TestCase):
     repost['object'] = f'nostr:{post_id}'
     self.assert_equals(repost, to_as1(event))
 
+  def test_from_as1_repost_compacted_object(self):
+    self.assert_equals({
+      'kind': KIND_REPOST,
+      'content': '',
+      'tags': [['e', 'abc123', '', 'mention']],
+      'created_at': NOW_TS,
+    }, from_as1({
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': 'nostr:abc123',
+    }))
+
   def test_to_from_as1_like(self):
     like = {
       'objectType': 'activity',

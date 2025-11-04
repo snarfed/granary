@@ -305,6 +305,7 @@ _Non-breaking changes:_
   * Add support for `d` (id) tags with kind 30023 (article) events.
   * `from_as1`:
     * Bug fix for when `inReplyTo` is an object with an `author` field.
+    * Bug fix for reposts (`share`s) with compacted `object`.
     * Support `objectType: comment`.
     * Always set `created_at` to the current time, which some relays require, instead of the input object's `published`.
   * `to_as1`:
