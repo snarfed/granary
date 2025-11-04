@@ -69,7 +69,7 @@ BECH32_PREFIXES = (
   'nrelay',
   'nsec',
 )
-BECH32_RE = re.compile(f'^({"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,70}}$')
+BECH32_RE = re.compile(f'^({"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,}}$')
 ID_RE = re.compile(r'^[0-9a-f]{64}$')
 
 # Event kinds

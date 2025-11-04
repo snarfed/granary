@@ -46,6 +46,7 @@ THEN_ISO = (testutil.NOW - timedelta(seconds=1)).isoformat()
 
 ID = '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
 URI = 'nostr:note180cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkws4c58hj'
+URI_TLV = 'nostr:nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu'
 
 PRIVKEY = '1fb759a121ece5e22da48cb20989813fddfc9b2896a4e0207b4ffdd9a0bd189b'
 PRIVKEY_2 = 'dadb5ed90eb04a122c5117d2f108778e21b2398952b3d1e4a0d1d8082ddc9efa'
@@ -1236,3 +1237,4 @@ class ClientTest(testutil.TestCase):
     self.assertIsNone(BECH32_RE.match(ID))
     self.assertIsNone(BECH32_RE.match(URI))
     self.assertIsNotNone(BECH32_RE.match(URI.removeprefix('nostr:')))
+    self.assertIsNotNone(BECH32_RE.match(URI_TLV.removeprefix('nostr:')))
