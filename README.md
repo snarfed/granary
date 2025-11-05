@@ -314,7 +314,7 @@ _Non-breaking changes:_
     * Add `author` when converting user relays events (kind 10002).
   * `user_url`: expect `npub` as input, not `nprofile`.
   * `web_url_to_at_uri`: add `app.bsky.graph.list` support.
-  * `bech32_decode`: add TLV support.
+  * `bech32_decode`, `bech32_encode`: add TLV support.
 * `rss`:
   * `to_as1`: bug fix for multiple categories.
 

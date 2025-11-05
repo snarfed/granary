@@ -69,6 +69,7 @@ BECH32_PREFIXES = (
   'nrelay',
   'nsec',
 )
+# bech32-encoded ids with these prefix are always TLV
 BECH32_TLV_PREFIXES = (
   'naddr',
   'nevent',
@@ -227,7 +228,7 @@ def bech32_decode(val):
 
   if prefix in BECH32_TLV_PREFIXES:
     # TLV! find the type 0 value, it's (usually) the id
-    while len(data) > 32:
+    while data:
       type, length = data[:2]
       assert type in (0, 1, 2, 3), type
       if type == 0:
@@ -237,14 +238,14 @@ def bech32_decode(val):
 
       data = data[length + 2:]
 
-    if len(data) != 32:
+    if not data:
       return None
 
   return data.hex()
 
 
 def bech32_encode(prefix, hex):
-  """Converts a hex string to a bech32-encoded string.
+  """Converts a hex id to a bech32-encoded string.
 
   Based on NIP-19.
 
@@ -257,6 +258,13 @@ def bech32_encode(prefix, hex):
   """
   if not hex:
     return hex
+
+  assert len(hex) == 64
+
+  if prefix in BECH32_TLV_PREFIXES:
+    assert prefix in ('nprofile', 'nevent')
+    # first byte 0 for id/pubkey, second byte 32 for length
+    hex = '0020' + hex
 
   data = bech32.convertbits(bytes.fromhex(hex), 8, 5)
   return bech32.bech32_encode(prefix, data)

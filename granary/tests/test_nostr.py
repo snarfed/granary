@@ -46,7 +46,9 @@ THEN_ISO = (testutil.NOW - timedelta(seconds=1)).isoformat()
 
 ID = '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
 URI = 'nostr:note180cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkws4c58hj'
-URI_TLV = 'nostr:nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu'
+URI_NEVENT = 'nostr:nevent1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gf9fkma'
+URI_NPROFILE = 'nostr:nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8g2lcy6q'
+
 
 PRIVKEY = '1fb759a121ece5e22da48cb20989813fddfc9b2896a4e0207b4ffdd9a0bd189b'
 PRIVKEY_2 = 'dadb5ed90eb04a122c5117d2f108778e21b2398952b3d1e4a0d1d8082ddc9efa'
@@ -58,7 +60,8 @@ PUBKEY_2 = '7d3fd9eea8a6b5521cb8f8bb1b79a00c3d6c92c2f11cd614017843ddd492194c'
 PUBKEY_URI = f'nostr:{PUBKEY}'
 PUBKEY_URI_2 = f'nostr:{PUBKEY_2}'
 # bech32-encoded keys
-NPUB_URI = 'nostr:npub1xtqxrxulvesqhjfgavrgp2jh3fqlc94l80akqr2pcm8xwv7d2vxqdvp2h2'
+NPUB = 'npub1xtqxrxulvesqhjfgavrgp2jh3fqlc94l80akqr2pcm8xwv7d2vxqdvp2h2'
+NPUB_URI = f'nostr:{NPUB}'
 NPUB_URI_2 = 'nostr:npub1qd7nlk0w4znt25suhrutkxme5qxr6myjctc3e4s5q9uy8hw5jgv5cg3vgkc'
 NSEC_URI = 'nostr:nsec1r7m4ngfpanj7ytdy3jeqnzvp8lwlexegj6jwqgrmfl7ang9arzdsv9gn7f'
 NSEC_URI_2 = 'nostr:nsec1mtd4akgwkp9pytz3zlf0zzrh3csmywvf22eare9q68vqstwunmaquc9uu0'
@@ -153,15 +156,14 @@ class NostrTest(testutil.TestCase):
     self.assertEqual(id, id_for(event))
 
   def test_uri_for(self):
-    self.assertEqual('nostr:note14vfqpdvxk8',
-                     uri_for({'kind': KIND_NOTE, 'id': 'ab12'}))
-    self.assertEqual('nostr:nprofile14vfql8g7xk',
-                     uri_for({'kind': KIND_PROFILE, 'id': 'ab12'}))
-    self.assertEqual('nostr:nevent14vfqwk95np',
-                     uri_for({'kind': KIND_DELETE, 'id': 'ab12'}))
+    self.assertEqual(URI, uri_for({'kind': KIND_NOTE, 'id': ID}))
+    self.assertEqual(URI_NPROFILE, uri_for({'kind': KIND_PROFILE, 'id': ID}))
+    self.assertEqual(URI_NEVENT, uri_for({'kind': KIND_DELETE, 'id': ID}))
 
   def test_id_to_uri(self):
     self.assertEqual(URI, id_to_uri('note', ID))
+    self.assertEqual(URI_NEVENT, id_to_uri('nevent', ID))
+    self.assertEqual(URI_NPROFILE, id_to_uri('nprofile', ID))
 
   def test_uri_to_id(self):
     self.assertEqual(ID, uri_to_id(URI))
@@ -254,7 +256,7 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(person, to_as1(event))
     self.assert_equals({**person, 'id': PUBKEY}, to_as1(event, nostr_uri_ids=False))
     self.assert_equals({**person, 'id': NPUB_URI}, to_as1(event, id_format='bech32'))
-    self.assert_equals({**person, 'id': NPUB_URI.removeprefix('nostr:')},
+    self.assert_equals({**person, 'id': NPUB},
                         to_as1(event, id_format='bech32', nostr_uri_ids=False))
 
     # we don't try to detect which URLs might be Mastodon
@@ -341,7 +343,7 @@ class NostrTest(testutil.TestCase):
     self.assert_equals({
       **note,
       'id': 'note1fftu0gwauwl7zvrkmdy9cncfw4h9g3rlvwyaha5xf4qnn0zq5g2qrlw3zf',
-      'author': NPUB_URI.removeprefix('nostr:'),
+      'author': NPUB,
     }, to_as1(event, id_format='bech32', nostr_uri_ids=False))
     self.assert_equals(event, from_as1(note))
 
@@ -633,8 +635,8 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(reply, to_as1(event))
     self.assert_equals({
       **reply,
-      'inReplyTo': 'nevent180cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkws4eev8g',
-      'author': NPUB_URI.removeprefix('nostr:'),
+      'inReplyTo': URI_NEVENT.removeprefix('nostr:'),
+      'author': NPUB,
     }, to_as1(event, id_format='bech32', nostr_uri_ids=False))
 
     event['tags'][0][3] = 'root'
@@ -841,31 +843,31 @@ class NostrTest(testutil.TestCase):
     ]
     self.assert_equals(event, from_as1(follow, remote_relay='reelaay'), ignore=['id'])
 
-  @patch('requests.get', return_value=requests_response({'names': {'alice': 'b0635d'}}))
+  @patch('requests.get', return_value=requests_response({'names': {'alice': PUBKEY}}))
   def test_nip05_to_npub(self, mock_get):
     npub = nostr.nip05_to_npub('alice@example.com')
-    self.assertEqual('npub1kp346yk70h6', npub)
+    self.assertEqual(NPUB, npub)
     mock_get.assert_any_call('https://example.com/.well-known/nostr.json?name=alice',
                              timeout=HTTP_TIMEOUT, stream=True,
                              headers={'User-Agent': util.user_agent})
 
-  @patch('requests.get', return_value=requests_response({'names': {'_': 'b0635d'}}))
+  @patch('requests.get', return_value=requests_response({'names': {'_': PUBKEY}}))
   def test_nip05_to_npub_underscore_username(self, mock_get):
     npub = nostr.nip05_to_npub('_@example.com')
-    self.assertEqual('npub1kp346yk70h6', npub)
+    self.assertEqual(NPUB, npub)
     mock_get.assert_any_call('https://example.com/.well-known/nostr.json?name=_',
                              timeout=HTTP_TIMEOUT, stream=True,
                              headers={'User-Agent': util.user_agent})
 
-  @patch('requests.get', return_value=requests_response({'names': {'_': 'b0635d'}}))
+  @patch('requests.get', return_value=requests_response({'names': {'_': PUBKEY}}))
   def test_nip05_to_npub_bare_domain(self, mock_get):
     npub = nostr.nip05_to_npub('example.com')
-    self.assertEqual('npub1kp346yk70h6', npub)
+    self.assertEqual(NPUB, npub)
     mock_get.assert_any_call('https://example.com/.well-known/nostr.json?name=_',
                              timeout=HTTP_TIMEOUT, stream=True,
                              headers={'User-Agent': util.user_agent})
 
-  @patch('requests.get', return_value=requests_response({'names': {'bob': 'b0635d'}}))
+  @patch('requests.get', return_value=requests_response({'names': {'bob': PUBKEY}}))
   def test_nip05_to_npub_user_not_found(self, mock_get):
     with self.assertRaises(ValueError) as cm:
       nostr.nip05_to_npub('alice@example.com')
@@ -1244,4 +1246,9 @@ class ClientTest(testutil.TestCase):
     self.assertIsNone(BECH32_RE.match(ID))
     self.assertIsNone(BECH32_RE.match(URI))
     self.assertIsNotNone(BECH32_RE.match(URI.removeprefix('nostr:')))
-    self.assertIsNotNone(BECH32_RE.match(URI_TLV.removeprefix('nostr:')))
+    self.assertIsNotNone(BECH32_RE.match(URI_NEVENT.removeprefix('nostr:')))
+
+    # id: 0a9b254077729866b0ae7ab70c353807c4f802e9f0db8df7d5f27ed7cc7055bd
+    # author: a4237e420cdb0b3231d171fe879bcae37a2db7abf2f12a337b975337618c3ac2
+    # kind: 1
+    self.assertIsNotNone(BECH32_RE.match('nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu'))
