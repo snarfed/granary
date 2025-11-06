@@ -541,11 +541,9 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
     })
 
     if inner_obj:
-      event['tags'] = [
-        # https://nips.nostr.com/18
-        # "The repost event MUST include an e tag with the id of the note that is being reposted. That tag MUST include a relay URL as its third entry to indicate where it can be fetched."
-        ['e', inner_hex_id, remote_relay, 'mention'],
-      ]
+      # https://nips.nostr.com/18
+      # "The repost event MUST include an e tag with the id of the note that is being reposted. That tag MUST include a relay URL as its third entry to indicate where it can be fetched."
+      event['tags'].append(['e', inner_hex_id, remote_relay, 'mention'])
       if set(inner_obj.keys()) > {'id'}:
         orig_event = from_as1(inner_obj, from_protocol=from_protocol)
         event['content'] = json_dumps(orig_event, sort_keys=True, ensure_ascii=False)
@@ -557,25 +555,26 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
       'content': '+' if type == 'like'
                  else '-' if type == 'dislike'
                  else obj.get('content'),
-      'tags': [['e', inner_hex_id]],
     })
+    event['tags'].append(['e', inner_hex_id])
 
   elif type == 'delete':
     event.update({
       'kind': KIND_DELETE,
       # TODO: include kind of the object being deleted, in a `k` tag. we'd have
       # to fetch it first. :/
-      'tags': [['e', inner_hex_id]],
     })
+    event['tags'].append(['e', inner_hex_id])
 
   elif type == 'follow':
     event.update({
       'kind': KIND_CONTACTS,
       # https://nips.nostr.com/2
       # Each tag entry should contain the key for the profile, a relay URL where events from that key can be found (can be set to an empty string if not needed), and a local name (or "petname") for that profile (can also be set to an empty string or not provided), i.e., ["p", <32-bytes hex key>, <main relay URL>, <petname>].
-      'tags': [['p', uri_to_id(o['id']), remote_relay, o.get('displayName') or '']
-               for o in as1.get_objects(obj) if o.get('id')]
     })
+    event['tags'].extend(
+      [['p', uri_to_id(o['id']), remote_relay, o.get('displayName') or '']
+       for o in as1.get_objects(obj) if o.get('id')])
 
   else:
     raise NotImplementedError(f'Unsupported activity/object type: {type} {id}')
@@ -815,7 +814,7 @@ class Nostr(Source):
   def user_url(cls, npub):
     npub = npub.removeprefix('nostr:')
     assert npub.startswith('npub'), npub
-    return f'https://coracle.social/people/{npub}'
+    return f'https://njump.me/{npub}'
 
   def get_actor(self, user_id=None):
     """Fetches and returns a Nostr user profile.

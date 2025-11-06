@@ -1237,10 +1237,8 @@ class ClientTest(testutil.TestCase):
     ], FakeConnection.sent)
 
   def test_user_url(self):
-    self.assertEqual('https://coracle.social/people/npub123',
-                     self.nostr.user_url('npub123'))
-    self.assertEqual('https://coracle.social/people/npub123',
-                     self.nostr.user_url('nostr:npub123'))
+    self.assertEqual('https://njump.me/npub123', self.nostr.user_url('npub123'))
+    self.assertEqual('https://njump.me/npub123', self.nostr.user_url('nostr:npub123'))
 
   def test_bech32_re(self):
     self.assertIsNone(BECH32_RE.match(ID))
