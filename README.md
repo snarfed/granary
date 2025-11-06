@@ -312,7 +312,7 @@ _Non-breaking changes:_
     * Add new `id_format` kwarg for choosing between hex and bech32-encoded ids.
     * Add new `nostr_uri_ids` boolean kwarg for whether to prefix ids with `nostr:`.
     * Add `author` when converting user relays events (kind 10002).
-  * `user_url`: expect `npub` as input, not `nprofile`.
+  * Rename `user_url` to `object_url`, expand to accept any NIP-19, NIP-05, or hex id. `user_url` is kept as an alias.
   * `web_url_to_at_uri`: add `app.bsky.graph.list` support.
   * `bech32_decode`, `bech32_encode`: add TLV support.
 * `rss`:

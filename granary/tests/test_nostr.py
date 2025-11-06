@@ -1236,9 +1236,15 @@ class ClientTest(testutil.TestCase):
       ['CLOSE', 'towkin 1'],
     ], FakeConnection.sent)
 
-  def test_user_url(self):
-    self.assertEqual('https://njump.me/npub123', self.nostr.user_url('npub123'))
-    self.assertEqual('https://njump.me/npub123', self.nostr.user_url('nostr:npub123'))
+  def test_object_url(self):
+    for input, expected in (
+        ('npub123', 'https://njump.me/npub123'),
+        ('nostr:npub123', 'https://njump.me/nostr:npub123'),
+        ('foo.com', 'https://njump.me/foo.com'),
+        ('foo@bar.com', 'https://njump.me/foo@bar'),
+    ):
+      with self.subTest(input=input):
+        self.assertEqual(expected, self.nostr.object_url(input))
 
   def test_bech32_re(self):
     self.assertIsNone(BECH32_RE.match(ID))

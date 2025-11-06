@@ -811,10 +811,19 @@ class Nostr(Source):
     self.hex_pubkey = pubkey_from_privkey(uri_to_id(privkey)) if privkey else None
 
   @classmethod
-  def user_url(cls, npub):
-    npub = npub.removeprefix('nostr:')
-    assert npub.startswith('npub'), npub
-    return f'https://njump.me/{npub}'
+  def object_url(cls, id_or_nip05):
+    """Returns the njump.me URL for a given event id, npub, or NIP-05.
+
+    Args:
+      id_or_nip05 (str)
+
+    Returns:
+      str: njump.me URL
+    """
+    assert id_or_nip05
+    return f'https://njump.me/{id_or_nip05}'
+
+  user_url = post_url = object_url
 
   def get_actor(self, user_id=None):
     """Fetches and returns a Nostr user profile.
