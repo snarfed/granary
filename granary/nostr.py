@@ -1021,9 +1021,11 @@ class Nostr(Source):
         return
 
     resp = json_loads(msg)
+    logger.debug(f'{websocket.remote_address} => {resp}')
     if resp[:3] == ['OK', event['id'], True]:
       return creation_result(event)
 
+    logger.warning('relay rejected event!')
     return creation_result(error_plain=resp[-1], abort=True)
 
   def delete(self, id):
