@@ -412,8 +412,7 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
 
   if privkey:
     privkey = privkey.removeprefix('nostr:')
-    if not pubkey:
-      pubkey = pubkey_from_privkey(uri_to_id(privkey))
+    pubkey = pubkey_from_privkey(uri_to_id(privkey))
 
   content = (html_to_text(obj.get('content') or obj.get('summary'))
              or obj.get('displayName') or '')
@@ -427,7 +426,7 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
   }
 
   # NIP-48 proxy tag
-  if from_protocol and id and not id.startswith('nostr:'):
+  if from_protocol and from_protocol != 'nostr' and id and not id.startswith('nostr:'):
     event['tags'].append(['proxy', id, from_protocol])
 
   # types
@@ -457,8 +456,7 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
                             ensure_ascii=False),
     })
 
-    if id:
-      event['pubkey'] = uri_to_id(id)
+    event.setdefault('pubkey', uri_to_id(id))
 
     for url in as1.object_urls(obj):
       for platform, base_url in PLATFORMS.items():
