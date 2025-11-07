@@ -162,6 +162,20 @@ class SourceTest(testutil.TestCase):
       'target': {'url': 'http://fake.com/taggee'},
     }))
 
+  def test_base_object_no_DOMAIN(self):
+    self.source.DOMAIN = None
+    self.assert_equals({
+      'id': 'foo',
+      'url': 'http://any.com/bar',
+    }, self.source.base_object({
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': {
+        'id': 'foo',
+        'url': 'http://any.com/bar',
+      },
+    }))
+
   def test_content_for_create(self):
     def cfc(base, extra, **kwargs):
       obj = base.copy()

@@ -825,7 +825,7 @@ class Source(object, metaclass=SourceMeta):
         domain = parsed_id[0]
       else:
         domain = util.domain_from_link(base_obj.get('url', ''))
-      if domain == self.DOMAIN:
+      if not self.DOMAIN or domain == self.DOMAIN:
         break
     else:
       return {}
