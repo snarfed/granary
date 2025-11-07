@@ -46,7 +46,8 @@ THEN_ISO = (testutil.NOW - timedelta(seconds=1)).isoformat()
 
 ID = '3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d'
 URI = 'nostr:note180cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkws4c58hj'
-URI_NEVENT = 'nostr:nevent1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gf9fkma'
+NEVENT = 'nevent1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8gf9fkma'
+URI_NEVENT = 'nostr:' + NEVENT
 URI_NPROFILE = 'nostr:nprofile1qqsrhuxx8l9ex335q7he0f09aej04zpazpl0ne2cgukyawd24mayt8g2lcy6q'
 
 
@@ -83,6 +84,7 @@ NOTE_AS1 = {
   'author': PUBKEY_URI,
   'content': 'Something to say',
   'published': '2022-01-02T03:04:05+00:00',
+  'url': 'https://njump.me/note1fftu0gwauwl7zvrkmdy9cncfw4h9g3rlvwyaha5xf4qnn0zq5g2qrlw3zf',
 }
 
 logger = logging.getLogger(__name__)
@@ -229,6 +231,7 @@ class NostrTest(testutil.TestCase):
         'https://twitter.com/semisol_public',
         'https://bitcoinhackers.org/@semisol',
         'https://t.me/1087295469',
+        'https://njump.me/alice.com',
       ],
       'published': NOW_ISO,
     }
@@ -330,6 +333,7 @@ class NostrTest(testutil.TestCase):
       'author': PUBKEY_URI,
       'content': 'Something to say',
       'published': NOW_ISO,
+      'url': f'https://njump.me/{bech32_encode("note", id)}',
     }
     event = {
       'kind': KIND_NOTE,
@@ -434,6 +438,7 @@ class NostrTest(testutil.TestCase):
         'objectType': 'hashtag',
         'displayName': 'bar',
       }],
+      'url': f'https://njump.me/{bech32_encode("note", id)}',
     }
     event = {
       'kind': KIND_NOTE,
@@ -466,6 +471,7 @@ class NostrTest(testutil.TestCase):
           'displayName': 'my alt text',
         },
       ],
+      'url': f'https://njump.me/{bech32_encode("note", id)}',
     }
     event = {
       'kind': KIND_NOTE,
@@ -511,6 +517,7 @@ class NostrTest(testutil.TestCase):
         # 'displayName': 'my alt text',
         'stream': {'url': 'http://a/vidjo.mov'},
       }],
+      'url': f'https://njump.me/{bech32_encode("note", id)}',
     }
     event = {
       'kind': KIND_NOTE,
@@ -546,6 +553,7 @@ class NostrTest(testutil.TestCase):
       'location': {
         'displayName': 'my house',
       },
+      'url': f'https://njump.me/{bech32_encode("note", id)}',
     }
     event = {
       'kind': KIND_NOTE,
@@ -561,6 +569,7 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(event, from_as1(note))
 
   def test_to_from_as1_article(self):
+    id = '2f395bebb3be5f4738a24f70fea33b7067902eea261fc7b24ba4559f32312acd'
     note = {
       'objectType': 'article',
       'id': 'http://art/icle',
@@ -569,10 +578,11 @@ class NostrTest(testutil.TestCase):
       'summary': 'about the thing',
       'content': 'Something to say',
       'published': NOW_ISO,
+      'url': f'https://njump.me/{bech32_encode("nevent", id)}',
     }
     event = {
       'kind': KIND_ARTICLE,
-      'id': '2f395bebb3be5f4738a24f70fea33b7067902eea261fc7b24ba4559f32312acd',
+      'id': id,
       'pubkey': PUBKEY,
       'content': 'Something to say',
       'created_at': NOW_TS,
@@ -635,7 +645,7 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(reply, to_as1(event))
     self.assert_equals({
       **reply,
-      'inReplyTo': URI_NEVENT.removeprefix('nostr:'),
+      'inReplyTo': NEVENT,
       'author': NPUB,
     }, to_as1(event, id_format='bech32', nostr_uri_ids=False))
 
@@ -689,6 +699,7 @@ class NostrTest(testutil.TestCase):
         'author': PUBKEY_URI,
         'content': 'The orig post',
         'published': NOW_ISO,
+        'url': f'https://njump.me/{bech32_encode("note", post_id)}',
       },
     }
     event = {
@@ -949,6 +960,7 @@ class ClientTest(testutil.TestCase):
       **NOTE_AS1,
       'id': f'nostr:{event["id"]}',
       'content': f"It's {i}",
+      'url': f'https://njump.me/{bech32_encode("note", event["id"])}',
     } for i, event in enumerate(events)]
 
     FakeConnection.to_receive = \
@@ -987,6 +999,7 @@ class ClientTest(testutil.TestCase):
       'content': 'I hereby reply',
       'inReplyTo': f'nostr:{NOTE_NOSTR["id"]}',
       'published': NOW_ISO,
+      'url': f'https://njump.me/{bech32_encode("note", reply_nostr["id"])}',
     }
 
     FakeConnection.to_receive = [
@@ -1024,6 +1037,7 @@ class ClientTest(testutil.TestCase):
       'id': f'nostr:{repost_nostr["id"]}',
       'object': f'nostr:{NOTE_NOSTR["id"]}',
       'published': NOW_ISO,
+      'url': f'https://njump.me/{bech32_encode("nevent", repost_nostr["id"])}',
     }
 
     FakeConnection.to_receive = [
@@ -1129,6 +1143,7 @@ class ClientTest(testutil.TestCase):
       'displayName': 'Alice',
       'username': 'alice.com',
       'published': NOW_ISO,
+      'urls': [f'https://njump.me/alice.com'],
     }
 
     self.assert_equals(person, self.nostr.get_actor(user_id='nostr:npub1z24szqzphd'))
@@ -1238,10 +1253,11 @@ class ClientTest(testutil.TestCase):
 
   def test_object_url(self):
     for input, expected in (
+        (None, None),
         ('npub123', 'https://njump.me/npub123'),
         ('nostr:npub123', 'https://njump.me/nostr:npub123'),
         ('foo.com', 'https://njump.me/foo.com'),
-        ('foo@bar.com', 'https://njump.me/foo@bar'),
+        ('foo@bar.com', 'https://njump.me/foo@bar.com'),
     ):
       with self.subTest(input=input):
         self.assertEqual(expected, self.nostr.object_url(input))
@@ -1250,7 +1266,7 @@ class ClientTest(testutil.TestCase):
     self.assertIsNone(BECH32_RE.match(ID))
     self.assertIsNone(BECH32_RE.match(URI))
     self.assertIsNotNone(BECH32_RE.match(URI.removeprefix('nostr:')))
-    self.assertIsNotNone(BECH32_RE.match(URI_NEVENT.removeprefix('nostr:')))
+    self.assertIsNotNone(BECH32_RE.match(NEVENT))
 
     # id: 0a9b254077729866b0ae7ab70c353807c4f802e9f0db8df7d5f27ed7cc7055bd
     # author: a4237e420cdb0b3231d171fe879bcae37a2db7abf2f12a337b975337618c3ac2

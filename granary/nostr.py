@@ -616,8 +616,11 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
     return {}
 
   obj = {}
+  id_bech32 = None
   if id := event.get('id'):
-    obj['id'] = make_id(id, bech32_prefix_for(event))
+    prefix = bech32_prefix_for(event)
+    obj['id'] = make_id(id, prefix)
+    id_bech32 = bech32_encode(prefix, id)
 
   kind = event['kind']
   tags = event.get('tags', [])
@@ -626,15 +629,15 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
 
   if kind == KIND_PROFILE:  # profile
     content = json_loads(content) if content else {}
-    nip05_domain = (content['nip05'].removeprefix('_@')
-                    if isinstance(content.get('nip05'), str)
-                    else '')
+    nip05 = (content['nip05'].removeprefix('_@')
+             if isinstance(content.get('nip05'), str)
+             else '')
     obj.update({
       'objectType': 'person',
       'id': make_id(event['pubkey'], 'npub'),
       'displayName': content.get('display_name') or content.get('name'),
       'summary': content.get('about'),
-      'username': nip05_domain,
+      'username': nip05,
       'urls': [],
     })
 
@@ -655,6 +658,8 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
         if base_url:
           obj['urls'].append(base_url + identity)
 
+    obj['urls'].append(Nostr.object_url(nip05 or id_bech32))
+
   elif kind in (KIND_NOTE, KIND_ARTICLE):  # note, article
     obj.update({
       'objectType': 'note' if kind == KIND_NOTE else 'article',
@@ -664,6 +669,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
       'image': [],
       'attachments': [],
       'tags': [],
+      'url': Nostr.object_url(id_bech32),
     })
 
     if id:
@@ -714,6 +720,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
     obj.update({
       'objectType': 'activity',
       'verb': 'share',
+      'url': Nostr.object_url(id_bech32),
     })
     for tag in tags:
       if tag[0] == 'e' and tag[-1] == 'mention':
@@ -820,8 +827,8 @@ class Nostr(Source):
     Returns:
       str: njump.me URL
     """
-    assert id_or_nip05
-    return f'https://njump.me/{id_or_nip05}'
+    if id_or_nip05:
+      return f'https://njump.me/{id_or_nip05}'
 
   user_url = post_url = object_url
 
