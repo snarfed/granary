@@ -377,7 +377,7 @@ class NostrTest(testutil.TestCase):
   def test_from_as1_post_activity_with_proxy_tag(self):
     self.assert_equals({
       **NOTE_NOSTR,
-      'tags': [['proxy', 'https://example.com/note/123', 'activitypub']],
+      'tags': [['proxy', 'proxy-id', 'proxy-proto']],
     }, from_as1({
       'objectType': 'activity',
       'verb': 'post',
@@ -385,7 +385,7 @@ class NostrTest(testutil.TestCase):
         **NOTE_AS1,
         'id': 'https://example.com/note/123',
       },
-    }, from_protocol='activitypub'), ignore=['id', 'sig'])
+    }, proxy_tag=('proxy-id', 'proxy-proto')), ignore=['id', 'sig'])
 
   def test_from_as1_reject_activity_not_implemented(self):
     with self.assertRaises(NotImplementedError):
@@ -614,15 +614,11 @@ class NostrTest(testutil.TestCase):
   def test_from_as1_with_proxy_tag(self):
     self.assert_equals({
       **NOTE_NOSTR,
-      'tags': [['proxy', 'at://did:plc:123/app.bsky.feed.post/456', 'atproto']],
+      'tags': [['proxy', 'proxy-id', 'proxy-proto']],
     }, from_as1({
       **NOTE_AS1,
       'id': 'at://did:plc:123/app.bsky.feed.post/456',
-    }, from_protocol='atproto'), ignore=['id', 'sig'])
-
-    # no id in input AS2 object
-    self.assert_equals(NOTE_NOSTR, from_as1(NOTE_AS1, from_protocol='activitypub'),
-                      ignore=['id', 'sig'])
+    }, proxy_tag=('proxy-id', 'proxy-proto')), ignore=['id', 'sig'])
 
   def test_to_from_as1_reply(self):
     reply = {

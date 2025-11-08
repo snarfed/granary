@@ -387,7 +387,7 @@ def pubkey_from_privkey(privkey):
   return pubkey
 
 
-def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
+def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
   """Converts an ActivityStreams 1 activity or object to a Nostr event.
 
   Args:
@@ -398,11 +398,11 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
     remote_relays (sequence of str): optional sequence of remote relays where the
       "target" of this object - followee, in-reply-to, repost-of, etc - can be
       fetched.
-    from_protocol (str): optional source protocol for NIP-48 proxy tag. Supported
-      values: 'activitypub', 'atproto', 'web'
-
+    proxy_tag (sequence of [str ID URL, str protocol]): optional NIP-48 proxy
+      tag to add to the output event, without the initial ``proxy`` element.
   Returns:
     dict: Nostr event
+
   """
   type = as1.object_type(obj)
   id = obj.get('id')
@@ -426,8 +426,9 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
   }
 
   # NIP-48 proxy tag
-  if from_protocol and from_protocol != 'nostr' and id and not id.startswith('nostr:'):
-    event['tags'].append(['proxy', id, from_protocol])
+  if proxy_tag:
+    assert len(proxy_tag) == 2, proxy_tag
+    event['tags'].append(['proxy'] + list(proxy_tag))
 
   # types
   if type in as1.ACTOR_TYPES:
@@ -467,7 +468,7 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
 
   elif type in ('post', 'update'):
     return from_as1(inner_obj, privkey=privkey, remote_relay=remote_relay,
-                    from_protocol=from_protocol)
+                    proxy_tag=proxy_tag)
 
   elif type in ('article', 'comment', 'note'):
     if type == 'article':
@@ -543,7 +544,7 @@ def from_as1(obj, privkey=None, remote_relay='', from_protocol=None):
       # "The repost event MUST include an e tag with the id of the note that is being reposted. That tag MUST include a relay URL as its third entry to indicate where it can be fetched."
       event['tags'].append(['e', inner_hex_id, remote_relay, 'mention'])
       if set(inner_obj.keys()) > {'id'}:
-        orig_event = from_as1(inner_obj, from_protocol=from_protocol)
+        orig_event = from_as1(inner_obj)
         event['content'] = json_dumps(orig_event, sort_keys=True, ensure_ascii=False)
         event['tags'].append(['p', orig_event.get('pubkey')])
 
