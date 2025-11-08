@@ -644,6 +644,22 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals(OBJECT_WITH_EMOJI,
                        self.mastodon.status_to_as1_object(STATUS_WITH_EMOJI))
 
+  def test_status_to_as1_object_mention_with_null_url(self):
+    obj = self.mastodon.status_to_as1_object({
+      **STATUS,
+      'mentions': [{
+        'username': 'bob',
+        'url': None,
+        'id': '22222',
+        'acct': 'bob@example.com',
+      }],
+    })
+    self.assertEqual({
+      'objectType': 'person',
+      'id': tag_uri('22222'),
+      'displayName': 'bob',
+    }, obj['tags'][0])
+
   def test_status_to_as1_activity(self):
     self.assert_equals(ACTIVITY, self.mastodon.status_to_as1_activity(STATUS))
 

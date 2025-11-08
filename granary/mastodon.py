@@ -409,7 +409,7 @@ class Mastodon(source.Source):
     obj['tags'] = [{
       'objectType': 'person',
       # no uri in Mastodon API `mentions` objects, so construct the actor id manually
-      'id': t.get('url', '').replace('/@', '/users/') or self.tag_uri(t.get('id')),
+      'id': (t.get('url') or '').replace('/@', '/users/') or self.tag_uri(t.get('id')),
       'url': t.get('url'),
       'displayName': t.get('username'),
     } for t in status.get('mentions', [])] + [{
