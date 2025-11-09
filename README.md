@@ -321,6 +321,7 @@ _Non-breaking changes:_
   * Rename `user_url` to `object_url`, expand to accept any NIP-19, NIP-05, or hex id. `user_url` is kept as an alias.
   * `web_url_to_at_uri`: add `app.bsky.graph.list` support.
   * `bech32_decode`, `bech32_encode`: add TLV support.
+  * Add new `normalize_relay_uri` function.
 * `rss`:
   * `to_as1`: bug fix for multiple categories.
 

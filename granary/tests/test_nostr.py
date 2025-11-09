@@ -34,6 +34,7 @@ from ..nostr import (
   KIND_REACTION,
   KIND_RELAYS,
   KIND_REPOST,
+  normalize_relay_uri,
   to_as1,
   uri_for,
   uri_to_id,
@@ -907,6 +908,30 @@ class NostrTest(testutil.TestCase):
       with self.subTest(nip05=bad):
         with self.assertRaises(ValueError):
           nostr.nip05_to_npub(bad)
+
+  def test_normalize_relay_uri(self):
+    for uri, expected in (
+        (None, None),
+        ('', ''),
+        ('wss://re.lay', 'wss://re.lay/'),
+        ('wss://re.lay/', 'wss://re.lay/'),
+        ('wss://re.lay:443', 'wss://re.lay/'),
+        ('wss://re.lay:443/', 'wss://re.lay/'),
+        ('wss://re.lay:8443', 'wss://re.lay:8443/'),
+        ('wss://re.lay:8443/foo', 'wss://re.lay:8443/foo'),
+        ('wss://re.lay:443/foo', 'wss://re.lay/foo'),
+        ('ws://re.lay', 'ws://re.lay/'),
+        ('ws://re.lay/', 'ws://re.lay/'),
+        ('ws://re.lay:80', 'ws://re.lay/'),
+        ('ws://re.lay:80/', 'ws://re.lay/'),
+        ('ws://re.lay:8080', 'ws://re.lay:8080/'),
+        ('ws://re.lay:8080/foo', 'ws://re.lay:8080/foo'),
+        ('ws://re.lay:80/foo', 'ws://re.lay/foo'),
+        ('wss://re.lay/path/to/relay', 'wss://re.lay/path/to/relay'),
+        ('wss://re.lay:443/path/to/relay', 'wss://re.lay/path/to/relay'),
+    ):
+      with self.subTest(uri=uri):
+        self.assertEqual(expected, normalize_relay_uri(uri))
 
 
 class ClientTest(testutil.TestCase):

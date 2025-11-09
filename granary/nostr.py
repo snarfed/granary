@@ -46,6 +46,7 @@ import logging
 import mimetypes
 import re
 import secrets
+from urllib.parse import urlparse, urlunparse
 
 import bech32
 from oauth_dropins.webutil import util
@@ -794,6 +795,40 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
     obj['actor'] = make_id(pubkey, 'npub')
 
   return util.trim_nulls(Source.postprocess_object(obj))
+
+
+def normalize_relay_uri(uri):
+  """Returns a normalized relay URI.
+
+  Right now, just adds a trailing slash if the URI has no path, and removes the port
+  if it's explicitly provided and redundant, ie ``:443`` for ``wss://`` or ``:80``
+  for ``ws://``.
+
+  https://github.com/nostr-protocol/nips/issues/1876
+  https://github.com/nostr-protocol/nips/issues/1198
+
+  Args:
+    uri (str)
+
+  Returns:
+    str: normalized URI
+  """
+  if not uri:
+    return uri
+
+  parsed = urlparse(uri)
+
+  # remove redundant port
+  if ((parsed.scheme == 'wss' and parsed.port == 443)
+      or (parsed.scheme == 'ws' and parsed.port == 80)):
+    netloc = parsed.hostname
+  else:
+    netloc = parsed.netloc
+
+  # add trailing slash if no path
+  path = parsed.path or '/'
+
+  return urlunparse(parsed._replace(netloc=netloc, path=path))
 
 
 class Nostr(Source):
