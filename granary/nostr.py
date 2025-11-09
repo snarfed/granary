@@ -10,7 +10,7 @@ NIPS implemented:
 * 02: contacts/followings
 * 05: domain identifiers
 * 09: deletes
-* 10: replies, mentions
+* 10: text notes, replies, mentions
 * 12: hashtags, locations
 * 14: subject tag in notes
 * 18: reposts, including 10 for e/p tags
@@ -19,7 +19,6 @@ NIPS implemented:
 * 23: articles
 * 24: extra fields
 * 25: likes, emoji reactions
-* 27: text notes
 * 39: external identities
 * 48: proxy tags
 * 50: search
@@ -27,7 +26,6 @@ NIPS implemented:
 
 TODO:
 
-* 11: relay info (like nodeinfo)
 * 12: tag queries
 * 16, 33: ephemeral/replaceable events
 * 17: DMs
@@ -36,7 +34,6 @@ TODO:
 *     text. clients are supposed to get that from their local database.
 * 32: tag activities
 * 46: "Nostr Connect," signing proxy that holds user's keys
-* 65: user relays. what would this be in AS1? anything?
 * 73: external content ids
 """
 from datetime import datetime, timezone
@@ -46,7 +43,6 @@ import logging
 import mimetypes
 import re
 import secrets
-from urllib.parse import urlparse, urlunparse
 
 import bech32
 from oauth_dropins.webutil import util
@@ -795,40 +791,6 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
     obj['actor'] = make_id(pubkey, 'npub')
 
   return util.trim_nulls(Source.postprocess_object(obj))
-
-
-def normalize_relay_uri(uri):
-  """Returns a normalized relay URI.
-
-  Right now, just adds a trailing slash if the URI has no path, and removes the port
-  if it's explicitly provided and redundant, ie ``:443`` for ``wss://`` or ``:80``
-  for ``ws://``.
-
-  https://github.com/nostr-protocol/nips/issues/1876
-  https://github.com/nostr-protocol/nips/issues/1198
-
-  Args:
-    uri (str)
-
-  Returns:
-    str: normalized URI
-  """
-  if not uri:
-    return uri
-
-  parsed = urlparse(uri)
-
-  # remove redundant port
-  if ((parsed.scheme == 'wss' and parsed.port == 443)
-      or (parsed.scheme == 'ws' and parsed.port == 80)):
-    netloc = parsed.hostname
-  else:
-    netloc = parsed.netloc
-
-  # add trailing slash if no path
-  path = parsed.path or '/'
-
-  return urlunparse(parsed._replace(netloc=netloc, path=path))
 
 
 class Nostr(Source):
