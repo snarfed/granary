@@ -455,7 +455,7 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(event, from_as1(note))
 
   def test_to_from_as1_note_with_image(self):
-    id = '9187b96eb958fd73a2b632d282bc953f84a4cdcdb31038ceb796326462f213b5'
+    id = '51c9a64dc4f00590d76fdf01af9c7e75ddb15810e8da2b0783227500447f2c37'
     note = {
       'objectType': 'note',
       'id': f'nostr:{id}',
@@ -482,6 +482,7 @@ class NostrTest(testutil.TestCase):
       'tags': [[
         'imeta',
         'url http://pic/1.png',
+        'alt ',
         'm image/png',
       ], [
         'imeta',
@@ -501,7 +502,7 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(note, to_as1(event))
 
   def test_to_from_as1_note_with_video_audio(self):
-    id = '08696375b68a7be64301ee9c32919bfc158572231fa7e76f5031f48ae6687da3'
+    id = 'ed8312b06730cf57793b8b354331b9fa0a85c9823ad2352865504613afb2f3af'
     note = {
       'objectType': 'note',
       'id': f'nostr:{id}',
@@ -528,10 +529,12 @@ class NostrTest(testutil.TestCase):
       'tags': [[
         'imeta',
         'url http://a/podcast.mp3',
+        'alt ',
         'm audio/mpeg',
       ], [
         'imeta',
         'url http://a/vidjo.mov',
+        'alt ',
         'm video/quicktime',
       ]],
     }

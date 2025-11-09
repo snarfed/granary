@@ -519,13 +519,15 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
       event['tags'].append(['location', location])
 
     # imeta tags for images, video, audio
+    # https://nips.nostr.com/92#media-attachments
     video_audio = [as1.get_object(att, 'stream')
                    for att in as1.get_objects(obj, 'attachments')]
     for img in as1.get_objects(obj, 'image') + video_audio:
       if url := img.get('url') or img.get('id'):
-        tag = ['imeta', f'url {url}']
-        if alt := img.get('displayName'):
-          tag.append(f'alt {alt}')
+        # requires at least one element besides url
+        # if we ever start fetching the URL, we could include dim
+        # other possibilities: https://nips.nostr.com/94#event-format
+        tag = ['imeta', f'url {url}', f'alt {img.get("displayName") or ""}']
         if mime := img.get('mimeType') or mimetypes.guess_type(url, strict=False)[0]:
           tag.append(f'm {mime}')
         event['tags'].append(tag)
@@ -690,7 +692,11 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
       elif type == 'location':
         obj['location'] = {'displayName': tag[1]}
       elif type == 'imeta':
-        metas = dict(val.split(maxsplit=1) for val in tag[1:])
+        metas = {}
+        for val in tag[1:]:
+          parts = val.split(maxsplit=1)
+          if len(parts) == 2:
+            metas[parts[0]] = parts[1]
         if url := metas.get('url'):
           mime = metas.get('m') or mimetypes.guess_type(url, strict=False)[0]
           type = mime.split('/')[0]
