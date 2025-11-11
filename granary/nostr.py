@@ -73,7 +73,9 @@ BECH32_TLV_PREFIXES = (
   'nprofile',
   'nrelay',
 )
-BECH32_RE = re.compile(f'^({"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,}}$')
+BECH32_PATTERN = f'({"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,}}'
+BECH32_RE = re.compile('^' + BECH32_PATTERN + '$')
+URI_RE = re.compile(r'\bnostr:' + BECH32_PATTERN + r'\b')
 ID_RE = re.compile(r'^[0-9a-f]{64}$')
 
 # Event kinds

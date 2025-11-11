@@ -36,6 +36,7 @@ from ..nostr import (
   KIND_REPOST,
   to_as1,
   uri_for,
+  URI_RE,
   uri_to_id,
 )
 
@@ -63,7 +64,7 @@ PUBKEY_URI_2 = f'nostr:{PUBKEY_2}'
 # bech32-encoded keys
 NPUB = 'npub1xtqxrxulvesqhjfgavrgp2jh3fqlc94l80akqr2pcm8xwv7d2vxqdvp2h2'
 NPUB_URI = f'nostr:{NPUB}'
-NPUB_URI_2 = 'nostr:npub1qd7nlk0w4znt25suhrutkxme5qxr6myjctc3e4s5q9uy8hw5jgv5cg3vgkc'
+NPUB_URI_2 = 'nostr:npub105lanm4g5664y89clza3k7dqps7keykz7ywdv9qp0ppam4yjr9xq49gjap'
 NSEC_URI = 'nostr:nsec1r7m4ngfpanj7ytdy3jeqnzvp8lwlexegj6jwqgrmfl7ang9arzdsv9gn7f'
 NSEC_URI_2 = 'nostr:nsec1mtd4akgwkp9pytz3zlf0zzrh3csmywvf22eare9q68vqstwunmaquc9uu0'
 # signature of NOTE_NOSTR with PRIVKEY
@@ -1271,3 +1272,15 @@ class ClientTest(testutil.TestCase):
     # author: a4237e420cdb0b3231d171fe879bcae37a2db7abf2f12a337b975337618c3ac2
     # kind: 1
     self.assertIsNotNone(BECH32_RE.match('nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu'))
+
+  def test_uri_re(self):
+    self.assertIsNone(URI_RE.search(ID))
+    self.assertIsNone(URI_RE.search(NPUB))
+    self.assertIsNone(URI_RE.search(PUBKEY_URI))
+
+    matches = list(URI_RE.finditer(URI))
+    self.assertEqual(1, len(matches))
+    self.assertEqual(URI, matches[0].group(0))
+
+    matches = list(URI_RE.finditer(f'a {URI} b x{URI} ({URI_NEVENT}) \n c {URI_NPROFILE} d'))
+    self.assertEqual([URI, URI_NEVENT, URI_NPROFILE], [m.group(0) for m in matches])
