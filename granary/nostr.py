@@ -543,11 +543,14 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
     if inner_obj:
       # https://nips.nostr.com/18
       # "The repost event MUST include an e tag with the id of the note that is being reposted. That tag MUST include a relay URL as its third entry to indicate where it can be fetched."
-      event['tags'].append(['e', inner_hex_id, remote_relay, 'mention'])
+      e_tag = ['e', inner_hex_id, remote_relay, '']
+      event['tags'].append(e_tag)
       if set(inner_obj.keys()) > {'id'}:
         orig_event = from_as1(inner_obj)
         event['content'] = json_dumps(orig_event, sort_keys=True, ensure_ascii=False)
-        event['tags'].append(['p', orig_event.get('pubkey')])
+        orig_author_pubkey = orig_event.get('pubkey')
+        event['tags'].append(['p', orig_author_pubkey])
+        e_tag.append(orig_author_pubkey)
 
   elif type in ('like', 'dislike', 'react'):
     event.update({
@@ -726,9 +729,18 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
       'verb': 'share',
       'url': Nostr.object_url(id_bech32),
     })
+
     for tag in tags:
-      if tag[0] == 'e' and tag[-1] == 'mention':
-        obj['object'] = make_id(tag[1], 'note')
+      if tag[0] == 'e':
+        orig_post_id = make_id(tag[1], 'note')
+        if len(tag) >= 5 and tag[4]:
+          obj['object'] = {
+            'id': orig_post_id,
+            'author': make_id(tag[4], 'npub')
+          }
+        else:
+          obj['object'] = orig_post_id
+
     if content and content.startswith('{'):
       obj['object'] = to_as1(json_loads(content))
 

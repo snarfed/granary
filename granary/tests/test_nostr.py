@@ -714,7 +714,7 @@ class NostrTest(testutil.TestCase):
         'tags': [],
       }, sort_keys=True),
       'tags': [
-        ['e', post_id, '', 'mention'],
+        ['e', post_id, '', '', PUBKEY],
         ['p', PUBKEY],
       ],
       'created_at': THEN_TS,
@@ -728,12 +728,17 @@ class NostrTest(testutil.TestCase):
     }
     self.assert_equals(expected_event, from_as1(repost))
 
-    event['tags'][0:1] = [
-        ['e', post_id, 'reelaay', 'mention'],
-    ]
-    self.assert_equals(expected_event, from_as1(repost, remote_relay='reelaay'))
+    event['tags'][0][3] = ['reelaay']
+    self.assert_equals(expected_event, from_as1(repost, remote_relay=['reelaay']))
 
     del event['content']
+    repost['object'] = {
+      'id': f'nostr:{post_id}',
+      'author': PUBKEY_URI,
+    }
+    self.assert_equals(repost, to_as1(event))
+
+    del event['tags'][0][4]
     repost['object'] = f'nostr:{post_id}'
     self.assert_equals(repost, to_as1(event))
 
@@ -741,7 +746,7 @@ class NostrTest(testutil.TestCase):
     self.assert_equals({
       'kind': KIND_REPOST,
       'content': '',
-      'tags': [['e', 'abc123', '', 'mention']],
+      'tags': [['e', 'abc123', '', '']],
       'created_at': NOW_TS,
     }, from_as1({
       'objectType': 'activity',
@@ -1027,7 +1032,7 @@ class ClientTest(testutil.TestCase):
       'kind': KIND_REPOST,
       'pubkey': PUBKEY,
       'content': None,
-      'tags': [['e', NOTE_NOSTR['id'], 'TODO relay', 'mention']],
+      'tags': [['e', NOTE_NOSTR['id'], 'TODO relay', '']],
     } , NSEC_URI)
 
     repost_as1 = {
