@@ -19,6 +19,7 @@ NIPS implemented:
 * 23: articles
 * 24: extra fields
 * 25: likes, emoji reactions
+* 27: user mentions
 * 39: external identities
 * 48: proxy tags
 * 50: search
@@ -29,7 +30,7 @@ TODO:
 * 12: tag queries
 * 16, 33: ephemeral/replaceable events
 * 17: DMs
-* 27: user mentions, note/event mentions
+* 27: user mentions, note/event mentions (to_as1 direction)
 *     the difficulty is that the Nostr tags don't include human-readable
 *     text. clients are supposed to get that from their local database.
 * 32: tag activities
@@ -423,14 +424,12 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
     pubkey = pubkey_from_privkey(uri_to_id(privkey))
 
   # content
-  if content := obj.get('content'):
-    is_html = (obj.get('content_is_html')
-               or bool(BeautifulSoup(content, 'html.parser').find())
-               or HTML_ENTITY_RE.search(content))
-    if is_html:
-      content = html_to_text(content, ignore_links=False)
-  else:
-    content = obj.get('summary') or obj.get('displayName') or ''
+  content = obj.get('content') or obj.get('summary') or obj.get('displayName') or ''
+  content_is_html = (obj.get('content_is_html')
+                     or bool(BeautifulSoup(content, 'html.parser').find())
+                     or HTML_ENTITY_RE.search(content))
+  if content_is_html:
+    content = html_to_text(content)
 
   # base event
   event = {
@@ -527,10 +526,25 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
     if summary := obj.get('summary'):
       event['tags'].append(['summary', summary])
 
+    # tags: hashtags are NIP-12 't' tags, mentions are NIP-27 URIs in content
+    mentions = []
     for tag in util.get_list(obj, 'tags'):
-      name = tag.get('displayName')
-      if name and tag.get('objectType') == 'hashtag':
+      tag_type = tag.get('objectType')
+      if tag_type == 'hashtag' and (name := tag.get('displayName')):
         event['tags'].append(['t', name])
+      elif tag_type == 'mention' and (url := tag.get('url')):
+        if url.startswith('nostr:'):
+          util.add(event['tags'], ['p', url.removeprefix('nostr:')])
+          if not content_is_html and 'startIndex' in tag and 'length' in tag:
+            mentions.append(tag)
+
+    # replace mentions in content in reverse order to preserve indices
+    for tag in sorted(mentions, key=lambda m: m['startIndex'], reverse=True):
+      start = tag['startIndex']
+      end = start + tag['length']
+      content = event['content']
+      npub_uri = id_to_uri('npub', tag['url'].removeprefix('nostr:'))
+      event['content'] = content[:start] + npub_uri + content[end:]
 
     if location := as1.get_object(obj, 'location').get('displayName'):
       event['tags'].append(['location', location])

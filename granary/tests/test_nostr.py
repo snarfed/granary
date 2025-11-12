@@ -460,6 +460,88 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(note, to_as1(event))
     self.assert_equals(event, from_as1(note))
 
+  def test_from_as1_note_with_mention_tags(self):
+    note = {
+      'objectType': 'note',
+      'author': PUBKEY_URI,
+      'content': 'Hey @alice and @bob and @eve ok',
+      'content_is_html': False,
+      'tags': [{
+        'objectType': 'mention',
+        'url': PUBKEY_URI_2,
+        'displayName': '@alice',
+        'startIndex': 4,
+        'length': 6,
+      }, {
+        'objectType': 'mention',
+        'url': PUBKEY_URI,
+        'displayName': '@bob',
+        'startIndex': 15,
+        'length': 4,
+      }, {
+        'objectType': 'mention',
+        'url': 'https://example.com/@eve',
+        'displayName': '@eve',
+        'startIndex': 24,
+        'length': 4,
+      }],
+    }
+    expected = {
+      'kind': KIND_NOTE,
+      'pubkey': PUBKEY,
+      'content': f'Hey {NPUB_URI_2} and {NPUB_URI} and @eve ok',
+      'created_at': NOW_TS,
+      'tags': [
+        ['p', PUBKEY_2],
+        ['p', PUBKEY],
+      ],
+    }
+    self.assert_equals(expected, from_as1(note), ignore=['id', 'sig'])
+
+  def test_from_as1_note_with_mention_tag_html_content(self):
+    note = {
+      'objectType': 'note',
+      'author': PUBKEY_URI,
+      'content': '<p>Hello <a href="https://example.com">@alice</a>!</p>',
+      'content_is_html': True,
+      'tags': [{
+        'objectType': 'mention',
+        'url': PUBKEY_URI_2,
+        'displayName': '@alice',
+        'startIndex': 20,
+        'length': 6,
+      }],
+    }
+    expected = {
+      'kind': KIND_NOTE,
+      'pubkey': PUBKEY,
+      'content': 'Hello @alice!',
+      'created_at': NOW_TS,
+      'tags': [['p', PUBKEY_2]],
+    }
+    self.assert_equals(expected, from_as1(note), ignore=['id', 'sig'])
+
+  def test_from_as1_note_with_mention_tag_without_indices(self):
+    note = {
+      'objectType': 'note',
+      'author': PUBKEY_URI,
+      'content': 'Hello @alice!',
+      'content_is_html': False,
+      'tags': [{
+        'objectType': 'mention',
+        'url': PUBKEY_URI_2,
+        'displayName': '@alice',
+      }],
+    }
+    expected = {
+      'kind': KIND_NOTE,
+      'pubkey': PUBKEY,
+      'content': 'Hello @alice!',
+      'created_at': NOW_TS,
+      'tags': [['p', PUBKEY_2]],
+    }
+    self.assert_equals(expected, from_as1(note), ignore=['id', 'sig'])
+
   def test_to_from_as1_note_with_image(self):
     id = '51c9a64dc4f00590d76fdf01af9c7e75ddb15810e8da2b0783227500447f2c37'
     note = {
