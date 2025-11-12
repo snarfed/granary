@@ -1469,8 +1469,6 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       tags.append(tag)
 
     # escape HTML characters: <, >, &. shuffle over facet indices to match.
-    # ordered_tags = sorted((t for t in tags if 'startIndex' in t and 'length' in t),
-    #                       key = lambda t: t['startIndex'])
     while match := re.search(r'<|>', text):
       # escape char
       entity = f'&{html.entities.codepoint2name[ord(match.group(0))]};'

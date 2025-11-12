@@ -45,6 +45,7 @@ import re
 import secrets
 
 import bech32
+from bs4 import BeautifulSoup
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 import secp256k1
@@ -52,7 +53,15 @@ from websockets.exceptions import ConnectionClosedOK
 from websockets.sync.client import connect
 
 from . import as1
-from .source import creation_result, FRIENDS, html_to_text, INCLUDE_LINK, OMIT_LINK, Source
+from .source import (
+  creation_result,
+  FRIENDS,
+  HTML_ENTITY_RE,
+  html_to_text,
+  INCLUDE_LINK,
+  OMIT_LINK,
+  Source,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -413,8 +422,17 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
     privkey = privkey.removeprefix('nostr:')
     pubkey = pubkey_from_privkey(uri_to_id(privkey))
 
-  content = (html_to_text(obj.get('content') or obj.get('summary'))
-             or obj.get('displayName') or '')
+  # content
+  if content := obj.get('content'):
+    is_html = (obj.get('content_is_html')
+               or bool(BeautifulSoup(content, 'html.parser').find())
+               or HTML_ENTITY_RE.search(content))
+    if is_html:
+      content = html_to_text(content, ignore_links=False)
+  else:
+    content = obj.get('summary') or obj.get('displayName') or ''
+
+  # base event
   event = {
     'pubkey': pubkey,
     'content': content,
