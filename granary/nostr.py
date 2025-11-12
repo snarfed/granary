@@ -669,6 +669,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
       'author': make_id(pubkey, 'npub'),
       # TODO: render Markdown to HTML?
       'content': event.get('content'),
+      'content_is_html': False,
       'image': [],
       'attachments': [],
       'tags': [],

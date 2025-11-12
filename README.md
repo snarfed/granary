@@ -318,6 +318,7 @@ _Non-breaking changes:_
     * Add new `nostr_uri_ids` boolean kwarg for whether to prefix ids with `nostr:`.
     * Add `author` when converting user relays events (kind 10002).
     * Populate `url`/`urls` field for more object types, using [njump.me](https://njump.me/) URLs.
+    * Add `content_is_html` property.
   * Rename `user_url` to `object_url`, expand to accept any NIP-19, NIP-05, or hex id. `user_url` is kept as an alias.
   * `web_url_to_at_uri`: add `app.bsky.graph.list` support.
   * `bech32_decode`, `bech32_encode`: add TLV support.

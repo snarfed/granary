@@ -85,6 +85,7 @@ NOTE_AS1 = {
   'id': f'nostr:{NOTE_NOSTR["id"]}',
   'author': PUBKEY_URI,
   'content': 'Something to say',
+  'content_is_html': False,
   'published': '2022-01-02T03:04:05+00:00',
   'url': 'https://njump.me/note1fftu0gwauwl7zvrkmdy9cncfw4h9g3rlvwyaha5xf4qnn0zq5g2qrlw3zf',
 }
@@ -334,6 +335,7 @@ class NostrTest(testutil.TestCase):
       'id': f'nostr:{id}',
       'author': PUBKEY_URI,
       'content': 'Something to say',
+      'content_is_html': False,
       'published': NOW_ISO,
       'url': f'https://njump.me/{bech32_encode("note", id)}',
     }
@@ -411,6 +413,7 @@ class NostrTest(testutil.TestCase):
       'objectType': 'note',
       'author': PUBKEY_URI,
       'content': 'Something to say',
+      'content_is_html': False,
       'title': 'my thing',
     }
     event = {
@@ -432,6 +435,7 @@ class NostrTest(testutil.TestCase):
       'id': f'nostr:{id}',
       'author': PUBKEY_URI,
       'content': 'Something to say',
+      'content_is_html': False,
       'published': NOW_ISO,
       'tags': [{
         'objectType': 'hashtag',
@@ -463,6 +467,7 @@ class NostrTest(testutil.TestCase):
       'id': f'nostr:{id}',
       'author': PUBKEY_URI,
       'content': 'Something to say',
+      'content_is_html': False,
       'published': NOW_ISO,
       'image': [
         'http://pic/1.png',
@@ -510,6 +515,7 @@ class NostrTest(testutil.TestCase):
       'id': f'nostr:{id}',
       'author': PUBKEY_URI,
       'content': 'Something to say',
+      'content_is_html': False,
       'published': NOW_ISO,
       'attachments': [{
         'objectType': 'audio',
@@ -554,6 +560,7 @@ class NostrTest(testutil.TestCase):
       'id': f'nostr:{id}',
       'author': PUBKEY_URI,
       'content': 'Something to say',
+      'content_is_html': False,
       'published': NOW_ISO,
       'location': {
         'displayName': 'my house',
@@ -582,6 +589,7 @@ class NostrTest(testutil.TestCase):
       'title': 'a thing',
       'summary': 'about the thing',
       'content': 'Something to say',
+      'content_is_html': False,
       'published': NOW_ISO,
       'url': f'https://njump.me/{bech32_encode("nevent", id)}',
     }
@@ -631,6 +639,7 @@ class NostrTest(testutil.TestCase):
       'author': PUBKEY_URI,
       'published': NOW_ISO,
       'content': 'I hereby reply',
+      'content_is_html': False,
       'inReplyTo': f'nostr:{ID}',
     }
     event = {
@@ -699,6 +708,7 @@ class NostrTest(testutil.TestCase):
         'id': f'nostr:{post_id}',
         'author': PUBKEY_URI,
         'content': 'The orig post',
+        'content_is_html': False,
         'published': NOW_ISO,
         'url': f'https://njump.me/{bech32_encode("note", post_id)}',
       },
@@ -1003,6 +1013,7 @@ class ClientTest(testutil.TestCase):
       'id': f'nostr:{reply_nostr["id"]}',
       'author': PUBKEY_URI,
       'content': 'I hereby reply',
+      'content_is_html': False,
       'inReplyTo': f'nostr:{NOTE_NOSTR["id"]}',
       'published': NOW_ISO,
       'url': f'https://njump.me/{bech32_encode("note", reply_nostr["id"])}',
