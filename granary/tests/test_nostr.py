@@ -463,35 +463,48 @@ class NostrTest(testutil.TestCase):
   def test_from_as1_note_with_mention_tags(self):
     note = {
       'objectType': 'note',
-      'author': PUBKEY_URI,
-      'content': 'Hey @alice and @bob and @eve ok',
+      'author': NPUB_URI,
+      'content': 'Hey @alice and @bob and @eve and @foo and @bar ok',
       'content_is_html': False,
       'tags': [{
+        # NIP-21 (bech32-encoded) URI
         'objectType': 'mention',
-        'url': PUBKEY_URI_2,
-        'displayName': '@alice',
+        'url': URI_NPROFILE,
         'startIndex': 4,
         'length': 6,
       }, {
+        # non-standard nostr: + hex ID URI
         'objectType': 'mention',
-        'url': PUBKEY_URI,
-        'displayName': '@bob',
+        'url': PUBKEY_URI_2,
         'startIndex': 15,
         'length': 4,
       }, {
+        # not a Nostr user
         'objectType': 'mention',
         'url': 'https://example.com/@eve',
-        'displayName': '@eve',
         'startIndex': 24,
+        'length': 4,
+      }, {
+        # plain bech32 ID
+        'objectType': 'mention',
+        'url': NPUB,
+        'startIndex': 33,
+        'length': 4,
+      }, {
+        # plain hex ID
+        'objectType': 'mention',
+        'url': PUBKEY_2,
+        'startIndex': 42,
         'length': 4,
       }],
     }
     expected = {
       'kind': KIND_NOTE,
       'pubkey': PUBKEY,
-      'content': f'Hey {NPUB_URI_2} and {NPUB_URI} and @eve ok',
+      'content': f'Hey {id_to_uri("npub", ID)} and {NPUB_URI_2} and @eve and {NPUB_URI} and {NPUB_URI_2} ok',
       'created_at': NOW_TS,
       'tags': [
+        ['p', ID],
         ['p', PUBKEY_2],
         ['p', PUBKEY],
       ],
@@ -541,6 +554,81 @@ class NostrTest(testutil.TestCase):
       'tags': [['p', PUBKEY_2]],
     }
     self.assert_equals(expected, from_as1(note), ignore=['id', 'sig'])
+
+  def test_from_as1_profile_plain_bech32_id(self):
+    profile = {
+      'objectType': 'person',
+      'id': NPUB,
+      'displayName': 'Alice',
+      'summary': 'Just a test user',
+    }
+    expected = {
+      'kind': KIND_PROFILE,
+      'pubkey': PUBKEY,
+      'content': '{"about":"Just a test user","name":"Alice"}',
+      'created_at': NOW_TS,
+      'tags': [],
+    }
+    self.assert_equals(expected, from_as1(profile), ignore=['id', 'sig'])
+
+  def test_from_as1_reply_plain_hex_in_reply_to(self):
+    id = ID
+    reply = {
+      'objectType': 'comment',
+      'id': f'nostr:{id}',
+      'author': NPUB_URI,
+      'content': 'Great post!',
+      'inReplyTo': {'id': ID},
+    }
+    expected = {
+      'kind': KIND_NOTE,
+      'pubkey': PUBKEY,
+      'content': 'Great post!',
+      'created_at': NOW_TS,
+      'tags': [['e', ID, '']],
+    }
+    self.assert_equals(expected, from_as1(reply), ignore=['id', 'sig'])
+
+  def test_from_as1_like_plain_bech32_object(self):
+    note_bech32 = bech32_encode('note', ID)
+    like = {
+      'objectType': 'activity',
+      'verb': 'like',
+      'actor': NPUB_URI,
+      'object': {'id': note_bech32},
+    }
+    expected = {
+      'kind': KIND_REACTION,
+      'pubkey': PUBKEY,
+      'content': '+',
+      'created_at': NOW_TS,
+      'tags': [['e', ID]],
+    }
+    self.assert_equals(expected, from_as1(like), ignore=['id', 'sig'])
+
+  def test_from_as1_follow_mixed_formats(self):
+    follow = {
+      'objectType': 'activity',
+      'verb': 'follow',
+      'actor': NPUB_URI,
+      'object': [
+        {'id': NPUB_2},
+        {'id': PUBKEY},
+        {'id': PUBKEY_URI_2},
+      ],
+    }
+    expected = {
+      'kind': KIND_CONTACTS,
+      'pubkey': PUBKEY,
+      'content': '',
+      'created_at': NOW_TS,
+      'tags': [
+        ['p', PUBKEY_2, '', ''],
+        ['p', PUBKEY, '', ''],
+        ['p', PUBKEY_2, '', ''],
+      ],
+    }
+    self.assert_equals(expected, from_as1(follow), ignore=['id', 'sig'])
 
   def test_to_from_as1_note_with_image(self):
     id = '51c9a64dc4f00590d76fdf01af9c7e75ddb15810e8da2b0783227500447f2c37'

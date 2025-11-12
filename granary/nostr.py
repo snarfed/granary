@@ -533,8 +533,8 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
       if tag_type == 'hashtag' and (name := tag.get('displayName')):
         event['tags'].append(['t', name])
       elif tag_type == 'mention' and (url := tag.get('url')):
-        if url.startswith('nostr:'):
-          util.add(event['tags'], ['p', url.removeprefix('nostr:')])
+        if url.startswith('nostr:') or is_bech32(url) or ID_RE.match(url):
+          util.add(event['tags'], ['p', uri_to_id(url)])
           if not content_is_html and 'startIndex' in tag and 'length' in tag:
             mentions.append(tag)
 
@@ -543,7 +543,7 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
       start = tag['startIndex']
       end = start + tag['length']
       content = event['content']
-      npub_uri = id_to_uri('npub', tag['url'].removeprefix('nostr:'))
+      npub_uri = id_to_uri('npub', uri_to_id(tag['url']))
       event['content'] = content[:start] + npub_uri + content[end:]
 
     if location := as1.get_object(obj, 'location').get('displayName'):
