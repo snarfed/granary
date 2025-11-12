@@ -73,7 +73,7 @@ BECH32_TLV_PREFIXES = (
   'nprofile',
   'nrelay',
 )
-BECH32_PATTERN = f'({"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,}}'
+BECH32_PATTERN = f'(?P<prefix>{"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,}}'
 BECH32_RE = re.compile('^' + BECH32_PATTERN + '$')
 URI_RE = re.compile(r'\bnostr:' + BECH32_PATTERN + r'\b')
 ID_RE = re.compile(r'^[0-9a-f]{64}$')
@@ -637,7 +637,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
              else '')
     obj.update({
       'objectType': 'person',
-      'id': make_id(event['pubkey'], 'npub'),
+      'id': make_id(pubkey, 'npub'),
       'displayName': content.get('display_name') or content.get('name'),
       'summary': content.get('about'),
       'username': nip05,

@@ -63,8 +63,9 @@ PUBKEY_URI = f'nostr:{PUBKEY}'
 PUBKEY_URI_2 = f'nostr:{PUBKEY_2}'
 # bech32-encoded keys
 NPUB = 'npub1xtqxrxulvesqhjfgavrgp2jh3fqlc94l80akqr2pcm8xwv7d2vxqdvp2h2'
+NPUB_2 = 'npub105lanm4g5664y89clza3k7dqps7keykz7ywdv9qp0ppam4yjr9xq49gjap'
 NPUB_URI = f'nostr:{NPUB}'
-NPUB_URI_2 = 'nostr:npub105lanm4g5664y89clza3k7dqps7keykz7ywdv9qp0ppam4yjr9xq49gjap'
+NPUB_URI_2 = f'nostr:{NPUB_2}'
 NSEC_URI = 'nostr:nsec1r7m4ngfpanj7ytdy3jeqnzvp8lwlexegj6jwqgrmfl7ang9arzdsv9gn7f'
 NSEC_URI_2 = 'nostr:nsec1mtd4akgwkp9pytz3zlf0zzrh3csmywvf22eare9q68vqstwunmaquc9uu0'
 # signature of NOTE_NOSTR with PRIVKEY
