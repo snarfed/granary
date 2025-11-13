@@ -555,6 +555,38 @@ class NostrTest(testutil.TestCase):
     }
     self.assert_equals(expected, from_as1(note), ignore=['id', 'sig'])
 
+  def test_to_as1_note_with_nip27_mentions(self):
+    content = f'Hey {NPUB_URI} and {URI_NPROFILE} and {URI_NEVENT} and {NPUB} ok'
+    note = {
+      'kind': KIND_NOTE,
+      'pubkey': PUBKEY,
+      'content': content,
+      'created_at': NOW_TS,
+    }
+
+    expected = {
+      'objectType': 'note',
+      'author': PUBKEY_URI,
+      'content': content,
+      'content_is_html': False,
+      'published': NOW_ISO,
+      'tags': [{
+        'objectType': 'mention',
+        'url': PUBKEY_URI,
+        'displayName': NPUB_URI,
+        'startIndex': 4,
+        'length': 69,
+      }, {
+        'objectType': 'mention',
+        'url': 'nostr:' + ID,
+        'displayName': URI_NPROFILE,
+        'startIndex': 78,
+        'length': 76,
+      }],
+    }
+
+    self.assert_equals(expected, to_as1(note), ignore=['@context', 'to'])
+
   def test_from_as1_profile_plain_bech32_id(self):
     profile = {
       'objectType': 'person',

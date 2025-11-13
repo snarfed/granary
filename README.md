@@ -307,6 +307,7 @@ _Non-breaking changes:_
   * `status_to_as1_object`: bug fix for when `mention.url` is explicitly null.
 * `nostr`:
   * Add support for `d` (id) tags with kind 30023 (article) events.
+  * Add support for [NIP-27](https://nips.nostr.com/27) user mentions to both `to_as1` and `from_as1`.
   * `from_as1`:
     * Bug fix for when `inReplyTo` is an object with an `author` field.
     * Bug fix for reposts (`share`s) with compacted `object`.
@@ -314,7 +315,6 @@ _Non-breaking changes:_
     * Always set `created_at` to the current time, which some relays require, instead of the input object's `published`.
     * Always include `alt` element, even if it's blank, in `imeta` tags for images and videos. ([NIP-92](https://nips.nostr.com/92) requires `imeta` tags to have at least one field besides `url`.)
     * Try harder to sniff whether `content` is HTML or plain text.
-    * Implement NIP-27 user mentions.
   * `to_as1`:
     * Add new `id_format` kwarg for choosing between hex and bech32-encoded ids.
     * Add new `nostr_uri_ids` boolean kwarg for whether to prefix ids with `nostr:`.

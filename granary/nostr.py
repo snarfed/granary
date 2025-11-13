@@ -640,6 +640,11 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
   assert id_format in ('hex', 'bech32')
 
   def make_id(id, prefix):
+    """
+    Args:
+      id (str): hex id
+      prefix (str): bech32 prefix
+    """
     assert ID_RE.match(id)
     if id_format == 'bech32':
       id = bech32_encode(prefix, id)
@@ -755,6 +760,22 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
             continue
           # remove from text content
           obj['content'] = obj['content'].replace(url, '').rstrip()
+
+    # convert NIP-27 user mentions in content to AS1 tags, and replace
+    # URIs in content with mentioned users' handles
+    #
+    # can't easily do this in granary.nostr.to_as1 because we need to fetch
+    # the Nostr user
+    for match in URI_RE.finditer(obj['content'] or ''):
+      if match['prefix'] in ('npub', 'nprofile'):
+        uri = match.group(0)
+        obj['tags'].append({
+          'objectType': 'mention',
+          'url': make_id(uri_to_id(uri), 'npub'),
+          'displayName': uri,
+          'startIndex': match.start(),
+          'length': match.end() - match.start(),
+        })
 
   elif kind in (KIND_REPOST, KIND_GENERIC_REPOST):  # repost
     obj.update({
