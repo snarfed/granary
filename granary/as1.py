@@ -8,8 +8,12 @@ import copy
 import logging
 from operator import itemgetter
 import re
+import string
 
+from bs4 import BeautifulSoup
 from oauth_dropins.webutil import util
+
+from .source import HTML_ENTITY_RE
 
 logger = logging.getLogger(__name__)
 
@@ -719,3 +723,19 @@ def mentions(obj):
 
   return [t['url'] for t in get_objects(obj, 'tags')
           if t.get('url') and t.get('objectType') == 'mention']
+
+
+def is_content_html(obj):
+  """Returns True if ``obj.content`` is HTML, False otherwise.
+
+  Args:
+    obj (dict): AS1 object
+  """
+  if (is_html := obj.get('content_is_html')) is not None:
+    return is_html
+
+  content = obj.get('content') or ''
+  # use html.parser to require HTML tags, not add them by default
+  # https://www.crummy.com/software/BeautifulSoup/bs4/doc/#differences-between-parsers
+  return (bool(util.parse_html(content, features='html.parser').find())
+          or HTML_ENTITY_RE.search(content))

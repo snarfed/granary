@@ -16,7 +16,6 @@ import re
 import urllib.parse
 
 import brevity
-from bs4 import BeautifulSoup
 import html2text
 import mf2util
 from oauth_dropins.webutil import util
@@ -926,12 +925,7 @@ class Source(object, metaclass=SourceMeta):
       # HTML formatting.
       summary = None
 
-    # sniff whether content is HTML or plain text. use html.parser instead of
-    # the default html5lib since html.parser is stricter and expects actual
-    # HTML tags.
-    # https://www.crummy.com/software/BeautifulSoup/bs4/doc/#differences-between-parsers
-    is_html = (bool(BeautifulSoup(content, 'html.parser').find()) or
-               HTML_ENTITY_RE.search(content))
+    is_html = as1.is_content_html(obj)
     if is_html and not ignore_formatting:
       content = html_to_text(content, baseurl=(obj.get('url') or ''),
                              **self.HTML2TEXT_OPTIONS)

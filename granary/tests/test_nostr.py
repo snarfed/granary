@@ -362,6 +362,7 @@ class NostrTest(testutil.TestCase):
     }, from_as1({
       **NOTE_AS1,
       'content': '<p>hi <em>there</em></p><ul><li>1<li>2</ul>',
+      'content_is_html': None,
     }), ignore=['id', 'sig'])
 
   def test_from_as1_post_activity(self):

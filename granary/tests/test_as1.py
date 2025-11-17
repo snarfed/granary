@@ -932,3 +932,25 @@ class As1Test(testutil.TestCase):
         'url': 'z',
       }],
     }))
+
+  def test_is_content_html(self):
+    for obj in (
+        {'content_is_html': True},
+        {'content': 'foo', 'content_is_html': True},
+        {'content': '<p>foo bar</p>'},
+        {'content': 'foo <a href="...">bar</a> baz'},
+        {'content': 'foo &lt; bar'},
+    ):
+      with self.subTest(obj=obj):
+        self.assertTrue(as1.is_content_html(obj))
+
+    for obj in (
+        {},
+        {'summary': 'foo'},
+        {'content': None},
+        {'content': ''},
+        {'content': 'foo'},
+        {'content': '<p>foo</p>', 'content_is_html': False},
+    ):
+      with self.subTest(obj=obj):
+        self.assertFalse(as1.is_content_html(obj))

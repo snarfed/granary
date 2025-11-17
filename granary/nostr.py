@@ -425,10 +425,7 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
 
   # content
   content = obj.get('content') or obj.get('summary') or obj.get('displayName') or ''
-  content_is_html = (obj.get('content_is_html')
-                     or bool(BeautifulSoup(content, 'html.parser').find())
-                     or HTML_ENTITY_RE.search(content))
-  if content_is_html:
+  if content_is_html := as1.is_content_html(obj):
     content = html_to_text(content)
 
   # base event
