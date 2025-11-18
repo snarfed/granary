@@ -227,7 +227,11 @@ def url():
   if orig_url.startswith('https://rss-bridge.netlib.re/'):
     return 'Sorry, rss-bridge.netlib.re is down right now.', 502
 
-  fragment = urllib.parse.urlparse(orig_url).fragment
+  try:
+    fragment = urllib.parse.urlparse(orig_url).fragment
+  except ValueError as e:
+    raise BadRequest(f'Invalid url: {e}')
+
   if fragment and input != 'html':
       raise BadRequest('URL fragments only supported with input=html.')
 

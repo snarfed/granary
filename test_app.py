@@ -736,6 +736,11 @@ not RSS!
     self._test_bad_url("-2093%25'%20UNION%20ALL%20SELECT%2015%2C15%2C15%2C15",
                        requests.exceptions.InvalidURL('foo'))
 
+  def test_url_bad_url_invalid_brackets(self):
+    resp = client.get('/url?url=http://[DOMAIN]/&input=html&output=atom')
+    self.assert_equals(400, resp.status_code)
+    self.assertIn('Invalid url', resp.get_data(as_text=True))
+
   def test_url_fetch_fails(self):
     self.expect_requests_get('http://my/posts.html').AndRaise(socket.timeout(''))
     self.mox.ReplayAll()
