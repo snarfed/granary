@@ -11,6 +11,7 @@ entrypoint: gunicorn --workers 1 --threads 10 --timeout 300 -b :$PORT app:app
 # background: https://github.com/snarfed/bridgy/issues/578
 automatic_scaling:
   max_idle_instances: 1
+  max_instances: 20
   max_concurrent_requests: 10
   max_pending_latency: 2000ms  # default is 30
 
