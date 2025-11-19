@@ -178,7 +178,7 @@ The original post]]></description>
   <link>http://this</link>
 </image>""", got)
 
-  def test_content_html(self):
+  def test_from_as1_content_html(self):
     got = rss.from_as1([{
         'objectType': 'note',
         'content': '<x>A</x> <y> <z>B C</z>',
@@ -186,6 +186,22 @@ The original post]]></description>
     self.assert_multiline_in("""\
 <description><![CDATA[<x>A</x> <y> <z>B C</z>]]></description>
 """, got)
+
+  def test_to_as1_content_html(self):
+    self.assert_equals({
+        'objectType': 'note',
+        'content': '<a href="http://a">A</a>  <em>B C</em>',
+      }, rss.to_as1(
+"""\
+<?xml version='1.0' encoding='UTF-8'?>
+<rss version="2.0">
+<channel>
+  <item>
+    <description><![CDATA[<a href="http://a">A</a> <y> <em>B C</em>]]></description>
+  </item>
+</channel>
+</rss>
+""")[0]['object'])
 
   def test_title_html(self):
     got = rss.from_as1([{
