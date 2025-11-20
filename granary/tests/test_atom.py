@@ -101,6 +101,10 @@ INSTAGRAM_ACTIVITY = {
       'objectType': 'mention',
       'url': 'https://www.instagram.com/foo/',
       'displayName': '@foo',
+    }, {
+      'objectType': 'link',
+      'url': 'https://instagram.com/explore/locations/520640/',
+      'displayName': 'Le Truc',
     }],
     'location': {
       'displayName': 'Le Truc',

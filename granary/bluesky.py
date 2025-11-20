@@ -46,7 +46,6 @@ HANDLE_REGEX = (
 )
 HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX + r'$')
 DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX + r'$')
-AT_MENTION_PATTERN = re.compile(r'(?:^|\s)(@' + HANDLE_REGEX + r')(?:$|\s)')
 
 MAX_MEDIA_SIZE_BYTES = 5_000_000
 
@@ -143,10 +142,6 @@ SENSITIVE_LABEL = 'graphic-media'
 
 # TODO: bring back validate? or remove?
 LEXRPC = Base(truncate=True, validate=False)
-
-# TODO: html2text doesn't escape ]s in link text, which breaks this, eg
-# <a href="http://post">ba](r</a> turns into [ba](r](http://post)
-MARKDOWN_LINK_RE = re.compile(r'\[(?P<text>.*?)\]\((?P<url>[^ ]*?)( "[^"]*?")?(?<!\\)\)')
 
 ELLIPSIS = ' […]'
 
@@ -488,6 +483,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   if not type:
     raise ValueError(f"Missing objectType or verb")
 
+  obj = copy.deepcopy(obj)
   actor = as1.get_object(activity, 'actor')
   if blobs is None:
     blobs = {}
@@ -501,10 +497,6 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         break
     else:
       raise ValueError(f"{type} {verb} doesn't support out_type {out_type}")
-
-  # extract @-mention links in HTML text
-  obj = copy.deepcopy(obj)
-  Source.postprocess_object(obj, mentions=True)
 
   ret = None
 
@@ -669,7 +661,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       'reason': (obj.get('content') or obj.get('summary') or '')[:2000],
     }
 
-  elif verb == 'post' and type in POST_TYPES:
+  elif verb in ('post', 'update') and type in POST_TYPES:
     # images => embeds
     images_embed = images_record_embed = None
     if images := as1.get_objects(obj, 'image'):
@@ -762,46 +754,16 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         include_link = OMIT_LINK  # link will be in the external embed, not text
 
     # convert text from HTML and truncate
-    link_tags = []
-    content = orig_content = obj.get('content', '')
-    if content:
-      # convert HTML tags _only if_ content has any, not otherwise so that we
-      # preserve whitespace
-      #
-      # sniff whether content is HTML or plain text. use html.parser instead of
-      # the default html5lib since html.parser is stricter and expects actual
-      # HTML tags.
-      # https://www.crummy.com/software/BeautifulSoup/bs4/doc/#differences-between-parsers
-      is_html = (obj.get('content_is_html')
-                 or bool(BeautifulSoup(content, 'html.parser').find())
-                 or HTML_ENTITY_RE.search(content))
-      if is_html:
-        content = html_to_text(content, ignore_links=False)
-
-        # extract links and convert to plain text
-        # TODO: unify into as1 or source
-        # https://github.com/snarfed/granary/issues/729
-        while link := MARKDOWN_LINK_RE.search(content):
-          start, end = link.span()
-          # our regexp isn't perfect, so skip links that we can't extract a
-          # clean URL from
-          if (util.is_web(link['url']) and util.is_url(link['url'])
-              and not link['text'].strip().startswith(('@', '#'))):
-            link_tags.append({
-              'objectType': 'link',
-              'displayName': link['text'],
-              'url': link['url'].replace(r'\(', '(').replace(r'\)', ')'),
-              'startIndex': start,
-              'length': len(link['text']),
-            })
-          content = content[:start] + link['text'] + content[end:]
+    orig_content = obj.get('content', '')
+    as1.convert_html_content_to_text(obj)
+    as1.expand_tags(obj)
 
     tags = util.get_list(obj, 'tags')
 
     # handle summary. for articles, use instead of content. for notes, assume
     # it's a fediverse-style content warnings, add above content.
     # https://github.com/snarfed/bridgy-fed/issues/1001
-    full_text = content
+    full_text = content = obj.get('content') or ''
     index_offset = 0
     if summary := obj.get('summary'):
       if type == 'article' or as_embed:
@@ -815,12 +777,10 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # attachments to embed(s), including quoted posts
     record_embed = record_record_embed = external_embed = external_record_embed = None
 
-    # convert link at end of post to a quote
+    # convert Bluesky post link at end of content to a quote
     attachment_urls = [att['url'] for att in attachments if 'url' in att]
-
     text_end = len(full_text)
-
-    for tag in link_tags:
+    for tag in tags:
       # check that the link is at the end and the text is the url
       if (tag.get('objectType') != 'link' or tag.get('url') != tag.get('displayName') or
           tag.get('startIndex', 0) + tag.get('length', 0) + index_offset != text_end):
@@ -905,7 +865,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       text_byte_end = len(text.encode())
 
     facets = []
-    standalone_tags = []
+    standalone_tags = set()
     if (truncated and original_post_text_suffix
         and text.endswith(original_post_text_suffix)):
       facets.append({
@@ -921,14 +881,15 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       })
 
     # convert tags to facets
-    for tag in tags + link_tags:
+    hashtag_facets = set()  # contains string displayNames, lower cased
+    for tag in tags:
       name = tag.get('displayName', '').strip().lstrip('@#')
       tag_type = tag.get('objectType')
       if name and not tag_type:
         tag_type = 'hashtag'
 
-      tag_url = tag.get('url')
-      if not tag_url and tag_type != 'hashtag':
+      tag_url = tag.get('url') or ''
+      if not name and not tag_url:
         continue
 
       facet = {
@@ -960,71 +921,49 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         }]
 
       elif tag_type == 'mention':
-        # extract and if necessary resolve DID
-        did = None
+        # extract and resolve DID
         if tag_url.startswith('did:'):
-          did = tag_url
+          user = tag_url
+        elif match := AT_URI_RE.match(tag_url):
+          user = match.group('repo')
+        elif match := BSKY_APP_URL_RE.match(tag_url):
+          user = match.group('id')
         else:
-          if match := AT_URI_RE.match(tag_url):
-            did = match.group('repo')
-          elif match := BSKY_APP_URL_RE.match(tag_url):
-            did = match.group('id')
-          if did and client and not did.startswith('did:'):
-            did = client.com.atproto.identity.resolveHandle(handle=did)['did']
+          user = name.lstrip('@')
 
-        if not did:
-          # preserve the profile link if we couldn't resolve it
-          facet['features'] = [{
-            '$type': 'app.bsky.richtext.facet#link',
-            'uri': tag_url,
-          }]
-        else:
+        did = None
+        if user.startswith('did:'):
+          did = user
+        elif client and HANDLE_PATTERN.match(user):
+          try:
+            did = client.com.atproto.identity.resolveHandle(handle=user)['did']
+          except BaseException as e:
+            code, _ = util.interpret_http_exception(e)
+            if not code:
+              raise
+
+        if did:
           facet['features'] = [{
             '$type': 'app.bsky.richtext.facet#mention',
             'did': did,
           }]
 
-      else:
+      if not facet.get('features') and tag_url:
         facet['features'] = [{
           '$type': 'app.bsky.richtext.facet#link',
           'uri': tag_url,
         }]
-
-      if name and 'index' not in facet:
-        # use displayName to guess index at first location found in text. note
-        # that #/@ character for mentions is included in index end.
-        #
-        # can't use \b for word boundaries here because that only includes
-        # alphanumerics, and Bluesky hashtags can include emoji
-        prefix = ('#' if tag_type == 'hashtag'
-                  else '@' if tag_type == 'mention'
-                  else '')
-        # can't use \b at beginning/end because # and @ and emoji aren't
-        # word-constituent chars
-        bound = fr'[\s{string.punctuation.replace("-", "")}]'
-        match = re.search(fr'(^|{bound})({prefix}{re.escape(name)})($|{bound})', text,
-                          flags=re.IGNORECASE)
-        if not match and tag_type == 'mention' and '@' in name:
-          # try without @[server] suffix
-          username = name.split('@')[0]
-          match = re.search(fr'(^|\s)({prefix}{username})($|\s)', text)
-
-        if match:
-          facet['index'] = {
-            'byteStart': len(full_text[:match.start(2)].encode()),
-            'byteEnd': len(full_text[:match.end(2)].encode()),
-          }
 
       # skip or trim this facet if it's off the end of content that got truncated
       index = facet.get('index')
 
       if not index:
         max_length = LEXRPC.defs['app.bsky.feed.post']['record']['properties']['tags']['maxLength']
-        if tag_type == 'hashtag':
+        if tag_type == 'hashtag' and name.lower() not in hashtag_facets:
           if len(standalone_tags) >= max_length:
             logger.warning(f'More than {max_length} standalone hashtags, omitting "{name}"')
           else:
-            standalone_tags.append(name)
+            standalone_tags.add(name)
         continue
 
       if index.get('byteStart', 0) >= text_byte_end:
@@ -1032,44 +971,11 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       if index.get('byteEnd', 0) > text_byte_end:
         index['byteEnd'] = text_byte_end
 
-      if facet not in facets:
+      if facet.get('features') and facet not in facets:
         facets.append(facet)
-
-    # extract un-linked @-mentions
-    if client:
-      for match in AT_MENTION_PATTERN.finditer(text):
-        handle = match.group(0).strip()
-
-        index = {
-          'byteStart': len(text[:match.start(1)].encode()),
-          'byteEnd': len(text[:match.end(1)].encode()),
-        }
-
-        # check if no overlap with any existing facets
-        def index_range_overlap(index1, index2):
-          start1 = index1.get('byteStart', 0)
-          end1 = index1.get('byteEnd', 0)
-          start2 = index2.get('byteStart', 0)
-          end2 = index2.get('byteEnd', 0)
-          return (start1 >= start2 and start1 < end2) or (end1 > start2 and end1 < end2)
-
-        if any('index' in f and index_range_overlap(index, f['index']) for f in facets):
-          continue
-
-        # attempt to resolve handle
-        did = client.com.atproto.identity.resolveHandle(handle=handle[1:])['did']
-
-        if did:
-          facet = {
-            '$type': 'app.bsky.richtext.facet',
-            'features': [{
-              '$type': 'app.bsky.richtext.facet#mention',
-              'did': did,
-            }],
-            'index': index
-          }
-
-          facets.append(facet)
+        if tag_type == 'hashtag':
+          hashtag_facets.add(name.lower())
+          standalone_tags.discard(name.lower())
 
     # if we truncated this post's text, override external embed with link to
     # original post. (if there are images, we added a link in the text instead,
@@ -1149,7 +1055,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       'reply': reply,
       'langs': langs,
       'labels': labels,
-      'tags': standalone_tags,
+      'tags': sorted(standalone_tags),
     }
 
     if as_embed or (type == 'article' and url):

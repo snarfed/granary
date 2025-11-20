@@ -933,6 +933,311 @@ class As1Test(testutil.TestCase):
       }],
     }))
 
+  def test_expand_tags_plain_text_bare_mention(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo @you.com bar',
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': 'you.com',
+      }],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([{
+      'objectType': 'mention',
+      'displayName': 'you.com',
+      'startIndex': 4,
+      'length': 8,
+    }], obj.get('tags'))
+
+  def test_expand_tags_plain_text_hashtag(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo #hache-☕ bar',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'hache-☕',
+      }],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([{
+      'objectType': 'hashtag',
+      'displayName': 'hache-☕',
+      'startIndex': 4,
+      'length': 8,
+    }], obj.get('tags'))
+
+  def test_expand_tags_plain_text_url(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo http://example.com/bar bar',
+      'tags': [{
+        'objectType': 'article',
+        'url': 'http://example.com/bar',
+      }],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([{
+      'objectType': 'article',
+      'url': 'http://example.com/bar',
+      'startIndex': 4,
+      'length': 22,
+    }], obj.get('tags'))
+
+  def test_expand_tags_html_content_does_nothing(self):
+    obj = {
+      'objectType': 'note',
+      'content': '<p>foo <a href="http://example.com">@you.com</a> bar</p>',
+    }
+    as1.expand_tags(obj)
+    self.assertNotIn('tags', obj)
+
+  def test_expand_tags_dont_overlap_existing_tag(self):
+    article_tag = {
+        'objectType': 'article',
+        'startIndex': 4,
+        'length': 8,
+    }
+    obj = {
+      'objectType': 'note',
+      'content': 'x @alice #hash bar',
+      'tags': [article_tag],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([article_tag], obj['tags'])
+
+  def test_expand_tags_existing_tag_guess_index(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo #hache-☕ bar',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'hache-☕',
+      }],
+    }
+    as1.expand_tags(obj)
+    # should have inferred the index for the existing tag
+    self.assertEqual([{
+      'objectType': 'hashtag',
+      'displayName': 'hache-☕',
+      'startIndex': 4,
+      'length': 8,
+    }], obj.get('tags'))
+
+  def test_expand_tags_existing_tag_with_index_unchanged(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo #hache-☕ bar',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'hache-☕',
+        'startIndex': 4,
+        'length': 10,
+      }],
+    }
+    as1.expand_tags(obj)
+    # should not have changed the existing tag with index
+    self.assertEqual([{
+      'objectType': 'hashtag',
+      'displayName': 'hache-☕',
+      'startIndex': 4,
+      'length': 10,
+    }], obj.get('tags'))
+
+  def test_expand_tags_post_activity(self):
+    obj = {
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'content': 'foo @you.com bar',
+        'tags': [{
+          'objectType': 'mention',
+          'displayName': 'you.com',
+        }],
+      },
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([{
+      'objectType': 'mention',
+      'displayName': 'you.com',
+      'startIndex': 4,
+      'length': 8,
+    }], obj['object'].get('tags'))
+
+  def test_expand_tags_mention_case_insensitive(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo @YOU.COM bar',
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': 'you.com',
+      }],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([{
+      'objectType': 'mention',
+      'displayName': 'you.com',
+      'startIndex': 4,
+      'length': 8,
+    }], obj.get('tags'))
+
+  def test_expand_tags_mention_with_server_suffix(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo @you.com bar',
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': '@you.com@bsky.brid.gy',
+      }],
+    }
+    as1.expand_tags(obj)
+    # should find @you.com part
+    self.assertEqual([{
+      'objectType': 'mention',
+      'displayName': '@you.com@bsky.brid.gy',
+      'startIndex': 4,
+      'length': 8,
+    }], obj.get('tags'))
+
+  def test_expand_tags_mention_no_displayName(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo @you.com bar',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'http://example.com/you',
+      }],
+    }
+    as1.expand_tags(obj)
+    # without displayName, can't infer index
+    self.assertEqual([{
+      'objectType': 'mention',
+      'url': 'http://example.com/you',
+    }, {
+      'objectType': 'mention',
+      'displayName': '@you.com',
+      'startIndex': 4,
+      'length': 8,
+    }], obj.get('tags'))
+
+  def test_expand_tags_mention_at_beginning(self):
+    obj = {
+      'objectType': 'note',
+      'content': '@shreyanjain.net hello there',
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': '@shreyanjain.net@bsky.brid.gy',
+        'url': 'did:plc:foo',
+      }],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([{
+      'objectType': 'mention',
+      'displayName': '@shreyanjain.net@bsky.brid.gy',
+      'url': 'did:plc:foo',
+      'startIndex': 0,
+      'length': 16,
+    }], obj.get('tags'))
+
+  def test_expand_tags_hashtag_special_chars(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'test',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'a**b(',
+      }],
+    }
+    as1.expand_tags(obj)
+    # can't find hashtag with special chars that aren't in content
+    self.assertEqual([{
+      'objectType': 'hashtag',
+      'displayName': 'a**b(',
+    }], obj.get('tags'))
+
+  def test_expand_tags_multiple_tags(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo #bar @you.com http://example.com baz',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'bar',
+      }, {
+        'objectType': 'mention',
+        'displayName': 'you.com',
+      }, {
+        'objectType': 'article',
+        'url': 'http://example.com',
+      }],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([{
+      'objectType': 'hashtag',
+      'displayName': 'bar',
+      'startIndex': 4,
+      'length': 4,
+    }, {
+      'objectType': 'mention',
+      'displayName': 'you.com',
+      'startIndex': 9,
+      'length': 8,
+    }, {
+      'objectType': 'article',
+      'url': 'http://example.com',
+      'startIndex': 18,
+      'length': 18,
+    }], obj.get('tags'))
+
+  def test_expand_tags_mention_with_at_prefix(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo @you.com bar',
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': '@you.com',
+      }],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([{
+      'objectType': 'mention',
+      'displayName': '@you.com',
+      'startIndex': 4,
+      'length': 8,
+    }], obj.get('tags'))
+
+  def test_expand_tags_hashtag_with_hash_prefix(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo #bar baz',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': '#bar',
+      }],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([{
+      'objectType': 'hashtag',
+      'displayName': '#bar',
+      'startIndex': 4,
+      'length': 4,
+    }], obj.get('tags'))
+
+  def test_expand_tags_not_found_in_content(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo bar',
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': 'nothere',
+      }],
+    }
+    as1.expand_tags(obj)
+    # tag not found in content, no index added
+    self.assertEqual([{
+      'objectType': 'mention',
+      'displayName': 'nothere',
+    }], obj.get('tags'))
+
   def test_is_content_html(self):
     for obj in (
         {'content_is_html': True},
@@ -954,3 +1259,69 @@ class As1Test(testutil.TestCase):
     ):
       with self.subTest(obj=obj):
         self.assertFalse(as1.is_content_html(obj))
+
+  def test_add_tags_for_html_content_links_mentions(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo">@bar</a>',
+    }
+    obj_with_tag = {  # because postprocess_object modifies obj
+      **obj,
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'http://foo',
+        'displayName': '@bar',
+      }],
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assert_equals(obj_with_tag, obj)
+
+  def test_add_tags_for_html_content_links_webfinger(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo">@bar@inst</a>',
+    }
+    obj_with_tag = {  # because postprocess_object modifies obj
+      **obj,
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'http://foo',
+        'displayName': '@bar@inst',
+      }],
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assert_equals(obj_with_tag, obj)
+
+  def test_add_tags_for_html_content_links_existing_tag(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo">@bar</a>',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'http://other/link',
+        'displayName': '@bar',
+      }],
+    }
+    expected = copy.deepcopy(obj)  # because postprocess_object modifies obj
+    as1.add_tags_for_html_content_links(obj)
+    self.assert_equals(expected, obj)
+
+  def test_add_tags_for_html_content_links_existing_tag_webfinger_user_vs_server(self):
+    for in_content, name in (
+        ('@bar', '@bar@inst'),
+        ('@bar@inst', '@bar'),
+    ):
+      with self.subTest(in_content=in_content, name=name):
+        obj = {
+          'objectType': 'note',
+          'content': f'hi <a href="http://foo">{in_content}</a>',
+          'tags': [{
+            'objectType': 'mention',
+            'url': 'http://other/link',
+            'displayName': name,
+          }],
+        }
+        expected = copy.deepcopy(obj)  # because postprocess_object modifies obj
+        as1.add_tags_for_html_content_links(obj)
+        self.assert_equals(expected, obj)
+

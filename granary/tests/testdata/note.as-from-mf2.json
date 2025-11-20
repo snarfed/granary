@@ -26,5 +26,10 @@
     "latitude": 50.820641,
     "longitude": -0.149522,
     "position": "+50.820641-0.149522/"
-  }
+  },
+  "tags": [{
+    "objectType": "link",
+    "displayName": "link",
+    "url": "http://my/link"
+  }]
 }

@@ -680,7 +680,7 @@ class Source(object, metaclass=SourceMeta):
     return util.trim_nulls(activity)
 
   @staticmethod
-  def postprocess_object(obj, mentions=False, first_link_to_attachment=False):
+  def postprocess_object(obj, first_link_to_attachment=False):
     """Does source-independent post-processing of an AS1 object, in place.
 
     * Populates ``location.position`` based on latitude and longitude.
@@ -692,8 +692,6 @@ class Source(object, metaclass=SourceMeta):
 
     Args:
       obj (dict): AS1 object
-      mentions (boolean): whether to detect @-mention links and convert them to
-        mention tags
       first_link_to_attachment (boolean): whether to generate an ``attachment``
         for the first HTML link in ``content``, if any. Will make external HTTP
         requests!
@@ -714,33 +712,6 @@ class Source(object, metaclass=SourceMeta):
           pass
 
     links = util.parse_html(obj.get('content') or '').find_all('a')
-
-    if mentions:
-      # @-mentions to mention tags
-      # https://github.com/snarfed/bridgy-fed/issues/493
-      # TODO: unify into new textContent field
-      # https://github.com/snarfed/granary/issues/729
-      existing_tags_with_urls = []
-      for tag in obj.get('tags', []):
-        if tag.get('url'):
-          name = (tag.get('displayName') or '').strip()
-          if name.startswith('@') and name.count('@') == 2:
-            name = name.rsplit('@', maxsplit=1)[0]
-          existing_tags_with_urls.append(name)
-
-      for a in links:
-        href = a.get('href')
-        text = a.get_text('').strip()
-        if text.startswith('@'):
-          at_user = text
-          if text.count('@') == 2:
-            at_user = text.rsplit('@', maxsplit=1)[0]
-          if href and at_user not in existing_tags_with_urls:
-            obj.setdefault('tags', []).append({
-              'objectType': 'mention',
-              'url': href,
-              'displayName': text,
-            })
 
     if (first_link_to_attachment and links and links[0].get('href')
         and not obj.get('attachments')):

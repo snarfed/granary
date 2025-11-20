@@ -1214,9 +1214,22 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_tag_mention_url_html_link_space(self, _):
     content = 'foo<a href="https://bsky.app/profile/you.com"> @you.com</a> bar'
     self.assert_equals({
-      **POST_BSKY_FACET_MENTION,
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo @you.com bar',
       'fooOriginalText': content,
       'fooOriginalUrl': 'https://bsky.app/profile/did:al:ice/post/tid',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#mention',
+          'did': 'did:plc:foo',
+        }],
+        'index': {
+          'byteStart': 3,
+          'byteEnd': 12,
+        },
+      }],
     }, self.from_as1({
       **POST_AS['object'],
       'content': content,
@@ -1224,7 +1237,7 @@ class BlueskyTest(testutil.TestCase):
 
   # resolveHandle
   @patch('requests.get', return_value=requests_response({'did': 'did:plc:foo'}))
-  def test_from_as1_bare_mention(self, _):
+  def test_from_as1_bare_mention(self, mock_get):
     content = 'foo @you.com bar'
     self.assert_equals({
       **POST_BSKY_FACET_MENTION,
@@ -1234,6 +1247,8 @@ class BlueskyTest(testutil.TestCase):
       **POST_AS['object'],
       'content': content,
     }, client=self.bs), ignore=['createdAt'])
+
+    self.assert_call(mock_get, 'com.atproto.identity.resolveHandle?handle=you.com')
 
   # resolveHandle
   @patch('requests.get', return_value=requests_response({'did': 'did:plc:foo'}))
@@ -1643,7 +1658,9 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     }))
 
-  def test_from_as1_link_mention_hashtag(self):
+  # resolveHandle
+  @patch('requests.get', return_value=requests_response({'did': 'did:plc:you'}))
+  def test_from_as1_link_mention_hashtag(self, mock_get):
     content = 'foo <a href="...">#hache-☕</a> <a href="http://post">bar</a> foo <a href="https://bsky.app/profile/you.com">@you.com</a> baz'
 
     self.assert_equals({
@@ -1664,22 +1681,22 @@ class BlueskyTest(testutil.TestCase):
       }, {
         '$type': 'app.bsky.richtext.facet',
         'features': [{
-          '$type': 'app.bsky.richtext.facet#mention',
-          'did': 'you.com',
-        }],
-        'index': {
-          'byteStart': 23,
-          'byteEnd': 31,
-        },
-      }, {
-        '$type': 'app.bsky.richtext.facet',
-        'features': [{
           '$type': 'app.bsky.richtext.facet#link',
           'uri': 'http://post',
         }],
         'index': {
           'byteStart': 15,
           'byteEnd': 18,
+        },
+      }, {
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#mention',
+          'did': 'did:plc:you',
+        }],
+        'index': {
+          'byteStart': 23,
+          'byteEnd': 31,
         },
       }],
     }, self.from_as1({
@@ -1689,35 +1706,29 @@ class BlueskyTest(testutil.TestCase):
         'objectType': 'hashtag',
         'displayName': 'hache-☕',
       }],
-    }))
+    }, client=self.bs))
 
-  def test_from_as1_link_mention_unresolved(self):
-    content = 'foo <a href="https://instance.name/@you">@you</a> baz'
+    self.assert_call(mock_get, 'com.atproto.identity.resolveHandle?handle=you.com')
+
+  @patch('requests.get', return_value=requests_response(status=404))
+  def test_from_as1_link_mention_unresolved(self, mock_get):
+    content = 'foo <a href="https://instance.name/@you">@you.com</a> baz'
 
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
-      'text': 'foo @you baz',
+      'text': 'foo @you.com baz',
       'fooOriginalText': content,
-      'facets': [{
-        '$type': 'app.bsky.richtext.facet',
-        'features': [{
-          '$type': 'app.bsky.richtext.facet#link',
-          'uri': 'https://instance.name/@you',
-        }],
-        'index': {
-          'byteStart': 4,
-          'byteEnd': 8,
-        },
-      }],
     }, self.from_as1({
       'objectType': 'note',
       'content': content,
       'tags': [{
         'objectType': 'mention',
-        'displayName': '@you',
+        'displayName': '@you.com',
       }],
-    }))
+    }, client=self.bs))
+
+    self.assert_call(mock_get, 'com.atproto.identity.resolveHandle?handle=you.com')
 
   def test_from_as1_hashtag_special_chars(self):
     self.assert_equals({

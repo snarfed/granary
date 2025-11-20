@@ -283,7 +283,7 @@ def to_as1(rss):
           'displayName': alt.get('value'),
         })
 
-    activities.append(Source.postprocess_activity({
+    activity = {
       'objectType': 'activity',
       'verb': 'post',
       'id': id,
@@ -303,7 +303,9 @@ def to_as1(rss):
         'attachments': attachments,
         'stream': [a['stream'] for a in attachments],
       },
-    }, mentions=True))
+    }
+    as1.add_tags_for_html_content_links(activity)
+    activities.append(Source.postprocess_activity(activity))
 
   return util.trim_nulls(activities)
 

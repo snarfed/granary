@@ -266,7 +266,8 @@ def _to_as1(entry, feed_author=None):
     'inReplyTo': obj.get('inReplyTo'),
   }
 
-  return Source.postprocess_activity(a, mentions=True)
+  as1.add_tags_for_html_content_links(obj)
+  return Source.postprocess_activity(a)
 
 
 def _to_as1_object(elem, feed_author=None):

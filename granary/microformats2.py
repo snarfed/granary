@@ -667,12 +667,14 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
       })
 
   else:
+    # this is an object, not an activity
     obj.update({
       'inReplyTo': in_reply_tos,
       'author': author,
     })
+    as1.add_tags_for_html_content_links(obj)
 
-  return source.Source.postprocess_object(obj, mentions=True)
+  return source.Source.postprocess_object(obj)
 
 
 json_to_object = to_as1

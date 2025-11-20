@@ -13,7 +13,7 @@ import string
 from bs4 import BeautifulSoup
 from oauth_dropins.webutil import util
 
-from .source import HTML_ENTITY_RE
+from . import source
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +79,12 @@ POST_TYPES = frozenset((
 _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 
 HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
+
+# TODO: html2text doesn't escape ]s in link text, which breaks this, eg
+# <a href="http://post">ba](r</a> turns into [ba](r](http://post)
+MARKDOWN_LINK_RE = re.compile(r'\[(?P<text>.*?)\]\((?P<url>[^ ]*?)( "[^"]*?")?(?<!\\)\)')
+
+AT_MENTION_RE = re.compile(r'(?:^|\W)(@[\w._-]+)(?:$|\W)')
 
 
 def object_type(obj):
@@ -738,4 +744,221 @@ def is_content_html(obj):
   # use html.parser to require HTML tags, not add them by default
   # https://www.crummy.com/software/BeautifulSoup/bs4/doc/#differences-between-parsers
   return (bool(util.parse_html(content, features='html.parser').find())
-          or HTML_ENTITY_RE.search(content))
+          or source.HTML_ENTITY_RE.search(content))
+
+
+def expand_tags(obj):
+  """Expands mention, hashtag, article (link) tags and indices from content.
+
+  If ``obj.content`` is plain text, detects URLs, @-mentions, and hashtags and adds
+  them to ``obj.tags`` if they're not already there. If they are, but don't have
+  ``startIndex`` or ``length``, adds those fields. If ``obj.content`` is HTML, does
+  nothing.
+
+  Also, for ``mention`` and ``hashtag`` tags without ``startIndex``/``length``, tries
+  to infer and populate their indices by searching ``content`` for their ``name``.
+
+  Modifies ``obj`` in place.
+
+  Args:
+    obj (dict): AS1 object
+  """
+  if not obj or is_content_html(obj):
+    return
+
+  if obj.get('verb') in ('post', 'update'):
+    expand_tags(get_object(obj))
+    return
+
+  if not (content := obj.get('content')):
+    return
+
+  tags = obj['tags'] = util.get_list(obj, 'tags')
+
+  tag_ranges = []
+  for tag in tags:
+    start = tag.get('startIndex')
+    length = tag.get('length')
+    if start is not None and length is not None:
+      tag_ranges.append(range(start, start + length))
+
+  # try to infer indices for tags without them
+  for tag in tags:
+    if 'startIndex' in tag:
+      continue
+
+    # for article/link tags, search for the URL
+    type = tag.get('objectType')
+    if type in ('article', 'link'):
+      if url := tag.get('url'):
+        start = content.find(url)
+        tag_range = range(start, start + len(url))
+        if start >= 0 and not util.overlaps(tag_range, tag_ranges):
+          tag_ranges.append(tag_range)
+          tag['startIndex'] = start
+          tag['length'] = len(url)
+      continue
+
+    name = tag.get('displayName', '').strip().lstrip('@#')
+    if not type:
+      if name:
+        type = tag['objectType'] = 'hashtag'
+      else:
+        continue
+
+    # guess index at first location found in text
+    prefix = ('#' if type == 'hashtag'
+              else '@' if type == 'mention'
+              else '')
+    # can't use \b at beginning because # and @ and emoji aren't word-constituent chars
+    bound = fr'[\s{string.punctuation.replace("-", "")}]'
+    match = re.search(fr'(^|{bound})({prefix}{re.escape(name)})($|{bound})',
+                      content, flags=re.IGNORECASE)
+
+    if not match and type == 'mention' and '@' in name:
+      # try without @[server] suffix
+      username = name.split('@')[0]
+      match = re.search(fr'(^|\s)(@{username})\b', content)
+
+    if match:
+      start = match.start(2)
+      length = len(match.group(2))
+      tag_range = range(start, start + length)
+      if not util.overlaps(tag_range, tag_ranges):
+        tag_ranges.append(tag_range)
+        tag['startIndex'] = start
+        tag['length'] = length
+
+  # generate tags for plain text @-mentions
+  for match in AT_MENTION_RE.finditer(content):
+    handle = match.group(1).strip()
+    start = match.start(1)
+    length = len(match.group(1))
+    tag_range = range(start, start + length)
+    if not util.overlaps(tag_range, tag_ranges):
+      tag_ranges.append(tag_range)
+      tags.append({
+        'objectType': 'mention',
+        'displayName': handle,
+        'startIndex': start,
+        'length': length,
+      })
+
+
+def add_tags_for_html_content_links(obj):
+  """Adds tags for links in HTML ``obj.content``.
+
+  Adds ``link`` tags to ``obj.tags`` for any HTML links in content that don't already
+  have tags.
+
+  If content is plain text, does nothing.
+
+  Modifies ``obj`` in place.
+
+  Args:
+    obj (dict): AS1 object
+  """
+  return _handle_html_content(obj, to_plain_text=False)
+
+
+def convert_html_content_to_text(obj):
+  """If ``obj.content`` is HTML, converts it to plain text and adds link tags.
+
+  Adds ``link`` tags to ``obj.tags`` for any HTML links in content that don't already
+  have tags.
+
+  If content is plain text, does nothing.
+
+  Modifies ``obj`` in place.
+
+  Args:
+    obj (dict): AS1 object
+  """
+  return _handle_html_content(obj, to_plain_text=True)
+
+
+def _handle_html_content(obj, to_plain_text=False):
+  """Adds tags for links in HTML ``obj.content``, optionally converts it to text.
+
+  Adds ``link`` tags to ``obj.tags`` for any HTML links in content that don't already
+  have tags. Tags will include ``startIndex`` and ``length`` if ``to_plain_text`` is
+  True.
+
+  If content is plain text, does nothing.
+
+  Modifies ``obj`` in place.
+
+  Args:
+    obj (dict): AS1 object
+    to_plain_text (bool): whether to convert ``obj.content`` to plain text and set
+      ``obj.content_is_html``
+  """
+  if not is_content_html(obj):
+    return
+
+  content = source.html_to_text(obj.get('content', ''), ignore_links=False)
+
+  tags = obj.setdefault('tags', [])
+  in_reply_tos = get_ids(obj, 'inReplyTo')
+  existing_tag_names = set()
+
+  for tag in tags:
+    # normalize and store tag names we already have. for @-@ webfinger addresses,
+    # store username as well as full address
+    if name := tag.get('displayName'):
+      name = name.strip().lstrip('@#')
+      existing_tag_names.add(name.lower())
+      parts = name.split('@')
+      if len(parts) == 2:
+        existing_tag_names.add(parts[0])
+
+    if to_plain_text:
+      # clear existing tag indices since we're modifying content
+      tag.pop('startIndex', None)
+      tag.pop('length', None)
+
+  # extract HTML links, convert to plain text, add tags with indices
+  while link := MARKDOWN_LINK_RE.search(content):
+    start, end = link.span()
+    content = content[:start] + link['text'] + content[end:]
+    url = link['url'].replace(r'\(', '(').replace(r'\)', ')')
+    text = link['text'].strip()
+
+    if not text:
+      continue
+
+    # our regexp isn't perfect, so skip links that we can't extract a
+    # clean URL from
+    if not util.is_web(url) or not util.is_url(url) or url in in_reply_tos:
+      continue
+
+    # skip if we already have this tag. for @-@ webfinger addresses, check username
+    # as well as full address
+    normalized_text = text.strip().lstrip('@#').lower()
+    if (normalized_text in existing_tag_names
+        or normalized_text.split('@')[0] in existing_tag_names):
+      continue
+
+    type = 'link'
+    if not re.search(r'\s', text):
+      if text.startswith('@'):
+        type = 'mention'
+      elif text.startswith('#'):
+        type = 'hashtag'
+    tag = {
+      'objectType': type,
+      'displayName': text,
+      'url': url,
+    }
+    if to_plain_text:
+      tag.update({
+        'startIndex': start,
+        'length': len(link['text']),
+      })
+    tags.append(tag)
+
+  if to_plain_text:
+    obj.update({
+      'content': content,
+      'content_is_html': False,
+    })
