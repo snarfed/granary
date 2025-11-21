@@ -512,6 +512,12 @@ class NostrTest(testutil.TestCase):
     }
     self.assert_equals(expected, from_as1(note), ignore=['id', 'sig'])
 
+    for tag, name in zip(note['tags'], ['alice', 'bob', 'eve', 'foo', 'bar']):
+      del tag['startIndex']
+      del tag['length']
+      tag['displayName'] = name
+    self.assert_equals(expected, from_as1(note), ignore=['id', 'sig'])
+
   def test_from_as1_note_with_mention_tag_html_content(self):
     note = {
       'objectType': 'note',
@@ -529,7 +535,7 @@ class NostrTest(testutil.TestCase):
     expected = {
       'kind': KIND_NOTE,
       'pubkey': PUBKEY,
-      'content': 'Hello @alice!',
+      'content': f'Hello {NPUB_URI_2}!',
       'created_at': NOW_TS,
       'tags': [['p', PUBKEY_2]],
     }
@@ -550,7 +556,7 @@ class NostrTest(testutil.TestCase):
     expected = {
       'kind': KIND_NOTE,
       'pubkey': PUBKEY,
-      'content': 'Hello @alice!',
+      'content': f'Hello {NPUB_URI_2}!',
       'created_at': NOW_TS,
       'tags': [['p', PUBKEY_2]],
     }

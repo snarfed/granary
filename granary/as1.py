@@ -811,9 +811,11 @@ def expand_tags(obj):
               else '@' if type == 'mention'
               else '')
     # can't use \b at beginning because # and @ and emoji aren't word-constituent chars
-    bound = fr'[\s{string.punctuation.replace("-", "")}]'
-    match = re.search(fr'(^|{bound})({prefix}{re.escape(name)})($|{bound})',
-                      content, flags=re.IGNORECASE)
+    begin = string.punctuation.replace("-", "")
+    end = string.punctuation.replace("-", "").replace("@", "").replace(".", "")
+    match = re.search(
+        fr'(^|[\s{begin}])({prefix}{re.escape(name)}(?:@{util.HOST_RE})?)($|[\s{end}])',
+        content, flags=re.IGNORECASE)
 
     if not match and type == 'mention' and '@' in name:
       # try without @[server] suffix

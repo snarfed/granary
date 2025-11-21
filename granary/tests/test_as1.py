@@ -1205,6 +1205,48 @@ class As1Test(testutil.TestCase):
       'length': 8,
     }], obj.get('tags'))
 
+  def test_expand_tags_mention_username_tag_webfinger_address_content(self):
+    obj = {
+      'objectType': 'note',
+      'content': f'foo @bar@in.st baz',
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': '@bar',
+      }],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': f'foo @bar@in.st baz',
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': '@bar',
+        'startIndex': 4,
+        'length': 10,
+      }],
+    }, obj)
+
+  def test_expand_tags_mention_username_content_webfinger_address_tag(self):
+    obj = {
+      'objectType': 'note',
+      'content': f'foo @bar baz',
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': '@bar@in.st',
+      }],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': f'foo @bar baz',
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': '@bar@in.st',
+        'startIndex': 4,
+        'length': 4,
+      }],
+    }, obj)
+
   def test_expand_tags_hashtag_with_hash_prefix(self):
     obj = {
       'objectType': 'note',

@@ -37,6 +37,7 @@ TODO:
 * 46: "Nostr Connect," signing proxy that holds user's keys
 * 73: external content ids
 """
+import copy
 from datetime import datetime, timezone
 from hashlib import sha256
 import itertools
@@ -413,6 +414,7 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
     dict: Nostr event
 
   """
+  obj = copy.deepcopy(obj)
   type = as1.object_type(obj)
   id = obj.get('id')
   inner_obj = as1.get_object(obj)
@@ -423,12 +425,12 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
     privkey = privkey.removeprefix('nostr:')
     pubkey = pubkey_from_privkey(uri_to_id(privkey))
 
-  # content
-  content = obj.get('content') or obj.get('summary') or obj.get('displayName') or ''
-  if content_is_html := as1.is_content_html(obj):
-    content = html_to_text(content)
+  # generate and expand tags from content
+  as1.convert_html_content_to_text(obj)
+  as1.expand_tags(obj)
 
   # base event
+  content = obj.get('content') or ''
   event = {
     'pubkey': pubkey,
     'content': content,
@@ -532,7 +534,7 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
       elif tag_type == 'mention' and (url := tag.get('url')):
         if url.startswith('nostr:') or is_bech32(url) or ID_RE.match(url):
           util.add(event['tags'], ['p', uri_to_id(url)])
-          if not content_is_html and 'startIndex' in tag and 'length' in tag:
+          if 'startIndex' in tag and 'length' in tag:
             mentions.append(tag)
 
     # replace mentions in content in reverse order to preserve indices
@@ -701,7 +703,6 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
     obj.update({
       'objectType': 'note' if kind == KIND_NOTE else 'article',
       'author': make_id(pubkey, 'npub'),
-      # TODO: render Markdown to HTML?
       'content': event.get('content'),
       'content_is_html': False,
       'image': [],
