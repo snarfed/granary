@@ -1280,6 +1280,48 @@ class As1Test(testutil.TestCase):
       'displayName': 'nothere',
     }], obj.get('tags'))
 
+  def test_expand_tags_article_url_not_found_in_content(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo bar',
+      'tags': [{
+        'objectType': 'article',
+        'url': 'http://nothere.com',
+      }],
+    }
+    orig = copy.deepcopy(obj)
+    as1.expand_tags(obj)
+    self.assertEqual(orig, obj)
+
+  def test_expand_tags_article_overlapping_existing_tag(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo http://example.com bar',
+      'tags': [{
+        'objectType': 'mention',
+        'startIndex': 3,
+        'length': 17,
+      }, {
+        'objectType': 'article',
+        'url': 'http://example.com',
+      }],
+    }
+    orig = copy.deepcopy(obj)
+    as1.expand_tags(obj)
+    self.assertEqual(orig, obj)
+
+  def test_expand_tags_no_displayName_no_objectType(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo bar',
+      'tags': [{
+        'url': 'http://example.com',
+      }],
+    }
+    orig = copy.deepcopy(obj)
+    as1.expand_tags(obj)
+    self.assertEqual(orig, obj)
+
   def test_is_content_html(self):
     for obj in (
         {'content_is_html': True},
