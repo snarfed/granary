@@ -1376,7 +1376,7 @@ class As1Test(testutil.TestCase):
     as1.add_tags_for_html_content_links(obj)
     self.assert_equals(obj_with_tag, obj)
 
-  def test_add_tags_for_html_content_links_existing_tag(self):
+  def test_add_tags_for_html_content_links_mention_existing_tag(self):
     obj = {
       'objectType': 'note',
       'content': 'hi <a href="http://foo">@bar</a>',
@@ -1409,3 +1409,236 @@ class As1Test(testutil.TestCase):
         as1.add_tags_for_html_content_links(obj)
         self.assert_equals(expected, obj)
 
+  def test_add_tags_for_html_content_links_hashtag(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">#hashtag</a>',
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">#hashtag</a>',
+      'tags': [{
+        'objectType': 'hashtag',
+        'url': 'http://foo.com',
+        'displayName': '#hashtag',
+      }],
+    }, obj)
+
+  def test_add_tags_for_html_content_links_regular_link(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">some text</a>',
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">some text</a>',
+      'tags': [{
+        'objectType': 'link',
+        'url': 'http://foo.com',
+        'displayName': 'some text',
+      }],
+    }, obj)
+
+  def test_add_tags_for_html_content_links_empty_text(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com"></a> there',
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com"></a> there',
+      'tags': [],
+    }, obj)
+
+  def test_add_tags_for_html_content_links_multiple_links(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://one.com">@user</a> and <a href="http://two.com">#tag</a>',
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi <a href="http://one.com">@user</a> and <a href="http://two.com">#tag</a>',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'http://one.com',
+        'displayName': '@user',
+      }, {
+        'objectType': 'hashtag',
+        'url': 'http://two.com',
+        'displayName': '#tag',
+      }],
+    }, obj)
+
+  def test_add_tags_for_html_content_links_plain_text_does_nothing(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'plain text',
+    }
+    orig = copy.deepcopy(obj)
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual(orig, obj)
+
+  def test_add_tags_for_html_content_links_url_in_reply_to(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">link</a>',
+      'inReplyTo': [{'url': 'http://foo.com'}],
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">link</a>',
+      'inReplyTo': [{'url': 'http://foo.com'}],
+      'tags': [],
+    }, obj)
+
+  def test_add_tags_for_html_content_links_invalid_url(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="not-a-url">link</a>',
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi <a href="not-a-url">link</a>',
+      'tags': [],
+    }, obj)
+
+  def test_add_tags_for_html_content_links_multiword_link(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">multi word link</a>',
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">multi word link</a>',
+      'tags': [{
+        'objectType': 'link',
+        'url': 'http://foo.com',
+        'displayName': 'multi word link',
+      }],
+    }, obj)
+
+  def test_convert_html_content_to_text_basic(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">link</a> there',
+    }
+    as1.convert_html_content_to_text(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi link there',
+      'content_is_html': False,
+      'tags': [{
+        'objectType': 'link',
+        'url': 'http://foo.com',
+        'displayName': 'link',
+        'startIndex': 3,
+        'length': 4,
+      }],
+    }, obj)
+
+  def test_convert_html_content_to_text_hashtag(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">#hashtag</a> there',
+    }
+    as1.convert_html_content_to_text(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi #hashtag there',
+      'content_is_html': False,
+      'tags': [{
+        'objectType': 'hashtag',
+        'url': 'http://foo.com',
+        'displayName': '#hashtag',
+        'startIndex': 3,
+        'length': 8,
+      }],
+    }, obj)
+
+  def test_convert_html_content_to_text_mention(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">@user</a> there',
+    }
+    as1.convert_html_content_to_text(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi @user there',
+      'content_is_html': False,
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'http://foo.com',
+        'displayName': '@user',
+        'startIndex': 3,
+        'length': 5,
+      }],
+    }, obj)
+
+  def test_convert_html_content_to_text_multiple_links(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://one.com">@user</a> and <a href="http://two.com">#tag</a>',
+    }
+    as1.convert_html_content_to_text(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi @user and #tag',
+      'content_is_html': False,
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'http://one.com',
+        'displayName': '@user',
+        'startIndex': 3,
+        'length': 5,
+      }, {
+        'objectType': 'hashtag',
+        'url': 'http://two.com',
+        'displayName': '#tag',
+        'startIndex': 13,
+        'length': 4,
+      }],
+    }, obj)
+
+  def test_convert_html_content_to_text_clears_existing_indices(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">link</a> there',
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': '@other',
+        'startIndex': 10,
+        'length': 5,
+      }],
+    }
+    as1.convert_html_content_to_text(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi link there',
+      'content_is_html': False,
+      'tags': [{
+        'objectType': 'mention',
+        'displayName': '@other',
+      }, {
+        'objectType': 'link',
+        'url': 'http://foo.com',
+        'displayName': 'link',
+        'startIndex': 3,
+        'length': 4,
+      }],
+    }, obj)
+
+  def test_convert_html_content_to_text_plain_text_does_nothing(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'plain text',
+    }
+    orig = copy.deepcopy(obj)
+    as1.convert_html_content_to_text(obj)
+    self.assertEqual(orig, obj)
