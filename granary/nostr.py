@@ -618,6 +618,12 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
   else:
     raise NotImplementedError(f'Unsupported activity/object type: {type} {id}')
 
+  # tags should all be strings, no nulls
+  # https://nips.nostr.com/1#events-and-signatures
+  # https://github.com/nostr-protocol/nips/issues/354#issuecomment-1465169789
+  for tag in event.get('tags', []):
+    assert None not in tag, event
+
   event = util.trim_nulls(event, ignore=['tags', 'content'])
 
   if privkey:
