@@ -604,7 +604,12 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
     event.update({
       'kind': KIND_CONTACTS,
       # https://nips.nostr.com/2
-      # Each tag entry should contain the key for the profile, a relay URL where events from that key can be found (can be set to an empty string if not needed), and a local name (or "petname") for that profile (can also be set to an empty string or not provided), i.e., ["p", <32-bytes hex key>, <main relay URL>, <petname>].
+      #
+      # Each tag entry should contain the key for the profile, a relay URL where
+      # events from that key can be found (can be set to an empty string if not
+      # needed), and a local name (or "petname") for that profile (can also be set to
+      # an empty string or not provided), eg:
+      # ["p", <32-bytes hex key>, <main relay URL>, <petname>]
     })
     event['tags'].extend(
       [['p', uri_to_id(o['id']), remote_relay, o.get('displayName') or '']
