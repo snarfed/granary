@@ -21,7 +21,7 @@ pbr==7.0.3
 async-timeout==5.0.1
 attrs==25.4.0
 bases==0.3.0
-beautifulsoup4==4.14.2
+beautifulsoup4==4.14.3
 bech32==1.2.0
 blinker==1.9.0
 cachetools==6.2.0
