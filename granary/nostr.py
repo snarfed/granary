@@ -747,7 +747,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
           if len(parts) == 2:
             metas[parts[0]] = parts[1]
         if url := metas.get('url'):
-          mime = metas.get('m') or mimetypes.guess_type(url, strict=False)[0]
+          mime = metas.get('m') or mimetypes.guess_type(url, strict=False)[0] or ''
           type = mime.split('/')[0]
           if type == 'image':
             obj['image'].append({

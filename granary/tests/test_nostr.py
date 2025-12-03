@@ -809,6 +809,26 @@ class NostrTest(testutil.TestCase):
     note['attachments'][1]['stream']['mimeType'] = 'video/quicktime'
     self.assert_equals(note, to_as1(event))
 
+  def test_to_as1_note_with_imeta_unknown_type(self):
+    note = {
+      'objectType': 'note',
+      'id': f'nostr:{ID}',
+      'author': PUBKEY_URI,
+      'content': 'Something to say http://a/blob',
+      'content_is_html': False,
+      'published': NOW_ISO,
+      'url': f'https://njump.me/{bech32_encode("note", ID)}',
+    }
+    event = {
+      'kind': KIND_NOTE,
+      'id': ID,
+      'pubkey': PUBKEY,
+      'content': 'Something to say http://a/blob',
+      'created_at': NOW_TS,
+      'tags': [['imeta', 'url http://a/blob']],
+    }
+    self.assert_equals(note, to_as1(event))
+
   def test_to_from_as1_note_with_location(self):
     id = 'b6fef17709ae65ed97fa57a9705fcf0d88948d65935989584516d8e89a5ac0c7'
     note = {
