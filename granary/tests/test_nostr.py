@@ -1111,6 +1111,21 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(delete, to_as1(event))
     self.assert_equals(event, from_as1(delete))
 
+  def test_from_as1_undo(self):
+    delete = {
+      'objectType': 'activity',
+      'verb': 'undo',
+      'published': NOW_ISO,
+      'object': f'nostr:{ID}',
+    }
+    event = {
+      'kind': KIND_DELETE,
+      'content': '',
+      'tags': [['e', ID]],
+      'created_at': NOW_TS,
+    }
+    self.assert_equals(event, from_as1(delete))
+
   def test_to_from_as1_followings(self):
     id = 'd5bb6dd9cdc5e782992f1bfda10b817ff0c949419da9b21addf50095b16dab1a'
     follow = {

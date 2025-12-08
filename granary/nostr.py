@@ -592,7 +592,7 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
     })
     event['tags'].append(['e', inner_hex_id])
 
-  elif type == 'delete':
+  elif type in ('delete', 'undo'):
     event.update({
       'kind': KIND_DELETE,
       # TODO: include kind of the object being deleted, in a `k` tag. we'd have
