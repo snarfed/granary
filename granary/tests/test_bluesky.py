@@ -55,6 +55,7 @@ ACTOR_PROFILE_VIEW_BSKY = {
   'displayName': 'Alice',
   'avatar': 'https://alice.com/alice.jpg',
   'description': 'hi there',
+  'website': 'https://alice.com/',
   'fooOriginalDescription': 'hi there',
   'fooOriginalUrl': 'https://alice.com/',
 }
@@ -459,6 +460,7 @@ REPOST_BSKY_REASON = {
     'did': 'did:web:bob.com',
     'handle': 'bob.com',
     'displayName': 'Bob',
+    'website': 'https://bsky.app/profile/bob.com',
     'fooOriginalUrl': 'https://bsky.app/profile/bob.com',
   },
   'indexedAt': '2022-01-02T03:04:05.000Z',
@@ -468,8 +470,10 @@ REPOST_BSKY_FEED_VIEW_POST = {
   'post': copy.deepcopy(POST_AUTHOR_BSKY),
   'reason': REPOST_BSKY_REASON,
 }
-REPOST_BSKY_FEED_VIEW_POST['post']['author']['fooOriginalUrl'] = \
-  'https://bsky.app/profile/alice.com'
+REPOST_BSKY_FEED_VIEW_POST['post']['author'].update({
+  'website': 'https://bsky.app/profile/alice.com',
+  'fooOriginalUrl': 'https://bsky.app/profile/alice.com',
+})
 
 THREAD_REPLY_AS = copy.deepcopy(REPLY_AS['object'])
 THREAD_REPLY_AS['id'] = 'tag:bsky.app:at://did:dy:d/app.bsky.feed.post/tid'
@@ -1845,6 +1849,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.actor.profile',
       'displayName': 'Alice',
       'description': 'hi there',
+      'website': 'https://alice.com/',
       'fooOriginalDescription': 'hi there',
       'fooOriginalUrl': 'https://alice.com/',
     }
@@ -1856,6 +1861,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.actor.profile',
       'displayName': 'Alice',
       'description': 'hi there',
+      'website': 'https://alice.com/',
       'fooOriginalDescription': 'hi there',
       'fooOriginalUrl': 'https://alice.com/',
       'avatar': BLOB,
@@ -1932,6 +1938,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.actor.defs#profileView',
       'did': 'did:web:rodentdisco.co.uk',
       'handle': 'rodentdisco.co.uk',
+      'website': 'https://rodentdisco.co.uk/author/dan/',
       'fooOriginalUrl': 'https://rodentdisco.co.uk/author/dan/',
     }, self.from_as1({
       'objectType': 'person',

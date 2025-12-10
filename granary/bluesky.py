@@ -543,6 +543,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       'avatar': blobs.get(avatar),
       'banner': blobs.get(banner),
       'pinnedPost': pinned_post,
+      'website': url,
     }
     if original_fields_prefix:
       ret.update({
@@ -1245,6 +1246,9 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
     if did and did.startswith('did:web:'):
       urls.append(did_web_to_url(did))
+
+    if website := obj.get('website'):
+      urls.append(website)
 
     summary = util.linkify(html.escape(obj.get('description') or ''), pretty=True)
     urls.extend(util.extract_links(summary))

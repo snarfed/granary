@@ -11,5 +11,9 @@
   "username": "example.com",
   "summary": "this is my bio",
   "url": "https://bsky.app/profile/example.com",
-  "urls": ["https://bsky.app/profile/example.com", "https://example.com/"]
+  "urls": [
+    "https://bsky.app/profile/example.com",
+    "https://example.com/",
+    "https://example.com/martin"
+  ]
 }

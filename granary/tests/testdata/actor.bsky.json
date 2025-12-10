@@ -2,6 +2,7 @@
   "$type": "app.bsky.actor.profile",
   "displayName": "Martin Smith",
   "description": "this is my bio",
+  "website": "https://example.com/martin",
   "fooOriginalDescription": "this is my bio",
   "fooOriginalUrl": "https://example.com/martin",
   "avatar": {
