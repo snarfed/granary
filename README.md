@@ -191,6 +191,30 @@ gcloud -q beta app deploy --no-cache granary-demo *.yaml
 The docs are built with [Sphinx](http://sphinx-doc.org/), including [apidoc](http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html), [autodoc](http://www.sphinx-doc.org/en/stable/ext/autodoc.html), and [napoleon](http://www.sphinx-doc.org/en/stable/ext/napoleon.html). Configuration is in [`docs/conf.py`](https://github.com/snarfed/granary/blob/master/docs/conf.py) To build them, first install Sphinx with `pip install sphinx`. (You may want to do this outside your virtualenv; if so, you'll need to reconfigure it to see system packages with `virtualenv --system-site-packages local`.) Then, run [`docs/build.sh`](https://github.com/snarfed/granary/blob/master/docs/build.sh).
 
 
+Protocol buffers and generated code
+---
+Some formats (currently just Farcaster) use [protocol buffers](https://protobuf.dev/) as their data format, which we vendor into `granary/proto/` and[compile to Python generated code](https://protobuf.dev/reference/python/python-generated/). We also check in the generated code, in `granary/generated/`.
+
+The Farcaster protobufs are from `[farcasterxyz/snapchain:src/proto](https://github.com/farcasterxyz/snapchain/tree/main/src/proto)`. Here are the commands we currently use to copy and compile them:
+
+```sh
+cd ~/src/granary
+source local/bin/activate.csh
+python -m pip install grpcio-tools
+
+cd granary/proto/farcaster
+cp ~/src/snapchain/src/proto/{rpc,blocks,hub_event,message,onchain_event,request_response,username_proof}.proto .
+
+cd ../../generated/farcaster
+python -m grpc_tools.protoc -I ../../proto/farcaster --python_out=. --pyi_out=. --grpc_python_out=. ../../proto/farcaster/*.proto
+
+# post-process the generated code to make the imports package-relative
+# https://github.com/protocolbuffers/protobuf/issues/1491
+# https://github.com/protocolbuffers/protobuf/pull/7470
+sed -i '' 's/^import [a-z_]*_pb2 /from . & /' *_pb2*
+```
+
+
 Release instructions
 ---
 Here's how to package, test, and ship a new release. (Note that this is [largely duplicated in the oauth-dropins readme too](https://github.com/snarfed/oauth-dropins#release-instructions).)

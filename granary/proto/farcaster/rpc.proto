@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+import "message.proto";
+import "blocks.proto";
+import "hub_event.proto";
+import "username_proof.proto";
+import "onchain_event.proto";
+import "request_response.proto";
+
+service HubService {
+  // Write API
+  rpc SubmitMessage(Message) returns (Message);
+  rpc SubmitBulkMessages(SubmitBulkMessagesRequest) returns (SubmitBulkMessagesResponse);
+
+  // Validation Methods
+  rpc ValidateMessage(Message) returns (ValidationResponse);
+
+  // Block API
+  rpc GetBlocks(BlocksRequest) returns (stream Block);
+  rpc GetShardChunks(ShardChunksRequest) returns (ShardChunksResponse);
+
+  rpc GetInfo(GetInfoRequest) returns (GetInfoResponse);
+  rpc GetFids(FidsRequest) returns (FidsResponse);
+  rpc GetConnectedPeers(GetConnectedPeersRequest) returns (GetConnectedPeersResponse);
+
+  // Events
+  rpc Subscribe(SubscribeRequest) returns (stream HubEvent);
+  rpc GetEvent(EventRequest) returns (HubEvent);
+  rpc GetEvents(EventsRequest) returns (EventsResponse);
+
+
+  // Casts
+  rpc GetCast(CastId) returns (Message);
+  rpc GetCastsByFid(FidRequest) returns (MessagesResponse);
+  rpc GetCastsByParent(CastsByParentRequest) returns (MessagesResponse);
+  rpc GetCastsByMention(FidRequest) returns (MessagesResponse);
+
+  // Reactions
+  rpc GetReaction(ReactionRequest) returns (Message);
+  rpc GetReactionsByFid(ReactionsByFidRequest) returns (MessagesResponse);
+  rpc GetReactionsByCast(ReactionsByTargetRequest) returns (MessagesResponse); // To be deprecated
+  rpc GetReactionsByTarget(ReactionsByTargetRequest) returns (MessagesResponse);
+
+  // User Data
+  rpc GetUserData(UserDataRequest) returns (Message);
+  rpc GetUserDataByFid(FidRequest) returns (MessagesResponse);
+
+  // Username Proof
+  rpc GetUsernameProof(UsernameProofRequest) returns (UserNameProof);
+  rpc GetUserNameProofsByFid(FidRequest) returns (UsernameProofsResponse);
+
+  // Verifications
+  rpc GetVerification(VerificationRequest) returns (Message);
+  rpc GetVerificationsByFid(FidRequest) returns (MessagesResponse);
+
+  // OnChain Events
+  rpc GetOnChainSigner(SignerRequest) returns (OnChainEvent);
+  rpc GetOnChainSignersByFid(FidRequest) returns (OnChainEventResponse);
+  rpc GetOnChainEvents(OnChainEventRequest) returns (OnChainEventResponse);
+  rpc GetIdRegistryOnChainEvent(FidRequest) returns (OnChainEvent);
+  rpc GetIdRegistryOnChainEventByAddress(IdRegistryEventByAddressRequest) returns (OnChainEvent);
+  rpc GetCurrentStorageLimitsByFid(FidRequest) returns (StorageLimitsResponse);
+  rpc GetFidAddressType(FidAddressTypeRequest) returns (FidAddressTypeResponse);
+
+  // Links
+  rpc GetLink(LinkRequest) returns (Message);
+  rpc GetLinksByFid(LinksByFidRequest) returns (MessagesResponse);
+  rpc GetLinksByTarget(LinksByTargetRequest) returns (MessagesResponse);
+  rpc GetLinkCompactStateMessageByFid(FidRequest) returns (MessagesResponse);
+
+  // Bulk Methods
+  rpc GetAllCastMessagesByFid(FidTimestampRequest) returns (MessagesResponse);
+  rpc GetAllReactionMessagesByFid(FidTimestampRequest) returns (MessagesResponse);
+  rpc GetAllVerificationMessagesByFid(FidTimestampRequest) returns (MessagesResponse);
+  rpc GetAllUserDataMessagesByFid(FidTimestampRequest) returns (MessagesResponse);
+  rpc GetAllLinkMessagesByFid(FidTimestampRequest) returns (MessagesResponse);
+  rpc GetAllLendStorageMessagesByFid(FidTimestampRequest) returns (MessagesResponse);
+
+  rpc GetTrieMetadataByPrefix(TrieNodeMetadataRequest) returns (TrieNodeMetadataResponse);
+};
