@@ -1,0 +1,323 @@
+syntax = "proto3";
+
+import "message.proto";
+import "blocks.proto";
+import "hub_event.proto";
+import "username_proof.proto";
+import "onchain_event.proto";
+
+
+message BlocksRequest {
+  uint32 shard_id = 1;
+  uint64 start_block_number = 2;
+  optional uint64 stop_block_number = 3;
+}
+
+message ShardChunksRequest {
+  uint32 shard_id = 1;
+  uint64 start_block_number = 2;
+  optional uint64 stop_block_number = 3;
+}
+
+message ShardChunksResponse {
+  repeated ShardChunk shard_chunks = 1;
+}
+
+message SubscribeRequest {
+  repeated HubEventType event_types = 1;
+  optional uint64 from_id = 2;
+  //  optional uint32 total_shards = 3; // Not required for snapchain
+  optional uint32 shard_index = 4;
+}
+
+message DbStats {
+  uint64 num_messages = 1;
+  uint64 num_fid_registrations = 2;
+  uint64 approx_size = 4;
+}
+
+message ShardInfo {
+  uint32 shard_id = 1;
+  uint64 max_height = 2;
+  uint64 num_messages = 3;
+  uint64 num_fid_registrations = 4;
+  uint64 approx_size = 5;
+  uint64 block_delay = 6;
+  uint64 mempool_size = 7;
+  uint64 num_onchain_events = 8;
+}
+
+message GetInfoRequest {
+}
+
+// Response Types for the Sync RPC Methods
+message GetInfoResponse {
+  string version = 1;
+  DbStats db_stats = 5;
+  string peerId = 6;
+  uint32 num_shards = 8;
+  repeated ShardInfo shard_infos = 9;
+  uint64 next_engine_version_timestamp = 10;
+}
+
+message EventRequest {
+  uint64 id = 1;
+  uint32 shard_index = 5;
+}
+
+message FidRequest {
+  uint64 fid = 1;
+  optional uint32 page_size = 2;
+  optional bytes page_token = 3;
+  optional bool reverse = 4;
+}
+
+message FidTimestampRequest {
+  uint64 fid = 1;
+  optional uint32 page_size = 2;
+  optional bytes page_token = 3;
+  optional bool reverse = 4;
+  optional uint64 start_timestamp = 5;
+  optional uint64 stop_timestamp = 6;
+}
+
+message FidsRequest {
+  optional uint32 page_size = 1;
+  optional bytes page_token = 2;
+  optional bool reverse = 3;
+  uint32 shard_id = 4;
+}
+
+message FidsResponse {
+  repeated uint64 fids = 1;
+  optional bytes next_page_token = 2;
+}
+
+message MessagesResponse {
+  repeated Message messages = 1;
+  optional bytes next_page_token = 2;
+}
+
+message CastsByParentRequest {
+  oneof parent {
+    CastId parent_cast_id = 1;
+    string parent_url = 5;
+  }
+  optional uint32 page_size = 2;
+  optional bytes page_token = 3;
+  optional bool reverse = 4;
+}
+
+message ReactionRequest {
+  uint64 fid = 1;
+  ReactionType reaction_type = 2;
+  oneof target {
+    CastId target_cast_id = 3;
+    string target_url = 4;
+  }
+}
+
+message ReactionsByFidRequest {
+  uint64 fid = 1;
+  optional ReactionType reaction_type = 2;
+  optional uint32 page_size = 3;
+  optional bytes page_token = 4;
+  optional bool reverse = 5;
+}
+
+message ReactionsByTargetRequest {
+  oneof target {
+    CastId target_cast_id = 1;
+    string target_url = 6;
+  }
+  optional ReactionType reaction_type = 2;
+  optional uint32 page_size = 3;
+  optional bytes page_token = 4;
+  optional bool reverse = 5;
+}
+
+message UserDataRequest {
+  uint64 fid = 1;
+  UserDataType user_data_type = 2;
+}
+
+message OnChainEventRequest {
+  uint64 fid = 1;
+  OnChainEventType event_type = 2;
+  optional uint32 page_size = 3;
+  optional bytes page_token = 4;
+  optional bool reverse = 5;
+}
+
+message OnChainEventResponse {
+  repeated OnChainEvent events = 1;
+  optional bytes next_page_token = 2;
+}
+
+message TierDetails {
+  TierType tier_type = 1;
+  uint64 expires_at = 2;
+}
+
+message StorageLimitsResponse {
+  repeated StorageLimit limits = 1;
+  uint32 units = 2;
+  repeated StorageUnitDetails unit_details = 3;
+  repeated TierDetails tier_subscriptions = 4;
+}
+
+enum StoreType {
+  STORE_TYPE_NONE = 0;
+  STORE_TYPE_CASTS = 1;
+  STORE_TYPE_LINKS = 2;
+  STORE_TYPE_REACTIONS = 3;
+  STORE_TYPE_USER_DATA = 4;
+  STORE_TYPE_VERIFICATIONS = 5;
+  STORE_TYPE_USERNAME_PROOFS = 6;
+  STORE_TYPE_STORAGE_LENDS = 7;
+}
+
+message StorageUnitDetails {
+  StorageUnitType unit_type = 1;
+  uint32 unit_size = 2;
+  uint32 purchased_unit_size = 3;
+  uint32 lent_unit_size = 4;
+  uint32 borrowed_unit_size = 5;
+}
+
+message StorageLimit {
+  StoreType store_type = 1;
+  string name = 2;
+  uint64 limit = 3;
+  uint64 used = 4;
+  uint64 earliestTimestamp = 5;
+  bytes earliestHash = 6;
+}
+
+message UsernameProofRequest {
+  bytes name = 1;
+}
+
+message UsernameProofsResponse {
+  repeated UserNameProof proofs = 1;
+}
+
+message ValidationResponse {
+  bool valid = 1;
+  Message message = 2;
+}
+
+message VerificationRequest {
+  uint64 fid = 1;
+  bytes address = 2;
+}
+
+message SignerRequest {
+  uint64 fid = 1;
+  bytes signer = 2;
+}
+
+message LinkRequest {
+  uint64 fid = 1;
+  string link_type = 2;
+  oneof target {
+    uint64 target_fid = 3;
+  }
+}
+
+message LinksByFidRequest {
+  uint64 fid = 1;
+  optional string link_type = 2;
+  optional uint32 page_size = 3;
+  optional bytes page_token = 4;
+  optional bool reverse = 5;
+}
+
+message LinksByTargetRequest {
+  oneof target {
+    uint64 target_fid = 1;
+  }
+  optional string link_type = 2;
+  optional uint32 page_size = 3;
+  optional bytes page_token = 4;
+  optional bool reverse = 5;
+}
+
+message IdRegistryEventByAddressRequest {
+  bytes address = 1;
+}
+
+message SubmitBulkMessagesRequest {
+  repeated Message messages = 1;
+}
+
+message MessageError {
+  bytes hash = 1;
+  string errCode = 2;
+  string message = 3;
+}
+
+message BulkMessageResponse {
+  oneof response {
+    Message message = 1;
+    MessageError message_error = 2;
+  }
+}
+
+message SubmitBulkMessagesResponse {
+  repeated BulkMessageResponse messages = 1;
+}
+
+message TrieNodeMetadataRequest {
+  uint32 shard_id = 1;
+  bytes prefix = 2;
+}
+
+message TrieNodeMetadataResponse {
+  bytes prefix = 1;
+  uint64 num_messages = 2;
+  string hash = 3;
+  repeated TrieNodeMetadataResponse children = 4;
+}
+
+message EventsRequest {
+  uint64 start_id = 1;
+  optional uint32 shard_index = 2;
+  optional uint64 stop_id = 3;
+  optional uint32 page_size = 4;
+  optional bytes page_token = 5;
+  optional bool reverse = 6;
+}
+
+message EventsResponse {
+  repeated HubEvent events = 1;
+  optional bytes next_page_token = 2;
+}
+
+message FidAddressTypeRequest {
+  uint64 fid = 1;
+  bytes address = 2;
+}
+
+message FidAddressTypeResponse {
+  bool is_custody = 1;
+  bool is_auth = 2;
+  bool is_verified = 3;
+}
+
+message ContactInfoBody {
+  string gossip_address = 1;
+  bytes peer_id = 2;
+  string snapchain_version = 3;
+  FarcasterNetwork network = 4;
+  uint64 timestamp = 5;
+  string announce_rpc_address = 6;
+}
+
+message GetConnectedPeersRequest {
+}
+
+message GetConnectedPeersResponse {
+  repeated ContactInfoBody contacts = 1;
+}
+

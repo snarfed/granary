@@ -1,0 +1,246 @@
+syntax = "proto3";
+
+import "message.proto";
+import "username_proof.proto";
+import "onchain_event.proto";
+
+// Common types
+
+message Validator {
+  uint64 fid = 1;
+  bytes signer = 2;
+  string rpc_address = 3;
+  uint32 shard_index = 4;
+  uint64 current_height= 5;
+}
+
+message ValidatorSet {
+  repeated Validator validators = 1;
+}
+
+message Height {
+  uint32 shard_index = 1;
+  uint64 block_number = 2;
+}
+
+
+// Consensus messages
+enum VoteType {
+  PREVOTE = 0;
+  PRECOMMIT = 1;
+}
+
+// Uniquely identifies a hash within a shard
+message ShardHash {
+  uint32 shard_index = 1;
+  bytes hash = 2;
+}
+
+message Vote {
+  VoteType type = 1;
+  Height height = 2;
+  int64 round = 3;
+  ShardHash value = 4;
+  bytes voter = 5;
+}
+
+// Votes of at least 2/3 of the validators, required to independently verify that consensus was reached
+
+message CommitSignature {
+  bytes signer = 1;
+  bytes signature = 2;
+}
+
+message Commits {
+  Height height = 1;
+  int64 round = 2;
+  ShardHash value = 3;
+  repeated CommitSignature signatures = 4;
+}
+
+message Proposal {
+  Height height = 1;
+  int64 round = 2;
+  int64 pol_round = 3;
+  bytes proposer = 4;
+  ShardHash value = 5;
+//  repeated Transaction transactions = 4;  // Transactions for the shard level proposals (submitted by shard leader)
+//  repeated ShardHeader shard_headers = 5; // shard headers for the block level proposal (submitted by the block leader)
+}
+
+// TODO: This probably needs a signature? Should we use ConsensusMessage?
+message FullProposal {
+  Height height = 1;
+  int64 round = 2;
+  bytes proposer = 3;
+  oneof proposed_value {
+    Block block = 4;
+    ShardChunk shard = 5;
+  }
+}
+
+message DecidedValue {
+  oneof value {
+    Block block = 2;
+    ShardChunk shard = 3;
+  }
+}
+
+message ReadNodeMessage {
+  oneof read_node_message {
+    DecidedValue decided_value = 1;
+  }
+}
+
+message ConsensusMessage {
+  oneof consensus_message {
+    Vote vote = 1;
+    Proposal proposal = 2;
+  }
+  bytes signature = 3;
+}
+
+enum BlockEventType {
+  BLOCK_EVENT_TYPE_HEARTBEAT = 0;
+  BLOCK_EVENT_TYPE_MERGE_MESSAGE = 1;
+}
+
+message HeartbeatEventBody {
+}
+
+message MergeMessageEventBody {
+  Message message = 1;
+} 
+
+message BlockEventData {
+  uint64 seqnum = 1;
+  BlockEventType type = 2;
+  uint64 block_number = 3;
+  uint64 event_index = 4;
+  uint64 block_timestamp = 5;
+  oneof body {
+    HeartbeatEventBody heartbeat_event_body = 6;
+    MergeMessageEventBody merge_message_event_body = 7;
+  };
+}
+
+message BlockEvent {
+  bytes hash = 1;
+  BlockEventData data = 2;
+}
+
+// Block types
+message BlockHeader {
+  Height height = 1;
+  uint64 timestamp = 2;
+  uint32 version = 3;
+  FarcasterNetwork chain_id = 4;
+  bytes shard_witnesses_hash = 5;
+  bytes parent_hash = 6;
+  bytes state_root = 7;
+  bytes events_hash = 8;
+}
+
+message ShardWitness {
+  repeated ShardChunkWitness shard_chunk_witnesses = 1;
+}
+
+message ShardChunkWitness {
+  Height height = 1;
+  bytes shard_root = 2;
+  bytes shard_hash = 3;
+}
+
+message Block {
+  BlockHeader header = 1;
+  bytes hash = 2;
+  ShardWitness shard_witness = 3;
+  Commits commits = 4;
+  repeated Transaction transactions = 5;
+  repeated BlockEvent events = 6;
+}
+
+message ShardHeader {
+  Height height = 1;
+  uint64 timestamp = 2;
+  bytes parent_hash = 3;
+  bytes shard_root = 4; // State root for the shard after applying the transactions for the height
+}
+
+message ShardChunk {
+  ShardHeader header = 1;
+  bytes hash = 2;
+  repeated Transaction transactions = 3;
+  Commits commits = 4;
+}
+
+message Transaction {
+  uint64 fid = 1;
+  repeated Message user_messages = 2;
+  repeated ValidatorMessage system_messages = 3;
+  bytes account_root = 4; // State root for the account after applying the transaction for the fid
+}
+
+// Fname transfers
+message FnameTransfer {
+  uint64 id = 1;
+  uint64 from_fid = 2;
+  UserNameProof proof = 4;
+}
+
+// Validator initiated prunes/revokes etc
+message ValidatorMessage {
+  OnChainEvent on_chain_event = 1;
+  FnameTransfer fname_transfer = 2;
+  BlockEvent block_event = 3;
+}
+
+
+// Gossip related messages
+message MempoolMessage {
+  oneof mempool_message {
+    Message user_message = 1;
+  }
+}
+
+message StatusMessage {
+  bytes peer_id = 1;
+  Height height = 2;
+  Height min_height = 3;
+}
+
+message SyncValueRequest {
+  Height height = 1;
+}
+
+message SyncVoteSetRequest {
+  Height height = 1;
+  int64 round = 2;
+}
+
+message SyncRequest {
+  oneof sync_request {
+    SyncValueRequest value = 1;
+    SyncVoteSetRequest vote_set = 2;
+  }
+}
+
+message SyncValueResponse {
+  Height height = 1;
+  bytes full_value = 2;
+  Commits commits = 3;
+}
+
+message SyncVoteSetResponse {
+  Height height = 1;
+  int64 round = 2;
+  repeated Vote votes = 3;
+  repeated bytes signatures = 4;
+}
+
+message SyncResponse {
+  oneof sync_response {
+    SyncValueResponse value = 1;
+    SyncVoteSetResponse vote_set = 2;
+  }
+}
