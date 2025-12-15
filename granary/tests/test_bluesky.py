@@ -2905,6 +2905,16 @@ class BlueskyTest(testutil.TestCase):
       'url': 'https://bsky.app/profile/alice.bsky.social',
     }, to_as1({'$type': 'app.bsky.actor.profile'}, repo_handle='alice.bsky.social'))
 
+  def test_to_as1_profile_uri(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'at://did/coll/id',
+      'summary': 'one &lt;two&gt; &lt;thr&amp;ee&gt;',
+    }, to_as1({
+      '$type': 'app.bsky.actor.profile',
+      'description': 'one <two> <thr&ee>',
+    }, repo_did='nope', uri='at://did/coll/id'))
+
   def test_to_as1_profile_view(self):
     self.assert_equals({
       **ACTOR_AS,

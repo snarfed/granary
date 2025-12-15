@@ -1265,7 +1265,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     else:
       ret = {
         'objectType': 'person',
-        'id': did,
+        'id': uri or did,
         'username': obj.get('handle') or repo_handle,
       }
 
