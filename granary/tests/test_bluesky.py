@@ -1574,6 +1574,34 @@ class BlueskyTest(testutil.TestCase):
       'content': content,
     }))
 
+  def test_from_as1_html_link_existing_tag_without_indices(self):
+    content = 'foo <a href="http://post">ba]r</a> baz'
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'foo ba]r baz',
+      'fooOriginalText': content,
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://post',
+        }],
+        'index': {
+          'byteStart': 4,
+          'byteEnd': 8,
+        },
+      }],
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': 'foo <a href="http://post">ba]r</a> baz',
+      'tags': [{
+        'displayName': 'ba]r',
+        'objectType': 'link',
+        'url': 'http://post',
+      }],
+    }))
+
   def test_from_as1_html_link_with_url_as_text(self):
     content = 'foo <a href="http://post">http://post</a> baz'
     self.assert_equals({

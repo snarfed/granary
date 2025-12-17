@@ -1634,6 +1634,30 @@ class As1Test(testutil.TestCase):
       }],
     }, obj)
 
+  def test_convert_html_content_to_text_adds_indices_to_existing_link_tag(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">link</a> there',
+      'tags': [{
+        'objectType': 'link',
+        'displayName': 'link',
+        'url': 'http://foo.com',
+      }],
+    }
+    as1.convert_html_content_to_text(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi link there',
+      'content_is_html': False,
+      'tags': [{
+        'objectType': 'link',
+        'url': 'http://foo.com',
+        'displayName': 'link',
+        'startIndex': 3,
+        'length': 4,
+      }],
+    }, obj)
+
   def test_convert_html_content_to_text_plain_text_does_nothing(self):
     obj = {
       'objectType': 'note',

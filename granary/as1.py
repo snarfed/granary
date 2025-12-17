@@ -902,17 +902,17 @@ def _handle_html_content(obj, to_plain_text=False):
 
   tags = obj.setdefault('tags', [])
   in_reply_tos = get_ids(obj, 'inReplyTo')
-  existing_tag_names = set()
+  existing_tags = {}  # maps string displayName to dict tag object
 
   for tag in tags:
     # normalize and store tag names we already have. for @-@ webfinger addresses,
     # store username as well as full address
     if name := tag.get('displayName'):
       name = name.strip().lstrip('@#')
-      existing_tag_names.add(name.lower())
+      existing_tags.setdefault(name.lower(), tag)
       parts = name.split('@')
       if len(parts) == 2:
-        existing_tag_names.add(parts[0])
+        existing_tags.setdefault(parts[0], tag)
 
     if to_plain_text:
       # clear existing tag indices since we're modifying content
@@ -934,30 +934,31 @@ def _handle_html_content(obj, to_plain_text=False):
     if not util.is_web(url) or not util.is_url(url) or url in in_reply_tos:
       continue
 
-    # skip if we already have this tag. for @-@ webfinger addresses, check username
-    # as well as full address
-    normalized_text = text.strip().lstrip('@#').lower()
-    if (normalized_text in existing_tag_names
-        or normalized_text.split('@')[0] in existing_tag_names):
-      continue
-
     type = 'link'
     if not re.search(r'\s', text):
       if text.startswith('@'):
         type = 'mention'
       elif text.startswith('#'):
         type = 'hashtag'
-    tag = {
-      'objectType': type,
-      'displayName': text,
-      'url': url,
-    }
+
+    # do we already have this tag? for @-@ webfinger addresses, check username
+    # as well as full address. if we do, only update its indices, at most.
+    normalized_text = text.strip().lstrip('@#').lower()
+    tag = (existing_tags.get(normalized_text)
+           or existing_tags.get(normalized_text.split('@')[0]))
+    if not tag:
+      tag = {
+        'objectType': type,
+        'displayName': text,
+        'url': url,
+      }
+      tags.append(tag)
+
     if to_plain_text:
       tag.update({
         'startIndex': start,
         'length': len(link['text']),
       })
-    tags.append(tag)
 
   if to_plain_text:
     obj.update({
