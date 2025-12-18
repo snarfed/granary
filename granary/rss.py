@@ -31,6 +31,7 @@ from .source import Source
 logger = logging.getLogger(__name__)
 
 CONTENT_TYPE = 'application/rss+xml; charset=utf-8'
+CONTENT_TYPE_RDF = 'application/rdf+xml'
 
 
 def from_as1(activities, actor=None, title=None, feed_url=None,

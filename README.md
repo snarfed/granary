@@ -357,6 +357,7 @@ _Non-breaking changes:_
   * Bug fix for converting reposts, both directions.
 * `rss`:
   * `to_as1`: bug fix for multiple categories.
+  * Add `CONTENT_TYPE_RDF`.
 
 
 ### 9.0 - 2025-09-13
