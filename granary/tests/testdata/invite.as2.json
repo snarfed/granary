@@ -13,7 +13,8 @@
         "discoverable": "http://joinmastodon.org/ns#discoverable",
         "indexable": "http://joinmastodon.org/ns#indexable"
       }, {
-        "PropertyValue": "http://schema.org#PropertyValue"
+        "PropertyValue": "http://schema.org#PropertyValue",
+        "value": "http://schema.org#value"
       }
     ],
     "type": "Person",

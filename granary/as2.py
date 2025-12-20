@@ -38,7 +38,10 @@ CONTEXT = [
   'https://purl.archive.org/miscellany',
 ]
 MISSKEY_QUOTE_CONTEXT = {'_misskey_quote': 'https://misskey-hub.net/ns#_misskey_quote'}
-PROPERTY_VALUE_CONTEXT = {'PropertyValue': 'http://schema.org#PropertyValue'}
+PROPERTY_VALUE_CONTEXT = {
+  'PropertyValue': 'http://schema.org#PropertyValue',
+  'value': 'http://schema.org#value',
+}
 # https://codeberg.org/fediverse/fep/src/branch/main/fep/5feb/fep-5feb.md#specifying-search-indexing-consent-at-the-actor-level
 # https://docs.joinmastodon.org/spec/activitypub/#discoverable
 DISCOVERABLE_INDEXABLE_CONTEXT = {

@@ -497,6 +497,7 @@ class ActivityStreams2Test(testutil.TestCase):
       '@context': as2.CONTEXT + [
         {
           'PropertyValue': 'http://schema.org#PropertyValue',
+          'value': 'http://schema.org#value',
         }, {
           'discoverable': 'http://joinmastodon.org/ns#discoverable',
           'indexable': 'http://joinmastodon.org/ns#indexable',
