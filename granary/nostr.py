@@ -84,10 +84,9 @@ BECH32_TLV_PREFIXES = (
   'nprofile',
   'nrelay',
 )
-BECH32_PATTERN = f'(?P<prefix>{"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,}}'
-BECH32_RE = re.compile('^' + BECH32_PATTERN + '$')
-URI_RE = re.compile(r'\bnostr:' + BECH32_PATTERN + r'\b')
-ID_RE = re.compile(r'^[0-9a-f]{64}$')
+BECH32_RE = re.compile(f'(?P<prefix>{"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,}}')
+URI_RE = re.compile(r'\bnostr:' + BECH32_RE.pattern + r'\b')
+ID_RE = re.compile(r'[0-9a-f]{64}')
 
 # Event kinds
 # https://github.com/nostr-protocol/nips#event-kinds
@@ -532,7 +531,7 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
       if tag_type == 'hashtag' and (name := tag.get('displayName')):
         event['tags'].append(['t', name])
       elif tag_type == 'mention' and (url := tag.get('url')):
-        if url.startswith('nostr:') or is_bech32(url) or ID_RE.match(url):
+        if url.startswith('nostr:') or is_bech32(url) or ID_RE.fullmatch(url):
           util.add(event['tags'], ['p', uri_to_id(url)])
           if 'startIndex' in tag and 'length' in tag:
             mentions.append(tag)
@@ -655,7 +654,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
       id (str): hex id
       prefix (str): bech32 prefix
     """
-    assert ID_RE.match(id)
+    assert ID_RE.fullmatch(id)
     if id_format == 'bech32':
       id = bech32_encode(prefix, id)
     if nostr_uri_ids:

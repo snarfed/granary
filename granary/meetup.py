@@ -18,7 +18,7 @@ API_RSVPS = '/%(urlname)s/events/%(event_id)s/rsvps'
 
 # We don't want to be too strict here with what a valid urlname and event_id
 # are because Meetup.com haven't documented it too well, and it may change
-EVENT_URL_RE = re.compile(r'https://(www\.|)meetup.com/([^/]+)/events/([^/]+)/?$')
+EVENT_URL_RE = re.compile(r'https://(www\.|)meetup.com/([^/]+)/events/([^/]+)/?')
 
 
 class Meetup(source.Source):
@@ -85,7 +85,7 @@ class Meetup(source.Source):
     if not event_url:
       return self.return_error('Invalid Meetup.com event URL')
 
-    parsed_url_part = EVENT_URL_RE.match(event_url)
+    parsed_url_part = EVENT_URL_RE.fullmatch(event_url)
     if not parsed_url_part:
       return self.return_error('Invalid Meetup.com event URL')
 

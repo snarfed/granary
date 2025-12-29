@@ -221,7 +221,7 @@ class GitHub(source.Source):
   BASE_URL = 'https://github.com/'
   NAME = 'GitHub'
   # username:repo:id
-  POST_ID_RE = re.compile(r'^[A-Za-z0-9-]+:[A-Za-z0-9_.-]+:[0-9]+$')
+  POST_ID_RE = re.compile(r'[A-Za-z0-9-]+:[A-Za-z0-9_.-]+:[0-9]+')
   # https://github.com/shinnn/github-username-regex#readme
   # (this slightly overspecifies; it allows multiple consecutive hyphens and
   # leading/trailing hyphens. oh well.)
@@ -593,7 +593,7 @@ class GitHub(source.Source):
     # TODO: support #pullrequestreview-* URLs for top-level PR comments too.
     # Haven't yet gotten those to work via either the issues or pulls APIs.
     # https://github.com/snarfed/bridgy/issues/955#issuecomment-788478848
-    comment_id = re.match(r'^(discussion_r|issuecomment-)([0-9]+)$', parsed.fragment)
+    comment_id = re.fullmatch(r'(discussion_r|issuecomment-)([0-9]+)', parsed.fragment)
     comment_type = None
     if comment_id:
       comment_type = 'issues' if comment_id.group(1) == 'issuecomment-' else 'pulls'

@@ -183,7 +183,7 @@ class NostrTest(testutil.TestCase):
 
     # bech-32 with TLV, should ignore the TLVs other than hex id
     id = '0a9b254077729866b0ae7ab70c353807c4f802e9f0db8df7d5f27ed7cc7055bd'
-    assert BECH32_RE.match('nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu')
+    assert BECH32_RE.fullmatch('nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu')
     self.assertEqual(id, uri_to_id('nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu'))
     # same contents, TLVs are just in a different order
     self.assertEqual(id, uri_to_id('nevent1qgs2ggm7ggxdkzejx8ghrl58n09wx73dk74l9uf2xdaew5ehvxxr4ssrqsqqqqqpqqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0g06gpj8'))
@@ -1571,15 +1571,15 @@ class ClientTest(testutil.TestCase):
         self.assertEqual(expected, self.nostr.object_url(input))
 
   def test_bech32_re(self):
-    self.assertIsNone(BECH32_RE.match(ID))
-    self.assertIsNone(BECH32_RE.match(URI))
-    self.assertIsNotNone(BECH32_RE.match(URI.removeprefix('nostr:')))
-    self.assertIsNotNone(BECH32_RE.match(NEVENT))
+    self.assertIsNone(BECH32_RE.fullmatch(ID))
+    self.assertIsNone(BECH32_RE.fullmatch(URI))
+    self.assertIsNotNone(BECH32_RE.fullmatch(URI.removeprefix('nostr:')))
+    self.assertIsNotNone(BECH32_RE.fullmatch(NEVENT))
 
     # id: 0a9b254077729866b0ae7ab70c353807c4f802e9f0db8df7d5f27ed7cc7055bd
     # author: a4237e420cdb0b3231d171fe879bcae37a2db7abf2f12a337b975337618c3ac2
     # kind: 1
-    self.assertIsNotNone(BECH32_RE.match('nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu'))
+    self.assertIsNotNone(BECH32_RE.fullmatch('nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu'))
 
   def test_uri_re(self):
     self.assertIsNone(URI_RE.search(ID))

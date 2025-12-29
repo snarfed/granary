@@ -99,7 +99,7 @@ MF2_TO_AS_TYPE_VERB = {
   'tag': ('activity', 'tag'),
 }
 # ISO 6709 location string. http://en.wikipedia.org/wiki/ISO_6709
-ISO_6709_RE = re.compile(r'^([-+][0-9.]+)([-+][0-9.]+).*/$')
+ISO_6709_RE = re.compile(r'([-+][0-9.]+)([-+][0-9.]+).*/')
 
 
 def get_string_urls(objs):
@@ -395,7 +395,7 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
 
   # latitude & longitude
   lat = long = None
-  position = ISO_6709_RE.match(primary.get('position') or '')
+  position = ISO_6709_RE.fullmatch(primary.get('position') or '')
   if position:
     lat, long = position.groups()
   if not lat:
@@ -501,7 +501,7 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   # special case GitHub issues that are in-reply-to the repo or its issues URL
   in_reply_tos = get_string_urls(props.get('in-reply-to', []))
   for url in in_reply_tos:
-    if re.match(r'^https?://github.com/[^/]+/[^/]+(/issues)?/?$', url):
+    if re.fullmatch(r'https?://github.com/[^/]+/[^/]+(/issues)?/?', url):
       as_type = 'issue'
 
   def is_absolute(url):

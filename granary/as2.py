@@ -157,7 +157,7 @@ SERVER_ACTOR_PREFIXES = (
 )
 
 # a basic, incomplete pattern for fediverse URLs and AP ids
-URL_RE = re.compile(r'^https?://(?P<server>.+)/(users/|profile/|@)(?P<username>[^/?]+)')
+URL_RE = re.compile(r'https?://(?P<server>.+)/(users/|profile/|@)(?P<username>[^/?]+)')
 
 
 def get_urls(obj, key='url'):
@@ -720,14 +720,17 @@ def to_as1(obj, use_type=True, get_fn=None):
   if type in ('Audio', 'Video'):  # this may have been set above
     duration_val = obj.pop('duration', None)
     duration = None
-    try:
-      if duration_dt := util.parse_iso8601_duration(duration_val):
-        duration = duration_dt.total_seconds()
-    except (TypeError, ValueError):
-      # some AP implementations incorrectly use integer seconds for duration,
-      # eg Funkwhale: https://dev.funkwhale.audio/funkwhale/funkwhale/-/issues/1566
-      if util.is_int(duration_val):
-        duration = int(duration_val)
+
+    # some AP implementations incorrectly use integer seconds for duration,
+    # eg Funkwhale: https://dev.funkwhale.audio/funkwhale/funkwhale/-/issues/1566
+    if util.is_int(duration_val):
+      duration = int(duration_val)
+    else:
+      try:
+        if duration_dt := util.parse_iso8601_duration(duration_val):
+          duration = duration_dt.total_seconds()
+      except (TypeError, ValueError):
+        pass
 
     obj.setdefault('stream', {
       # file size in bytes. nonstandard, not in AS1 proper

@@ -57,7 +57,7 @@ API_USER = 'users/show.json?screen_name=%s'
 API_USER_TIMELINE = 'statuses/user_timeline.json?count=%(count)d&screen_name=%(screen_name)s' + API_TWEET_PARAMS
 SCRAPE_LIKES_URL = 'https://api.twitter.com/2/timeline/liked_by.json?tweet_mode=extended&include_user_entities=true&tweet_id=%s&count=80'
 
-TWEET_URL_RE = re.compile(r'https://twitter\.com/[^/?]+/status(es)?/[^/?]+$')
+TWEET_URL_RE = re.compile(r'https://twitter\.com/[^/?]+/status(es)?/[^/?]+')
 HTTP_RATE_LIMIT_CODES = (429, 503)
 
 # Don't hit the RETWEETS endpoint more than this many times per
@@ -107,7 +107,7 @@ MAX_ALT_LENGTH = 420
 # https://support.twitter.com/articles/101299#error
 # http://stackoverflow.com/a/13396934/186123
 USERNAME = r'\w{1,15}'
-USERNAME_RE = re.compile(USERNAME + '$')
+USERNAME_RE = re.compile(USERNAME)
 MENTION_RE = re.compile(r'(^|[^\w@/\!?=&])@(' + USERNAME + r')\b', re.UNICODE)
 
 # alias allows unit tests to mock this function
@@ -139,7 +139,7 @@ class Twitter(source.Source):
   BASE_URL = 'https://twitter.com/'
   NAME = 'Twitter'
   FRONT_PAGE_TEMPLATE = 'templates/twitter_index.html'
-  POST_ID_RE = re.compile('^[0-9]+$')
+  POST_ID_RE = re.compile('[0-9]+')
   OPTIMIZED_COMMENTS = True
 
   # HTML snippet for embedding a tweet.
@@ -262,7 +262,7 @@ class Twitter(source.Source):
     if user_id:
       if user_id.startswith('@'):
         user_id = user_id[1:]
-      if not USERNAME_RE.match(user_id):
+      if not USERNAME_RE.fullmatch(user_id):
         raise ValueError(f'Invalid Twitter username: {user_id}')
 
     # nested function for lazily fetching the user object if we need it
@@ -713,7 +713,7 @@ class Twitter(source.Source):
     quote_tweet_url = None
     for att in obj.get('attachments', []):
       url = self.URL_CANONICALIZER(att.get('url', ''))
-      if url and TWEET_URL_RE.match(url):
+      if url and TWEET_URL_RE.fullmatch(url):
         quote_tweet_url = url
         preview_description += f"""<span class="verb">quote</span>
 <a href="{url}">this tweet</a>:<br>

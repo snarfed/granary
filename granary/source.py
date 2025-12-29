@@ -840,7 +840,7 @@ class Source(object, metaclass=SourceMeta):
       str or None
     """
     id = cls.base_id(url)
-    if id and (not cls.POST_ID_RE or cls.POST_ID_RE.match(id)):
+    if id and (not cls.POST_ID_RE or cls.POST_ID_RE.fullmatch(id)):
       return id
 
   def _content_for_create(self, obj, ignore_formatting=False, prefer_name=False,

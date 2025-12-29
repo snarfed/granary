@@ -16,7 +16,7 @@ import urllib.parse
 
 from bs4 import BeautifulSoup
 from lexrpc import Client
-from lexrpc.base import AT_URI_RE, Base, LANG_RE, NSID_RE
+from lexrpc.base import AT_URI_RE, Base, LANG_RE
 from multiformats import CID
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
@@ -40,12 +40,11 @@ from .source import (
 logger = logging.getLogger(__name__)
 
 # via https://atproto.com/specs/handle
-HANDLE_REGEX = (
+HANDLE_RE = re.compile(
   r'([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+'
   r'[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?'
 )
-HANDLE_PATTERN = re.compile(r'^' + HANDLE_REGEX + r'$')
-DID_WEB_PATTERN = re.compile(r'^did:web:' + HANDLE_REGEX + r'$')
+DID_WEB_PATTERN = re.compile('did:web:' + HANDLE_RE.pattern)
 
 MAX_MEDIA_SIZE_BYTES = 5_000_000
 
@@ -105,10 +104,10 @@ FROM_AS1_TYPES = {
 AUTHORITY_CHARS = 'a-zA-Z0-9-.:'
 RKEY_CHARS = f'{AUTHORITY_CHARS}~_'
 BSKY_APP_URL_RE = re.compile(fr"""
-  ^https://(staging\.)?bsky\.app
+  https://(staging\.)?bsky\.app
   /profile/(?P<id>[{AUTHORITY_CHARS}]+)
   (/(?P<type>{"|".join(COLLECTION_TO_BSKY_APP_TYPE.values())})
-   /(?P<tid>[{RKEY_CHARS}]+))?$
+   /(?P<tid>[{RKEY_CHARS}]+))?
   """, re.VERBOSE)
 
 DEFAULT_PDS_DOMAIN = 'bsky.social'
@@ -197,7 +196,7 @@ def did_web_to_url(did):
   Returns:
     str:
   """
-  if not did or not DID_WEB_PATTERN.match(did):
+  if not did or not DID_WEB_PATTERN.fullmatch(did):
     raise ValueError(f'Invalid did:web: {did}')
 
   host = did.removeprefix('did:web:')
@@ -271,7 +270,7 @@ def web_url_to_at_uri(url, handle=None, did=None):
   if not url:
     return None
 
-  match = BSKY_APP_URL_RE.match(url)
+  match = BSKY_APP_URL_RE.fullmatch(url)
   if not match:
     raise ValueError(f"{url} doesn't look like a bsky.app profile or post URL")
 
@@ -317,11 +316,11 @@ def from_as1_to_strong_ref(obj, client=None, value=False, raise_=False):
     assert not raise_
 
   id = (obj.get('id') or as1.get_url(obj)) if isinstance(obj, dict) else obj
-  if match := AT_URI_RE.match(id):
+  if match := AT_URI_RE.fullmatch(id):
     at_uri = id
   else:
     at_uri = Bluesky.post_id(id) or ''
-    match = AT_URI_RE.match(at_uri)
+    match = AT_URI_RE.fullmatch(at_uri)
 
   if not match or not client:
     if not match and raise_:
@@ -570,7 +569,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     parsed = urllib.parse.urlparse(url)
     domain = parsed.netloc
     did_web_bare = did_web.removeprefix('did:web:')
-    handle = (username if username and HANDLE_PATTERN.match(username)
+    handle = (username if username and HANDLE_RE.fullmatch(username)
               else did_web_bare if ':' not in did_web_bare
               else domain if domain
               else '')
@@ -625,7 +624,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     obj_id = inner_obj.get('id')
     lexicon = f'app.bsky.graph.{type}'
-    if match := AT_URI_RE.match(obj_id):
+    if match := AT_URI_RE.fullmatch(obj_id):
       if match.group('collection') == 'app.bsky.graph.list':
         lexicon = 'app.bsky.graph.listblock'
 
@@ -789,7 +788,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
       # check the link is to a bluesky post and not already in attachments
       if ((tag['url'].startswith('at://')
-           or ((match := BSKY_APP_URL_RE.match(tag['url']))
+           or ((match := BSKY_APP_URL_RE.fullmatch(tag['url']))
                and match.group('type') == 'post'))
           and not tag['url'] in attachment_urls):
         start_index = tag['startIndex'] + index_offset
@@ -850,7 +849,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # language(s)
     # (we steal contentMap from AS2, it's not officially part of AS1)
     langs = [lang for lang, lang_content in obj.get('contentMap', {}).items()
-             if LANG_RE.match(lang) and lang_content == orig_content]
+             if LANG_RE.fullmatch(lang) and lang_content == orig_content]
 
     # truncate text. if we're including a suffix, ie original post link, link
     # that with a facet
@@ -925,9 +924,9 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         # extract and resolve DID
         if tag_url.startswith('did:'):
           user = tag_url
-        elif match := AT_URI_RE.match(tag_url):
+        elif match := AT_URI_RE.fullmatch(tag_url):
           user = match.group('repo')
-        elif match := BSKY_APP_URL_RE.match(tag_url):
+        elif match := BSKY_APP_URL_RE.fullmatch(tag_url):
           user = match.group('id')
         else:
           user = name.lstrip('@')
@@ -935,7 +934,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         did = None
         if user.startswith('did:'):
           did = user
-        elif client and HANDLE_PATTERN.match(user):
+        elif client and HANDLE_RE.fullmatch(user):
           try:
             did = client.com.atproto.identity.resolveHandle(handle=user)['did']
           except BaseException as e:
@@ -1211,7 +1210,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     uri_bsky_url = at_uri_to_web_url(uri)
     if not uri.startswith('at://'):
       raise ValueError('Expected at:// uri, got {uri}')
-    if parsed := AT_URI_RE.match(uri):
+    if parsed := AT_URI_RE.fullmatch(uri):
       uri_repo = parsed.group(1)
 
   # for nested to_as1 calls, if necessary
@@ -1919,7 +1918,7 @@ class Bluesky(Source):
     if not url:
       return None
 
-    if not AT_URI_RE.match(url):
+    if not AT_URI_RE.fullmatch(url):
       try:
         url = web_url_to_at_uri(url)
       except ValueError:
@@ -2444,7 +2443,7 @@ class Bluesky(Source):
     Returns:
       CreationResult: content is dict with ``url`` and ``id`` fields
     """
-    match = AT_URI_RE.match(at_uri)
+    match = AT_URI_RE.fullmatch(at_uri)
     if not match:
       raise ValueError(f'Expected at:// URI, got {at_uri}')
 

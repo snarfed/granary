@@ -263,7 +263,7 @@ Watching  \t waves
     FakeSource.POST_ID_RE = re.compile('^$')
     self.assertIsNone(self.source.post_id('http://x/y/1'))
 
-    FakeSource.POST_ID_RE = re.compile('^a+$')
+    FakeSource.POST_ID_RE = re.compile('a+')
     self.assertIsNone(self.source.post_id('http://x/y/1'))
     self.assertEqual('aaa', self.source.post_id('http://x/y/aaa'))
 

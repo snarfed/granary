@@ -814,7 +814,7 @@ def expand_tags(obj):
     begin = string.punctuation.replace("-", "")
     end = string.punctuation.replace("-", "").replace("@", "").replace(".", "")
     match = re.search(
-        fr'(^|[\s{begin}])({prefix}{re.escape(name)}(?:@{util.HOST_RE})?)($|[\s{end}])',
+        fr'(^|[\s{begin}])({prefix}{re.escape(name)}(?:@{util.HOST_RE.pattern})?)($|[\s{end}])',
         content, flags=re.IGNORECASE)
 
     if not match and type == 'mention' and '@' in name:

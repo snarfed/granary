@@ -178,7 +178,7 @@ class Facebook(source.Source):
   BASE_URL = 'https://www.facebook.com/'
   NAME = 'Facebook'
   FRONT_PAGE_TEMPLATE = 'templates/facebook_index.html'
-  POST_ID_RE = re.compile('^[0-9_:]+$')  # see parse_id() for gory details
+  POST_ID_RE = re.compile('[0-9_:]+')  # see parse_id() for gory details
   OPTIMIZED_COMMENTS = True
 
   # HTML snippet for embedding a post.
@@ -2497,7 +2497,7 @@ class Facebook(source.Source):
     fbid = FacebookId(user, post, comment)
 
     for sub_id in user, post, comment:
-      if sub_id and not re.match(r'^[0-9a-zA-Z]+$', sub_id):
+      if sub_id and not re.fullmatch('[0-9a-zA-Z]+', sub_id):
         fbid = blank
 
     if fbid == blank:
