@@ -2794,7 +2794,7 @@ class BlueskyTest(testutil.TestCase):
       'content': '<a href="https://bsky.app/profile/alice.bsky.social">https://bsky.app/profile/alice.bsky.social</a>',
     }, client=self.bs._client, raise_=True), ignore=['fooOriginalText', 'fooOriginalUrl'])
 
-  def test_from_as1_sensitive(self):
+  def test_from_as1_sensitive_default(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': '',
@@ -2805,6 +2805,66 @@ class BlueskyTest(testutil.TestCase):
       'createdAt': '2022-01-02T03:04:05.000Z',
     }, self.from_as1({
       'objectType' : 'note',
+      'sensitive': True,
+    }))
+
+  def test_from_as1_sensitive_nudity(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '[Im a label that contains nudity]\n\n',
+      'labels': {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val' : 'nudity'}],
+      },
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, self.from_as1({
+      'objectType' : 'note',
+      'summary': 'Im a label that contains nudity',
+      'sensitive': True,
+    }))
+
+  def test_from_as1_sensitive_sexual(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '[Im a label that contains suggestive or sexual]\n\n',
+      'labels': {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val' : 'sexual'}],
+      },
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, self.from_as1({
+      'objectType' : 'note',
+      'summary': 'Im a label that contains suggestive or sexual',
+      'sensitive': True,
+    }))
+
+  def test_from_as1_sensitive_porn(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '[Im a label that contains porn or nsfw]\n\n',
+      'labels': {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val' : 'porn'}],
+      },
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, self.from_as1({
+      'objectType' : 'note',
+      'summary': 'Im a label that contains porn or nsfw',
+      'sensitive': True,
+    }))
+
+  def test_from_as1_sensitive_porn_with_lower_labels(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '[Im a label that contains porn or nsfw and sexual]\n\n',
+      'labels': {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val' : 'porn'}],
+      },
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, self.from_as1({
+      'objectType' : 'note',
+      'summary': 'Im a label that contains porn or nsfw and sexual',
       'sensitive': True,
     }))
 
