@@ -137,6 +137,8 @@ SENSITIVE_LABELS = {
   'gore': 'Explicit or potentially disturbing media',
 }
 
+SENSITIVE_LABEL_DEFAULT = 'graphic-media'
+
 # TODO: bring back validate? or remove?
 LEXRPC = Base(truncate=True, validate=False)
 
@@ -151,7 +153,7 @@ def convert_as1_sensitive_label(summary):
     summary (str)
   """
 
-  label = 'graphic-media'
+  label = SENSITIVE_LABEL_DEFAULT
 
   if None == summary:
     return label
@@ -455,7 +457,9 @@ def base_object(obj):
 
 
 def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
-             original_fields_prefix=None, as_embed=False, raise_=False):
+             original_fields_prefix=None, as_embed=False, raise_=False,
+             dynamic_sensitive_labels=False,
+             ):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
@@ -486,6 +490,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       ``objectType`` is ``article``
     raise_ (bool): whether to raise ``ValueError`` if ``client`` is provided and
       we can't fetch an object's record
+    dynamic_sensitive_labels (bool): if enabled we attempt to determine the bluesky label based on the summary
 
   Returns:
     dict: ``app.bsky.*`` object
@@ -1068,7 +1073,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     if obj.get('sensitive'):
       labels = {
         '$type' : 'com.atproto.label.defs#selfLabels',
-        'values' : [{'val' : convert_as1_sensitive_label(summary)}],
+        'values' : [{'val' : dynamic_sensitive_labels and convert_as1_sensitive_label(summary) or SENSITIVE_LABEL_DEFAULT}],
       }
 
     ret = {
