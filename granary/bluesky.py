@@ -136,13 +136,38 @@ SENSITIVE_LABELS = {
   'nsfl': 'Explicit or potentially disturbing media',
   'gore': 'Explicit or potentially disturbing media',
 }
-# AS1 => Bluesky
-SENSITIVE_LABEL = 'graphic-media'
 
 # TODO: bring back validate? or remove?
 LEXRPC = Base(truncate=True, validate=False)
 
 ELLIPSIS = ' […]'
+
+def convert_as1_sensitive_label(summary):
+  """
+  Check the as1 summary for keywords that might suggest a specific bluesky label level.
+  We are checking labels in increasing order of severity, so the most severe one will be used even if lesser ones are present.
+
+  Args:
+    summary (str)
+  """
+
+  label = 'graphic-media'
+
+  if None == summary:
+    return label
+
+  summary_lower = summary.lower()
+
+  if any(s in summary_lower for s in ['nudity']):
+    label = 'nudity'
+
+  if any(s in summary_lower for s in ['suggestive', 'sexual']):
+    label = 'sexual'
+
+  if any(s in summary_lower for s in ['porn', 'nsfw']):
+    label = 'porn'
+
+  return label
 
 
 def url_to_did_web(url):
@@ -1043,7 +1068,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     if obj.get('sensitive'):
       labels = {
         '$type' : 'com.atproto.label.defs#selfLabels',
-        'values' : [{'val' : SENSITIVE_LABEL}],
+        'values' : [{'val' : convert_as1_sensitive_label(summary)}],
       }
 
     ret = {
