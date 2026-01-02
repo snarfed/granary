@@ -137,40 +137,22 @@ SENSITIVE_LABELS = {
   'gore': 'Explicit or potentially disturbing media',
 }
 
+# AS1 => Bluesky keyword map
+#
+# Used for checking the as1 summary for keywords that might suggest a specific bluesky label level.
+# We are checking labels in increasing order of severity, so the most severe one will be used even if lesser ones are present. (Python preserves the order of dict items)
+AS1_TO_BLUESKY_LABEL_MAP = {
+  'nudity': ['nudity'],
+  'sexual': ['suggestive', 'sexual'],
+  'porn': ['porn', 'nsfw']
+}
+
 SENSITIVE_LABEL_DEFAULT = 'graphic-media'
 
 # TODO: bring back validate? or remove?
 LEXRPC = Base(truncate=True, validate=False)
 
 ELLIPSIS = ' […]'
-
-def convert_as1_sensitive_label(summary):
-  """
-  Check the as1 summary for keywords that might suggest a specific bluesky label level.
-  We are checking labels in increasing order of severity, so the most severe one will be used even if lesser ones are present.
-
-  Args:
-    summary (str)
-  """
-
-  label = SENSITIVE_LABEL_DEFAULT
-
-  if None == summary:
-    return label
-
-  summary_lower = summary.lower()
-
-  if any(s in summary_lower for s in ['nudity']):
-    label = 'nudity'
-
-  if any(s in summary_lower for s in ['suggestive', 'sexual']):
-    label = 'sexual'
-
-  if any(s in summary_lower for s in ['porn', 'nsfw']):
-    label = 'porn'
-
-  return label
-
 
 def url_to_did_web(url):
   """Converts a URL to a ``did:web``.
@@ -1071,9 +1053,17 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     labels = None
     if obj.get('sensitive'):
+      label = SENSITIVE_LABEL_DEFAULT
+
+      if summary is not None and dynamic_sensitive_labels:
+        summary_lower = summary.lower()
+        for bluesky_label, keywords in AS1_TO_BLUESKY_LABEL_MAP.items():
+          if any(s in summary_lower for s in keywords):
+            label = bluesky_label
+
       labels = {
         '$type' : 'com.atproto.label.defs#selfLabels',
-        'values' : [{'val' : dynamic_sensitive_labels and convert_as1_sensitive_label(summary) or SENSITIVE_LABEL_DEFAULT}],
+        'values' : [{'val' : label}],
       }
 
     ret = {
