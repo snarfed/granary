@@ -562,21 +562,25 @@ def to_as1(obj, use_type=True, get_fn=None):
             obj['mimeType'] = media_type
             break
 
-  # ActivityPub/Mastodon uses icon for profile picture, image for header.
   as1_images = []
   image_urls = set()
   icons = util.pop_list(obj, 'icon')
   images = util.pop_list(obj, 'image')
-  # by convention, first element in AS2 images field is banner/header
-  if type in ACTOR_TYPES and images:
-    if isinstance(images[0], str):
-      images[0] = {'url': images[0]}
-    images[0]['objectType'] = 'featured'
 
-  img_atts = [a for a in attachments
-              if a.get('type') == 'Image'
-              or (a.get('mediaType') or '').startswith('image/')]
-  for as2_img in icons + images + img_atts:
+  if type in ACTOR_TYPES:
+    if images:
+      # by convention, first element in AS2 images field is banner/header
+      if isinstance(images[0], str):
+        images[0] = {'url': images[0]}
+      images[0]['objectType'] = 'featured'
+    # ActivityPub/Mastodon actors use icon for profile picture, image for header
+    images = icons + images
+
+  images += [a for a in attachments
+             if a.get('type') == 'Image'
+             or (a.get('mediaType') or '').startswith('image/')]
+
+  for as2_img in images:
     as1_img = to_as1(as2_img, use_type=False)
     url = util.get_url(as1_img)
     if url not in image_urls:

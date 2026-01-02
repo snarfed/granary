@@ -383,6 +383,7 @@ _Non-breaking changes:_
   * `to_as1`:
     * Handle bare string `attachment` values.
     * Handle multiply-valued `type`.
+    * Stop propagating `icon` into `image` for non-actors ([bridgy-fed#2265](https://github.com/snarfed/bridgy-fed/issues/2265)).
   * `is_server_actor`: return `False` for id URLs with query parameters.
   * Add new `URL_RE` constant.
 * `bluesky`:

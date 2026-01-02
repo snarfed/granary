@@ -390,6 +390,17 @@ class ActivityStreams2Test(testutil.TestCase):
       'attachment': ['http://foo/bar'],
     }))
 
+  def test_to_as1_note_ignore_icon(self):
+    # https://github.com/snarfed/bridgy-fed/issues/2265
+    self.assertEqual({
+      'objectType': 'note',
+      'image': ['http://image'],
+    }, as2.to_as1({
+      'type': 'Note',
+      'icon': ['http://icon'],
+      'image': ['http://image'],
+    }))
+
   def test_is_public(self):
     publics = list(PUBLICS)
     for result, input in (
