@@ -154,6 +154,7 @@ LEXRPC = Base(truncate=True, validate=False)
 
 ELLIPSIS = ' […]'
 
+
 def url_to_did_web(url):
   """Converts a URL to a ``did:web``.
 
