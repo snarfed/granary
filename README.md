@@ -332,6 +332,7 @@ _Non-breaking changes:_
   * Support new `website` property in `app.bsky.actor.profile`, `app.bsky.actor.defs#profileViewDetailed`, etc.
   * Convert AS1 `block` of `app.bsky.graph.list` `at://` URI to/from `app.bsky.graph.listblock` record.
   * `to_as1`: add new `client` kwarg, paralleling the existing one in `from_as1`.
+  * Support other labels than `graphic-media` based on keywords in `from_as1`
 * `mastodon`:
   * `status_to_as1_object`: bug fix for when `mention.url` is explicitly null.
 * `nostr`:
