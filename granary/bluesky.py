@@ -441,8 +441,7 @@ def base_object(obj):
 
 def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
              original_fields_prefix=None, as_embed=False, raise_=False,
-             dynamic_sensitive_labels=False,
-             ):
+             dynamic_sensitive_labels=False):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
@@ -1056,7 +1055,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     if obj.get('sensitive'):
       label = SENSITIVE_LABEL_DEFAULT
 
-      if summary is not None and dynamic_sensitive_labels:
+      if dynamic_sensitive_labels and summary:
         summary_lower = summary.lower()
         for bluesky_label, keywords in AS1_TO_BLUESKY_LABEL_MAP.items():
           if any(s in summary_lower for s in keywords):
