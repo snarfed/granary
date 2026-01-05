@@ -356,7 +356,7 @@ _Non-breaking changes:_
     * Bug fix for NIP-92 `imeta` tags without `m` (MIME type) tag.
   * Rename `user_url` to `object_url`, expand to accept any NIP-19, NIP-05, or hex id. `user_url` is kept as an alias.
   * `web_url_to_at_uri`: add `app.bsky.graph.list` support.
-  * `bech32_decode`, `bech32_encode`: add TLV support.
+  * `bech32_decode`, `bech32_encode`: add TLV support, error handling.
   * Bug fix for converting reposts, both directions.
 * `rss`:
   * `to_as1`: bug fix for multiple categories.

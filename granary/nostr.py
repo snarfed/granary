@@ -227,13 +227,18 @@ def bech32_decode(val):
     val (str): bech32
 
   Returns:
-    str: hex
+    str: hex, or val unchanged if it can't be decoded
   """
   if not val or not is_bech32(val):
     return val
 
   prefix, bits = bech32.bech32_decode(val)
-  data = bytes(bech32.convertbits(bits, 5, 8, pad=False))
+  if not bits:
+    return val
+  converted = bech32.convertbits(bits, 5, 8, pad=False)
+  if not converted:
+    return val
+  data = bytes(converted)
 
   if prefix in BECH32_TLV_PREFIXES:
     # TLV! find the type 0 value, it's (usually) the id
@@ -263,19 +268,25 @@ def bech32_encode(prefix, hex):
     hex (str)
 
   Returns:
-    str: bech32
+    str: bech32, or hex unchanged if it can't be encoded
   """
-  if not hex:
+  if not hex or len(hex) != 64:
     return hex
-
-  assert len(hex) == 64
 
   if prefix in BECH32_TLV_PREFIXES:
     assert prefix in ('nprofile', 'nevent')
     # first byte 0 for id/pubkey, second byte 32 for length
     hex = '0020' + hex
 
-  data = bech32.convertbits(bytes.fromhex(hex), 8, 5)
+  try:
+    bytes_data = bytes.fromhex(hex)
+  except ValueError:
+    return hex
+
+  data = bech32.convertbits(bytes_data, 8, 5)
+  if not data:
+    return hex
+
   return bech32.bech32_encode(prefix, data)
 
 

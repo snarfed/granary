@@ -188,11 +188,24 @@ class NostrTest(testutil.TestCase):
     # same contents, TLVs are just in a different order
     self.assertEqual(id, uri_to_id('nevent1qgs2ggm7ggxdkzejx8ghrl58n09wx73dk74l9uf2xdaew5ehvxxr4ssrqsqqqqqpqqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0g06gpj8'))
 
+    # invalid bech32 that causes convertbits to return None should return as is
+    invalid = 'npubinvalid'
+    self.assertEqual(invalid, uri_to_id(invalid))
+
   def test_is_bech32(self):
     self.assertTrue(is_bech32('nostr:npubabc'))
     self.assertTrue(is_bech32('neventabc'))
     self.assertFalse(is_bech32('abc'))
     self.assertFalse(is_bech32(None))
+
+  def test_bech32_encode_invalid_input(self):
+    self.assertIsNone(bech32_encode('note', None))
+    self.assertEqual('', bech32_encode('note', ''))
+    self.assertEqual('tooshort', bech32_encode('note', 'tooshort'))
+    self.assertEqual('0' * 63, bech32_encode('note', '0' * 63))
+    self.assertEqual('0' * 65, bech32_encode('note', '0' * 65))
+    self.assertEqual('not-valid-hex-string-but-is-64-chars!!!!!!!!!!!!!!!!!!!!!!!',
+                     bech32_encode('note', 'not-valid-hex-string-but-is-64-chars!!!!!!!!!!!!!!!!!!!!!!!'))
 
   def test_id_and_asign(self):
     event = copy.deepcopy(NOTE_NOSTR)
