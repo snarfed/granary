@@ -208,7 +208,7 @@ def get_ids(obj, field):
     elif isinstance(elem, dict):
       id = elem.get('id') or elem.get('url')
       if id:
-        ids.add(id)
+        ids.add(id.get('value') if isinstance(id, dict) else id)
 
   return sorted(ids)
 
