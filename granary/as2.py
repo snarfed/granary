@@ -702,6 +702,7 @@ def to_as1(obj, use_type=True, get_fn=None):
     'inReplyTo': [to_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': to_as1(obj.get('location')),
     'object': inner_objs,
+    'preview': to_as1(obj.get('preview')),
     'tags': tags_as1,
     'to': as1_to,
     'cc': as1_cc,
@@ -742,6 +743,13 @@ def to_as1(obj, use_type=True, get_fn=None):
       'duration': duration or None,
     })
     obj['stream'].setdefault('url', obj.pop('url', None))
+
+  # preview field: if summary is unset and preview is a Note with content, use it
+  # https://www.w3.org/TR/activitystreams-vocabulary/#dfn-preview
+  # https://github.com/snarfed/bridgy-fed/issues/2091
+  preview = as1.get_object(obj, 'preview')
+  if not obj.get('summary') and as1.object_type(preview) == 'note':
+    obj['summary'] = preview.get('content')
 
   # object author
   attrib = util.pop_list(obj, 'attributedTo')

@@ -401,6 +401,57 @@ class ActivityStreams2Test(testutil.TestCase):
       'image': ['http://image'],
     }))
 
+  def test_to_as1_preview_note_to_summary(self):
+    # https://github.com/snarfed/bridgy-fed/issues/2091
+    self.assertEqual({
+      'objectType': 'article',
+      'summary': 'Preview text',
+      'preview': {
+        'objectType': 'note',
+        'content': 'Preview text',
+      },
+    }, as2.to_as1({
+      'type': 'Article',
+      'preview': {
+        'type': 'Note',
+        'content': 'Preview text',
+      },
+    }))
+
+  def test_to_as1_preview_preserves_existing_summary(self):
+    # https://github.com/snarfed/bridgy-fed/issues/2091
+    self.assertEqual({
+      'objectType': 'article',
+      'summary': 'Existing summary',
+      'preview': {
+        'objectType': 'note',
+        'content': 'Preview text',
+      },
+    }, as2.to_as1({
+      'type': 'Article',
+      'summary': 'Existing summary',
+      'preview': {
+        'type': 'Note',
+        'content': 'Preview text',
+      },
+    }))
+
+  def test_to_as1_preview_ignores_non_note(self):
+    # https://github.com/snarfed/bridgy-fed/issues/2091
+    self.assertEqual({
+      'objectType': 'article',
+      'preview': {
+        'objectType': 'article',
+        'content': 'Should be ignored',
+      },
+    }, as2.to_as1({
+      'type': 'Article',
+      'preview': {
+        'type': 'Article',
+        'content': 'Should be ignored',
+      },
+    }))
+
   def test_is_public(self):
     publics = list(PUBLICS)
     for result, input in (

@@ -484,6 +484,7 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
     * Always convert images to objects with `type: Image`, never to bare string URLs ([bridgy-fed#/1000](https://github.com/snarfed/bridgy-fed/issues/1000)).
     * Bug fixes for converting links to facets when the link text is the link URL.
   * `to_as1`:
+    * If `summary` is unset and `preview` is a Note with `content`, use the preview's content as `summary` ([bridgy-fed#2091](https://github.com/snarfed/bridgy-fed/issues/2091)).
     * Handle other types of tags better, eg non-standard `Hashtag` and inner `tag` field for name.
     * Bug fix for videos, `mimeType` goes in outer object, not in `stream`.
     * Bug fix for `to`/`cc` with mixed dict and string elements.
