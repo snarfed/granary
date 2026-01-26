@@ -499,7 +499,7 @@ Standardize function and method names in all modules to `to_as1`, `from_as`, etc
   * `create`/`previewCreate`:
     * If `inReplyTo` isn't a Bluesky URL or AT URI, return `CreationResult` instead of raising `ValueError`.
   * `from_as1`:
-    * Convert `article`s to external embeds with no post text.
+    * For `article`s, if `summary` is set, use it as the post text; otherwise use empty text. Also create external embed even without `url` ([bridgy-fed#2091](https://github.com/snarfed/bridgy-fed/issues/2091)).
     * Add new `as_embed` boolean kwarg to do the same thing for any object.
     * When truncating and adding a link to the original post, use `id` if `url` is not available ([snarfed/bridgy-fed#1155](https://github.com/snarfed/bridgy-fed/issues/1155)).
     * If the input object has `inReplyTo` or `object` or `target` with no recognizable ATProto or Bluesky object, raise `ValueError`.

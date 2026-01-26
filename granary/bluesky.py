@@ -777,14 +777,14 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # https://github.com/snarfed/bridgy-fed/issues/1001
     full_text = content = obj.get('content') or ''
     index_offset = 0
-    if summary := obj.get('summary'):
-      if type == 'article' or as_embed:
-        full_text = summary
-        tags = []  # tags are presumably in content, not summary
-      else:
-        prefix = f'[{summary}]\n\n'
-        full_text = prefix + full_text
-        index_offset = len(prefix)
+    summary = obj.get('summary') or ''
+    if type == 'article' or as_embed:
+      full_text = summary
+      tags = []  # tags are presumably in content, not summary
+    elif summary:
+      prefix = f'[{summary}]\n\n'
+      full_text = prefix + full_text
+      index_offset = len(prefix)
 
     # attachments to embed(s), including quoted posts
     record_embed = record_record_embed = external_embed = external_record_embed = None
@@ -1079,12 +1079,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     }
 
     if as_embed or (type == 'article' and url):
-      # render articles with just an external link embed, no text
-      ret.update({
-        'text': '',
-        'facets': None,
-        'embed': to_external_embed(obj, description=full_text, blobs=blobs),
-      })
+      ret['embed'] = to_external_embed(obj, description=orig_content, blobs=blobs)
       if images_record_embed:
         ret['embed']['external']['thumb'] = images_record_embed['images'][0]['image']
 

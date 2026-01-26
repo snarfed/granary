@@ -2205,10 +2205,44 @@ class BlueskyTest(testutil.TestCase):
       'image': NEW_BLOB_URL,
     }, blobs={NEW_BLOB_URL: BLOB}))
 
+  def test_from_as1_article_with_summary(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'This is the summary',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'uri': 'http://my/article',
+          'title': 'My big article',
+          'description': 'some long long long text',
+        },
+      },
+    }, from_as1({
+      'objectType': 'article',
+      'url': 'http://my/article',
+      'displayName': 'My big article',
+      'summary': 'This is the summary',
+      'content': 'some long long long text',
+    }))
+
+  def test_from_as1_article_with_summary_no_url(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'This is the summary',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'article',
+      'displayName': 'My big article',
+      'summary': 'This is the summary',
+      'content': 'some long long long text',
+    }))
+
   def test_from_as1_attachment_without_url_isnt_embed(self):
     self.assertEqual({
       '$type': 'app.bsky.feed.post',
-      'text': 'foo bar',
+      'text': '',
       'createdAt': '2022-01-02T03:04:05.000Z',
     }, from_as1({
       'objectType': 'article',
