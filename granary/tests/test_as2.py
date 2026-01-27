@@ -554,6 +554,17 @@ class ActivityStreams2Test(testutil.TestCase):
       }
     }))
 
+  def test_to_as1_list_valued_image(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'https://mastodon.xyz/users/alice',
+      'preview': {'url': 'https://banner/'},
+    }, as2.to_as1({
+      'type': 'Person',
+      'id': 'https://mastodon.xyz/users/alice',
+      'preview': [{'url': 'https://banner/'}],
+    }), ignore=['displayName'])
+
   def test_from_as1_person_propertyvalue_attachment_strips_home_page_slash(self):
     self.assert_equals({
       '@context': as2.CONTEXT + [

@@ -472,9 +472,18 @@ def to_as1(obj, use_type=True, get_fn=None):
   Returns:
     dict: AS1 activity or object
   """
-  def all_to_as1(field):
-    return [to_as1(elem) for elem in util.pop_list(obj, field)
-            if not (type in ACTOR_TYPES and elem.get('type') == 'PropertyValue')]
+  def all_to_as1(field, plural=False):
+    """
+    Args:
+      field (str)
+      plural (bool): if True, always uses a list for the value, even if it only has
+        one element
+    """
+    converted = [to_as1(elem) for elem in util.pop_list(obj, field)
+                 if not (type in ACTOR_TYPES and elem.get('type') == 'PropertyValue')]
+    if not plural and len(converted) == 1:
+      return converted[0]
+    return converted
 
   def collection_to_as1(field):
     coll = as1.get_object(obj, field)
@@ -588,7 +597,7 @@ def to_as1(obj, use_type=True, get_fn=None):
       image_urls.add(url)
 
   # inner objects
-  inner_objs = all_to_as1('object')
+  inner_objs = all_to_as1('object', plural=True)
   actor = to_as1(as1.get_object(obj, 'actor'))
 
   if type in ('Create', 'Update'):
@@ -627,7 +636,7 @@ def to_as1(obj, use_type=True, get_fn=None):
     displayName = address(obj)
 
   # attachments, tags
-  attachments = all_to_as1('attachment')
+  attachments = all_to_as1('attachment', plural=True)
   tags_as1 = []
   quote_urls = []
   for tag in util.pop_list(obj, 'tag'):
@@ -702,12 +711,12 @@ def to_as1(obj, use_type=True, get_fn=None):
     'inReplyTo': [to_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
     'location': to_as1(obj.get('location')),
     'object': inner_objs,
-    'preview': to_as1(obj.get('preview')),
+    'preview': all_to_as1('preview'),
     'tags': tags_as1,
     'to': as1_to,
     'cc': as1_cc,
     # question (poll) responses
-    'options': all_to_as1('anyOf') + all_to_as1('oneOf'),
+    'options': all_to_as1('anyOf', plural=True) + all_to_as1('oneOf', plural=True),
     'replies': collection_to_as1('replies'),
     'url': urls[0] if urls else None,
     'urls': urls if len(urls) > 1 else None,
