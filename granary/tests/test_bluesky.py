@@ -3840,7 +3840,10 @@ class BlueskyTest(testutil.TestCase):
       'User-Agent': util.user_agent,
     })
 
-  @patch('requests.get', return_value=requests_response({}))
+  @patch('requests.get', return_value=requests_response({
+    'did': 'did:plc:a',
+    'handle': 'a.com',
+  }))
   def test_constructor_pds_url(self, mock_get):
     bs = Bluesky('handull', pds_url='http://my.pds/')
 
