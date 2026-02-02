@@ -407,7 +407,7 @@ def pubkey_from_privkey(privkey):
   return pubkey
 
 
-def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
+def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None, multiple=False):
   """Converts an ActivityStreams 1 activity or object to a Nostr event.
 
   Args:
@@ -420,6 +420,8 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None):
       fetched.
     proxy_tag (sequence of [str ID URL, str protocol]): optional NIP-48 proxy
       tag to add to the output event, without the initial ``proxy`` element.
+    multiple (bool): unused, for compatibility with other from_as1 functions
+
   Returns:
     dict: Nostr event
 

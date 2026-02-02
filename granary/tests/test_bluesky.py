@@ -2081,6 +2081,46 @@ class BlueskyTest(testutil.TestCase):
       },
     }, client=self.bs, raise_=True))
 
+  def test_from_as1_actor_multiple_without_monetization(self):
+    self.assert_equals([{
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+    }], self.from_as1(ACTOR_AS, multiple=True))
+
+  def test_from_as1_actor_multiple_with_monetization(self):
+    actor_with_wallet = {
+      **ACTOR_AS,
+      'monetization': '$wallet.example.com/alice',
+    }
+    expected = [{
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+    }, {
+      '$type': 'community.lexicon.payments.webMonetization',
+      'address': '$wallet.example.com/alice',
+    },]
+    self.assert_equals(expected, self.from_as1(actor_with_wallet, multiple=True))
+
+  def test_from_as1_post_multiple(self):
+    self.assert_equals([{
+      '$type': 'app.bsky.feed.post',
+      'text': 'My original post',
+      'fooOriginalText': 'My original post',
+      'createdAt': '2007-07-07T03:04:05.000Z',
+    }], self.from_as1({
+      'objectType': 'note',
+      'content': 'My original post',
+      'published': '2007-07-07T03:04:05',
+    }, multiple=True))
+
   def test_from_as1_embed(self):
     self.assert_equals(POST_BSKY_EMBED, self.from_as1(POST_AS_EMBED))
 

@@ -441,7 +441,7 @@ def base_object(obj):
 
 def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
              original_fields_prefix=None, as_embed=False, raise_=False,
-             dynamic_sensitive_labels=False):
+             dynamic_sensitive_labels=False, multiple=False):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
@@ -473,14 +473,20 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     raise_ (bool): whether to raise ``ValueError`` if ``client`` is provided and
       we can't fetch an object's record
     dynamic_sensitive_labels (bool): if enabled we attempt to determine the bluesky label based on the summary
+    multiple (bool): if True, always return a list of output records. When
+      converting an input actor to an output ``app.bsky.actor.profile`` record,
+      also includes a ``community.lexicon.payments.webMonetization`` record if
+      the actor has a ``monetization`` property. Default False.
 
   Returns:
-    dict: ``app.bsky.*`` object
+    dict or list: ``app.bsky.*`` object, or list of objects if ``multiple`` is True
 
   Raises:
     ValueError: if the object can't be converted, eg if the ``objectType`` or
       ``verb`` fields are missing or unsupported
   """
+  assert not (out_type and multiple)
+
   if isinstance(client, Bluesky):
     client = client._client
 
@@ -510,6 +516,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       raise ValueError(f"{type} {verb} doesn't support out_type {out_type}")
 
   ret = None
+  rets = []
 
   # for nested from_as1 calls, if necessary
   kwargs = {'original_fields_prefix': original_fields_prefix}
@@ -556,6 +563,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       'pinnedPost': pinned_post,
       'website': url,
     }
+
     if original_fields_prefix:
       ret.update({
         f'{original_fields_prefix}OriginalDescription': orig_summary,
@@ -564,40 +572,49 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     if not out_type or out_type == 'app.bsky.actor.profile':
       ret = trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
-      return LEXRPC.validate('app.bsky.actor.profile', 'record', ret)
+      # Web Monetization
+      # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
+      if wallet := obj.get('monetization'):
+        web_monetization = {
+          '$type': 'community.lexicon.payments.webMonetization',
+          'address': wallet,
+        }
+        rets = [ret, web_monetization]
 
-    did_web = ''
-    if id and id.startswith('did:web:'):
-      did_web = id
     else:
-      try:
-        did_web = url_to_did_web(url)
-      except ValueError as e:
-        logger.info(f"Couldn't generate did:web: {e}")
+      did_web = ''
+      if id and id.startswith('did:web:'):
+        did_web = id
+      else:
+        try:
+          did_web = url_to_did_web(url)
+        except ValueError as e:
+          logger.info(f"Couldn't generate did:web: {e}")
 
-    # handles must be hostnames
-    # https://atproto.com/specs/handle
-    username = obj.get('username')
-    parsed = urllib.parse.urlparse(url)
-    domain = parsed.netloc
-    did_web_bare = did_web.removeprefix('did:web:')
-    handle = (username if username and HANDLE_RE.fullmatch(username)
-              else did_web_bare if ':' not in did_web_bare
-              else domain if domain
-              else '')
+      # handles must be hostnames
+      # https://atproto.com/specs/handle
+      username = obj.get('username')
+      parsed = urllib.parse.urlparse(url)
+      domain = parsed.netloc
+      did_web_bare = did_web.removeprefix('did:web:')
+      handle = (username if username and HANDLE_RE.fullmatch(username)
+                else did_web_bare if ':' not in did_web_bare
+                else domain if domain
+                else '')
 
-    ret.update({
-      '$type': out_type,
-      # TODO: more specific than domain, many users will be on shared domains
-      'did': id if id and id.startswith('did:') else did_web,
-      'handle': handle,
-      'avatar': avatar,
-      'banner': banner,
-      # these collections aren't not in AS1, they're borrowed from ActivityPub:
-      # https://www.w3.org/TR/activitypub/#followers
-      'followersCount': obj.get('followers', {}).get('totalItems'),
-      'followsCount': obj.get('following', {}).get('totalItems'),
-    })
+      ret.update({
+        '$type': out_type,
+        # TODO: more specific than domain, many users will be on shared domains
+        'did': id if id and id.startswith('did:') else did_web,
+        'handle': handle,
+        'avatar': avatar,
+        'banner': banner,
+        # these collections aren't not in AS1, they're borrowed from ActivityPub:
+        # https://www.w3.org/TR/activitypub/#followers
+        'followersCount': obj.get('followers', {}).get('totalItems'),
+        'followsCount': obj.get('following', {}).get('totalItems'),
+      })
+
     # WARNING: this includes a few fields that aren't in #profileViewBasic, eg
     # description, followersCount, followsCount
     # https://atproto.com/specs/lexicon#authority-and-control
@@ -1097,7 +1114,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         # author
         author = as1.get_object(obj, 'author')
         author.setdefault('objectType', 'person')
-        author = from_as1(author, out_type='app.bsky.actor.defs#profileViewBasic', **kwargs)
+        author = from_as1(author, out_type='app.bsky.actor.defs#profileViewBasic',
+                          **kwargs)
 
         ret = trim_nulls({
           '$type': 'app.bsky.feed.defs#postView',
@@ -1140,16 +1158,20 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   else:
     raise ValueError(f'AS1 object has unknown objectType {type} verb {verb}')
 
-  if nsid := ret.get('$type'):
-    method = nsid.removesuffix('#input')
-    if method == nsid:
-      type = 'record'
-    else:
-      nsid = method
-      type = 'input'
-    return LEXRPC.validate(nsid, type, ret)
+  # validate against lexicon schema, truncate for character limits, etc
+  truncated = []
+  for record in (rets or [ret]):
+    if nsid := record.get('$type'):
+      method = nsid.removesuffix('#input')
+      if method == nsid:
+        type = 'record'
+      else:
+        nsid = method
+        type = 'input'
+      record = LEXRPC.validate(nsid, type, record)
+    truncated.append(record)
 
-  return ret
+  return truncated if multiple else truncated[0]
 
 
 def to_external_embed(obj, description=None, blobs=None):

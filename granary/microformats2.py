@@ -188,7 +188,7 @@ def _activity_or_object(activity):
 
 
 def from_as1(obj, trim_nulls=True, entry_class='h-entry',
-             default_object_type=None, synthesize_content=True):
+             default_object_type=None, synthesize_content=True, multiple=False):
   """Converts an ActivityStreams object to microformats2 JSON.
 
   Args:
@@ -201,6 +201,7 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
       is not present. defaults to None
     synthesize_content (bool): whether to generate synthetic content if the object
       doesn't have its own, eg ``likes this`` or ``shared this``
+    multiple (bool): unused, for compatibility with other from_as1 functions
 
   Returns:
     dict: decoded microformats2 JSON

@@ -35,7 +35,7 @@ CONTENT_TYPE_RDF = 'application/rdf+xml'
 
 
 def from_as1(activities, actor=None, title=None, feed_url=None,
-             home_page_url=None, hfeed=None):
+             home_page_url=None, hfeed=None, multiple=False):
   """Converts ActivityStreams activities to an RSS 2.0 feed.
 
   Args:
@@ -45,6 +45,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None,
     feed_url (str): the URL for this RSS feed
     home_page_url (str): the home page URL
     hfeed (dict): parsed mf2 ``h-feed``, if available
+    multiple (bool): unused, for compatibility with other from_as1 functions
 
   Returns:
     str: RSS 2.0 XML

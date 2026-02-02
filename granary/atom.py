@@ -114,7 +114,7 @@ class Defaulter(collections.defaultdict):
 
 
 def from_as1(input, actor=None, title=None, request_url=None, host_url=None,
-             xml_base=None, rels=None, reader=True):
+             xml_base=None, rels=None, reader=True, multiple=False):
   """Converts an ActivityStreams 1 activity or activities to an Atom feed.
 
   Args:
@@ -130,6 +130,7 @@ def from_as1(input, actor=None, title=None, request_url=None, host_url=None,
       string URLs.
     reader (bool): whether the output will be rendered in a feed reader.
       Currently just includes location if True, not otherwise.
+    multiple (bool): unused, for compatibility with other from_as1 functions
 
   Returns:
     str: Atom XML

@@ -323,7 +323,7 @@ _Breaking changes:_
 
 _Non-breaking changes:_
 
-* Switch from pillow to pymediainfo for extracting image metadata in `Bluesky.upload_media`.
+* Add `multiple` kwarg to all `to_as` functions, defaulting to `False`. When `True`, returns a list of output objects instead of only a single object. Currently only has effect in `bluesky.to_as1`; details below.
 * `as1`:
   * `targets`: exclude hashtags in `tags`.
   * Add new `is_content_html`, `convert_html_content_to_text`, `expand_tags`, and `add_tags_for_html_content_links` functions.
@@ -332,6 +332,7 @@ _Non-breaking changes:_
   * Support new `website` property in `app.bsky.actor.profile`, `app.bsky.actor.defs#profileViewDetailed`, etc.
   * Convert AS1 `block` of `app.bsky.graph.list` `at://` URI to/from `app.bsky.graph.listblock` record.
   * `from_as1`:
+    * When `multiple=True`, returns a list of output records. When converting an actor to `app.bsky.actor.profile` with a `monetization` property, includes a `community.lexicon.payments.webMonetization` record in the list.
     * Add `dynamic_sensitive_labels` kwarg for choosing label other than `graphic-media` based on keywords in `summary`.
   * `to_as1`:
     * Add new `client` kwarg, paralleling the existing one in `from_as1`.

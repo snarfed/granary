@@ -184,13 +184,14 @@ def set_content(obj, new_content):
         content_map[lang] = new_content
 
 
-def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True):
+def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=False):
   """Converts an ActivityStreams 1 activity or object to ActivityStreams 2.
 
   Args:
     obj (dict): AS1 activity or object
     type (str): default type if type inference can't determine a type.
     context (str): included as ``@context``
+    multiple (bool): unused, for compatibility with other from_as1 functions
 
   Returns:
     dict: AS2 activity or object

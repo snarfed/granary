@@ -14,7 +14,8 @@ from .source import Source
 ATTACHMENT_TYPES = {'image', 'audio', 'video'}
 
 
-def from_as1(activities, actor=None, title=None, feed_url=None, home_page_url=None):
+def from_as1(activities, actor=None, title=None, feed_url=None, home_page_url=None,
+             multiple=False):
   """Converts ActivityStreams activities to a JSON feed.
 
   Args:
@@ -24,6 +25,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None, home_page_url=No
     home_page_url (str): the home page URL
     feed_url (str): the URL of the JSON Feed, if any. Included in the
       ``feed_url`` field.
+    multiple (bool): unused, for compatibility with other from_as1 functions
 
   Returns:
     dict: JSON Feed data
