@@ -76,6 +76,7 @@ FROM_AS1_TYPES = {
     'app.bsky.actor.defs#profileView',
     'app.bsky.actor.defs#profileViewBasic',
     'app.bsky.actor.defs#profileViewDetailed',
+    'site.standard.publication',
   ),
   tuple(set(POST_TYPES) - set(['article'])): (
     'app.bsky.feed.post',
@@ -587,6 +588,18 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           'address': wallet,
         }
         rets = [ret, web_monetization]
+
+    elif out_type == 'site.standard.publication':
+      if not url:
+        raise ValueError("No url or id, can't convert to site.standard.publication")
+
+      ret = trim_nulls({
+        '$type': 'site.standard.publication',
+        'url': urlunparse(urlparse(url)[:2] + ('',) * 4),
+        'name': obj.get('displayName') or '',
+        'description': summary,
+        'icon': blobs.get(avatar),
+      }, ignore=('name',))
 
     else:
       did_web = ''

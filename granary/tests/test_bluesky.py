@@ -2121,6 +2121,30 @@ class BlueskyTest(testutil.TestCase):
       'published': '2007-07-07T03:04:05',
     }, multiple=True))
 
+  def test_from_as1_actor_to_publication(self):
+    self.assert_equals({
+      '$type': 'site.standard.publication',
+      'url': 'https://alice.com',
+      'name': 'Alice',
+      'description': 'hi there',
+    }, from_as1(ACTOR_AS, out_type='site.standard.publication'))
+
+  def test_from_as1_actor_to_publication_with_icon(self):
+    self.assert_equals({
+      '$type': 'site.standard.publication',
+      'url': 'https://alice.com',
+      'name': 'Alice',
+      'description': 'hi there',
+      'icon': BLOB,
+    }, from_as1(ACTOR_AS, out_type='site.standard.publication',
+                blobs={'https://alice.com/alice.jpg': BLOB}))
+
+  def test_from_as1_actor_to_publication_no_url(self):
+    actor_no_url = copy.deepcopy(ACTOR_AS)
+    del actor_no_url['url']
+    with self.assertRaises(ValueError):
+      from_as1(actor_no_url, out_type='site.standard.publication')
+
   def test_from_as1_article_multiple(self):
     self.assert_equals([{
       '$type': 'app.bsky.feed.post',
