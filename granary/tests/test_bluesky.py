@@ -2121,6 +2121,77 @@ class BlueskyTest(testutil.TestCase):
       'published': '2007-07-07T03:04:05',
     }, multiple=True))
 
+  def test_from_as1_article_multiple(self):
+    self.assert_equals([{
+      '$type': 'app.bsky.feed.post',
+      'text': 'This is the summary',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'uri': 'http://my/article',
+          'title': 'My big article',
+          'description': 'some long long long text',
+        },
+      },
+    }, {
+      '$type': 'site.standard.document',
+      'site': 'http://my',
+      'path': '/article',
+      'title': 'My big article',
+      'description': 'This is the summary',
+      'textContent': 'some long long long text',
+      'publishedAt': '2022-01-02T03:04:05.000Z',
+    }], from_as1({
+      'objectType': 'article',
+      'url': 'http://my/article',
+      'displayName': 'My big article',
+      'summary': 'This is the summary',
+      'content': 'some long long long text',
+    }, multiple=True))
+
+  def test_from_as1_article_multiple_with_tags_and_updated(self):
+    self.assert_equals([{
+      '$type': 'app.bsky.feed.post',
+      'text': 'Article summary',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'uri': 'http://example.com/post',
+          'title': 'Test Article',
+          'description': 'Full article content here',
+        },
+      },
+    }, {
+      '$type': 'site.standard.document',
+      'site': 'http://example.com',
+      'path': '/post',
+      'title': 'Test Article',
+      'description': 'Article summary',
+      'textContent': 'Full article content here',
+      'tags': ['programming', 'testing'],
+      'publishedAt': '2022-01-02T03:04:05.000Z',
+      'updatedAt': '2022-01-03T04:05:06.000Z',
+    }], from_as1({
+      'objectType': 'article',
+      'url': 'http://example.com/post',
+      'displayName': 'Test Article',
+      'summary': 'Article summary',
+      'content': 'Full article content here',
+      'published': '2022-01-02T03:04:05',
+      'updated': '2022-01-03T04:05:06',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'programming',
+      }, {
+        'objectType': 'hashtag',
+        'displayName': 'testing',
+      }],
+    }, multiple=True))
+
   def test_from_as1_embed(self):
     self.assert_equals(POST_BSKY_EMBED, self.from_as1(POST_AS_EMBED))
 

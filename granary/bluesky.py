@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 import string
 import urllib.parse
+from urllib.parse import urlparse, urlunparse
 
 from bs4 import BeautifulSoup
 from lexrpc import Client
@@ -68,7 +69,7 @@ BSKY_APP_TYPE_TO_COLLECTION = {
 
 # maps AS1 objectType/verb to possible output Bluesky lexicon types.
 # used in from_as1
-POST_TYPES = tuple(as1.POST_TYPES) + ('bookmark',)
+POST_TYPES = as1.POST_TYPES | set(['bookmark'])
 FROM_AS1_TYPES = {
   as1.ACTOR_TYPES: (
     'app.bsky.actor.profile',
@@ -76,10 +77,16 @@ FROM_AS1_TYPES = {
     'app.bsky.actor.defs#profileViewBasic',
     'app.bsky.actor.defs#profileViewDetailed',
   ),
-  POST_TYPES: (
+  tuple(set(POST_TYPES) - set(['article'])): (
     'app.bsky.feed.post',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#postView',
+  ),
+  ('article',): (
+    'app.bsky.feed.post',
+    'app.bsky.feed.defs#feedViewPost',
+    'app.bsky.feed.defs#postView',
+    'site.standard.document',
   ),
   ('block',): (
     'app.bsky.graph.block',
@@ -175,7 +182,7 @@ def url_to_did_web(url):
   Returns:
     str:
   """
-  parsed = urllib.parse.urlparse(url)
+  parsed = urlparse(url)
   if not parsed.hostname:
     raise ValueError(f'Invalid URL: {url}')
   if parsed.netloc != parsed.hostname:
@@ -237,7 +244,7 @@ def at_uri_to_web_url(uri, handle=None):
   if not uri.startswith('at://'):
     raise ValueError(f'Expected at:// URI, got {uri}')
 
-  parsed = urllib.parse.urlparse(uri)
+  parsed = urlparse(uri)
   did = parsed.netloc
 
   if not parsed.path:
@@ -594,7 +601,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       # handles must be hostnames
       # https://atproto.com/specs/handle
       username = obj.get('username')
-      parsed = urllib.parse.urlparse(url)
+      parsed = urlparse(url)
       domain = parsed.netloc
       did_web_bare = did_web.removeprefix('did:web:')
       handle = (username if username and HANDLE_RE.fullmatch(username)
@@ -1108,6 +1115,35 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     ret = trim_nulls(ret, ignore=('alt', 'createdAt', 'cid', 'description',
                                   'text', 'title', 'uri'))
+
+    # also site.standard.document for articles
+    if out_type == 'site.standard.document' and not url:
+        raise ValueError("No url or id, can't convert to site.standard.document")
+
+    if (type == 'article' and url
+        and (multiple or out_type == 'site.standard.document')):
+      url_parts = urlparse(url)
+      doc = trim_nulls({
+        '$type': 'site.standard.document',
+        'site': urlunparse(url_parts[:2] + ('',) * 4),
+        'path': urlunparse(('', '') + url_parts[2:]),
+        'title': obj.get('displayName') or '',
+        'description': summary,
+        'textContent': content,
+        'tags': [tag['displayName'].removeprefix('#')
+                 for tag in util.get_list(obj, 'tags') if tag.get('displayName')],
+        'publishedAt': from_as1_datetime(obj.get('published')),
+      }, ignore=('title',))
+
+      if updated := obj.get('updated'):
+        doc['updatedAt'] = from_as1_datetime(updated)
+      if images_record_embed and (imgs := images_record_embed.get('images')):
+        doc['coverImage'] = imgs[0]['image']  # blob
+
+      if multiple:
+        rets = [ret, doc]
+      else:
+        ret = doc
 
     if out_type in ('app.bsky.feed.defs#feedViewPost',
                     'app.bsky.feed.defs#postView'):

@@ -332,7 +332,9 @@ _Non-breaking changes:_
   * Support new `website` property in `app.bsky.actor.profile`, `app.bsky.actor.defs#profileViewDetailed`, etc.
   * Convert AS1 `block` of `app.bsky.graph.list` `at://` URI to/from `app.bsky.graph.listblock` record.
   * `from_as1`:
-    * When `multiple=True`, returns a list of output records. When converting an actor to `app.bsky.actor.profile` with a `monetization` property, includes a `community.lexicon.payments.webMonetization` record in the list.
+    * When `multiple=True`, returns a list of output records.
+    * When converting an actor to `app.bsky.actor.profile` with a `monetization` property, and `multiple=True`, include a `community.lexicon.payments.webMonetization` record in the list.
+    * When converting an article and `multiple=True` or `out_type='site.standard.document'`, include a `site.standard.document` record.
     * Add `dynamic_sensitive_labels` kwarg for choosing label other than `graphic-media` based on keywords in `summary`.
   * `to_as1`:
     * Add new `client` kwarg, paralleling the existing one in `from_as1`.
