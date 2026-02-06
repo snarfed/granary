@@ -329,6 +329,9 @@ def from_as1_to_strong_ref(obj, client=None, value=False, raise_=False):
 
   Returns:
     dict: ATProto ``com.atproto.repo.strongRef`` record
+
+  Raises:
+    ValueError:
   """
   if not client:
     assert not raise_
@@ -449,7 +452,7 @@ def base_object(obj):
 
 def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
              original_fields_prefix=None, as_embed=False, raise_=False,
-             dynamic_sensitive_labels=False, multiple=False):
+             dynamic_sensitive_labels=False, multiple=False, domain=None):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
@@ -474,17 +477,24 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     client (Bluesky or lexrpc.Client): optional; if provided, this will be used
       to make API calls to PDSes to fetch and populate CIDs for records
       referenced by replies, likes, reposts, etc.
-    original_fields_prefix (str): optional; if provided, stores original object URLs, post text, and actor profiles (ie before truncation) in custom fields with this prefix in output records. For example, if this is `foo`, an actor's complete `summary` field will be stored in the custom `fooOriginalDescription` field, and their (first) `url` will be stored in the custom `fooOriginalUrl` field.
+    original_fields_prefix (str): optional; if provided, stores original object URLs,
+      post text, and actor profiles (ie before truncation) in custom fields with this
+      prefix in output records. For example, if this is `foo`, an actor's complete
+      ``summary`` field will be stored in the custom ``fooOriginalDescription``
+      field, and their (first) `url` will be stored in ``fooOriginalUrl``.
     as_embed (bool): whether to render the post as an external embed (ie link
       preview) instead of a native post. This happens automatically if
       ``objectType`` is ``article``
     raise_ (bool): whether to raise ``ValueError`` if ``client`` is provided and
       we can't fetch an object's record
-    dynamic_sensitive_labels (bool): if enabled we attempt to determine the bluesky label based on the summary
+    dynamic_sensitive_labels (bool): if enabled we attempt to determine the bluesky
+      label based on ``summary``
     multiple (bool): if True, always return a list of output records. When
       converting an input actor to an output ``app.bsky.actor.profile`` record,
       also includes a ``community.lexicon.payments.webMonetization`` record if
       the actor has a ``monetization`` property. Default False.
+    domain (str): optional. A DNS domain for the actor. Only used with
+      ``out_type='site.standard.publication'``, and required then.
 
   Returns:
     dict or list: ``app.bsky.*`` object, or list of objects if ``multiple`` is True
@@ -492,9 +502,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   Raises:
     ValueError: if the object can't be converted, eg if the ``objectType`` or
       ``verb`` fields are missing or unsupported
-  """
-  assert not (out_type and multiple)
 
+  """
   if isinstance(client, Bluesky):
     client = client._client
 
@@ -590,12 +599,11 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         rets = [ret, web_monetization]
 
     elif out_type == 'site.standard.publication':
-      if not url:
-        raise ValueError("No url or id, can't convert to site.standard.publication")
-
+      if not domain:
+        raise ValueError("No domain, can't convert to site.standard.publication")
       ret = trim_nulls({
         '$type': 'site.standard.publication',
-        'url': urlunparse(urlparse(url)[:2] + ('',) * 4),
+        'url': f'https://{domain}',
         'name': obj.get('displayName') or '',
         'description': summary,
         'icon': blobs.get(avatar),
