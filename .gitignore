@@ -1,6 +1,5 @@
 .coverage
 /build/
-.claude/
 /docs/_build/
 /dist/
 /.eggs/
@@ -31,5 +30,3 @@ twitter_scrape_headers*
 TAGS
 *.pyc
 .DS_Store
-
-**/.claude/settings.local.json
