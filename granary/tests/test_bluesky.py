@@ -2372,6 +2372,30 @@ class BlueskyTest(testutil.TestCase):
       'content': 'some long long long text',
     }))
 
+  def test_from_as1_article_with_preview(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': "it's\n_html_",
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'uri': 'http://my/article',
+          'title': '',
+          'description': 'kawn-tent',
+        },
+      },
+    }, from_as1({
+      'objectType': 'article',
+      'id': 'http://my/article',
+      'content': 'kawn-tent',
+      'preview': {
+        'objectType': 'note',
+        'content': "<p>it's <br> <em>html</em></p>",
+      },
+    }))
+
   def test_from_as1_attachment_without_url_isnt_embed(self):
     self.assertEqual({
       '$type': 'app.bsky.feed.post',

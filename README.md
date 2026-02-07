@@ -327,6 +327,8 @@ _Non-breaking changes:_
 * `as1`:
   * `targets`: exclude hashtags in `tags`.
   * Add new `is_content_html`, `convert_html_content_to_text`, `expand_tags`, and `add_tags_for_html_content_links` functions.
+* `as2`:
+  * `to_as1`: extract `summary` from `preview` when it's a `Note`.
 * `bluesky`:
   * Support [Web Monetization](https://webmonetization.org/). Convert the [AS2 `monetization` field](https://webmonetization.org/developers/activity-streams/) in actors to/from [`community.lexicon.payments.webMonetization` records](https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments). `to_as1` only returns a single-element dict with key `monetization`, not a real AS1 object.
   * Support new `website` property in `app.bsky.actor.profile`, `app.bsky.actor.defs#profileViewDetailed`, etc.
@@ -337,6 +339,7 @@ _Non-breaking changes:_
     * When converting an article and `multiple=True` or `out_type='site.standard.document'`, include a `site.standard.document` record.
     * Add support for converting actors to `site.standard.publication` with `out_type='site.standard.publication'`.
     * Add `dynamic_sensitive_labels` kwarg for choosing label other than `graphic-media` based on keywords in `summary`.
+    * For `article`s, convert HTML `preview.content` to plain text and facets.
   * `to_as1`:
     * Add new `client` kwarg, paralleling the existing one in `from_as1`.
 * `mastodon`:

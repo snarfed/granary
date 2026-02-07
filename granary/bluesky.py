@@ -823,8 +823,13 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     full_text = content = obj.get('content') or ''
     index_offset = 0
     summary = obj.get('summary') or ''
+    preview_record = None
     if type == 'article' or as_embed:
-      full_text = summary
+      if (preview := obj.get('preview')) and as1.object_type(preview) == 'note':
+        # we'll take text and facets from this below
+        preview_record = from_as1(preview, **kwargs)
+      else:
+        full_text = summary
       tags = []  # tags are presumably in content, not summary
     elif summary:
       prefix = f'[{summary}]\n\n'
@@ -1122,6 +1127,14 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       'labels': labels,
       'tags': sorted(standalone_tags),
     }
+
+    if preview_record and preview_record['text']:
+      ret.update({
+        'text': preview_record['text'],
+        'facets': preview_record.get('facets'),
+        'langs': preview_record.get('langs'),
+        'tags': preview_record.get('tags'),
+      })
 
     if as_embed or (type == 'article' and url):
       ret['embed'] = to_external_embed(obj, description=orig_content, blobs=blobs)
