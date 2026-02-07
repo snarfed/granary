@@ -339,7 +339,7 @@ _Non-breaking changes:_
     * When converting an article and `multiple=True` or `out_type='site.standard.document'`, include a `site.standard.document` record.
     * Add support for converting actors to `site.standard.publication` with `out_type='site.standard.publication'`.
     * Add `dynamic_sensitive_labels` kwarg for choosing label other than `graphic-media` based on keywords in `summary`.
-    * For `article`s, convert HTML `preview.content` to plain text and facets.
+    * For `article`s, convert HTML `content`, `summary`, and `preview.content` more consistently to plain text and facets.
   * `to_as1`:
     * Add new `client` kwarg, paralleling the existing one in `from_as1`.
 * `mastodon`:

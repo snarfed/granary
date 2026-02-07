@@ -2176,7 +2176,7 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_article_multiple_with_tags_and_updated(self):
     self.assert_equals([{
       '$type': 'app.bsky.feed.post',
-      'text': 'Article summary',
+      'text': 'Article **summary**',
       'createdAt': '2022-01-02T03:04:05.000Z',
       'embed': {
         '$type': 'app.bsky.embed.external',
@@ -2184,7 +2184,7 @@ class BlueskyTest(testutil.TestCase):
           '$type': 'app.bsky.embed.external#external',
           'uri': 'http://example.com/post',
           'title': 'Test Article',
-          'description': 'Full article content here',
+          'description': 'Full _article_ content here',
         },
       },
     }, {
@@ -2192,8 +2192,8 @@ class BlueskyTest(testutil.TestCase):
       'site': 'http://example.com',
       'path': '/post',
       'title': 'Test Article',
-      'description': 'Article summary',
-      'textContent': 'Full article content here',
+      'description': 'Article **summary**',
+      'textContent': 'Full _article_ content here',
       'tags': ['programming', 'testing'],
       'publishedAt': '2022-01-02T03:04:05.000Z',
       'updatedAt': '2022-01-03T04:05:06.000Z',
@@ -2201,8 +2201,8 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'article',
       'url': 'http://example.com/post',
       'displayName': 'Test Article',
-      'summary': 'Article summary',
-      'content': 'Full article content here',
+      'summary': 'Article <b>summary</b>',
+      'content': 'Full <em>article</em> content here',
       'published': '2022-01-02T03:04:05',
       'updated': '2022-01-03T04:05:06',
       'tags': [{
@@ -2372,7 +2372,7 @@ class BlueskyTest(testutil.TestCase):
       'content': 'some long long long text',
     }))
 
-  def test_from_as1_article_with_preview(self):
+  def test_from_as1_article_with_preview_html_content(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'text': "it's\n_html_",
@@ -2383,13 +2383,13 @@ class BlueskyTest(testutil.TestCase):
           '$type': 'app.bsky.embed.external#external',
           'uri': 'http://my/article',
           'title': '',
-          'description': 'kawn-tent',
+          'description': 'kawn\n_tent_',
         },
       },
     }, from_as1({
       'objectType': 'article',
       'id': 'http://my/article',
-      'content': 'kawn-tent',
+      'content': '<p>kawn <br> <em>tent</em></p>',
       'preview': {
         'objectType': 'note',
         'content': "<p>it's <br> <em>html</em></p>",

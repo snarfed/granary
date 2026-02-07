@@ -532,6 +532,13 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     else:
       raise ValueError(f"{type} {verb} doesn't support out_type {out_type}")
 
+  # summary can be HTML; convert to plain text
+  summary = orig_summary = obj.get('summary') or ''
+  summary_is_html = (bool(BeautifulSoup(summary, 'html.parser').find())
+                     or HTML_ENTITY_RE.search(summary))
+  if summary_is_html:
+    summary = html_to_text(summary, ignore_links=True)
+
   ret = None
   rets = []
 
@@ -557,12 +564,6 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
                    or as1.get_id(featured, 'items')):
         if first.startswith('at://'):
           pinned_post = from_as1_to_strong_ref(first, client=client, raise_=raise_)
-
-    summary = orig_summary = obj.get('summary') or ''
-    is_html = (bool(BeautifulSoup(summary, 'html.parser').find())
-               or HTML_ENTITY_RE.search(summary))
-    if is_html:
-      summary = html_to_text(summary, ignore_links=True)
 
     url = as1.get_url(obj)
     id = obj.get('id')
@@ -715,7 +716,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       # https://github.com/bluesky-social/atproto/blob/main/lexicons/com/atproto/moderation/defs.json#
       'reasonType': 'com.atproto.moderation.defs#reasonOther',
       # https://github.com/bluesky-social/atproto/blob/651d4c2a3447525c68d3bf1b8492bdafb0a88c66/lexicons/com/atproto/moderation/createReport.json#L21
-      'reason': (obj.get('content') or obj.get('summary') or '')[:2000],
+      'reason': (obj.get('content') or summary)[:2000],
     }
 
   elif verb in ('post', 'update') and type in POST_TYPES:
@@ -822,7 +823,6 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # https://github.com/snarfed/bridgy-fed/issues/1001
     full_text = content = obj.get('content') or ''
     index_offset = 0
-    summary = obj.get('summary') or ''
     preview_record = None
     if type == 'article' or as_embed:
       if (preview := obj.get('preview')) and as1.object_type(preview) == 'note':
@@ -1137,7 +1137,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       })
 
     if as_embed or (type == 'article' and url):
-      ret['embed'] = to_external_embed(obj, description=orig_content, blobs=blobs)
+      ret['embed'] = to_external_embed(obj, description=content or summary,
+                                       blobs=blobs)
       if images_record_embed:
         ret['embed']['external']['thumb'] = images_record_embed['images'][0]['image']
 
@@ -1212,7 +1213,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         '$type': 'app.bsky.graph.list',
         'purpose': 'app.bsky.graph.defs#curatelist',
         'name': obj.get('displayName') or obj.get('id'),
-        'description': obj.get('summary'),
+        'description': summary,
         'avatar': blobs.get(util.get_url(obj, 'image')),
         'createdAt': from_as1_datetime(obj.get('published')),
       }
