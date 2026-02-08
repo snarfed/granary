@@ -1523,8 +1523,15 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_drop_tag_with_start_past_content_length(self):
     note = copy.deepcopy(NOTE_AS_TAG_HASHTAG)
     note['tags'][0]['startIndex'] = len(note['content']) + 2
+    note['tags'].append({
+      'objectType': 'hashtag',
+      'displayName': 'orig',
+    })
 
-    expected = copy.deepcopy(POST_BSKY_FACET_HASHTAG)
+    expected = {
+      **POST_BSKY_FACET_HASHTAG,
+      'tags': ['hache-☕', 'orig'],
+    }
     del expected['facets']
     self.assert_equals(expected, self.from_as1(note))
 
@@ -1661,7 +1668,6 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'note',
       'content': content,
     }))
-
 
   def test_from_as1_html_link_bad_url(self):
     content = 'foo <a href="http://not\na\nurl">bar</a> baz'

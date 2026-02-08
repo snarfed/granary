@@ -340,6 +340,7 @@ _Non-breaking changes:_
     * Add support for converting actors to `site.standard.publication` with `out_type='site.standard.publication'`.
     * Add `dynamic_sensitive_labels` kwarg for choosing label other than `graphic-media` based on keywords in `summary`.
     * For `article`s, convert HTML `content`, `summary`, and `preview.content` more consistently to plain text and facets.
+    * For `note`s and `article`s, when a hashtag in `content` is dropped due to truncation, populate it into the standalone `tags` field.
   * `to_as1`:
     * Add new `client` kwarg, paralleling the existing one in `from_as1`.
 * `mastodon`:

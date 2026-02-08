@@ -1019,7 +1019,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       # skip or trim this facet if it's off the end of content that got truncated
       index = facet.get('index')
 
-      if not index:
+      if not index or index.get('byteStart', 0) >= text_byte_end:
         max_length = LEXRPC.defs['app.bsky.feed.post']['record']['properties']['tags']['maxLength']
         if tag_type == 'hashtag' and name.lower() not in hashtag_facets:
           if len(standalone_tags) >= max_length:
@@ -1028,8 +1028,6 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
             standalone_tags.add(name)
         continue
 
-      if index.get('byteStart', 0) >= text_byte_end:
-        continue
       if index.get('byteEnd', 0) > text_byte_end:
         index['byteEnd'] = text_byte_end
 
