@@ -233,7 +233,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    kill %1
    ```
 1. Bump the version number in `setup.py` and `docs/conf.py`. `git grep` the old version number to make sure it only appears in the changelog. Change the current changelog entry in `README.md` for this new version from _unreleased_ to the current date.
-1. Bump the `oauth-dropins` version specifier in `setup.py` to the most recent version.
+1. Bump the version specifiers in `setup.py` for `oauth-dropins`, `lexrpc`, and any other relevant dependencies to their most recent versions.
 1. Build the docs. If you added any new modules, add them to the appropriate file(s) in `docs/source/`. Then run `./docs/build.sh`. Check that the generated HTML looks fine by opening `docs/_build/html/index.html` and looking around.
 1. `git commit -am 'release vX.Y'`
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
@@ -305,7 +305,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 10.0 - unreleased
+### 10.0 - 2026-02-08
 
 _Breaking changes:_
 
