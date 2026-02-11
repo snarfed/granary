@@ -593,6 +593,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       # Web Monetization
       # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
       if wallet := obj.get('monetization'):
+        if wallet.startswith('$'):
+          wallet = wallet.replace('$', 'https://', 1)
         web_monetization = {
           '$type': 'community.lexicon.payments.webMonetization',
           'address': wallet,

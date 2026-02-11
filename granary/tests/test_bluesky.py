@@ -2111,7 +2111,7 @@ class BlueskyTest(testutil.TestCase):
       'fooOriginalUrl': 'https://alice.com/',
     }, {
       '$type': 'community.lexicon.payments.webMonetization',
-      'address': '$wallet.example.com/alice',
+      'address': 'https://wallet.example.com/alice',
     },]
     self.assert_equals(expected, self.from_as1(actor_with_wallet, multiple=True))
 

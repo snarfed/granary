@@ -305,6 +305,12 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
+### 10.1 - unreleased
+
+* `bluesky`:
+  * `from_as1`: support [Payment Pointers](https://paymentpointers.org/) in actors' `monetization` property. If that value starts with `$`, eg `$wallet.com/user`, it's converted to `https://`, eg `https://wallet.com/user`.
+
+
 ### 10.0 - 2026-02-08
 
 _Breaking changes:_
