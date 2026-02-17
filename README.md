@@ -308,7 +308,9 @@ Changelog
 ### 10.1 - unreleased
 
 * `bluesky`:
-  * `from_as1`: support [Payment Pointers](https://paymentpointers.org/) in actors' `monetization` property. If that value starts with `$`, eg `$wallet.com/user`, it's converted to `https://`, eg `https://wallet.com/user`.
+  * `from_as1`:
+    * Support [Payment Pointers](https://paymentpointers.org/) in actors' `monetization` property. If that value starts with `$`, eg `$wallet.com/user`, it's converted to `https://`, eg `https://wallet.com/user`.
+    * De-dupe `tags` in output `site.standard.document` records.
 
 
 ### 10.0 - 2026-02-08

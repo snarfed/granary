@@ -1165,8 +1165,9 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         'title': obj.get('displayName') or '',
         'description': summary,
         'textContent': content,
-        'tags': [tag['displayName'].removeprefix('#')
-                 for tag in util.get_list(obj, 'tags') if tag.get('displayName')],
+        'tags': util.uniquify(
+          tag['displayName'].removeprefix('#')
+          for tag in util.get_list(obj, 'tags') if tag.get('displayName')),
         'publishedAt': from_as1_datetime(obj.get('published')),
       }, ignore=('title',))
 
