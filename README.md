@@ -307,6 +307,9 @@ Changelog
 
 ### 10.1 - unreleased
 
+* `as2`
+  * `to_as1`:
+    * Handle multiply-valued `content`.
 * `bluesky`:
   * `from_as1`:
     * Support [Payment Pointers](https://paymentpointers.org/) in actors' `monetization` property. If that value starts with `$`, eg `$wallet.com/user`, it's converted to `https://`, eg `https://wallet.com/user`.

@@ -452,6 +452,18 @@ class ActivityStreams2Test(testutil.TestCase):
       },
     }))
 
+  def test_to_as1_content_list(self):
+    # Ghost likes of Goblin (https://github.com/johnHackworth/goblin) posts
+    # end up with object.content as a list:
+    # https://console.cloud.google.com/errors/detail/CMyzw__0qbPNQA;locations=global;time=P30D?project=bridgy-federated
+    self.assertEqual({
+      'objectType': 'note',
+      'content': '<p>hello</p>',
+    }, as2.to_as1({
+      'type': 'Note',
+      'content': ['<p>hello</p>', '<p>world</p>'],
+    }))
+
   def test_is_public(self):
     publics = list(PUBLICS)
     for result, input in (

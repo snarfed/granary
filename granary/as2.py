@@ -506,6 +506,10 @@ def to_as1(obj, use_type=True, get_fn=None):
   for field in '@context', 'discoverable', 'indexable':
     obj.pop(field, None)
 
+  if isinstance(obj.get('content'), (list, tuple)):
+    logger.warning(f'content is a list; only using first value: {obj["content"]}')
+    obj['content'] = util.get_first(obj, 'content')
+
   # type to objectType + verb
   type = obj.pop('type', None)
   if use_type:
