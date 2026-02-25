@@ -36,6 +36,7 @@ from granary import (
   as2,
   atom,
   bluesky,
+  icalendar,
   jsonfeed,
   microformats2,
   nostr,
@@ -62,6 +63,7 @@ INPUTS = (
   'atom',
   'bluesky',
   'html',
+  'icalendar',
   'json-mf2',
   'jsonfeed',
   'mf2-json',
@@ -112,6 +114,7 @@ FORMATS = {
   'atom': atom.CONTENT_TYPE,
   'bluesky': 'application/json',
   'html': 'text/html; charset=utf-8',
+  'icalendar': icalendar.CONTENT_TYPE,
   'json': 'application/json',
   'json-mf2': 'application/mf2+json',
   'jsonfeed': 'application/feed+json',
@@ -308,6 +311,8 @@ def url():
       activities, actor = jsonfeed.jsonfeed_to_activities(body_json)
     elif input == 'nostr':
       activities = [nostr.to_as1(body_json)]
+    elif input == 'icalendar':
+      activities = icalendar.to_as1(resp.text)
     elif input == 'rss':
       activities = rss.to_activities(resp.text)
     else:
@@ -456,6 +461,10 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
         activities, actor, title=title,
         feed_url=request.url, hfeed=hfeed,
         home_page_url=util.base_url(url)), headers
+
+    elif format == 'icalendar':
+      return icalendar.from_as1(
+        activities, actor=actor, title=title), headers
 
     elif format in ('as1-xml', 'xml'):
       return XML_TEMPLATE % util.to_xml(response), headers
