@@ -16,14 +16,16 @@ import urllib.parse
 from urllib.parse import urlparse, urlunparse
 
 from bs4 import BeautifulSoup
+from io import BytesIO
 from lexrpc import Client
 from lexrpc.base import AT_URI_RE, Base, LANG_RE
 from multiformats import CID
+from oauth_dropins import bluesky as oauth_bluesky
 from oauth_dropins.webutil import util
 from oauth_dropins.webutil.util import trim_nulls
-import requests
 from pymediainfo import MediaInfo
-from io import BytesIO
+import requests
+from requests_oauth2client import OAuth2AccessTokenAuth, TokenSerializer
 
 from . import as1
 from .as2 import QUOTE_RE_SUFFIX
@@ -1960,6 +1962,44 @@ class Bluesky(Source):
                           **requests_kwargs)
     self._appview = Client(DEFAULT_APPVIEW, headers=headers, validate=True,
                            **requests_kwargs)
+
+  @classmethod
+  def from_auth(cls, auth_entity, client_metadata=None, **kwargs):
+    """Creates a :class:`Bluesky` from a :class:`oauth_dropins.bluesky.BlueskyAuth`.
+
+    TODO: unify with :meth:`oauth_dropins.bluesky.BlueskyAuth.oauth_api`?
+
+    Args:
+      auth_entity (oauth_dropins.bluesky.BlueskyAuth)
+      client_metadata (dict): Bluesky OAuth client metadata. Required for OAuth
+        users (those with :attr:`~oauth_dropins.bluesky.BlueskyAuth.dpop_token`
+        set). See :func:`oauth_dropins.bluesky.bluesky_auth_kwargs`.
+      kwargs: passed to :class:`Bluesky`
+
+    Returns:
+      Bluesky:
+    """
+    pds_url = auth_entity.pds_url or oauth_bluesky.pds_for_did(auth_entity.key.id())
+    kwargs = {}
+
+    if auth_entity.dpop_token:
+        oauth_client = oauth_bluesky.oauth_client_for_pds(client_metadata, pds_url)
+        token = TokenSerializer().loads(auth_entity.dpop_token)
+        kwargs.setdefault('auth', OAuth2AccessTokenAuth(client=oauth_client,
+                                                        token=token))
+    else:
+        kwargs.setdefault('app_password', auth_entity.password)
+        if auth_entity.session:
+          kwargs.setdefault('access_token', auth_entity.session.get('accessJwt'))
+          kwargs.setdefault('refresh_token', auth_entity.session.get('refreshJwt'))
+
+    return cls(
+      handle=auth_entity.user_display_name(),
+      did=auth_entity.key.id(),
+      pds_url=pds_url,
+      session_callback=oauth_bluesky.make_session_callback(auth_entity),
+      **kwargs,
+    )
 
   @property
   def client(self):

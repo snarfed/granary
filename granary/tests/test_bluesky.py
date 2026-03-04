@@ -6,16 +6,25 @@ import copy
 import os
 from io import BytesIO
 from unittest import skip
-from unittest.mock import ANY, patch
+from unittest.mock import ANY, MagicMock, patch
 from urllib.parse import urljoin
 
 from lexrpc.base import AT_URI_RE
 from multiformats import CID
+from oauth_dropins.webutil.appengine_config import ndb_client
+from oauth_dropins.bluesky import BlueskyAuth
 from oauth_dropins.webutil import testutil, util
 from oauth_dropins.webutil.testutil import NOW, requests_response
-from oauth_dropins.webutil.util import HTTP_TIMEOUT, trim_nulls
+from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, trim_nulls
 import requests
 from requests.auth import HTTPBasicAuth
+from requests_oauth2client import (
+  DPoPKey,
+  DPoPToken,
+  OAuth2AccessTokenAuth,
+  OAuth2Client,
+  TokenSerializer,
+)
 
 from .. import bluesky
 from ..bluesky import (
@@ -4030,6 +4039,41 @@ class BlueskyTest(testutil.TestCase):
       'Content-Type': 'application/json',
       'User-Agent': util.user_agent,
     })
+
+  def test_from_auth_session(self):
+    with ndb_client.context():
+      auth = BlueskyAuth(id='did:plc:alice', pds_url='http://pds.com',
+                         user_json=json_dumps({'handle': 'alice.bsky.social'}),
+                         session={'accessJwt': 'towkin', 'refreshJwt': 'reephrush'})
+
+    bs = Bluesky.from_auth(auth)
+    self.assertEqual('alice.bsky.social', bs.handle)
+    self.assertEqual('did:plc:alice', bs.did)
+    self.assertEqual({'accessJwt': 'towkin', 'refreshJwt': 'reephrush'},
+                     bs.client.session)
+    self.assertIsNotNone(bs._client.session_callback)
+
+  @patch('oauth_dropins.bluesky.oauth_client_for_pds',
+         return_value=OAuth2Client(token_endpoint='https://un/used',
+                                   client_id='unused', client_secret='unused'))
+  def test_from_auth_oauth(self, mock_ocp):
+    key = DPoPKey.generate()
+    token = DPoPToken(access_token='towkin', _dpop_key=key)
+    dpop_str = TokenSerializer().dumps(token)
+
+    with ndb_client.context():
+      auth = BlueskyAuth(id='did:plc:alice', pds_url='http://pds.com',
+                         user_json=json_dumps({'handle': 'alice.bsky.social'}),
+                         dpop_token=dpop_str)
+
+    metadata = {'client_id': 'https://example.com/client-metadata.json'}
+    bs = Bluesky.from_auth(auth, metadata)
+
+    mock_ocp.assert_called_once_with(metadata, 'http://pds.com')
+    self.assertEqual('alice.bsky.social', bs.handle)
+    self.assertEqual('did:plc:alice', bs.did)
+    self.assertIsInstance(bs._client.requests_kwargs['auth'], OAuth2AccessTokenAuth)
+    self.assertIsNotNone(bs._client.session_callback)
 
   @patch('requests.get', return_value=requests_response({
     'did': 'did:plc:a',

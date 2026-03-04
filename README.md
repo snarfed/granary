@@ -314,6 +314,7 @@ Changelog
   * `from_as1`:
     * Support [Payment Pointers](https://paymentpointers.org/) in actors' `monetization` property. If that value starts with `$`, eg `$wallet.com/user`, it's converted to `https://`, eg `https://wallet.com/user`.
     * De-dupe `tags` in output `site.standard.document` records.
+  * New `Bluesky.from_auth(auth_entity, client_metadata=None)` classmethod: creates a `Bluesky` instance from an `oauth_dropins.bluesky.BlueskyAuth` entity, handling both legacy app password sessions and OAuth DPoP tokens.
 
 
 ### 10.0 - 2026-02-08

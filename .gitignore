@@ -23,6 +23,7 @@ instagram_scrape_base
 instagram_sessionid_cookie
 linkedin_client_*
 meetup_client_*
+pyrightconfig.json
 reddit_app_*
 service_account_creds.json
 twitter_app_*
