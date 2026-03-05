@@ -1980,7 +1980,6 @@ class Bluesky(Source):
       Bluesky:
     """
     pds_url = auth_entity.pds_url or oauth_bluesky.pds_for_did(auth_entity.key.id())
-    kwargs = {}
 
     if auth_entity.dpop_token:
         oauth_client = oauth_bluesky.oauth_client_for_pds(client_metadata, pds_url)
