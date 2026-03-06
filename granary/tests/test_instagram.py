@@ -438,7 +438,8 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 
     <link rel="ostatus:attention" href="https://www.instagram.com/snarfed/" />
     <link rel="mentioned" href="https://www.instagram.com/snarfed/" />
-
+  <category term="abc" />
+  <category term="xyz" />
   <link rel="ostatus:attention" href="https://www.instagram.com/foo/" />
   <link rel="mentioned" href="https://www.instagram.com/foo/" />
 

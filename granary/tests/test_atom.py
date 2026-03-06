@@ -38,6 +38,8 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
   <link rel="ostatus:conversation" href="https://www.instagram.com/p/ABC123/" />
     <link rel="ostatus:attention" href="https://www.instagram.com/snarfed/" />
     <link rel="mentioned" href="https://www.instagram.com/snarfed/" />
+  <category term="abc" />
+  <category term="xyz" />
   <link rel="ostatus:attention" href="https://www.instagram.com/foo/" />
   <link rel="mentioned" href="https://www.instagram.com/foo/" />
   <activity:verb>http://activitystrea.ms/schema/1.0/post</activity:verb>
@@ -391,6 +393,23 @@ class AtomTest(testutil.TestCase):
       '<a href="https://twitter.com/foo">@twitter</a> meets @seepicturely at <a href="https://twitter.com/search?q=%23tcdisrupt">#tcdisrupt</a> &lt;3 <a href="http://first/link/">first</a> <a href="http://instagr.am/p/MuW67/">instagr.am/p/MuW67</a> ',
       atom.from_as1([copy.deepcopy(test_twitter.ACTIVITY)], test_twitter.ACTOR,
                     title='my title'))
+
+  def test_categories(self):
+    activity = copy.deepcopy(test_instagram.ACTIVITY)
+    activity['object']['tags'] = [
+      {'objectType': 'hashtag', 'displayName': 'foo'},
+      {'displayName': 'bar'},
+      {'objectType': 'person', 'displayName': 'someone', 'url': 'http://someone/'},
+      {'verb': 'like', 'displayName': 'liked'},
+    ]
+    for t in activity['object']['tags']:
+      t['object_type'] = repr(t.get('objectType'))
+
+    out = atom.from_as1([activity], test_instagram.ACTOR)
+    self.assert_multiline_in('<category term="foo" />', out)
+    self.assert_multiline_in('<category term="bar" />', out)
+    self.assertNotIn('<category term="someone"', out)
+    self.assertNotIn('<category term="liked"', out)
 
   def test_render_with_images(self):
     """Attached images are rendered inline as HTML."""

@@ -46,6 +46,9 @@
       <link rel="ostatus:attention" href="{{ url }}" />
       <link rel="mentioned" href="{{ url }}" />
     {% endif %}
+    {% if tag.displayName and tag.get('objectType') in ('hashtag', None) and not tag.verb %}
+      <category term="{{ tag.displayName }}" />
+    {% endif %}
   {% endfor %}
   {% if activity.verb %}
     <activity:verb>http://activitystrea.ms/schema/1.0/{{ activity.verb }}</activity:verb>

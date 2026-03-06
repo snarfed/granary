@@ -307,6 +307,8 @@ Changelog
 
 ### 10.1 - unreleased
 
+* `atom`:
+  * `from_as1`: include entry tags as `<category>` elements.
 * `as2`
   * `to_as1`:
     * Handle multiply-valued `content`.
