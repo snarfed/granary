@@ -1,7 +1,7 @@
 <img src="https://raw.github.com/snarfed/granary/main/static/granary_logo_512.png" alt="Granary" width="128" /> granary [![Circle CI](https://circleci.com/gh/snarfed/granary.svg?style=svg)](https://circleci.com/gh/snarfed/granary) [![Coverage Status](https://coveralls.io/repos/github/snarfed/granary/badge.svg)](https://coveralls.io/github/snarfed/granary)
 ===
 
-The social web translator. Fetches and converts data between social networks, HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2), [ActivityStreams](http://activitystrea.ms/)/[ActivityPub](https://activitypub.rocks/), [Atom](https://tools.ietf.org/html/rfc4287), [JSON Feed](https://jsonfeed.org/), and more.
+The social web translator. Fetches and converts data between social networks, HTML with [microformats2](http://microformats.org/wiki/microformats2), [mf2json](https://microformats.org/wiki/mf2json), [ActivityStreams](http://activitystrea.ms/)/[ActivityPub](https://activitypub.rocks/), [Atom](https://tools.ietf.org/html/rfc4287), [JSON Feed](https://jsonfeed.org/), and more.
 
 * [About](#about)
 * [Using](#using)
@@ -23,7 +23,7 @@ Granary is a library and REST API that fetches and converts between a wide varie
 * Facebook, Flickr, GitHub, Instagram, Mastodon, and Twitter native APIs
 * Instagram and Facebook scraped HTML
 * [ActivityStreams](http://activitystrea.ms/) 1.0 and 2.0 JSON, including [ActivityPub](https://activitypub.rocks/)
-* HTML and JSON with [microformats2](http://microformats.org/wiki/microformats2) (eg `h-entry`, `h-feed`, `h-card`, `h-event`)
+* HTML with [microformats2](http://microformats.org/wiki/microformats2) (e.g. `h-entry`, `h-feed`, `h-card`, `h-event`), [mf2json](https://microformats.org/wiki/mf2json)
 * [Atom](https://tools.ietf.org/html/rfc4287), [RSS 2.0](http://www.rssboard.org/rss-specification), [JSON Feed](https://jsonfeed.org/)
 * Plain XML
 * [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/)
