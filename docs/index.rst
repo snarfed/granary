@@ -8,8 +8,10 @@ wide variety of social data sources and formats:
 - Instagram and Facebook scraped HTML
 - `ActivityStreams <http://activitystrea.ms/>`__ 1.0 and 2.0 JSON,
   including `ActivityPub <https://activitypub.rocks/>`__
-- HTML and JSON with
+- HTML with
   `microformats2 <http://microformats.org/wiki/microformats2>`__
+  (e.g. ``h-entry``, ``h-feed``, ``h-card``, ``h-event``),
+  `mf2json <https://microformats.org/wiki/mf2json>`__
 - `Atom <https://tools.ietf.org/html/rfc4287>`__, `RSS
   2.0 <http://www.rssboard.org/rss-specification>`__, `JSON
   Feed <https://jsonfeed.org/>`__
@@ -477,6 +479,34 @@ Facebook and Twitter’s raw HTML.
 
 Changelog
 ---------
+
+10.1 - unreleased
+~~~~~~~~~~~~~~~~~
+
+- ``atom``:
+
+  - ``from_as1``: include entry tags as ``<category>`` elements.
+
+- ``as2``
+
+  - ``to_as1``:
+
+    - Handle multiply-valued ``content``.
+
+- ``bluesky``:
+
+  - ``from_as1``:
+
+    - Support `Payment Pointers <https://paymentpointers.org/>`__ in
+      actors’ ``monetization`` property. If that value starts with
+      ``$``, eg ``$wallet.com/user``, it’s converted to ``https://``, eg
+      ``https://wallet.com/user``.
+    - De-dupe ``tags`` in output ``site.standard.document`` records.
+
+  - New ``Bluesky.from_auth(auth_entity, client_metadata=None)``
+    classmethod: creates a ``Bluesky`` instance from an
+    ``oauth_dropins.bluesky.BlueskyAuth`` entity, handling both legacy
+    app password sessions and OAuth DPoP tokens.
 
 10.0 - 2026-02-08
 ~~~~~~~~~~~~~~~~~
