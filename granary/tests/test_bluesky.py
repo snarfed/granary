@@ -3996,6 +3996,60 @@ class BlueskyTest(testutil.TestCase):
       'address': 'http://wal/let',
     }))
 
+  def test_to_as1_document(self):
+    self.assert_equals({
+      'objectType': 'article',
+      'url': 'https://example.com/post',
+      'displayName': 'My Article',
+      'summary': 'A brief description',
+      'content': 'Full text content',
+      'published': '2022-01-02T03:04:05.000Z',
+      'updated': '2022-01-03T04:05:06.000Z',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'python',
+      }, {
+        'objectType': 'hashtag',
+        'displayName': 'web',
+      }],
+    }, to_as1({
+      '$type': 'site.standard.document',
+      'site': 'https://example.com',
+      'path': '/post',
+      'title': 'My Article',
+      'description': 'A brief description',
+      'textContent': 'Full text content',
+      'publishedAt': '2022-01-02T03:04:05.000Z',
+      'updatedAt': '2022-01-03T04:05:06.000Z',
+      'tags': ['python', 'web'],
+    }))
+
+  def test_to_as1_document_minimal(self):
+    self.assert_equals({
+      'objectType': 'article',
+      'url': 'https://example.com',
+      'displayName': 'My Article',
+      'published': '2022-01-02T03:04:05.000Z',
+    }, to_as1({
+      '$type': 'site.standard.document',
+      'site': 'https://example.com',
+      'title': 'My Article',
+      'publishedAt': '2022-01-02T03:04:05.000Z',
+    }))
+
+  def test_to_as1_publication(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'url': 'https://example.com',
+      'displayName': 'My Blog',
+      'summary': 'A blog about things',
+    }, to_as1({
+      '$type': 'site.standard.publication',
+      'url': 'https://example.com',
+      'name': 'My Blog',
+      'description': 'A blog about things',
+    }))
+
   def test_constructor_access_token(self):
     bs = Bluesky('handull', access_token='towkin')
     self.assertEqual({

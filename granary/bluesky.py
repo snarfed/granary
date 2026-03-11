@@ -1833,6 +1833,28 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'monetization': obj.get('address'),
     }
 
+  elif type == 'site.standard.document':
+    ret = {
+      'objectType': 'article',
+      'url': urllib.parse.urljoin(obj['site'], obj.get('path')),
+      'displayName': obj.get('title'),
+      'summary': obj.get('description'),
+      'content': obj.get('textContent'),
+      'published': obj.get('publishedAt'),
+      'updated': obj.get('updatedAt'),
+      'tags': [{'objectType': 'hashtag', 'displayName': tag}
+               for tag in obj.get('tags', [])],
+    }
+
+  elif type == 'site.standard.publication':
+    ret = {
+      # should this be organization or service or group instead?
+      'objectType': 'person',
+      'url': obj.get('url'),
+      'displayName': obj.get('name'),
+      'summary': obj.get('description'),
+    }
+
   else:
     raise ValueError(f'Bluesky object has unknown $type: {type}')
 
