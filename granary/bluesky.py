@@ -1846,6 +1846,16 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
                for tag in obj.get('tags', [])],
     }
 
+    if client and (post_uri := obj.get('bskyPostRef', {}).get('uri')):
+      if (parsed := AT_URI_RE.fullmatch(post_uri)) and parsed.lastgroup == 'rkey':
+        # note that bskyPostRef is a strongRef, with cid, but we don't pass that cid
+        # to getRecord, since if the post record has been updated, the repo may no
+        # longer have the version with this cid. (plus, we probably *want* the
+        # updated version anyway.)
+        if record := client.com.atproto.repo.getRecord(**parsed.groupdict()):
+          ret['preview'] = to_as1(record['value'], uri=post_uri,
+                                  repo_did=parsed['repo'], pds=pds)
+
   elif type == 'site.standard.publication':
     ret = {
       # should this be organization or service or group instead?

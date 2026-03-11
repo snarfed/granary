@@ -4050,6 +4050,45 @@ class BlueskyTest(testutil.TestCase):
       'description': 'A blog about things',
     }))
 
+  @patch('requests.get', return_value=requests_response({
+    'uri': 'at://did:plc:foo/app.bsky.feed.post/abc123',
+    'cid': 'sydddddd',
+    'value': {
+      '$type': 'app.bsky.feed.post',
+      'text': 'hello world',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    },
+  }))
+  def test_to_as1_document_with_bskyPostRef(self, mock_get):
+    self.assert_equals({
+      'objectType': 'article',
+      'url': 'https://example.com/post',
+      'displayName': 'My Article',
+      'published': '2022-01-02T03:04:05.000Z',
+      'preview': {
+        'objectType': 'note',
+        'id': 'at://did:plc:foo/app.bsky.feed.post/abc123',
+        'url': 'https://bsky.app/profile/did:plc:foo/post/abc123',
+        'author': 'did:plc:foo',
+        'content': 'hello world',
+        'published': '2022-01-02T03:04:05.000Z',
+      },
+    }, to_as1({
+      '$type': 'site.standard.document',
+      'site': 'https://example.com',
+      'path': '/post',
+      'title': 'My Article',
+      'publishedAt': '2022-01-02T03:04:05.000Z',
+      'bskyPostRef': {
+        'uri': 'at://did:plc:foo/app.bsky.feed.post/abc123',
+        'cid': 'sydddddd',
+      },
+    }, client=self.bs._client))
+
+    self.assert_call(
+      mock_get,
+      'com.atproto.repo.getRecord?repo=did%3Aplc%3Afoo&collection=app.bsky.feed.post&rkey=abc123')
+
   def test_constructor_access_token(self):
     bs = Bluesky('handull', access_token='towkin')
     self.assertEqual({
