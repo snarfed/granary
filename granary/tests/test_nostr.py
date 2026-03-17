@@ -1252,6 +1252,10 @@ class ClientTest(testutil.TestCase):
   def test_constructor_without_privkey(self):
     nostr.Nostr(['ws://relay'])  # just check that we don't crash
 
+  def test_constructor_invalid_relay(self):
+    with self.assertRaises(ValueError):
+      nostr.Nostr(['wss://@@Dg68J'])
+
   def test_activity_id(self):
     FakeConnection.to_receive = [
       ['EVENT', 'towkin 1', NOTE_NOSTR],

@@ -277,3 +277,7 @@ class ApiTest(testutil.TestCase):
     resp = client.get('/bad/')
     self.assertEqual(404, resp.status_code)
     self.assertEqual('Unknown site bad', resp.get_data(as_text=True))
+
+  def test_nostr_invalid_relay(self):
+    resp = client.get('/nostr/1/@all/@app/1?relay=@@Dg68J&user_id=1')
+    self.assertEqual(400, resp.status_code)

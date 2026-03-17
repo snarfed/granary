@@ -320,6 +320,8 @@ Changelog
     * Add support for `site.standard.document` records, converting them to AS1 `article` objects.
     * Add support for `site.standard.publication` records, converting them to AS1 `person` objects.
   * New `Bluesky.from_auth(auth_entity, client_metadata=None)` classmethod: creates a `Bluesky` instance from an `oauth_dropins.bluesky.BlueskyAuth` entity, handling both legacy app password sessions and OAuth DPoP tokens.
+* `nostr`:
+  * `Nostr` constructor: raise `ValueError` on invalid relay URL.
 
 
 ### 10.0 - 2026-02-08

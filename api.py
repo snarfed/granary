@@ -107,9 +107,13 @@ def api(path):
       user_id=get_required_param('user_id'))
   elif site == 'nostr':
     relay = get_required_param('relay')
-    if not relay.startswith('ws://') and  not relay.startswith('wss://'):
+    if not relay.startswith('ws://') and not relay.startswith('wss://'):
       relay = 'wss://' + relay
-    src = nostr.Nostr([relay])
+    try:
+      src = nostr.Nostr([relay])
+    # TODO: move this to a granary app Flask exception handler?
+    except ValueError as e:
+      return abort(400, str(e))
   elif site == 'meetup':
     src = meetup.Meetup(
       access_token_key=get_required_param('access_token_key'),
@@ -163,6 +167,7 @@ def api(path):
     return abort(400, str(e))
     # other exceptions are handled by webutil.flask_util.handle_exception(),
     # which uses interpret_http_exception(), etc.
+    # TODO: move this to a granary app Flask exception handler?
 
   logger.info(f'Got {len(response.get("items", []))} activities')
   logger.debug(f'  activities: {json_dumps(response, indent=2)}')
@@ -175,6 +180,7 @@ def api(path):
       error('atom output requires user id')
     try:
       actor = src.get_actor(user_id) if src else {}
+    # TODO: move this to a granary app Flask exception handler?
     except ValueError as e:
       error(f"Couldn't fetch {user_id}: {e}", exc_info=True)
     logger.debug(f'Got actor: {json_dumps(actor, indent=2)}')

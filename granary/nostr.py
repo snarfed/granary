@@ -42,6 +42,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 import itertools
 import logging
+import urllib.parse
 import mimetypes
 import re
 import secrets
@@ -900,6 +901,10 @@ class Nostr(Source):
       privkey (str): optional bech32-encoded private key of the current user.
         Required by :meth:`create` in order to sign events.
     """
+    for relay in relays:
+      parsed = urllib.parse.urlparse(relay)
+      if not parsed.hostname or parsed.username is not None:
+        raise ValueError(f'Invalid relay URL: {relay}')
     self.relays = relays
 
     if privkey:
