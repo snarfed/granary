@@ -378,7 +378,7 @@ class NostrTest(testutil.TestCase):
   def test_to_from_as1_note_html_content(self):
     self.assert_equals({
       **NOTE_NOSTR,
-      'content': 'hi _there_\n\n  * 1\n  * 2\n',
+      'content': 'hi _there_\n\n  * 1\n  * 2\n\n',
     }, from_as1({
       **NOTE_AS1,
       'content': '<p>hi <em>there</em></p><ul><li>1<li>2</ul>',

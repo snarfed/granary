@@ -10,7 +10,6 @@ from operator import itemgetter
 import re
 import string
 
-from bs4 import BeautifulSoup
 from oauth_dropins.webutil import util
 
 from . import source
@@ -80,9 +79,6 @@ _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 
 HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
 
-# TODO: html2text doesn't escape ]s in link text, which breaks this, eg
-# <a href="http://post">ba](r</a> turns into [ba](r](http://post)
-MARKDOWN_LINK_RE = re.compile(r'\[(?P<text>.*?)\]\((?P<url>[^ ]*?)( "[^"]*?")?(?<!\\)\)')
 
 AT_MENTION_RE = re.compile(r'(?:^|\W)(@[\w._-]+)(?:$|\W)')
 
@@ -898,11 +894,26 @@ def _handle_html_content(obj, to_plain_text=False):
   if not is_content_html(obj):
     return
 
-  content = source.html_to_text(obj.get('content', ''), ignore_links=False)
-
   tags = obj.setdefault('tags', [])
   in_reply_tos = get_ids(obj, 'inReplyTo')
   existing_tags = {}  # maps string displayName to dict tag object
+
+  # Extract <a href> links from HTML before converting to plain text, using
+  # placeholder tokens to preserve link text positions. This avoids the
+  # markdown intermediary (html2text produces [text](url) which breaks when
+  # text contains ] characters).
+  parsed = util.parse_html(obj.get('content', ''))
+  extracted = []  # ordered list of (text, url)
+  for a in parsed.find_all('a', href=True):
+    text = a.get_text()
+    url = a['href']
+    if text and url and util.is_url(url) and url not in in_reply_tos:
+      # don't strip text, preserve whitespace
+      extracted.append((text, url))
+      # can't use enumerate() above since we don't add placeholders for all links
+      a.replace_with(f'\x00{len(extracted) - 1}\x00')
+
+  content = source.html_to_text(str(parsed), ignore_links=True)
 
   for tag in tags:
     # normalize and store tag names we already have. for @-@ webfinger addresses,
@@ -919,19 +930,13 @@ def _handle_html_content(obj, to_plain_text=False):
       tag.pop('startIndex', None)
       tag.pop('length', None)
 
-  # extract HTML links, convert to plain text, add tags with indices
-  while link := MARKDOWN_LINK_RE.search(content):
-    start, end = link.span()
-    content = content[:start] + link['text'] + content[end:]
-    url = link['url'].replace(r'\(', '(').replace(r'\)', ')')
-    text = link['text'].strip()
+  # convert links to plain text, add tags with indices
+  for i, (orig_text, url) in enumerate(extracted):
+    placeholder = f'\x00{i}\x00'
+    start = content.index(placeholder)
+    content = content[:start] + orig_text + content[start + len(placeholder):]
 
-    if not text:
-      continue
-
-    # our regexp isn't perfect, so skip links that we can't extract a
-    # clean URL from
-    if not util.is_web(url) or not util.is_url(url) or url in in_reply_tos:
+    if not (text := orig_text.strip()):
       continue
 
     type = 'link'
@@ -943,9 +948,9 @@ def _handle_html_content(obj, to_plain_text=False):
 
     # do we already have this tag? for @-@ webfinger addresses, check username
     # as well as full address. if we do, only update its indices, at most.
-    normalized_text = text.strip().lstrip('@#').lower()
-    tag = (existing_tags.get(normalized_text)
-           or existing_tags.get(normalized_text.split('@')[0]))
+    normalized = text.lstrip('@#').lower()
+    tag = (existing_tags.get(normalized)
+           or existing_tags.get(normalized.split('@')[0]))
     if not tag:
       tag = {
         'objectType': type,
@@ -957,7 +962,7 @@ def _handle_html_content(obj, to_plain_text=False):
     if to_plain_text:
       tag.update({
         'startIndex': start,
-        'length': len(link['text']),
+        'length': len(orig_text),
       })
 
   if to_plain_text:

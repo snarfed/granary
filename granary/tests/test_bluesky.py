@@ -1642,17 +1642,43 @@ class BlueskyTest(testutil.TestCase):
     }))
 
   def test_from_as1_html_markdown_link(self):
-    # too complicated for our markdown link regexp, should give up and skip it
+    # HTML with a markdown-like structure; we parse the real <a> link correctly
     content = 'foo [http://bar](<a href="http://post">baz</a>) biff'
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
-      # not great, but tolerable
-      'text': 'foo http://bar) biff',
+      'text': 'foo [http://bar](baz) biff',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://post',
+        }],
+        'index': {'byteStart': 17, 'byteEnd': 20},
+      }],
       'fooOriginalText': content,
     }, self.from_as1({
       'objectType': 'note',
       'content': content,
+    }))
+
+  def test_from_as1_escape_markdown_chars(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'foo [bar] baz',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://ba/z',
+        }],
+        'index': {'byteStart': 10, 'byteEnd': 13},
+      }],
+      'fooOriginalText': 'foo [bar] <a href="http://ba/z">baz</a>',
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': 'foo [bar] <a href="http://ba/z">baz</a>',
     }))
 
   def test_from_as1_html_link_url_with_parens(self):

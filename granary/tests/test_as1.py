@@ -1454,6 +1454,18 @@ class As1Test(testutil.TestCase):
       'tags': [],
     }, obj)
 
+  def test_add_tags_for_html_content_links_whitespace_text(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">  </a> there',
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">  </a> there',
+      'tags': [],
+    }, obj)
+
   def test_add_tags_for_html_content_links_multiple_links(self):
     obj = {
       'objectType': 'note',
@@ -1522,6 +1534,38 @@ class As1Test(testutil.TestCase):
         'objectType': 'link',
         'url': 'http://foo.com',
         'displayName': 'multi word link',
+      }],
+    }, obj)
+
+  def test_add_tags_for_html_content_links_bracket_in_text(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo [bar] <a href="http://ba/z">baz</a>',
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'foo [bar] <a href="http://ba/z">baz</a>',
+      'tags': [{
+        'objectType': 'link',
+        'url': 'http://ba/z',
+        'displayName': 'baz',
+      }],
+    }, obj)
+
+  def test_add_tags_for_html_content_links_bracket_in_link_text(self):
+    obj = {
+      'objectType': 'note',
+      'content': '<a href="http://post">ba](r</a>',
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': '<a href="http://post">ba](r</a>',
+      'tags': [{
+        'objectType': 'link',
+        'url': 'http://post',
+        'displayName': 'ba](r',
       }],
     }, obj)
 
@@ -1657,6 +1701,57 @@ class As1Test(testutil.TestCase):
         'startIndex': 3,
         'length': 4,
       }],
+    }, obj)
+
+  def test_convert_html_content_to_text_bracket_in_text(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo [bar] <a href="http://ba/z">baz</a>',
+    }
+    as1.convert_html_content_to_text(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'foo [bar] baz',
+      'content_is_html': False,
+      'tags': [{
+        'objectType': 'link',
+        'url': 'http://ba/z',
+        'displayName': 'baz',
+        'startIndex': 10,
+        'length': 3,
+      }],
+    }, obj)
+
+  def test_convert_html_content_to_text_bracket_in_link_text(self):
+    obj = {
+      'objectType': 'note',
+      'content': '<a href="http://post">ba](r</a>',
+    }
+    as1.convert_html_content_to_text(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'ba](r',
+      'content_is_html': False,
+      'tags': [{
+        'objectType': 'link',
+        'url': 'http://post',
+        'displayName': 'ba](r',
+        'startIndex': 0,
+        'length': 5,
+      }],
+    }, obj)
+
+  def test_convert_html_content_to_text_whitespace_link_text(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'hi <a href="http://foo.com">  </a> there',
+    }
+    as1.convert_html_content_to_text(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': 'hi   there',
+      'content_is_html': False,
+      'tags': [],
     }, obj)
 
   def test_convert_html_content_to_text_plain_text_does_nothing(self):

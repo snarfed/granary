@@ -307,6 +307,7 @@ Changelog
 
 ### 10.1 - unreleased
 
+* Bug fix for converting HTML content to plain text when it includes square brackets (`[` and `]`) ([snarfed/bridgy-fed#1605](https://github.com/snarfed/bridgy-fed/issues/1605)).
 * `atom`:
   * `from_as1`: include entry tags as `<category>` elements.
 * `as2`
