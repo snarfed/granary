@@ -911,7 +911,7 @@ def _handle_html_content(obj, to_plain_text=False):
       # don't strip text, preserve whitespace
       extracted.append((text, url))
       # can't use enumerate() above since we don't add placeholders for all links
-      a.replace_with(f'\x00{len(extracted) - 1}\x00')
+      a.replace_with(f'%%GRANARY_LINK_PLACEHOLDER_{len(extracted) - 1}%%')
 
   content = source.html_to_text(str(parsed), ignore_links=True)
 
@@ -932,7 +932,7 @@ def _handle_html_content(obj, to_plain_text=False):
 
   # convert links to plain text, add tags with indices
   for i, (orig_text, url) in enumerate(extracted):
-    placeholder = f'\x00{i}\x00'
+    placeholder = f'%%GRANARY_LINK_PLACEHOLDER_{i}%%'
     start = content.index(placeholder)
     content = content[:start] + orig_text + content[start + len(placeholder):]
 
