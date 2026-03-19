@@ -920,6 +920,94 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_emoji_in_note_content(self):
+    # custom emoji shortcodes in Note content should be replaced with REPLACEMENT_CHAR
+    # and the emoji tags should include startIndex/length
+    # https://github.com/snarfed/bridgy-fed/issues/1104
+    result = as2.to_as1({
+      'type': 'Note',
+      'content': 'hello :wave: world :wave: :blobcat:',
+      'tag': [
+        {
+          'type': 'Emoji',
+          'name': ':wave:',
+          'icon': {'type': 'Image', 'url': 'https://example.com/wave.png'},
+        },
+        {
+          'type': 'Emoji',
+          'name': ':blobcat:',
+          'icon': {'type': 'Image', 'url': 'https://example.com/blobcat.png'},
+        },
+      ],
+    })
+    REPL = as2.REPLACEMENT_CHAR
+    self.assertEqual(f'hello {REPL} world {REPL} {REPL}', result['content'])
+    # tags should have startIndex pointing to REPLACEMENT_CHAR positions in result
+    tags = result['tags']
+    self.assertEqual(3, len(tags))  # two :wave: occurrences + one :blobcat:
+    wave_tags = [t for t in tags if t.get('displayName') == ':wave:']
+    blobcat_tags = [t for t in tags if t.get('displayName') == ':blobcat:']
+    self.assertEqual(2, len(wave_tags))
+    self.assertEqual(1, len(blobcat_tags))
+    # check indices
+    self.assertEqual(6, wave_tags[0]['startIndex'])
+    self.assertEqual(1, wave_tags[0]['length'])
+    self.assertEqual(14, wave_tags[1]['startIndex'])
+    self.assertEqual(1, wave_tags[1]['length'])
+    self.assertEqual(16, blobcat_tags[0]['startIndex'])
+    self.assertEqual(1, blobcat_tags[0]['length'])
+
+  def test_to_as1_emoji_in_actor_name(self):
+    # custom emoji shortcodes in actor displayName should be replaced with REPLACEMENT_CHAR
+    # https://github.com/snarfed/bridgy-fed/issues/1104
+    REPL = as2.REPLACEMENT_CHAR
+    result = as2.to_as1({
+      'type': 'Person',
+      'name': 'Alice :sparkles: Dev',
+      'tag': [
+        {
+          'type': 'Emoji',
+          'name': ':sparkles:',
+          'icon': {'type': 'Image', 'url': 'https://example.com/sparkles.png'},
+        },
+      ],
+    })
+    self.assertEqual(f'Alice {REPL} Dev', result['displayName'])
+    tags = result['tags']
+    self.assertEqual(1, len(tags))
+    # no content, so no startIndex on the tag
+    self.assertNotIn('startIndex', tags[0])
+
+  def test_to_as1_emoji_at_edges_of_name(self):
+    # emoji at start/end of actor name: whitespace should be stripped
+    REPL = as2.REPLACEMENT_CHAR
+    result = as2.to_as1({
+      'type': 'Person',
+      'name': ':fire: Alice :fire:',
+      'tag': [{
+        'type': 'Emoji',
+        'name': ':fire:',
+        'icon': {'type': 'Image', 'url': 'https://example.com/fire.png'},
+      }],
+    })
+    self.assertEqual(f'{REPL} Alice {REPL}', result['displayName'])
+
+  def test_to_as1_emoji_no_shortcode_in_content(self):
+    # emoji tag present but shortcode not in content: tag preserved without indices
+    REPL = as2.REPLACEMENT_CHAR
+    result = as2.to_as1({
+      'type': 'Note',
+      'content': 'hello world',
+      'tag': [{
+        'type': 'Emoji',
+        'name': ':wave:',
+        'icon': {'type': 'Image', 'url': 'https://example.com/wave.png'},
+      }],
+    })
+    self.assertEqual('hello world', result['content'])
+    self.assertEqual(1, len(result['tags']))
+    self.assertNotIn('startIndex', result['tags'][0])
+
   def test_link_tags_no_indices(self):
     # no indices, should be a noop
     obj = {

@@ -50,6 +50,9 @@ DISCOVERABLE_INDEXABLE_CONTEXT = {
 }
 
 PUBLIC_AUDIENCE = 'https://www.w3.org/ns/activitystreams#Public'
+# Unicode replacement character, used to replace custom emoji shortcodes
+# https://en.wikipedia.org/wiki/Specials_(Unicode_block)#Replacement_character
+REPLACEMENT_CHAR = '\uFFFD'
 # All known Public values, cargo culted from:
 # https://socialhub.activitypub.rocks/t/visibility-to-cc-mapping/284
 # https://docs.joinmastodon.org/spec/activitypub/#properties-used
@@ -644,6 +647,9 @@ def to_as1(obj, use_type=True, get_fn=None):
   attachments = all_to_as1('attachment', plural=True)
   tags_as1 = []
   quote_urls = []
+  # custom emoji tags: list of (shortcode, as1_tag) to replace in content/displayName
+  # https://github.com/snarfed/bridgy-fed/issues/1104
+  emoji_tags = []
   for tag in util.pop_list(obj, 'tag'):
     if isinstance(tag, str):
       tags_as1.append(tag)
@@ -675,6 +681,16 @@ def to_as1(obj, use_type=True, get_fn=None):
         obj['content'])
       continue
 
+    elif tag.get('type') == 'Emoji':
+      # custom emoji: collect to replace shortcodes in content/displayName
+      # https://docs.joinmastodon.org/spec/activitypub/#emoji
+      shortcode = tag.get('name', '')
+      as1_tag = to_as1({'url': tag.pop('href', None), 'name': tag.pop('tag', None), **tag})
+      if shortcode:
+        emoji_tags.append((shortcode, as1_tag))
+      else:
+        tags_as1.append(as1_tag)
+
     else:
       # other tag
       tags_as1.append(to_as1({
@@ -682,6 +698,59 @@ def to_as1(obj, use_type=True, get_fn=None):
         'name': tag.pop('tag', None),  # rare
         **tag,
       }))
+
+  # replace custom emoji shortcodes (e.g. ':myemoji:') with REPLACEMENT_CHAR in
+  # content, contentMap, and displayName; preserve tags with updated indices
+  if emoji_tags:
+    # build a combined regex pattern for all shortcodes
+    seen = set()
+    unique_shortcodes = [sc for sc, _ in emoji_tags if not (sc in seen or seen.add(sc))]
+    pattern = re.compile('|'.join(re.escape(sc) for sc in unique_shortcodes))
+
+    def replace_shortcodes(text):
+      """Replace emoji shortcodes with REPLACEMENT_CHAR, return (new_text, positions).
+
+      positions maps shortcode -> list of startIndex values in the result string.
+      """
+      if not text:
+        return text, {}
+      parts = []
+      last_end = 0
+      pos = 0
+      positions = {}
+      for match in pattern.finditer(text):
+        before = text[last_end:match.start()]
+        parts.append(before)
+        pos += len(before)
+        sc = match.group(0)
+        positions.setdefault(sc, []).append(pos)
+        parts.append(REPLACEMENT_CHAR)
+        pos += 1
+        last_end = match.end()
+      parts.append(text[last_end:])
+      return ''.join(parts), positions
+
+    content, positions = replace_shortcodes(obj.get('content', ''))
+    if content != obj.get('content', ''):
+      obj['content'] = content
+    for lang, val in obj.get('contentMap', {}).items():
+      new_val, _ = replace_shortcodes(val)
+      obj['contentMap'][lang] = new_val
+
+    if displayName:
+      new_dn, _ = replace_shortcodes(displayName)
+      displayName = new_dn.strip()
+
+    # add emoji tags to tags_as1, with startIndex/length where available
+    for shortcode, as1_tag in emoji_tags:
+      sc_positions = positions.get(shortcode, [])
+      if sc_positions:
+        for start in sc_positions:
+          tags_as1.append({**as1_tag, 'startIndex': start, 'length': 1})
+        # remove positions already consumed so duplicate shortcode tags don't reuse them
+        del positions[shortcode]
+      else:
+        tags_as1.append(as1_tag)
 
   # check quote post fields on the top level object
   # https://misskey-hub.net/ns#_misskey_quote
