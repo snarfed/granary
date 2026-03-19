@@ -1361,6 +1361,27 @@ class As1Test(testutil.TestCase):
     as1.add_tags_for_html_content_links(obj)
     self.assert_equals(obj_with_tag, obj)
 
+  def test_add_tags_for_html_content_link_mention_domain(self):
+    obj = {
+      'objectType': 'note',
+      'content': 'foo <a href="https://bsky.brid.gy/">@bsky.brid.gy</a> bar',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'bsky.brid.gy',
+        'displayName': '@bsky.brid.gy@bsky.brid.gy'
+      }],
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'foo <a href="https://bsky.brid.gy/">@bsky.brid.gy</a> bar',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'bsky.brid.gy',
+        'displayName': '@bsky.brid.gy@bsky.brid.gy'
+      }],
+    }, obj)
+
   def test_add_tags_for_html_content_links_webfinger(self):
     obj = {
       'objectType': 'note',

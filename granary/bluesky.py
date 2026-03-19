@@ -1015,10 +1015,13 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           }]
 
       if not facet.get('features') and tag_url:
-        facet['features'] = [{
-          '$type': 'app.bsky.richtext.facet#link',
-          'uri': tag_url,
-        }]
+        if util.DOMAIN_RE.fullmatch(tag_url):
+          tag_url = f'https://{tag_url}/'
+        if util.is_url(tag_url):
+          facet['features'] = [{
+            '$type': 'app.bsky.richtext.facet#link',
+            'uri': tag_url,
+          }]
 
       # skip or trim this facet if it's off the end of content that got truncated
       index = facet.get('index')

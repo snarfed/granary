@@ -1203,6 +1203,28 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_tag_mention_url(self):
     self.assert_equals(POST_BSKY_FACET_MENTION, self.from_as1(NOTE_AS_TAG_MENTION_URL))
 
+  def test_from_as1_tag_mention_domain(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo @bsky.brid.gy bar',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'index': {'byteStart': 4, 'byteEnd': 17},
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'https://bsky.brid.gy/',
+        }],
+      }],
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': 'foo <a href="https://bsky.brid.gy/">@bsky.brid.gy</a> bar',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'bsky.brid.gy',
+        'displayName': '@bsky.brid.gy@bsky.brid.gy',
+      }],
+    }), ignore=['createdAt', 'fooOriginalText', 'fooOriginalUrl'])
+
   def test_from_as1_tag_mention_url_not_in_content(self):
     self.assert_equals(POST_BSKY, self.from_as1({
       **POST_AS['object'],
