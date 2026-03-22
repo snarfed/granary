@@ -130,6 +130,10 @@ DEFAULT_APPVIEW = 'https://api.bsky.app'
 # https://github.com/bluesky-social/atproto/blob/main/packages/api/docs/labels.md#label-behaviors
 NO_UNAUTHENTICATED_LABEL = '!no-unauthenticated'
 
+# label on profiles that indicate automated/bot accounts
+# https://docs.bsky.app/docs/advanced-guides/moderation#global-label-values
+BOT_LABEL = 'bot'
+
 # Bluesky => AS1 labels
 #
 # https://docs.bsky.app/docs/advanced-guides/moderation#global-label-values
@@ -652,6 +656,17 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # description, followersCount, followsCount
     # https://atproto.com/specs/lexicon#authority-and-control
     ret = trim_nulls(ret, ignore=('did', 'handle'))
+
+    # add bot label for automated account objectTypes
+    if type in ('application', 'service'):
+      bsky_type = ret.get('$type')
+      if bsky_type == 'app.bsky.actor.profile':
+        ret['labels'] = {
+          '$type': 'com.atproto.label.defs#selfLabels',
+          'values': [{'val': BOT_LABEL}],
+        }
+      elif bsky_type.startswith('app.bsky.actor.defs#'):
+        ret['labels'] = [{'val': BOT_LABEL}]
 
   elif type == 'share':
     if not out_type or out_type == 'app.bsky.feed.repost':
@@ -1414,6 +1429,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
           'objectType': 'group',
           'alias': '@unlisted',
         }]
+      if label.get('val') == BOT_LABEL and not label.get('neg'):
+        ret['objectType'] = 'service'
 
     # follow/follower counts. convert to followers/following collections, not in AS1,
     # borrowed from ActivityPub: https://www.w3.org/TR/activitypub/#followers

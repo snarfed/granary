@@ -36,6 +36,7 @@ from ..bluesky import (
   from_as1,
   from_as1_to_strong_ref,
   LEXRPC,
+  BOT_LABEL,
   NO_UNAUTHENTICATED_LABEL,
   to_as1,
   to_external_embed,
@@ -1968,6 +1969,28 @@ class BlueskyTest(testutil.TestCase):
         '$type': type,
       }, self.from_as1(ACTOR_AS, out_type=type))
 
+  def test_from_as1_actor_service_bot_label(self):
+    got = self.from_as1({**ACTOR_AS, 'objectType': 'service'})
+    self.assert_equals({
+      '$type': 'com.atproto.label.defs#selfLabels',
+      'values': [{'val': BOT_LABEL}],
+    }, got['labels'])
+
+  def test_from_as1_actor_application_bot_label(self):
+    got = self.from_as1({**ACTOR_AS, 'objectType': 'application'})
+    self.assert_equals({
+      '$type': 'com.atproto.label.defs#selfLabels',
+      'values': [{'val': BOT_LABEL}],
+    }, got['labels'])
+
+  def test_from_as1_actor_profileView_service_bot_label(self):
+    for out_type in ('app.bsky.actor.defs#profileView',
+                     'app.bsky.actor.defs#profileViewBasic',
+                     'app.bsky.actor.defs#profileViewDetailed',
+                     ):
+      got = self.from_as1({**ACTOR_AS, 'objectType': 'service'}, out_type=out_type)
+      self.assert_equals([{'val': BOT_LABEL}], got['labels'], msg=out_type)
+
   def test_from_as1_actor_profileViewDetailed(self):
     got = self.from_as1(ACTOR_AS_FOLLOW_COLLECTIONS,
                         out_type='app.bsky.actor.defs#profileViewDetailed')
@@ -3324,6 +3347,30 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'group',
       'alias': '@unlisted',
     }], got['to'])
+
+  def test_to_as1_profile_bot_label_to_service(self):
+    got = to_as1({
+      **ACTOR_PROFILE_BSKY,
+      'labels': {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val': BOT_LABEL}],
+      },
+    }, repo_did='did:plc:foo', repo_handle='han.dull')
+    self.assertEqual('service', got['objectType'])
+
+  def test_to_as1_profileView_bot_label_to_service(self):
+    got = to_as1({
+      **ACTOR_PROFILE_VIEW_BSKY,
+      'labels': [{'val': BOT_LABEL}],
+    })
+    self.assertEqual('service', got['objectType'])
+
+  def test_to_as1_profile_bot_label_negated(self):
+    got = to_as1({
+      **ACTOR_PROFILE_VIEW_BSKY,
+      'labels': [{'val': BOT_LABEL, 'neg': True}],
+    })
+    self.assertEqual('person', got['objectType'])
 
   def test_to_as1_post(self):
     self.assert_equals({
