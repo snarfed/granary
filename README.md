@@ -315,6 +315,7 @@ Changelog
 * `as2`
   * `to_as1`:
     * Handle multiply-valued `content`.
+    * Replace custom emoji shortcodes with Unicode replacement char � ([snarfed/bridgy-fed#1104](https://github.com/snarfed/bridgy-fed/issues/1104)).
 * `bluesky`:
   * Convert `application` and `service` actors to/from the Bluesky `bot` self-label.
   * `from_as1`:
