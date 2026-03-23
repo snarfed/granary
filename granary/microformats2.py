@@ -522,10 +522,15 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     })
 
   # quotations: https://indieweb.org/quotation#How_to_markup
-  attachments = [
-    json_to_object(quote)
-    for quote in mf2.get('children', []) + props.get('quotation-of', [])
-    if isinstance(quote, dict) and 'h-cite' in set(quote.get('type', []))]
+  # u-quotation-of items must have objectType 'note' so that as2.from_as1
+  # recognizes them as quote posts (not article attachments).
+  attachments = []
+  for quote in mf2.get('children', []) + props.get('quotation-of', []):
+    if isinstance(quote, dict) and 'h-cite' in set(quote.get('type', [])):
+      attachments.append({
+        **json_to_object(quote),
+        'objectType': 'note',
+      })
 
   # audio and video
   #

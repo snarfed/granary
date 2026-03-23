@@ -88,6 +88,35 @@ class Microformats2Test(testutil.TestCase):
     obj = microformats2.to_as1(mf2)
     self.assertEqual([{'url': 'http://example.com/video.mp4'}], obj['stream'])
 
+  def test_to_as1_quotation_of_becomes_note(self):
+    """quotation-of h-cite attachments should get objectType note.
+
+    https://github.com/snarfed/bridgy-fed/issues/1146
+    """
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'a quote post',
+      'attachments': [{
+        'objectType': 'note',
+        'displayName': 'The quoted post title',
+        'summary': 'Summary of quoted post',
+        'url': 'https://social.example/post/1',
+      }],
+    }, microformats2.to_as1({
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['a quote post'],
+        'quotation-of': [{
+          'type': ['h-cite'],
+          'properties': {
+            'url': ['https://social.example/post/1'],
+            'name': ['The quoted post title'],
+            'summary': ['Summary of quoted post'],
+          },
+        }],
+      },
+    }))
+
   def test_to_as1_nested_compound_url_object(self):
     mf2 = {'properties': {
              'repost-of': [{

@@ -308,6 +308,8 @@ Changelog
 ### 10.1 - unreleased
 
 * Bug fix for converting HTML content to plain text when it includes square brackets (`[` and `]`) ([snarfed/bridgy-fed#1605](https://github.com/snarfed/bridgy-fed/issues/1605)).
+* `microformats2`:
+  * `to_as1`: fix `quotation-of` h-cite attachments to have `objectType` `note`, enabling correct quote post conversion to ActivityPub ([snarfed/bridgy-fed#1146](https://github.com/snarfed/bridgy-fed/issues/1146)).
 * `atom`:
   * `from_as1`: include entry tags as `<category>` elements.
 * `as2`
