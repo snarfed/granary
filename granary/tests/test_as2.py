@@ -920,6 +920,107 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_emoji_in_note_content(self):
+    # custom emoji shortcodes in Note content should be replaced with
+    # REPLACEMENT_CHAR, and the emoji tags should include startIndex/length
+    # https://github.com/snarfed/bridgy-fed/issues/1104
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'hello � world � �',
+      'contentMap': {'en': 'hello � world � �'},
+      'tags': [{
+        'objectType': 'emoji',
+        'displayName': ':wave:',
+        'startIndex': 6,
+        'length': 1,
+        'image': [{'url': 'https://example.com/wave.png'}],
+      }, {
+        'objectType': 'emoji',
+        'displayName': ':wave:',
+        'startIndex': 14,
+        'length': 1,
+        'image': [{'url': 'https://example.com/wave.png'}],
+      }, {
+        'objectType': 'emoji',
+        'displayName': ':blobcat:',
+        'startIndex': 16,
+        'length': 1,
+        'image': [{'url': 'https://example.com/blobcat.png'}],
+      }],
+    }, as2.to_as1({
+      'type': 'Note',
+      'content': 'hello :wave: world :wave: :blobcat:',
+      'contentMap': {'en': 'hello :wave: world :wave: :blobcat:'},
+      'tag': [{
+        'type': 'Emoji',
+        'name': ':wave:',
+        'icon': {'type': 'Image', 'url': 'https://example.com/wave.png'},
+      }, {
+        'type': 'Emoji',
+        'name': ':blobcat:',
+        'icon': {'type': 'Image', 'url': 'https://example.com/blobcat.png'},
+      }],
+    }))
+
+  def test_to_as1_emoji_in_actor_name(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'displayName': 'Alice � Dev',
+      'tags': [{
+        'objectType': 'emoji',
+        'displayName': ':sparkles:',
+        'image': [{'url': 'https://example.com/sparkles.png'}],
+      }],
+    }, as2.to_as1({
+      'type': 'Person',
+      'name': 'Alice :sparkles: Dev',
+      'tag': [{
+        'type': 'Emoji',
+        'name': ':sparkles:',
+        'icon': {'type': 'Image', 'url': 'https://example.com/sparkles.png'},
+      }],
+    }))
+
+  def test_to_as1_emoji_at_edges_of_name(self):
+    # emoji at start/end of actor name: whitespace should be stripped
+    self.assert_equals({
+      'objectType': 'person',
+      'displayName': '� Alice �',
+      'tags': [{
+        'objectType': 'emoji',
+        'displayName': ':fire:',
+        'image': [{'url': 'https://example.com/fire.png'}],
+      }],
+    }, as2.to_as1({
+      'type': 'Person',
+      'name': ':fire: Alice :fire:',
+      'tag': [{
+        'type': 'Emoji',
+        'name': ':fire:',
+        'icon': {'type': 'Image', 'url': 'https://example.com/fire.png'},
+      }],
+    }))
+
+  def test_to_as1_emoji_no_shortcode_in_content(self):
+    # emoji tag present but shortcode not in content: tag preserved without indices
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'hello world',
+      'tags': [{
+        'objectType': 'emoji',
+        'displayName': ':wave:',
+        'image': [{'url': 'https://example.com/wave.png'}],
+      }],
+    }, as2.to_as1({
+      'type': 'Note',
+      'content': 'hello world',
+      'tag': [{
+        'type': 'Emoji',
+        'name': ':wave:',
+        'icon': {'type': 'Image', 'url': 'https://example.com/wave.png'},
+      }],
+    }))
+
   def test_link_tags_no_indices(self):
     # no indices, should be a noop
     obj = {
