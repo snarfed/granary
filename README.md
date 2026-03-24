@@ -322,6 +322,7 @@ Changelog
   * `from_as1`:
     * Support [Payment Pointers](https://paymentpointers.org/) in actors' `monetization` property. If that value starts with `$`, eg `$wallet.com/user`, it's converted to `https://`, eg `https://wallet.com/user`.
     * De-dupe `tags` in output `site.standard.document` records.
+    * Limit DM (`chat.bsky.convo.defs#messageInput`) output to record embeds only, not other types.
     * Convert raw domains in `mention` tags to home page URLs in `app.bsky.richtext.facet#link.uri`.
   * `to_as1`:
     * Add support for `site.standard.document` records, converting them to AS1 `article` objects.

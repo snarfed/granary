@@ -1093,7 +1093,11 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       embed = record_embed or media_embed
 
     media_record_embed = video_record_embed or images_record_embed or external_record_embed
-    if record_record_embed and media_record_embed:
+    if is_dm:
+      # chat.bsky.convo.defs#messageInput only allows record embeds
+      record_embed = record_record_embed
+      embed = record_embed
+    elif record_record_embed and media_record_embed:
       record_embed = {
         '$type': 'app.bsky.embed.recordWithMedia',
         'record': record_record_embed,

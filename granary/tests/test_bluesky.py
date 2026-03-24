@@ -3183,6 +3183,71 @@ class BlueskyTest(testutil.TestCase):
       'content': long,
     }))
 
+  @patch('requests.get', return_value=requests_response({
+    'uri': 'at://did:x:y/app.bsky.feed.post/ab',
+    'cid': 'sydddddd',
+    'value': {},
+  }))
+  def test_from_as1_dm_record_embed(self, mock_get):
+    self.assert_equals({
+      '$type': 'chat.bsky.convo.defs#messageInput',
+      'text': 'hello',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.record',
+        'record': {
+          'uri': 'at://did:x:y/app.bsky.feed.post/ab',
+          'cid': 'sydddddd',
+        },
+      },
+      'fooOriginalText': 'hello',
+    }, self.from_as1({
+      'objectType': 'note',
+      'actor': 'did:al:ice',
+      'to': ['did:bo:b'],
+      'content': 'hello',
+      'attachments': [{
+        'objectType': 'note',
+        'url': 'https://example.com/post',
+        'id': 'at://did:x:y/app.bsky.feed.post/ab',
+      }],
+    }, client=self.bs._client))
+
+  def test_from_as1_dm_no_external_embed(self):
+    self.assert_equals({
+      '$type': 'chat.bsky.convo.defs#messageInput',
+      'text': 'hello',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'fooOriginalText': 'hello',
+    }, self.from_as1({
+      'objectType': 'note',
+      'actor': 'did:al:ice',
+      'to': ['did:bo:b'],
+      'content': 'hello',
+      'attachments': [{
+        'objectType': 'article',
+        'url': 'https://example.com/',
+        'displayName': 'Example',
+      }],
+    }))
+
+  def test_from_as1_dm_no_image_embed(self):
+    self.assert_equals({
+      '$type': 'chat.bsky.convo.defs#messageInput',
+      'text': 'hello',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'fooOriginalText': 'hello',
+    }, self.from_as1({
+      'objectType': 'note',
+      'actor': 'did:al:ice',
+      'to': ['did:bo:b'],
+      'content': 'hello',
+      'image': [{
+        'objectType': 'image',
+        'url': 'https://example.com/pic.jpg',
+      }],
+    }))
+
   def test_from_as1_ignore_relative_urls(self):
     self.assertEqual({
       '$type': 'app.bsky.feed.post',
