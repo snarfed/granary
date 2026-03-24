@@ -376,6 +376,17 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_actor_null_attachment(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': '@alice@in.st',
+      'url': 'https://in.st/@alice',
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': 'https://in.st/@alice',
+      'attachment': [None],
+    }))
+
   def test_to_as1_link_attachment(self):
     self.assertEqual({
       'objectType': 'note',

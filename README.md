@@ -317,6 +317,7 @@ Changelog
     * Preserve the input object's `@context` field, and extend it, instead of overwriting it.
   * `to_as1`:
     * Handle multiply-valued `content`.
+    * Handle `null` elements in `attachment`.
 * `bluesky`:
   * Convert `application` and `service` actors to/from the Bluesky `bot` self-label.
   * `from_as1`:

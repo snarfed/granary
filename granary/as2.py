@@ -487,8 +487,8 @@ def to_as1(obj, use_type=True, get_fn=None):
       plural (bool): if True, always uses a list for the value, even if it only has
         one element
     """
-    converted = [to_as1(elem) for elem in util.pop_list(obj, field)
-                 if not (type in ACTOR_TYPES and elem.get('type') == 'PropertyValue')]
+    converted = [to_as1(elem) for elem in util.pop_list(obj, field) if elem
+                 and not (type in ACTOR_TYPES and elem.get('type') == 'PropertyValue')]
     if not plural and len(converted) == 1:
       return converted[0]
     return converted
@@ -558,7 +558,7 @@ def to_as1(obj, use_type=True, get_fn=None):
   # level up, in the parent's object, because its data goes into the parent's
   # url/urls fields
   names = {}
-  attachments = as1.get_objects(obj, 'attachment')
+  attachments = [att for att in as1.get_objects(obj, 'attachment') if att]
   for att in attachments:
     name = att.get('name')
     value = att.get('value')
