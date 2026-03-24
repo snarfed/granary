@@ -30,6 +30,16 @@ class ActivityStreams2Test(testutil.TestCase):
       'numeric_id': '123',
     }, context='bar'))
 
+  def test_from_as1_preserves_extra_context(self):
+    extra = {'myns': 'https://example.com/ns#', 'myns:foo': {'@type': '@id'}}
+    result = as2.from_as1({
+      'objectType': 'note',
+      '@context': [extra],
+    })
+    # standard context comes first, extra appended after
+    self.assertEqual(as2.CONTEXT[0], result['@context'][0])
+    self.assertIn(extra, result['@context'])
+
   def test_from_as1_stop_following_object_str(self):
     self.assertEqual({
       '@context': as2.CONTEXT,

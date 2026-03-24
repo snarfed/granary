@@ -313,6 +313,8 @@ Changelog
 * `atom`:
   * `from_as1`: include entry tags as `<category>` elements.
 * `as2`
+  * `from_as1`:
+    * Preserve the input object's `@context` field, and extend it, instead of overwriting it.
   * `to_as1`:
     * Handle multiply-valued `content`.
 * `bluesky`:

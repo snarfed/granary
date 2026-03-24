@@ -226,12 +226,19 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
 
   obj.pop('numeric_id', None)
 
+  # preserve any extra @context from input (eg extension contexts), append later
+  extra_context = obj.pop('@context', [])
+  if not isinstance(extra_context, list):
+    extra_context = [extra_context]
+
   obj['@context'] = []
   if context:
     if not isinstance(context, (tuple, set, list)):
       context = [context]
     for elem in context:
       util.add(obj['@context'], elem)
+  for elem in extra_context:
+    util.add(obj['@context'], elem)
 
   def all_from_as1(field, type=None, top_level=False, compact=False):
     got = [from_as1(elem, type=type, context=None, top_level=top_level)
