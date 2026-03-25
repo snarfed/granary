@@ -933,7 +933,10 @@ def _handle_html_content(obj, to_plain_text=False):
   # convert links to plain text, add tags with indices
   for i, (orig_text, url) in enumerate(extracted):
     placeholder = f'%%GRANARY_LINK_PLACEHOLDER_{i}%%'
-    start = content.index(placeholder)
+    if (start := content.find(placeholder)) == -1:
+      # placeholder was dropped by html_to_text (eg link was inside <script>)
+      continue
+
     content = content[:start] + orig_text + content[start + len(placeholder):]
 
     if not (text := orig_text.strip()):

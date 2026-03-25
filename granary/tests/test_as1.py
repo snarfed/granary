@@ -1,8 +1,9 @@
 """Unit tests for as1.py."""
 import copy
 import re
+from unittest.mock import patch
 
-from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import testutil, util
 
 from .. import as1
 
@@ -1572,6 +1573,24 @@ class As1Test(testutil.TestCase):
         'url': 'http://ba/z',
         'displayName': 'baz',
       }],
+    }, obj)
+
+  @patch.object(util, 'beautifulsoup_parser', 'xml')
+  def test_add_tags_for_html_content_links_placeholder_dropped_by_html2text(self):
+    # When html2text drops the content containing a placeholder (eg because
+    # the <a> was inside <script> and the xml parser was in use), the code
+    # should not crash
+    # https://github.com/snarfed/bridgy-fed/issues/1605
+    # https://console.cloud.google.com/errors/detail/CMfnhrqN6ujaMA;time=P7D;locations=global?project=bridgy-federated
+    obj = {
+      'objectType': 'note',
+      'content': '<script><a href="http://foo.com">link</a></script> text',
+    }
+    as1.add_tags_for_html_content_links(obj)
+    self.assertEqual({
+      'objectType': 'note',
+      'content': '<script><a href="http://foo.com">link</a></script> text',
+      'tags': [],
     }, obj)
 
   def test_add_tags_for_html_content_links_bracket_in_link_text(self):
