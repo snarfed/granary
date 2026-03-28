@@ -4197,6 +4197,17 @@ class BlueskyTest(testutil.TestCase):
       'publishedAt': '2022-01-02T03:04:05.000Z',
     }))
 
+  def test_to_as1_document_no_site(self):
+    self.assert_equals({
+      'objectType': 'article',
+      'displayName': 'Foo',
+    }, to_as1({
+      '$type': 'site.standard.document',
+      'createdAt': '2026-03-27T22:06:18.148Z',
+      'description': '',
+      'title': 'Foo',
+    }))
+
   def test_to_as1_publication(self):
     self.assert_equals({
       'objectType': 'person',

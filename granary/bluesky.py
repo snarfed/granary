@@ -1860,7 +1860,6 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
   elif type == 'site.standard.document':
     ret = {
       'objectType': 'article',
-      'url': urllib.parse.urljoin(obj['site'], obj.get('path')),
       'displayName': obj.get('title'),
       'summary': obj.get('description'),
       'content': obj.get('textContent'),
@@ -1869,6 +1868,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'tags': [{'objectType': 'hashtag', 'displayName': tag}
                for tag in obj.get('tags', [])],
     }
+    if site := obj.get('site'):
+      ret['url'] = urllib.parse.urljoin(site, obj.get('path'))
 
     if client and (post_uri := obj.get('bskyPostRef', {}).get('uri')):
       if (parsed := AT_URI_RE.fullmatch(post_uri)) and parsed.lastgroup == 'rkey':
