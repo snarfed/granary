@@ -332,6 +332,7 @@ Changelog
   * New `Bluesky.from_auth(auth_entity, client_metadata=None)` classmethod: creates a `Bluesky` instance from an `oauth_dropins.bluesky.BlueskyAuth` entity, handling both legacy app password sessions and OAuth DPoP tokens.
 * `nostr`:
   * `Nostr` constructor: raise `ValueError` on invalid relay URL.
+  * `Nostr.query`: skip NIP-42 AUTH challenge gracefully when no `privkey` is set.
 
 
 ### 10.0 - 2026-02-08

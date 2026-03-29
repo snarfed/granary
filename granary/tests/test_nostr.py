@@ -1576,6 +1576,26 @@ class ClientTest(testutil.TestCase):
       ['CLOSE', 'towkin 1'],
     ], FakeConnection.sent)
 
+  def test_query_nip_42_auth_no_privkey(self):
+    FakeConnection.to_receive = [
+      ['AUTH', 'chall-lunge'],
+      ['EVENT', 'towkin 1', NOTE_NOSTR],
+      ['EOSE', 'towkin 1'],
+    ]
+
+    no_privkey = nostr.Nostr(['ws://relay'])
+    with fake_connect('wss://my-relay',
+                      open_timeout=HTTP_TIMEOUT,
+                      close_timeout=HTTP_TIMEOUT,
+                      ) as ws:
+      events = no_privkey.query(ws, {})
+
+    self.assert_equals([NOTE_NOSTR], events)
+    self.assert_equals([
+      ['REQ', 'towkin 1', {'limit': 20}],
+      ['CLOSE', 'towkin 1'],
+    ], FakeConnection.sent)
+
   def test_object_url(self):
     for input, expected in (
         (None, None),

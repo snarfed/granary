@@ -1067,6 +1067,9 @@ class Nostr(Source):
           else:
             logger.warning(f'Invalid signature for event {event.get("id")}')
         elif resp[0] == 'AUTH' and len(resp) >= 2:
+          if not self.privkey:
+            logger.info(f'No private key, ignoring `{resp}` from relay')
+            continue
           auth = ['AUTH', id_and_sign({
             'kind': KIND_AUTH,
             'pubkey': self.hex_pubkey,
