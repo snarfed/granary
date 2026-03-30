@@ -218,8 +218,6 @@ reaction_body {
     self.assertEqual(as1, to_as1(msg))
     self.assertEqual(msg, from_as1(as1))
 
-  # TODO
-  @skip
   def test_unlike(self):
     msg = message("""
 type: MESSAGE_TYPE_REACTION_REMOVE
@@ -274,8 +272,6 @@ reaction_body {
     self.assertEqual(as1, to_as1(msg))
     self.assertEqual(msg, from_as1(as1))
 
-  # TODO
-  @skip
   def test_unrecast(self):
     msg = message("""
 type: MESSAGE_TYPE_REACTION_REMOVE

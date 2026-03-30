@@ -164,6 +164,8 @@ def from_as1(obj):
   if type in ('post', 'update'):
     type = as1.object_type(as1.get_object(obj))
 
+  inner_obj = as1.get_object(obj)
+  inner_type = as1.object_type(inner_obj)
   author = as1.get_owner(obj)
   if author and author.startswith('farcaster:fid:'):
     data.fid = int(author.removeprefix('farcaster:fid:'))
@@ -228,7 +230,6 @@ def from_as1(obj):
 
   # likes/reposts
   elif type in ('like', 'share'):
-    inner_obj = as1.get_object(obj)
     data.type = MESSAGE_TYPE_REACTION_ADD
     reaction = data.reaction_body
     reaction.type = REACTION_TYPE_LIKE if type == 'like' else REACTION_TYPE_RECAST
@@ -241,5 +242,10 @@ def from_as1(obj):
           reaction.target_cast_id.hash = bytes.fromhex(target.removeprefix('farcaster:cast:'))
       elif util.is_web(target):
         reaction.target_url = target
+
+  # undo like/repost
+  elif type == 'undo' and inner_type in ('like', 'share'):
+    data.type = MESSAGE_TYPE_REACTION_REMOVE
+    data.reaction_body.MergeFrom(from_as1(inner_obj).data.reaction_body)
 
   return msg
