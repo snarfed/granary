@@ -27,6 +27,8 @@ from .generated.farcaster.message_pb2 import (
   MESSAGE_TYPE_REACTION_ADD,
   MESSAGE_TYPE_REACTION_REMOVE,
   REACTION_TYPE_LIKE,
+  MESSAGE_TYPE_LINK_ADD,
+  MESSAGE_TYPE_LINK_REMOVE,
   REACTION_TYPE_RECAST,
 )
 
@@ -144,6 +146,27 @@ def to_as1(msg):
     if msg.hash:
       obj['id'] = f'farcaster:reaction:{msg.hash.hex()}'
 
+  # follow, unfollow
+  elif msg_type in (MESSAGE_TYPE_LINK_ADD, MESSAGE_TYPE_LINK_REMOVE):
+    obj = {
+      'objectType': 'activity',
+      'verb': 'follow',
+      'actor': f'farcaster:fid:{actor_fid}',
+      'object': f'farcaster:fid:{data.link_body.target_fid}',
+    }
+
+    if msg_type == MESSAGE_TYPE_LINK_REMOVE:
+      obj = {
+      'objectType': 'activity',
+        'verb': 'undo',
+        'actor': f'farcaster:fid:{actor_fid}',
+        'object': obj,
+      }
+
+    obj['published'] = published
+    if timestamp := data.link_body.displayTimestamp:
+      obj['published'] = datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat()
+
   return util.trim_nulls(obj)
 
 
@@ -243,9 +266,25 @@ def from_as1(obj):
       elif util.is_web(target):
         reaction.target_url = target
 
+  # follow
+  elif type == 'follow':
+    data.type = MESSAGE_TYPE_LINK_ADD
+    data.link_body.type = 'TODO'
+    if inner_obj_id := inner_obj.get('id'):
+      data.link_body.target_fid = int(inner_obj_id.removeprefix('farcaster:fid:'))
+    data.link_body.displayTimestamp = data.timestamp
+
   # undo like/repost
   elif type == 'undo' and inner_type in ('like', 'share'):
     data.type = MESSAGE_TYPE_REACTION_REMOVE
     data.reaction_body.MergeFrom(from_as1(inner_obj).data.reaction_body)
+
+  # unfollow
+  elif type == 'undo' and inner_type == 'follow':
+    data.type = MESSAGE_TYPE_LINK_REMOVE
+    data.link_body.type = 'TODO'
+    if followee_id := as1.get_object(inner_obj).get('id'):
+      data.link_body.target_fid = int(followee_id.removeprefix('farcaster:fid:'))
+    data.link_body.displayTimestamp = data.timestamp
 
   return msg

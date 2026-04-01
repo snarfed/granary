@@ -28,6 +28,7 @@ Granary is a library and REST API that fetches and converts between a wide varie
 * Plain XML
 * [Bluesky](https://blueskyweb.org/)/[AT Protocol](https://atproto.com/)
 * [Nostr](https://nostr.com/), with many [NIPs](https://nostr.com/the-protocol/nips)
+* [Farcaster](https://farcaster.xyz/)
 
 [Free](https://en.wikipedia.org/wiki/Threshing) yourself from silo API [chaff](https://en.wikipedia.org/wiki/Chaff) and expose the sweet social data foodstuff inside in standard formats and protocols!
 
