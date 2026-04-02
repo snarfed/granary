@@ -61,6 +61,14 @@ ITEMS_PER_PAGE_DEFAULT = 10
 PATH_DEFAULTS = ((source.ME,), (source.ALL, source.FRIENDS), (source.APP,), ())
 MAX_PATH_LEN = len(PATH_DEFAULTS) + 1
 
+SENSITIVE_QUERY_PARAMS = frozenset((
+  'access_token',
+  'access_token_key',
+  'access_token_secret',
+  'app_password',
+  'refresh_token',
+))
+
 
 # cache access tokens in Bluesky instances
 @cached(LRUCache(1000))
@@ -91,6 +99,10 @@ def api(path):
 
   # make source instance
   site = args.pop(0)
+  sensitive_params = sorted(SENSITIVE_QUERY_PARAMS.intersection(request.args))
+  if sensitive_params:
+    raise BadRequest('Sensitive credentials are not allowed in query parameters')
+
   if site in ('facebook', 'instagram', 'twitter'):
     return f'Sorry, {site.capitalize()} is not available in the REST API. Try the library instead!', 404
   elif site == 'flickr':
