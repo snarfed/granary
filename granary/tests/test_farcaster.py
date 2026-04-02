@@ -320,7 +320,7 @@ cast_add_body {
     msg = message("""
 type: MESSAGE_TYPE_LINK_ADD
 link_body {
-  type: "TODO"
+  type: "follow"
   target_fid: 456
   displayTimestamp: 1640000000
 }
@@ -339,7 +339,7 @@ link_body {
     msg = message("""
 type: MESSAGE_TYPE_LINK_REMOVE
 link_body {
-  type: "TODO"
+  type: "follow"
   target_fid: 456
   displayTimestamp: 1640000000
 }
@@ -351,6 +351,49 @@ link_body {
       'object': {
         'objectType': 'activity',
         'verb': 'follow',
+        'actor': 'farcaster:fid:123',
+        'object': 'farcaster:fid:456',
+      },
+      'published': '2021-12-20T11:33:20+00:00',
+    }
+    self.assertEqual(as1, to_as1(msg))
+    self.assertEqual(msg, from_as1(as1))
+
+  def test_block(self):
+    msg = message("""
+type: MESSAGE_TYPE_LINK_ADD
+link_body {
+  type: "block"
+  target_fid: 456
+  displayTimestamp: 1640000000
+}
+""")
+    as1 = {
+      'objectType': 'activity',
+      'verb': 'block',
+      'actor': 'farcaster:fid:123',
+      'object': 'farcaster:fid:456',
+      'published': '2021-12-20T11:33:20+00:00',
+    }
+    self.assertEqual(as1, to_as1(msg))
+    self.assertEqual(msg, from_as1(as1))
+
+  def test_unblock(self):
+    msg = message("""
+type: MESSAGE_TYPE_LINK_REMOVE
+link_body {
+  type: "block"
+  target_fid: 456
+  displayTimestamp: 1640000000
+}
+""")
+    as1 = {
+      'actor': 'farcaster:fid:123',
+      'objectType': 'activity',
+      'verb': 'undo',
+      'object': {
+        'objectType': 'activity',
+        'verb': 'block',
         'actor': 'farcaster:fid:123',
         'object': 'farcaster:fid:456',
       },
