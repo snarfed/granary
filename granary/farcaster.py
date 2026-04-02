@@ -24,6 +24,7 @@ from .generated.farcaster.message_pb2 import (
   FARCASTER_NETWORK_MAINNET,
   Message,
   MESSAGE_TYPE_CAST_ADD,
+  MESSAGE_TYPE_CAST_REMOVE,
   MESSAGE_TYPE_REACTION_ADD,
   MESSAGE_TYPE_REACTION_REMOVE,
   REACTION_TYPE_LIKE,
@@ -115,6 +116,16 @@ def to_as1(msg):
     elif cast.HasField('parent_url'):
       obj['inReplyTo'] = cast.parent_url
 
+  # delete
+  elif msg_type == MESSAGE_TYPE_CAST_REMOVE:
+    obj = {
+      'objectType': 'activity',
+      'verb': 'delete',
+      'actor': f'farcaster:fid:{actor_fid}',
+      'object': f'farcaster:cast:{data.cast_remove_body.target_hash.hex()}',
+      'published': published,
+    }
+
   # like, repost
   elif msg_type in (MESSAGE_TYPE_REACTION_ADD, MESSAGE_TYPE_REACTION_REMOVE):
     reaction = data.reaction_body
@@ -188,6 +199,7 @@ def from_as1(obj):
     type = as1.object_type(as1.get_object(obj))
 
   inner_obj = as1.get_object(obj)
+  inner_id = inner_obj.get('id')
   inner_type = as1.object_type(inner_obj)
   author = as1.get_owner(obj)
   if author and author.startswith('farcaster:fid:'):
@@ -257,22 +269,29 @@ def from_as1(obj):
     reaction = data.reaction_body
     reaction.type = REACTION_TYPE_LIKE if type == 'like' else REACTION_TYPE_RECAST
 
-    if target := inner_obj.get('id', ''):
-      if target.startswith('farcaster:cast:'):
+    if inner_id:
+      if inner_id.startswith('farcaster:cast:'):
         author = inner_obj.get('author', '')
         if author.startswith('farcaster:fid:'):
           reaction.target_cast_id.fid = int(author.removeprefix('farcaster:fid:'))
-          reaction.target_cast_id.hash = bytes.fromhex(target.removeprefix('farcaster:cast:'))
-      elif util.is_web(target):
-        reaction.target_url = target
+          reaction.target_cast_id.hash = bytes.fromhex(
+            inner_id.removeprefix('farcaster:cast:'))
+      elif util.is_web(inner_id):
+        reaction.target_url = inner_id
 
   # follow, block
   elif type in ('follow', 'block'):
     data.type = MESSAGE_TYPE_LINK_ADD
     data.link_body.type = type
-    if inner_obj_id := inner_obj.get('id'):
-      data.link_body.target_fid = int(inner_obj_id.removeprefix('farcaster:fid:'))
+    if inner_id:
+      data.link_body.target_fid = int(inner_id.removeprefix('farcaster:fid:'))
     data.link_body.displayTimestamp = data.timestamp
+
+  # delete post
+  elif type == 'delete' and inner_id and inner_id.startswith('farcaster:cast:'):
+    data.type = MESSAGE_TYPE_CAST_REMOVE
+    data.cast_remove_body.target_hash = bytes.fromhex(
+      inner_id.removeprefix('farcaster:cast:'))
 
   # undo like/repost
   elif type == 'undo' and inner_type in ('like', 'share'):
