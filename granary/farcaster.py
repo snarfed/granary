@@ -11,15 +11,21 @@ TODO:
   https://github.com/farcasterxyz/protocol/discussions/199
 * mapping FIDs <=> DNS domains. unclear whether/how much this is adopted
   https://github.com/farcasterxyz/protocol/discussions/106
+* user location, from https://github.com/farcasterxyz/protocol/discussions/196
+  (it's a geo:... URL string, https://tools.ietf.org/html/rfc5870, in
+  USER_DATA_TYPE_LOCATION)
 """
 import copy
 from datetime import datetime, timezone
 from itertools import zip_longest
 import mimetypes
 
+import grpc
 from oauth_dropins.webutil import util
 
-from . import as1
+from . import as1, source
+from .generated.farcaster import request_response_pb2, rpc_pb2_grpc
+from .generated.farcaster.request_response_pb2 import MessagesResponse
 from .generated.farcaster.message_pb2 import (
   FARCASTER_NETWORK_MAINNET,
   Message,
@@ -27,23 +33,65 @@ from .generated.farcaster.message_pb2 import (
   MESSAGE_TYPE_CAST_REMOVE,
   MESSAGE_TYPE_REACTION_ADD,
   MESSAGE_TYPE_REACTION_REMOVE,
+  MESSAGE_TYPE_USER_DATA_ADD,
   REACTION_TYPE_LIKE,
   MESSAGE_TYPE_LINK_ADD,
   MESSAGE_TYPE_LINK_REMOVE,
   REACTION_TYPE_RECAST,
+  USER_DATA_TYPE_BANNER,
+  USER_DATA_TYPE_BIO,
+  USER_DATA_TYPE_DISPLAY,
+  USER_DATA_TYPE_PFP,
+  USER_DATA_TYPE_URL,
+  USER_DATA_TYPE_USERNAME,
 )
+
+# Maps USER_DATA_TYPE_* constant to AS1 actor field name.
+USER_DATA_TYPE_TO_AS1 = {
+  USER_DATA_TYPE_DISPLAY:  'displayName',
+  USER_DATA_TYPE_USERNAME: 'username',
+  USER_DATA_TYPE_BIO:      'summary',
+  USER_DATA_TYPE_PFP:      'image',
+  USER_DATA_TYPE_BANNER:   'image',
+  USER_DATA_TYPE_URL:      'url',
+}
 
 
 def to_as1(msg):
-  """Converts a Farcaster Message protobuf to an ActivityStreams 1 object.
+  """Converts a Farcaster protobuf to an ActivityStreams 1 object or actor.
 
   Args:
-    msg (message_pb2.Message): Farcaster Message protobuf
+    msg (message_pb2.Message or request_response_pb2.MessagesResponse):
+      Farcaster Message protobuf or MessagesResponse (user data messages)
 
   Returns:
-    dict: AS1 activity or object
+    dict: AS1 activity, object, or actor
   """
-  if not msg or not msg.data:
+  # actor, from GetUserDataByFid response
+  if isinstance(msg, MessagesResponse):
+    fid = msg.messages[0].data.fid if msg.messages else None
+    actor = {
+      'objectType': 'person',
+      'id': f'farcaster:fid:{fid}' if fid else None,
+      'url': Farcaster.user_url(fid) if fid else None,
+      'image': [],
+    }
+
+    for m in msg.messages:
+      if m.data.type == MESSAGE_TYPE_USER_DATA_ADD:
+        body = m.data.user_data_body
+        if field := USER_DATA_TYPE_TO_AS1.get(body.type):
+          if field == 'image':
+            actor['image'].append({'objectType': 'featured', 'url': body.value}
+                                  if body.type == USER_DATA_TYPE_BANNER
+                                  else body.value)
+          else:
+            actor[field] = body.value
+
+    return util.trim_nulls(actor)
+
+  # all other object types
+  if not msg or not isinstance(msg, Message) or not msg.data:
     return {}
 
   data = msg.data
@@ -307,3 +355,51 @@ def from_as1(obj):
     data.link_body.displayTimestamp = data.timestamp
 
   return msg
+
+
+class Farcaster(source.Source):
+  """Farcaster source class. See file docstring and :class:`Source` for details.
+
+  Attributes:
+    _host (str): snapchain node host and port, eg ``snapchain.farcaster.xyz:3383``
+    _hub (rpc_pb2_grpc.HubServiceStub): gRPC client
+  """
+
+  DOMAIN = 'farcaster.xyz'
+  BASE_URL = 'https://farcaster.xyz/'
+  NAME = 'Farcaster'
+
+  def __init__(self, host):
+    """Constructor.
+
+    Args:
+      host (str): snapchain node host and port, eg ``snapchain.farcaster.xyz:3383``
+    """
+    assert host
+    self._host = host
+    channel = grpc.secure_channel(self._host, grpc.ssl_channel_credentials())
+    self._hub = rpc_pb2_grpc.HubServiceStub(channel)
+
+  @classmethod
+  def user_url(cls, fid):
+    """Returns the Farcaster URL for a user with the given FID.
+
+    Args:
+      fid (int): Farcaster user ID
+
+    Returns:
+      str: URL
+    """
+    return f'https://farcaster.xyz/~/user/{fid}'
+
+  def get_actor(self, fid):
+    """Fetches and returns a Farcaster user as an AS1 actor dict.
+
+    Args:
+      fid (int): Farcaster user ID
+
+    Returns:
+      dict: AS1 actor
+    """
+    resp = self._hub.GetUserDataByFid(request_response_pb2.FidRequest(fid=fid))
+    return to_as1(resp)

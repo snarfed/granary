@@ -2,12 +2,13 @@
 import copy
 import logging
 from unittest import skip
+from unittest.mock import patch
 
 from google.protobuf import text_format
 from oauth_dropins.webutil import testutil, util
 
-from ..farcaster import from_as1, to_as1
-from ..generated.farcaster import message_pb2
+from ..farcaster import Farcaster, from_as1, to_as1
+from ..generated.farcaster import message_pb2, request_response_pb2
 
 logger = logging.getLogger(__name__)
 
@@ -422,3 +423,83 @@ cast_remove_body {
   def test_to_as1_empty(self):
     self.assertEqual({}, to_as1(None))
     self.assertEqual({}, to_as1(message_pb2.Message()))
+
+  def test_to_as1_actor(self):
+    resp = request_response_pb2.MessagesResponse(
+      messages=[
+        user_data_message(456, 'USER_DATA_TYPE_DISPLAY', 'Alice'),
+        user_data_message(456, 'USER_DATA_TYPE_USERNAME', 'alice'),
+        user_data_message(456, 'USER_DATA_TYPE_BIO', 'Hello world'),
+        user_data_message(456, 'USER_DATA_TYPE_PFP', 'https://example.com/alice.jpg'),
+        user_data_message(456, 'USER_DATA_TYPE_BANNER', 'https://example.com/ban.jpg'),
+        user_data_message(456, 'USER_DATA_TYPE_URL', 'https://alice.com/'),
+      ],
+    )
+    self.assertEqual({
+      'objectType': 'person',
+      'id': 'farcaster:fid:456',
+      'url': 'https://alice.com/',
+      'username': 'alice',
+      'displayName': 'Alice',
+      'summary': 'Hello world',
+      'image': [
+        'https://example.com/alice.jpg',
+        {'objectType': 'featured', 'url': 'https://example.com/ban.jpg'},
+      ],
+    }, to_as1(resp))
+
+
+
+def user_data_message(fid, user_data_type, value):
+  msg = text_format.Parse(f"""
+data {{
+  fid: {fid}
+  timestamp: 1640000000
+  network: FARCASTER_NETWORK_MAINNET
+  type: MESSAGE_TYPE_USER_DATA_ADD
+  user_data_body {{
+    type: {user_data_type}
+    value: "{value}"
+  }}
+}}
+""", message_pb2.Message())
+  return msg
+
+
+@patch('granary.farcaster.rpc_pb2_grpc.HubServiceStub')
+class FarcasterClientTest(testutil.TestCase):
+  """Tests for the Farcaster client class.
+
+  We mock HubServiceStub directly instead of using grpcio-testing
+  (https://grpc.github.io/grpc/python/grpc_testing.html). grpcio-testing
+  requires two threads per RPC call — one to block on the stub call and one to
+  dequeue it and send a response — which adds complexity without testing
+  anything extra, since we're faking the server response either way.
+  """
+
+  def test_user_url(self, _):
+    self.assertEqual('https://farcaster.xyz/~/user/123', Farcaster.user_url(123))
+
+  def test_get_actor(self, mock_stub):
+    mock_stub.return_value.GetUserDataByFid.return_value = \
+      request_response_pb2.MessagesResponse(messages=[
+        user_data_message(456, 'USER_DATA_TYPE_DISPLAY', 'Alice'),
+        user_data_message(456, 'USER_DATA_TYPE_USERNAME', 'alice'),
+        user_data_message(456, 'USER_DATA_TYPE_BIO', 'Hello world'),
+        user_data_message(456, 'USER_DATA_TYPE_PFP', 'https://example.com/alice.jpg'),
+        user_data_message(456, 'USER_DATA_TYPE_URL', 'https://alice.com/'),
+      ])
+
+    fc = Farcaster('snap.chain:3383')
+    self.assertEqual({
+      'objectType': 'person',
+      'id': 'farcaster:fid:456',
+      'url': 'https://alice.com/',
+      'username': 'alice',
+      'displayName': 'Alice',
+      'summary': 'Hello world',
+      'image': ['https://example.com/alice.jpg'],
+    }, fc.get_actor(456))
+
+    mock_stub.return_value.GetUserDataByFid.assert_called_once_with(
+      request_response_pb2.FidRequest(fid=456))
