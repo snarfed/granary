@@ -18,6 +18,7 @@ TODO:
 import copy
 from datetime import datetime, timezone
 from itertools import zip_longest
+import logging
 import mimetypes
 
 import grpc
@@ -55,6 +56,11 @@ USER_DATA_TYPE_TO_AS1 = {
   USER_DATA_TYPE_BANNER:   'image',
   USER_DATA_TYPE_URL:      'url',
 }
+
+DEFAULT_SNAPCHAIN_HOST = 'crackle.farcaster.xyz'
+DEFAULT_SNAPCHAIN_PORT = 3383
+
+logger = logging.getLogger(__name__)
 
 
 def to_as1(msg):
@@ -361,7 +367,6 @@ class Farcaster(source.Source):
   """Farcaster source class. See file docstring and :class:`Source` for details.
 
   Attributes:
-    _host (str): snapchain node host and port, eg ``snapchain.farcaster.xyz:3383``
     _hub (rpc_pb2_grpc.HubServiceStub): gRPC client
   """
 
@@ -369,15 +374,18 @@ class Farcaster(source.Source):
   BASE_URL = 'https://farcaster.xyz/'
   NAME = 'Farcaster'
 
-  def __init__(self, host):
+  def __init__(self, host=DEFAULT_SNAPCHAIN_HOST, port=DEFAULT_SNAPCHAIN_PORT):
     """Constructor.
 
     Args:
-      host (str): snapchain node host and port, eg ``snapchain.farcaster.xyz:3383``
+      host (str): snapchain node host, eg ``snapchain.farcaster.xyz``
+      port (int): snapchain node port, default 3383
     """
     assert host
-    self._host = host
-    channel = grpc.secure_channel(self._host, grpc.ssl_channel_credentials())
+    assert port
+    addr = f'{host}:{port}'
+    logger.info(f'Connecting to Farcaster Snapchain node {addr}')
+    channel = grpc.secure_channel(addr, grpc.ssl_channel_credentials())
     self._hub = rpc_pb2_grpc.HubServiceStub(channel)
 
   @classmethod
