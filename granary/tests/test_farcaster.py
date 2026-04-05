@@ -547,7 +547,7 @@ cast_add_body { text: "Hello!" }
       }],
     }, resp)
     mock_stub.return_value.GetCastsByFid.assert_called_once_with(
-      FidRequest(fid=123))
+      FidRequest(fid=123, reverse=True))
 
   def test_get_activities_response_count(self, mock_stub):
     mock_stub.return_value.GetCastsByFid.return_value = \
@@ -557,7 +557,7 @@ cast_add_body { text: "Hello!" }
     fc.get_activities_response(user_id='123', count=10)
 
     mock_stub.return_value.GetCastsByFid.assert_called_once_with(
-      FidRequest(fid=123, page_size=10))
+      FidRequest(fid=123, page_size=10, reverse=True))
 
   def test_get_activities_response_fetch_likes(self, mock_stub):
     mock_stub.return_value.GetCastsByFid.return_value = \
@@ -586,8 +586,7 @@ reaction_body {
       'published': '2021-12-20T11:33:20+00:00',
     }], resp['items'])
     mock_stub.return_value.GetReactionsByFid.assert_called_once_with(
-      ReactionsByFidRequest(
-        fid=123, reaction_type=REACTION_TYPE_LIKE))
+      ReactionsByFidRequest(fid=123, reaction_type=REACTION_TYPE_LIKE, reverse=True))
 
   def test_get_activities_response_fetch_mentions(self, mock_stub):
     mention = message("""
@@ -605,4 +604,4 @@ cast_add_body { text: "Hey @alice!"  mentions: 123  mentions_positions: 4 }
     self.assertEqual(1, len(resp['items']))
     self.assertEqual('Hey @alice!', resp['items'][0]['object']['content'])
     mock_stub.return_value.GetCastsByMention.assert_called_once_with(
-      FidRequest(fid=123))
+      FidRequest(fid=123, reverse=True))

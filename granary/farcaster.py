@@ -436,7 +436,9 @@ class Farcaster(source.Source):
       raise ValueError('activity_id requires user_id')
 
     fid = int(user_id) if user_id else None
-    page_kwargs = {'page_size': count} if count else {}
+    page_kwargs = {'reverse': True}
+    if count:
+      page_kwargs['page_size'] = count
     activities = []
 
     def add_activities(resp):
