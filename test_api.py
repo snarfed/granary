@@ -6,6 +6,7 @@ from oauth_dropins.webutil import testutil
 
 from granary import instagram
 from granary import source
+from granary.farcaster import Farcaster
 from granary.tests import test_facebook
 from granary.tests import test_instagram
 from granary.tests import test_twitter
@@ -277,6 +278,16 @@ class ApiTest(testutil.TestCase):
     resp = client.get('/bad/')
     self.assertEqual(404, resp.status_code)
     self.assertEqual('Unknown site bad', resp.get_data(as_text=True))
+
+  def test_farcaster(self):
+    self.mox.StubOutWithMock(Farcaster, 'get_activities_response')
+    Farcaster.get_activities_response(
+      None, start_index=0, count=api.ITEMS_PER_PAGE_DEFAULT,
+    ).AndReturn({'items': []})
+    self.mox.ReplayAll()
+
+    resp = client.get('/farcaster/@me/')
+    self.assertEqual(200, resp.status_code)
 
   def test_nostr_invalid_relay(self):
     resp = client.get('/nostr/1/@all/@app/1?relay=@@Dg68J&user_id=1')

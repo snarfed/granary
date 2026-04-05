@@ -87,6 +87,13 @@ Try it below! Also <a href="https://granary.readthedocs.io/">see the docs</a> an
 
 <div class="col-lg-2 col-sm-4 col-xs-6">
 <form method="get" action="#logins">
+  <input type="image" class="shadow" title="Farcaster" id="farcaster"
+         src="/static/farcaster_button.png" height="50" />
+  <input name="site" type="hidden" value="farcaster" />
+</form></div>
+
+<div class="col-lg-2 col-sm-4 col-xs-6">
+<form method="get" action="#logins">
   <input type="image" class="shadow" title="Nostr" id="nostr"
          src="/static/nostr_button.png" height="50" />
   <input name="site" type="hidden" value="nostr" />
@@ -196,7 +203,11 @@ Try it below! Also <a href="https://granary.readthedocs.io/">see the docs</a> an
        {% else %}{% if site in ('mastodon', 'pixelfed') %}
          value="{{ entity.user_id() }}" placeholder="user id" size="19" required
        {% else %}
-         {% set name = 'handle' if site == 'bluesky' else 'user npub' if site == 'nostr' else 'username' %}
+         {% set name = 'handle' if site == 'bluesky'
+                else 'user npub' if site == 'nostr'
+                else 'fid' if site == 'farcaster'
+                else 'username'
+         %}
          placeholder="{{ name }} ({% if site == 'bluesky' %}required{% else %}optional{% endif %})" size="22"
        {% endif %}
        {% endif %} />
@@ -252,7 +263,7 @@ Try it below! Also <a href="https://granary.readthedocs.io/">see the docs</a> an
   <option value="rss" {% if output == 'rss' %} selected {% endif %}>rss</option>
 </select>
 
-{% if site not in ('github', 'nostr') %}
+{% if site not in ('farcaster', 'github', 'nostr') %}
 <br>
 &nbsp;
 {% endif %}

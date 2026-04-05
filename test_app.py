@@ -190,6 +190,11 @@ class AppTest(testutil.TestCase):
   def expect_requests_get(self, *args, **kwargs):
     return super(AppTest, self).expect_requests_get(*args, stream=True, **kwargs)
 
+  def test_front_page_farcaster(self):
+    resp = client.get('/?site=farcaster')
+    self.assert_equals(200, resp.status_code)
+    self.assertIn('farcaster', resp.get_data(as_text=True))
+
   def test_front_page_mastodon_pixelfed_without_auth_entity(self):
     for site in 'mastodon', 'pixelfed':
       with self.subTest(site=site):

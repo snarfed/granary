@@ -36,6 +36,7 @@ from granary import (
   as2,
   atom,
   bluesky,
+  farcaster,
   jsonfeed,
   microformats2,
   nostr,

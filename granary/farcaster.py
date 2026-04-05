@@ -4,6 +4,7 @@
 * https://snapchain.farcaster.xyz/
 
 TODO:
+* fix url field
 * change farcaster URIs to https://github.com/farcasterxyz/protocol/discussions/123
 * use data_bytes, hash based on it
   https://github.com/farcasterxyz/protocol/discussions/87

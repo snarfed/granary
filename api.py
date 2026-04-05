@@ -38,6 +38,7 @@ import app
 from granary import (
   bluesky,
   facebook,
+  farcaster,
   flickr,
   github,
   instagram,
@@ -105,6 +106,8 @@ def api(path):
       instance=get_required_param('instance'),
       access_token=get_required_param('access_token'),
       user_id=get_required_param('user_id'))
+  elif site == 'farcaster':
+    src = farcaster.Farcaster()
   elif site == 'nostr':
     relay = get_required_param('relay')
     if not relay.startswith('ws://') and not relay.startswith('wss://'):
