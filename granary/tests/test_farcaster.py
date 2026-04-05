@@ -1,15 +1,13 @@
 """Unit tests for farcaster.py."""
-import copy
 import logging
-from unittest import skip
 from unittest.mock import patch
 
 from google.protobuf import text_format
-from oauth_dropins.webutil import testutil, util
+from oauth_dropins.webutil import testutil
 
 from ..farcaster import Farcaster, from_as1, to_as1
 from ..generated.farcaster import message_pb2
-from ..generated.farcaster.message_pb2 import REACTION_TYPE_LIKE, REACTION_TYPE_RECAST
+from ..generated.farcaster.message_pb2 import REACTION_TYPE_LIKE
 from ..generated.farcaster.request_response_pb2 import (
   FidRequest,
   MessagesResponse,
@@ -42,7 +40,7 @@ cast_add_body {
 """)
     as1 = {
       'objectType': 'note',
-      'author': 'farcaster:fid:123',
+      'author': 'farcaster://123',
       'content': 'Hello Farcaster!',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
@@ -60,9 +58,9 @@ cast_add_body {
     msg.hash = b'\xab\xcd\x12\x34'
     self.assertEqual({
       'objectType': 'note',
-      'id': 'farcaster:cast:abcd1234',
+      'id': 'farcaster://123/0xabcd1234',
       'url': 'https://farcaster.xyz/~/conversations/0xabcd1234',
-      'author': 'farcaster:fid:123',
+      'author': 'farcaster://123',
       'content': 'Hello Farcaster!',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
@@ -79,13 +77,13 @@ cast_add_body {
 """)
     as1 = {
       'objectType': 'note',
-      'author': 'farcaster:fid:123',
+      'author': 'farcaster://123',
       'content': 'Hey @alice!',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
       'tags': [{
         'objectType': 'mention',
-        'url': 'farcaster:fid:456',
+        'url': 'farcaster://456',
         'startIndex': 4,
       }],
     }
@@ -104,7 +102,7 @@ cast_add_body {
 """)
     as1 = {
       'objectType': 'note',
-      'author': 'farcaster:fid:123',
+      'author': 'farcaster://123',
       'content': 'Check this out',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
@@ -125,7 +123,7 @@ cast_add_body {
 """)
     as1 = {
       'objectType': 'note',
-      'author': 'farcaster:fid:123',
+      'author': 'farcaster://123',
       'content': 'Watch this',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
@@ -149,7 +147,7 @@ cast_add_body {
 """)
     as1 = {
       'objectType': 'note',
-      'author': 'farcaster:fid:123',
+      'author': 'farcaster://123',
       'content': 'Read this',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
@@ -176,14 +174,14 @@ cast_add_body {
 """)
     as1 = {
       'objectType': 'note',
-      'author': 'farcaster:fid:123',
+      'author': 'farcaster://123',
       'content': 'Quoting this',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
       'attachments': [{
         'objectType': 'note',
-        'id': 'farcaster:cast:abcd123456',
-        'author': 'farcaster:fid:789',
+        'id': 'farcaster://789/0xabcd123456',
+        'author': 'farcaster://789',
       }],
     }
     self.assertEqual(as1, to_as1(msg))
@@ -202,13 +200,13 @@ cast_add_body {
 """)
     as1 = {
       'objectType': 'note',
-      'author': 'farcaster:fid:123',
+      'author': 'farcaster://123',
       'content': 'Replying',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
       'inReplyTo': {
-        'id': 'farcaster:cast:abcd789012',
-        'author': 'farcaster:fid:456',
+        'id': 'farcaster://456/0xabcd789012',
+        'author': 'farcaster://456',
       },
     }
     self.assertEqual(as1, to_as1(msg))
@@ -228,12 +226,11 @@ reaction_body {
     as1 = {
       'objectType': 'activity',
       'verb': 'like',
-      # 'id': 'farcaster:reaction:abcd1234ef',
-      'actor': 'farcaster:fid:123',
+      'actor': 'farcaster://123',
       'published': '2021-12-20T11:33:20+00:00',
       'object': {
-        'id': 'farcaster:cast:ef78901234',
-        'author': 'farcaster:fid:456',
+        'id': 'farcaster://456/0xef78901234',
+        'author': 'farcaster://456',
       },
     }
     self.assertEqual(as1, to_as1(msg))
@@ -253,19 +250,36 @@ reaction_body {
     as1 = {
       'objectType': 'activity',
       'verb': 'undo',
-      'actor': 'farcaster:fid:123',
+      'actor': 'farcaster://123',
       'published': '2021-12-20T11:33:20+00:00',
       'object': {
         'objectType': 'activity',
         'verb': 'like',
-        'actor': 'farcaster:fid:123',
+        'actor': 'farcaster://123',
         'object': {
-          'id': 'farcaster:cast:ef78901234',
-          'author': 'farcaster:fid:456',
+          'id': 'farcaster://456/0xef78901234',
+          'author': 'farcaster://456',
         },
       },
     }
     self.assertEqual(as1, to_as1(msg))
+    self.assertEqual(msg, from_as1(as1))
+
+  def test_like_url_target(self):
+    msg = message("""
+type: MESSAGE_TYPE_REACTION_ADD
+reaction_body {
+  type: REACTION_TYPE_LIKE
+  target_url: "https://example.com/post"
+}
+""")
+    as1 = {
+      'objectType': 'activity',
+      'verb': 'like',
+      'actor': 'farcaster://123',
+      'object': {'id': 'https://example.com/post'},
+      'published': '2021-12-20T11:33:20+00:00',
+    }
     self.assertEqual(msg, from_as1(as1))
 
   def test_recast(self):
@@ -282,12 +296,11 @@ reaction_body {
     as1 = {
       'objectType': 'activity',
       'verb': 'share',
-      # 'id': 'farcaster:reaction:abcdef1234',
-      'actor': 'farcaster:fid:123',
+      'actor': 'farcaster://123',
       'published': '2021-12-20T11:33:20+00:00',
       'object': {
-        'id': 'farcaster:cast:ef78901234',
-        'author': 'farcaster:fid:456',
+        'id': 'farcaster://456/0xef78901234',
+        'author': 'farcaster://456',
       },
     }
     self.assertEqual(as1, to_as1(msg))
@@ -307,15 +320,15 @@ reaction_body {
     as1 = {
       'objectType': 'activity',
       'verb': 'undo',
-      'actor': 'farcaster:fid:123',
+      'actor': 'farcaster://123',
       'published': '2021-12-20T11:33:20+00:00',
       'object': {
         'objectType': 'activity',
         'verb': 'share',
-        'actor': 'farcaster:fid:123',
+        'actor': 'farcaster://123',
         'object': {
-          'id': 'farcaster:cast:ef78901234',
-          'author': 'farcaster:fid:456',
+          'id': 'farcaster://456/0xef78901234',
+          'author': 'farcaster://456',
         },
       },
     }
@@ -331,7 +344,7 @@ cast_add_body {
 """)
     as1 = {
       'objectType': 'article',
-      'author': 'farcaster:fid:123',
+      'author': 'farcaster://123',
       'content': 'Long form content here',
       'published': '2021-12-20T11:33:20+00:00',
     }
@@ -349,8 +362,8 @@ link_body {
     as1 = {
       'objectType': 'activity',
       'verb': 'follow',
-      'actor': 'farcaster:fid:123',
-      'object': 'farcaster:fid:456',
+      'actor': 'farcaster://123',
+      'object': 'farcaster://456',
       'published': '2021-12-20T11:33:20+00:00',
     }
     self.assertEqual(as1, to_as1(msg))
@@ -366,14 +379,14 @@ link_body {
 }
 """)
     as1 = {
-      'actor': 'farcaster:fid:123',
+      'actor': 'farcaster://123',
       'objectType': 'activity',
       'verb': 'undo',
       'object': {
         'objectType': 'activity',
         'verb': 'follow',
-        'actor': 'farcaster:fid:123',
-        'object': 'farcaster:fid:456',
+        'actor': 'farcaster://123',
+        'object': 'farcaster://456',
       },
       'published': '2021-12-20T11:33:20+00:00',
     }
@@ -392,8 +405,8 @@ link_body {
     as1 = {
       'objectType': 'activity',
       'verb': 'block',
-      'actor': 'farcaster:fid:123',
-      'object': 'farcaster:fid:456',
+      'actor': 'farcaster://123',
+      'object': 'farcaster://456',
       'published': '2021-12-20T11:33:20+00:00',
     }
     self.assertEqual(as1, to_as1(msg))
@@ -409,14 +422,14 @@ link_body {
 }
 """)
     as1 = {
-      'actor': 'farcaster:fid:123',
+      'actor': 'farcaster://123',
       'objectType': 'activity',
       'verb': 'undo',
       'object': {
         'objectType': 'activity',
         'verb': 'block',
-        'actor': 'farcaster:fid:123',
-        'object': 'farcaster:fid:456',
+        'actor': 'farcaster://123',
+        'object': 'farcaster://456',
       },
       'published': '2021-12-20T11:33:20+00:00',
     }
@@ -433,8 +446,8 @@ cast_remove_body {
     as1 = {
       'objectType': 'activity',
       'verb': 'delete',
-      'actor': 'farcaster:fid:123',
-      'object': 'farcaster:cast:abcd1234',
+      'actor': 'farcaster://123',
+      'object': 'farcaster://123/0xabcd1234',
       'published': '2021-12-20T11:33:20+00:00',
     }
     self.assertEqual(as1, to_as1(msg))
@@ -450,7 +463,7 @@ cast_remove_body {
 
     self.assertEqual({
       'objectType': 'person',
-      'id': 'farcaster:fid:456',
+      'id': 'farcaster://456',
       'url': 'https://farcaster.xyz/~/profiles/456',
       'displayName': 'Alice',
     }, to_as1(resp))
@@ -468,7 +481,7 @@ cast_remove_body {
     )
     self.assertEqual({
       'objectType': 'person',
-      'id': 'farcaster:fid:456',
+      'id': 'farcaster://456',
       'url': 'https://alice.com/',
       'urls': [
         'https://alice.com/',
@@ -528,7 +541,7 @@ class FarcasterClientTest(testutil.TestCase):
     fc = Farcaster('snap.chain:3383')
     self.assertEqual({
       'objectType': 'person',
-      'id': 'farcaster:fid:456',
+      'id': 'farcaster://456',
       'url': 'https://alice.com/',
       'urls': [
         'https://alice.com/',
@@ -569,10 +582,10 @@ cast_add_body { text: "Hello!" }
       'items': [{
         'objectType': 'activity',
         'verb': 'post',
-        'actor': 'farcaster:fid:123',
+        'actor': 'farcaster://123',
         'object': {
           'objectType': 'note',
-          'author': 'farcaster:fid:123',
+          'author': 'farcaster://123',
           'content': 'Hello!',
           'content_is_html': False,
           'published': '2021-12-20T11:33:20+00:00',
@@ -611,10 +624,10 @@ reaction_body {
     self.assertEqual([{
       'objectType': 'activity',
       'verb': 'like',
-      'actor': 'farcaster:fid:123',
+      'actor': 'farcaster://123',
       'object': {
-        'id': 'farcaster:cast:abcd',
-        'author': 'farcaster:fid:456',
+        'id': 'farcaster://456/0xabcd',
+        'author': 'farcaster://456',
       },
       'published': '2021-12-20T11:33:20+00:00',
     }], resp['items'])

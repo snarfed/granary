@@ -4,8 +4,6 @@
 * https://snapchain.farcaster.xyz/
 
 TODO:
-* fix url field
-* change farcaster URIs to https://github.com/farcasterxyz/protocol/discussions/123
 * use data_bytes, hash based on it
   https://github.com/farcasterxyz/protocol/discussions/87
 * rel-alternate links via "Social Attestations." so complicated :(
@@ -21,6 +19,8 @@ from datetime import datetime, timezone
 from itertools import zip_longest
 import logging
 import mimetypes
+import re
+from urllib.parse import urlparse
 
 import grpc
 from oauth_dropins.webutil import util
@@ -66,11 +66,41 @@ USER_DATA_TYPE_TO_AS1 = {
 DEFAULT_SNAPCHAIN_HOST = 'crackle.farcaster.xyz'
 DEFAULT_SNAPCHAIN_PORT = 3383
 
+# farcaster:// URIs: https://github.com/farcasterxyz/protocol/discussions/123
+# we only support:
+# * farcaster://[fid]
+# * farcaster://[fid]/0x[hash]
+FARCASTER_URI_RE = re.compile(r'farcaster://(?P<fid>[0-9]+)(/0x(?P<hash>[0-9a-f]+))?')
+
 logger = logging.getLogger(__name__)
+
+
+def uri(fid, hash=None):
+  """Generates and returns a ``farcaster://`` URI.
+
+  https://github.com/farcasterxyz/protocol/discussions/123
+
+  Args:
+    fid (int)
+    hash (bytes)
+
+  Returns:
+    str
+  """
+  assert util.is_int(fid)
+
+  uri = f'farcaster://{fid}'
+  if hash:
+    assert isinstance(hash, bytes)
+    uri += f'/0x{hash.hex()}'
+
+  return uri
 
 
 def to_as1(msg):
   """Converts a Farcaster protobuf to an ActivityStreams 1 object or actor.
+
+  Ids are farcaster:// URIs: https://github.com/farcasterxyz/protocol/discussions/123
 
   Args:
     msg (message_pb2.Message or MessagesResponse):
@@ -84,7 +114,7 @@ def to_as1(msg):
     fid = msg.messages[0].data.fid if msg.messages else None
     actor = {
       'objectType': 'person',
-      'id': f'farcaster:fid:{fid}' if fid else None,
+      'id': uri(fid) if fid else None,
       'url': Farcaster.user_url(fid) if fid else None,
       'image': [],
     }
@@ -134,11 +164,11 @@ def to_as1(msg):
     })
 
     if actor_fid:
-      obj['author'] = f'farcaster:fid:{actor_fid}'
+      obj['author'] = uri(actor_fid)
 
     if msg.hash:
       obj.update({
-        'id': f'farcaster:cast:{msg.hash.hex()}',
+        'id': uri(actor_fid, msg.hash),
         'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
       })
 
@@ -146,7 +176,7 @@ def to_as1(msg):
       for mention_fid, pos in zip_longest(cast.mentions, cast.mentions_positions):
         obj['tags'].append({
           'objectType': 'mention',
-          'url': f'farcaster:fid:{mention_fid}',
+          'url': uri(mention_fid),
           'startIndex': pos,
         })
 
@@ -168,14 +198,14 @@ def to_as1(msg):
       elif embed.HasField('cast_id'):
         obj['attachments'].append({
           'objectType': 'note',
-          'id': f'farcaster:cast:{embed.cast_id.hash.hex()}',
-          'author': f'farcaster:fid:{embed.cast_id.fid}',
+          'id': uri(embed.cast_id.fid, embed.cast_id.hash),
+          'author': uri(embed.cast_id.fid),
         })
 
     if cast.HasField('parent_cast_id'):
       obj['inReplyTo'] = {
-        'id': f'farcaster:cast:{cast.parent_cast_id.hash.hex()}',
-        'author': f'farcaster:fid:{cast.parent_cast_id.fid}',
+        'id': uri(cast.parent_cast_id.fid, cast.parent_cast_id.hash),
+        'author': uri(cast.parent_cast_id.fid),
       }
     elif cast.HasField('parent_url'):
       obj['inReplyTo'] = cast.parent_url
@@ -185,8 +215,8 @@ def to_as1(msg):
     obj = {
       'objectType': 'activity',
       'verb': 'delete',
-      'actor': f'farcaster:fid:{actor_fid}',
-      'object': f'farcaster:cast:{data.cast_remove_body.target_hash.hex()}',
+      'actor': uri(actor_fid),
+      'object': uri(actor_fid, data.cast_remove_body.target_hash),
       'published': published,
     }
 
@@ -197,8 +227,8 @@ def to_as1(msg):
 
     if reaction.HasField('target_cast_id'):
       target_obj = {
-        'id': f'farcaster:cast:{reaction.target_cast_id.hash.hex()}',
-        'author': f'farcaster:fid:{reaction.target_cast_id.fid}',
+        'id': uri(reaction.target_cast_id.fid, reaction.target_cast_id.hash),
+        'author': uri(reaction.target_cast_id.fid),
       }
     # elif reaction.HasField('target_url'):
     #   target_obj = reaction.target_url
@@ -206,35 +236,35 @@ def to_as1(msg):
     obj = {
       'objectType': 'activity',
       'verb': verb,
-      'actor': f'farcaster:fid:{actor_fid}',
+      'actor': uri(actor_fid),
       'object': target_obj,
     }
     if msg_type == MESSAGE_TYPE_REACTION_REMOVE:
       obj = {
         'objectType': 'activity',
         'verb': 'undo',
-        'actor': f'farcaster:fid:{actor_fid}',
+        'actor': uri(actor_fid),
         'object': obj,
       }
 
     obj['published'] = published
     if msg.hash:
-      obj['id'] = f'farcaster:reaction:{msg.hash.hex()}'
+      obj['id'] = uri(actor_fid, msg.hash)
 
   # follow, block, unfollow, unblock
   elif msg_type in (MESSAGE_TYPE_LINK_ADD, MESSAGE_TYPE_LINK_REMOVE):
     obj = {
       'objectType': 'activity',
       'verb': data.link_body.type,
-      'actor': f'farcaster:fid:{actor_fid}',
-      'object': f'farcaster:fid:{data.link_body.target_fid}',
+      'actor': uri(actor_fid),
+      'object': uri(data.link_body.target_fid),
     }
 
     if msg_type == MESSAGE_TYPE_LINK_REMOVE:
       obj = {
       'objectType': 'activity',
         'verb': 'undo',
-        'actor': f'farcaster:fid:{actor_fid}',
+        'actor': uri(actor_fid),
         'object': obj,
       }
 
@@ -264,10 +294,12 @@ def from_as1(obj):
 
   inner_obj = as1.get_object(obj)
   inner_id = inner_obj.get('id')
+  inner_id_match = FARCASTER_URI_RE.fullmatch(inner_id or '')
   inner_type = as1.object_type(inner_obj)
   author = as1.get_owner(obj)
-  if author and author.startswith('farcaster:fid:'):
-    data.fid = int(author.removeprefix('farcaster:fid:'))
+
+  if (match := FARCASTER_URI_RE.fullmatch(author)) and not match['hash']:
+    data.fid = int(match['fid'])
 
   data.network = FARCASTER_NETWORK_MAINNET
 
@@ -288,10 +320,9 @@ def from_as1(obj):
     mention_positions = []
     for tag in as1.get_objects(obj, 'tags'):
       if tag.get('objectType') == 'mention':
-        url = tag.get('url', '')
-        if url.startswith('farcaster:fid:'):
-          fid = int(url.removeprefix('farcaster:fid:'))
-          cast.mentions.append(fid)
+        match = FARCASTER_URI_RE.fullmatch(tag.get('url', ''))
+        if match and not match['hash']:
+          cast.mentions.append(int(match['fid']))
           if 'startIndex' in tag:
             cast.mentions_positions.append(tag['startIndex'])
 
@@ -303,12 +334,11 @@ def from_as1(obj):
     for att in as1.get_objects(obj, 'attachments'):
       att_type = as1.object_type(att)
       if att_type == 'note':
-        id = att.get('id', '')
         author = att.get('author', '')
-        if id.startswith('farcaster:cast:') and author.startswith('farcaster:fid:'):
+        if (match := FARCASTER_URI_RE.fullmatch(att.get('id', ''))) and match['hash']:
           embed = cast.embeds.add()
-          embed.cast_id.fid = int(author.removeprefix('farcaster:fid:'))
-          embed.cast_id.hash = bytes.fromhex(id.removeprefix('farcaster:cast:'))
+          embed.cast_id.fid = int(match['fid'])
+          embed.cast_id.hash = bytes.fromhex(match['hash'])
       elif att_type in ('video', 'audio'):
         if url := as1.get_url(util.get_first(att, 'stream')):
           cast.embeds.add().url = url
@@ -319,11 +349,9 @@ def from_as1(obj):
     # reply
     if ((in_reply_to := as1.get_object(obj, 'inReplyTo'))
             and (id := in_reply_to.get('id'))):
-        if id.startswith('farcaster:cast:'):
-          if ((author := in_reply_to.get('author', ''))
-              and author.startswith('farcaster:fid:')):
-            cast.parent_cast_id.fid = int(author.removeprefix('farcaster:fid:'))
-            cast.parent_cast_id.hash = bytes.fromhex(id.removeprefix('farcaster:cast:'))
+        if (match := FARCASTER_URI_RE.fullmatch(id)) and match['hash']:
+            cast.parent_cast_id.fid = int(match['fid'])
+            cast.parent_cast_id.hash = bytes.fromhex(match['hash'])
         elif util.is_web(id):
           cast.parent_url = id
 
@@ -333,29 +361,25 @@ def from_as1(obj):
     reaction = data.reaction_body
     reaction.type = REACTION_TYPE_LIKE if type == 'like' else REACTION_TYPE_RECAST
 
-    if inner_id:
-      if inner_id.startswith('farcaster:cast:'):
-        author = inner_obj.get('author', '')
-        if author.startswith('farcaster:fid:'):
-          reaction.target_cast_id.fid = int(author.removeprefix('farcaster:fid:'))
-          reaction.target_cast_id.hash = bytes.fromhex(
-            inner_id.removeprefix('farcaster:cast:'))
-      elif util.is_web(inner_id):
-        reaction.target_url = inner_id
+    if inner_id_match and inner_id_match['hash']:
+      reaction.target_cast_id.fid = int(inner_id_match['fid'])
+      reaction.target_cast_id.hash = bytes.fromhex(inner_id_match['hash'])
+    elif util.is_web(inner_id):
+      reaction.target_url = inner_id
 
   # follow, block
   elif type in ('follow', 'block'):
     data.type = MESSAGE_TYPE_LINK_ADD
     data.link_body.type = type
-    if inner_id:
-      data.link_body.target_fid = int(inner_id.removeprefix('farcaster:fid:'))
+    if inner_id_match and not inner_id_match['hash']:
+      data.link_body.target_fid = int(inner_id_match['fid'])
     data.link_body.displayTimestamp = data.timestamp
 
   # delete post
-  elif type == 'delete' and inner_id and inner_id.startswith('farcaster:cast:'):
+  elif type == 'delete':
     data.type = MESSAGE_TYPE_CAST_REMOVE
-    data.cast_remove_body.target_hash = bytes.fromhex(
-      inner_id.removeprefix('farcaster:cast:'))
+    if inner_id_match and inner_id_match['hash']:
+      data.cast_remove_body.target_hash = bytes.fromhex(inner_id_match['hash'])
 
   # undo like/repost
   elif type == 'undo' and inner_type in ('like', 'share'):
@@ -366,8 +390,9 @@ def from_as1(obj):
   elif type == 'undo' and inner_type in ('follow', 'block'):
     data.type = MESSAGE_TYPE_LINK_REMOVE
     data.link_body.type = inner_type
-    if followee_id := as1.get_object(inner_obj).get('id'):
-      data.link_body.target_fid = int(followee_id.removeprefix('farcaster:fid:'))
+    target_id = as1.get_object(inner_obj).get('id', '')
+    if (match := FARCASTER_URI_RE.fullmatch(target_id)) and not match['hash']:
+      data.link_body.target_fid = int(match['fid'])
     data.link_body.displayTimestamp = data.timestamp
 
   return msg
