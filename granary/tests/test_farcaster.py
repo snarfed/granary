@@ -42,15 +42,31 @@ cast_add_body {
 """)
     as1 = {
       'objectType': 'note',
-      # 'id': 'farcaster:cast:abcd1234',
       'author': 'farcaster:fid:123',
       'content': 'Hello Farcaster!',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
-      # 'url': 'https://warpcast.com/~/conversations/abcd1234',
     }
     self.assertEqual(as1, to_as1(msg))
     self.assertEqual(msg, from_as1(as1))
+
+  def test_cast_with_hash(self):
+    msg = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body {
+  text: "Hello Farcaster!"
+}
+""")
+    msg.hash = b'\xab\xcd\x12\x34'
+    self.assertEqual({
+      'objectType': 'note',
+      'id': 'farcaster:cast:abcd1234',
+      'url': 'https://farcaster.xyz/~/conversations/0xabcd1234',
+      'author': 'farcaster:fid:123',
+      'content': 'Hello Farcaster!',
+      'content_is_html': False,
+      'published': '2021-12-20T11:33:20+00:00',
+    }, to_as1(msg))
 
   def test_cast_with_mentions(self):
     msg = message("""
@@ -63,12 +79,10 @@ cast_add_body {
 """)
     as1 = {
       'objectType': 'note',
-      # 'id': 'farcaster:cast:dff45678',
       'author': 'farcaster:fid:123',
       'content': 'Hey @alice!',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
-      # 'url': 'https://warpcast.com/~/conversations/dff45678',
       'tags': [{
         'objectType': 'mention',
         'url': 'farcaster:fid:456',
@@ -430,6 +444,17 @@ cast_remove_body {
     self.assertEqual({}, to_as1(None))
     self.assertEqual({}, to_as1(message_pb2.Message()))
 
+  def test_to_as1_actor_minimal(self):
+    resp = MessagesResponse(
+      messages=[user_data_message(456, 'USER_DATA_TYPE_DISPLAY', 'Alice')])
+
+    self.assertEqual({
+      'objectType': 'person',
+      'id': 'farcaster:fid:456',
+      'url': 'https://farcaster.xyz/~/profiles/456',
+      'displayName': 'Alice',
+    }, to_as1(resp))
+
   def test_to_as1_actor(self):
     resp = MessagesResponse(
       messages=[
@@ -445,6 +470,10 @@ cast_remove_body {
       'objectType': 'person',
       'id': 'farcaster:fid:456',
       'url': 'https://alice.com/',
+      'urls': [
+        'https://alice.com/',
+        'https://farcaster.xyz/~/profiles/456',
+      ],
       'username': 'alice',
       'displayName': 'Alice',
       'summary': 'Hello world',
@@ -484,7 +513,7 @@ class FarcasterClientTest(testutil.TestCase):
   """
 
   def test_user_url(self, _):
-    self.assertEqual('https://farcaster.xyz/~/user/123', Farcaster.user_url(123))
+    self.assertEqual('https://farcaster.xyz/~/profiles/123', Farcaster.user_url(123))
 
   def test_get_actor(self, mock_stub):
     mock_stub.return_value.GetUserDataByFid.return_value = \
@@ -501,6 +530,10 @@ class FarcasterClientTest(testutil.TestCase):
       'objectType': 'person',
       'id': 'farcaster:fid:456',
       'url': 'https://alice.com/',
+      'urls': [
+        'https://alice.com/',
+        'https://farcaster.xyz/~/profiles/456',
+      ],
       'username': 'alice',
       'displayName': 'Alice',
       'summary': 'Hello world',

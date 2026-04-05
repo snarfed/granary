@@ -97,6 +97,10 @@ def to_as1(msg):
             actor['image'].append({'objectType': 'featured', 'url': body.value}
                                   if body.type == USER_DATA_TYPE_BANNER
                                   else body.value)
+          elif field == 'url':
+            actor['url'] = body.value
+            if fid:
+              actor['urls'] = [body.value, Farcaster.user_url(fid)]
           else:
             actor[field] = body.value
 
@@ -135,7 +139,7 @@ def to_as1(msg):
     if msg.hash:
       obj.update({
         'id': f'farcaster:cast:{msg.hash.hex()}',
-        'url': f'https://farcaster.xyz/~/conversations/{msg.hash.hex()}',
+        'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
       })
 
     if cast.mentions:
@@ -398,13 +402,15 @@ class Farcaster(source.Source):
   def user_url(cls, fid):
     """Returns the Farcaster URL for a user with the given FID.
 
+    https://docs.farcaster.xyz/reference/farcaster/intent-urls#resource-urls
+
     Args:
       fid (int): Farcaster user ID
 
     Returns:
       str: URL
     """
-    return f'https://farcaster.xyz/~/user/{fid}'
+    return f'https://farcaster.xyz/~/profiles/{fid}'
 
   def get_actor(self, fid):
     """Fetches and returns a Farcaster user as an AS1 actor dict.
