@@ -489,7 +489,7 @@ def append_in_reply_to(before, after):
 
 def actor_name(actor):
   """Returns the given actor's name if available, otherwise Unknown."""
-  if actor:
+  if actor and isinstance(actor, dict):
     return actor.get('displayName') or actor.get('username') or 'Unknown'
   return 'Unknown'
 

@@ -1802,3 +1802,10 @@ class As1Test(testutil.TestCase):
     orig = copy.deepcopy(obj)
     as1.convert_html_content_to_text(obj)
     self.assertEqual(orig, obj)
+
+  def test_actor_name(self):
+    self.assertEqual('Alice', as1.actor_name({'displayName': 'Alice'}))
+    self.assertEqual('alice', as1.actor_name({'username': 'alice'}))
+    self.assertEqual('Unknown', as1.actor_name({}))
+    self.assertEqual('Unknown', as1.actor_name(None))
+    self.assertEqual('Unknown', as1.actor_name('farcaster:fid:123'))

@@ -8,7 +8,13 @@ from google.protobuf import text_format
 from oauth_dropins.webutil import testutil, util
 
 from ..farcaster import Farcaster, from_as1, to_as1
-from ..generated.farcaster import message_pb2, request_response_pb2
+from ..generated.farcaster import message_pb2
+from ..generated.farcaster.message_pb2 import REACTION_TYPE_LIKE, REACTION_TYPE_RECAST
+from ..generated.farcaster.request_response_pb2 import (
+  FidRequest,
+  MessagesResponse,
+  ReactionsByFidRequest,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -425,7 +431,7 @@ cast_remove_body {
     self.assertEqual({}, to_as1(message_pb2.Message()))
 
   def test_to_as1_actor(self):
-    resp = request_response_pb2.MessagesResponse(
+    resp = MessagesResponse(
       messages=[
         user_data_message(456, 'USER_DATA_TYPE_DISPLAY', 'Alice'),
         user_data_message(456, 'USER_DATA_TYPE_USERNAME', 'alice'),
@@ -482,7 +488,7 @@ class FarcasterClientTest(testutil.TestCase):
 
   def test_get_actor(self, mock_stub):
     mock_stub.return_value.GetUserDataByFid.return_value = \
-      request_response_pb2.MessagesResponse(messages=[
+      MessagesResponse(messages=[
         user_data_message(456, 'USER_DATA_TYPE_DISPLAY', 'Alice'),
         user_data_message(456, 'USER_DATA_TYPE_USERNAME', 'alice'),
         user_data_message(456, 'USER_DATA_TYPE_BIO', 'Hello world'),
@@ -502,4 +508,101 @@ class FarcasterClientTest(testutil.TestCase):
     }, fc.get_actor(456))
 
     mock_stub.return_value.GetUserDataByFid.assert_called_once_with(
-      request_response_pb2.FidRequest(fid=456))
+      FidRequest(fid=456))
+
+  def test_get_activities_response_bad_user_id(self, mock_stub):
+    fc = Farcaster('snap.chain:3383')
+    with self.assertRaisesRegex(ValueError, 'user_id must be a Farcaster FID'):
+      fc.get_activities_response(user_id='not-an-int')
+
+  def test_get_activities_response(self, mock_stub):
+    cast = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body { text: "Hello!" }
+""")
+    mock_stub.return_value.GetCastsByFid.return_value = \
+      MessagesResponse(messages=[cast])
+
+    fc = Farcaster('snap.chain:3383')
+    resp = fc.get_activities_response(user_id='123')
+
+    self.assertEqual({
+      'startIndex': 0,
+      'itemsPerPage': 1,
+      'totalResults': 1,
+      'filtered': False,
+      'sorted': False,
+      'updatedSince': False,
+      'items': [{
+        'objectType': 'activity',
+        'verb': 'post',
+        'actor': 'farcaster:fid:123',
+        'object': {
+          'objectType': 'note',
+          'author': 'farcaster:fid:123',
+          'content': 'Hello!',
+          'content_is_html': False,
+          'published': '2021-12-20T11:33:20+00:00',
+        },
+      }],
+    }, resp)
+    mock_stub.return_value.GetCastsByFid.assert_called_once_with(
+      FidRequest(fid=123))
+
+  def test_get_activities_response_count(self, mock_stub):
+    mock_stub.return_value.GetCastsByFid.return_value = \
+      MessagesResponse()
+
+    fc = Farcaster('snap.chain:3383')
+    fc.get_activities_response(user_id='123', count=10)
+
+    mock_stub.return_value.GetCastsByFid.assert_called_once_with(
+      FidRequest(fid=123, page_size=10))
+
+  def test_get_activities_response_fetch_likes(self, mock_stub):
+    mock_stub.return_value.GetCastsByFid.return_value = \
+      MessagesResponse()
+    like = message("""
+type: MESSAGE_TYPE_REACTION_ADD
+reaction_body {
+  type: REACTION_TYPE_LIKE
+  target_cast_id { fid: 456  hash: "\\xab\\xcd" }
+}
+""")
+    mock_stub.return_value.GetReactionsByFid.return_value = \
+      MessagesResponse(messages=[like])
+
+    fc = Farcaster('snap.chain:3383')
+    resp = fc.get_activities_response(user_id='123', fetch_likes=True)
+
+    self.assertEqual([{
+      'objectType': 'activity',
+      'verb': 'like',
+      'actor': 'farcaster:fid:123',
+      'object': {
+        'id': 'farcaster:cast:abcd',
+        'author': 'farcaster:fid:456',
+      },
+      'published': '2021-12-20T11:33:20+00:00',
+    }], resp['items'])
+    mock_stub.return_value.GetReactionsByFid.assert_called_once_with(
+      ReactionsByFidRequest(
+        fid=123, reaction_type=REACTION_TYPE_LIKE))
+
+  def test_get_activities_response_fetch_mentions(self, mock_stub):
+    mention = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body { text: "Hey @alice!"  mentions: 123  mentions_positions: 4 }
+""")
+    mock_stub.return_value.GetCastsByFid.return_value = \
+      MessagesResponse()
+    mock_stub.return_value.GetCastsByMention.return_value = \
+      MessagesResponse(messages=[mention])
+
+    fc = Farcaster('snap.chain:3383')
+    resp = fc.get_activities_response(user_id='123', fetch_mentions=True)
+
+    self.assertEqual(1, len(resp['items']))
+    self.assertEqual('Hey @alice!', resp['items'][0]['object']['content'])
+    mock_stub.return_value.GetCastsByMention.assert_called_once_with(
+      FidRequest(fid=123))

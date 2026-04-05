@@ -25,9 +25,14 @@ import grpc
 from oauth_dropins.webutil import util
 
 from . import as1, source
-from .generated.farcaster import request_response_pb2, rpc_pb2_grpc
-from .generated.farcaster.request_response_pb2 import MessagesResponse
+from .generated.farcaster import rpc_pb2_grpc
+from .generated.farcaster.request_response_pb2 import (
+  FidRequest,
+  MessagesResponse,
+  ReactionsByFidRequest,
+)
 from .generated.farcaster.message_pb2 import (
+  CastId,
   FARCASTER_NETWORK_MAINNET,
   Message,
   MESSAGE_TYPE_CAST_ADD,
@@ -67,7 +72,7 @@ def to_as1(msg):
   """Converts a Farcaster protobuf to an ActivityStreams 1 object or actor.
 
   Args:
-    msg (message_pb2.Message or request_response_pb2.MessagesResponse):
+    msg (message_pb2.Message or MessagesResponse):
       Farcaster Message protobuf or MessagesResponse (user data messages)
 
   Returns:
@@ -409,5 +414,61 @@ class Farcaster(source.Source):
     Returns:
       dict: AS1 actor
     """
-    resp = self._hub.GetUserDataByFid(request_response_pb2.FidRequest(fid=fid))
+    resp = self._hub.GetUserDataByFid(FidRequest(fid=fid))
     return to_as1(resp)
+
+  def get_activities_response(self, user_id=None, group_id=None, app_id=None,
+                              activity_id=None, fetch_replies=False,
+                              fetch_likes=False, fetch_shares=False,
+                              include_shares=True, fetch_events=False,
+                              fetch_mentions=False, search_query=None,
+                              start_index=0, count=0, **kwargs):
+    """Fetches casts and reactions and returns them as AS1 activities.
+
+    See :meth:`Source.get_activities_response` for details. ``group_id``,
+    ``fetch_replies``, ``fetch_events``, and ``search_query`` are not yet supported.
+    ``user_id`` is a Farcaster FID (integer or string).
+    """
+    if user_id and not util.is_int(user_id):
+      raise ValueError(f'user_id must be a Farcaster FID (integer), got {user_id!r}')
+    elif activity_id and not user_id:
+      raise ValueError('activity_id requires user_id')
+
+    fid = int(user_id) if user_id else None
+    page_kwargs = {'page_size': count} if count else {}
+    activities = []
+
+    def add_activities(resp):
+      for msg in resp.messages:
+        obj = to_as1(msg)
+        if obj.get('objectType') != 'activity':
+          obj = {
+            'objectType': 'activity',
+            'verb': 'post',
+            'object': obj,
+            'actor': obj.get('author'),
+          }
+        activities.append(self.postprocess_activity(obj))
+
+    if fid:
+      if activity_id:
+        cast_hash = bytes.fromhex(activity_id.removeprefix('farcaster:cast:'))
+        add_activities(MessagesResponse(
+          messages=[self._hub.GetCast(CastId(fid=fid, hash=cast_hash))]))
+      else:
+        add_activities(self._hub.GetCastsByFid(FidRequest(fid=fid, **page_kwargs)))
+
+      if fetch_mentions:
+        add_activities(self._hub.GetCastsByMention(FidRequest(fid=fid, **page_kwargs)))
+
+      if fetch_likes:
+        add_activities(self._hub.GetReactionsByFid(ReactionsByFidRequest(
+          fid=fid, reaction_type=REACTION_TYPE_LIKE, **page_kwargs)))
+
+      if fetch_shares:
+        add_activities(self._hub.GetReactionsByFid(
+          ReactionsByFidRequest(
+            fid=fid, reaction_type=REACTION_TYPE_RECAST, **page_kwargs)))
+
+    return self.make_activities_base_response(
+      activities, activity_id=activity_id, start_index=start_index)
