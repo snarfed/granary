@@ -1,11 +1,11 @@
 """Farcaster.
 
-* https://farcaster.xyz/
-* https://snapchain.farcaster.xyz/
+https://farcaster.xyz/
+https://snapchain.farcaster.xyz/
 
 TODO:
-* use data_bytes, hash based on it
-  https://github.com/farcasterxyz/protocol/discussions/87
+* from_as1 actor support. probably return a list of Message?
+* message signatures
 * rel-alternate links via "Social Attestations." so complicated :(
   https://github.com/farcasterxyz/protocol/discussions/199
 * mapping FIDs <=> DNS domains. unclear whether/how much this is adopted
@@ -14,6 +14,7 @@ TODO:
   (it's a geo:... URL string, https://tools.ietf.org/html/rfc5870, in
   USER_DATA_TYPE_LOCATION)
 """
+from blake3 import blake3
 import copy
 from datetime import datetime, timezone
 from itertools import zip_longest
@@ -35,7 +36,9 @@ from .generated.farcaster.request_response_pb2 import (
 from .generated.farcaster.message_pb2 import (
   CastId,
   FARCASTER_NETWORK_MAINNET,
+  HASH_SCHEME_BLAKE3,
   Message,
+  MessageData,
   MESSAGE_TYPE_CAST_ADD,
   MESSAGE_TYPE_CAST_REMOVE,
   MESSAGE_TYPE_REACTION_ADD,
@@ -72,6 +75,9 @@ DEFAULT_SNAPCHAIN_PORT = 3383
 # * farcaster://[fid]/0x[hash]
 FARCASTER_URI_RE = re.compile(r'farcaster://(?P<fid>[0-9]+)(/0x(?P<hash>[0-9a-f]+))?')
 
+# https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md#hashing
+BLAKE3_HASH_LENGTH_BYTES = 20
+
 logger = logging.getLogger(__name__)
 
 
@@ -97,6 +103,52 @@ def uri(fid, hash=None):
   return uri
 
 
+def deserialize_data(msg):
+  """Deserializes and returns the ``MessageData`` for a given ``Message``.
+
+  Prefers ``data_bytes`` over ``data`` per the Farcaster spec:
+  https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md#hashing
+  https://github.com/farcasterxyz/protocol/discussions/87
+
+  Requires and verifies ``hash``.
+
+  Args:
+    msg (message_pb2.Message)
+
+  Returns:
+    MessageData or None
+
+  Raises:
+    ValueError: if ``hash`` is invalid or missing
+  """
+  if msg.HasField('data_bytes'):
+    data_bytes = msg.data_bytes
+    data = MessageData()
+    data.ParseFromString(msg.data_bytes)
+  elif msg.HasField('data'):
+    data_bytes = msg.data.SerializeToString()
+    data = msg.data
+  else:
+    return None
+
+  hash = blake3(data_bytes).digest()[:BLAKE3_HASH_LENGTH_BYTES]
+  if hash != msg.hash:
+    raise ValueError(f'Hash mismatch: expected {hash.hex()}, got {msg.hash.hex()}')
+
+  return data
+
+
+def serialize_data(msg):
+  """Serializes ``MessageData`` into ``data_bytes`` and ``hash``.
+
+  Args:
+    msg (message_pb2.Message)
+  """
+  msg.data_bytes = msg.data.SerializeToString()
+  msg.hash = blake3(msg.data_bytes).digest()[:BLAKE3_HASH_LENGTH_BYTES]
+  msg.hash_scheme = HASH_SCHEME_BLAKE3
+
+
 def to_as1(msg):
   """Converts a Farcaster protobuf to an ActivityStreams 1 object or actor.
 
@@ -108,25 +160,28 @@ def to_as1(msg):
 
   Returns:
     dict: AS1 activity, object, or actor
+
+  Raises:
+    ValueError: if any message's hash is invalid
   """
   # actor, from GetUserDataByFid response
   if isinstance(msg, MessagesResponse):
-    fid = msg.messages[0].data.fid if msg.messages else None
-    actor = {
-      'objectType': 'person',
-      'id': uri(fid) if fid else None,
-      'url': Farcaster.user_url(fid) if fid else None,
-      'image': [],
-    }
+    actor = {}
+    fid = None
 
     for m in msg.messages:
-      if m.data.type == MESSAGE_TYPE_USER_DATA_ADD:
-        body = m.data.user_data_body
+      if (data := deserialize_data(m)) and data.type == MESSAGE_TYPE_USER_DATA_ADD:
+        if not fid:
+          fid = data.fid
+        assert data.fid == fid
+
+        body = data.user_data_body
         if field := USER_DATA_TYPE_TO_AS1.get(body.type):
           if field == 'image':
-            actor['image'].append({'objectType': 'featured', 'url': body.value}
-                                  if body.type == USER_DATA_TYPE_BANNER
-                                  else body.value)
+            img = ({'objectType': 'featured', 'url': body.value}
+                   if body.type == USER_DATA_TYPE_BANNER
+                   else body.value)
+            actor.setdefault('image', []).append(img)
           elif field == 'url':
             actor['url'] = body.value
             if fid:
@@ -134,21 +189,27 @@ def to_as1(msg):
           else:
             actor[field] = body.value
 
-    return util.trim_nulls(actor)
+    return util.trim_nulls({
+      'url': Farcaster.user_url(fid) if fid else None,  # default
+      **actor,
+      'objectType': 'person',
+      'id': uri(fid) if fid else None,
+    })
 
   # all other object types
-  if not msg or not isinstance(msg, Message) or not msg.data:
+  if not msg or not isinstance(msg, Message):
     return {}
 
-  data = msg.data
-  obj = {}  # AS1 return value
+  data = deserialize_data(msg)
+  if not data:
+    return {}
 
+  obj = {}  # AS1 return value
   actor_fid = data.fid
+  msg_type = data.type
   published = None
   if data.timestamp:
     published = datetime.fromtimestamp(data.timestamp, tz=timezone.utc).isoformat()
-
-  msg_type = data.type
 
   # post
   if msg_type == MESSAGE_TYPE_CAST_ADD:
@@ -230,8 +291,8 @@ def to_as1(msg):
         'id': uri(reaction.target_cast_id.fid, reaction.target_cast_id.hash),
         'author': uri(reaction.target_cast_id.fid),
       }
-    # elif reaction.HasField('target_url'):
-    #   target_obj = reaction.target_url
+    elif reaction.HasField('target_url'):
+      target_obj = reaction.target_url
 
     obj = {
       'objectType': 'activity',
@@ -395,6 +456,8 @@ def from_as1(obj):
       data.link_body.target_fid = int(match['fid'])
     data.link_body.displayTimestamp = data.timestamp
 
+  # serialize data into data_bytes, generaet hash
+  serialize_data(msg)
   return msg
 
 

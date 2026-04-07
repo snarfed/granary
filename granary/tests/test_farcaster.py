@@ -1,13 +1,18 @@
 """Unit tests for farcaster.py."""
+from blake3 import blake3
 import logging
 from unittest.mock import patch
 
 from google.protobuf import text_format
-from oauth_dropins.webutil import testutil
+from oauth_dropins.webutil import testutil, util
 
-from ..farcaster import Farcaster, from_as1, to_as1
+from ..farcaster import BLAKE3_HASH_LENGTH_BYTES, Farcaster, from_as1, to_as1
 from ..generated.farcaster import message_pb2
-from ..generated.farcaster.message_pb2 import REACTION_TYPE_LIKE
+from ..generated.farcaster.message_pb2 import (
+  HASH_SCHEME_BLAKE3,
+  MessageData,
+  REACTION_TYPE_LIKE,
+)
 from ..generated.farcaster.request_response_pb2 import (
   FidRequest,
   MessagesResponse,
@@ -15,6 +20,14 @@ from ..generated.farcaster.request_response_pb2 import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def add_hash(msg):
+  """Adds data_bytes, hash, and hash_scheme to msg in place and returns it."""
+  msg.data_bytes = msg.data.SerializeToString()
+  msg.hash = blake3(msg.data_bytes).digest()[:BLAKE3_HASH_LENGTH_BYTES]
+  msg.hash_scheme = HASH_SCHEME_BLAKE3
+  return msg
 
 
 def message(data_text):
@@ -38,15 +51,18 @@ cast_add_body {
   text: "Hello Farcaster!"
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'note',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
       'author': 'farcaster://123',
       'content': 'Hello Farcaster!',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_cast_with_hash(self):
     msg = message("""
@@ -55,11 +71,11 @@ cast_add_body {
   text: "Hello Farcaster!"
 }
 """)
-    msg.hash = b'\xab\xcd\x12\x34'
+    add_hash(msg)
     self.assertEqual({
       'objectType': 'note',
-      'id': 'farcaster://123/0xabcd1234',
-      'url': 'https://farcaster.xyz/~/conversations/0xabcd1234',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
       'author': 'farcaster://123',
       'content': 'Hello Farcaster!',
       'content_is_html': False,
@@ -75,8 +91,11 @@ cast_add_body {
   mentions_positions: 4
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'note',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
       'author': 'farcaster://123',
       'content': 'Hey @alice!',
       'content_is_html': False,
@@ -87,8 +106,8 @@ cast_add_body {
         'startIndex': 4,
       }],
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_cast_with_image_embed(self):
     msg = message("""
@@ -100,16 +119,19 @@ cast_add_body {
   }
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'note',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
       'author': 'farcaster://123',
       'content': 'Check this out',
       'content_is_html': False,
       'published': '2021-12-20T11:33:20+00:00',
       'image': ['https://example.com/image.jpg'],
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_cast_with_video_embed(self):
     msg = message("""
@@ -121,8 +143,11 @@ cast_add_body {
   }
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'note',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
       'author': 'farcaster://123',
       'content': 'Watch this',
       'content_is_html': False,
@@ -132,8 +157,8 @@ cast_add_body {
         'stream': {'url': 'https://example.com/video.mp4'},
       }],
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_cast_with_link_embed(self):
     msg = message("""
@@ -145,8 +170,11 @@ cast_add_body {
   }
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'note',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
       'author': 'farcaster://123',
       'content': 'Read this',
       'content_is_html': False,
@@ -156,8 +184,8 @@ cast_add_body {
         'url': 'https://example.com/article',
       }],
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_cast_with_cast_embed(self):
     msg = message("""
@@ -172,8 +200,11 @@ cast_add_body {
   }
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'note',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
       'author': 'farcaster://123',
       'content': 'Quoting this',
       'content_is_html': False,
@@ -184,8 +215,8 @@ cast_add_body {
         'author': 'farcaster://789',
       }],
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_reply(self):
     msg = message("""
@@ -198,8 +229,11 @@ cast_add_body {
   }
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'note',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
       'author': 'farcaster://123',
       'content': 'Replying',
       'content_is_html': False,
@@ -209,10 +243,10 @@ cast_add_body {
         'author': 'farcaster://456',
       },
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
-  def test_like(self):
+  def test_like_cast(self):
     msg = message("""
 type: MESSAGE_TYPE_REACTION_ADD
 reaction_body {
@@ -223,9 +257,11 @@ reaction_body {
   }
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'activity',
       'verb': 'like',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
       'actor': 'farcaster://123',
       'published': '2021-12-20T11:33:20+00:00',
       'object': {
@@ -233,8 +269,8 @@ reaction_body {
         'author': 'farcaster://456',
       },
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_unlike(self):
     msg = message("""
@@ -247,9 +283,11 @@ reaction_body {
   }
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'activity',
       'verb': 'undo',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
       'actor': 'farcaster://123',
       'published': '2021-12-20T11:33:20+00:00',
       'object': {
@@ -262,8 +300,8 @@ reaction_body {
         },
       },
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_like_url_target(self):
     msg = message("""
@@ -273,14 +311,16 @@ reaction_body {
   target_url: "https://example.com/post"
 }
 """)
-    as1 = {
+    obj = {
       'objectType': 'activity',
       'verb': 'like',
+      'id': 'farcaster://123/0xd01dd690b665a07927759660f4f1f2c0b0635ae8',
       'actor': 'farcaster://123',
-      'object': {'id': 'https://example.com/post'},
+      'object': 'https://example.com/post',
       'published': '2021-12-20T11:33:20+00:00',
     }
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(add_hash(msg), from_as1(obj))
+    self.assertEqual(obj, to_as1(msg))
 
   def test_recast(self):
     msg = message("""
@@ -293,9 +333,11 @@ reaction_body {
   }
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'activity',
       'verb': 'share',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
       'actor': 'farcaster://123',
       'published': '2021-12-20T11:33:20+00:00',
       'object': {
@@ -303,8 +345,8 @@ reaction_body {
         'author': 'farcaster://456',
       },
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_unrecast(self):
     msg = message("""
@@ -317,9 +359,11 @@ reaction_body {
   }
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'activity',
       'verb': 'undo',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
       'actor': 'farcaster://123',
       'published': '2021-12-20T11:33:20+00:00',
       'object': {
@@ -332,8 +376,8 @@ reaction_body {
         },
       },
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_article(self):
     msg = message("""
@@ -342,13 +386,13 @@ cast_add_body {
   text: "Long form content here"
 }
 """)
-    as1 = {
+    obj = {
       'objectType': 'article',
       'author': 'farcaster://123',
       'content': 'Long form content here',
       'published': '2021-12-20T11:33:20+00:00',
     }
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(add_hash(msg), from_as1(obj))
 
   def test_follow(self):
     msg = message("""
@@ -359,15 +403,16 @@ link_body {
   displayTimestamp: 1640000000
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'activity',
       'verb': 'follow',
       'actor': 'farcaster://123',
       'object': 'farcaster://456',
       'published': '2021-12-20T11:33:20+00:00',
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_unfollow(self):
     msg = message("""
@@ -378,7 +423,8 @@ link_body {
   displayTimestamp: 1640000000
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'actor': 'farcaster://123',
       'objectType': 'activity',
       'verb': 'undo',
@@ -390,8 +436,8 @@ link_body {
       },
       'published': '2021-12-20T11:33:20+00:00',
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_block(self):
     msg = message("""
@@ -402,15 +448,16 @@ link_body {
   displayTimestamp: 1640000000
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'activity',
       'verb': 'block',
       'actor': 'farcaster://123',
       'object': 'farcaster://456',
       'published': '2021-12-20T11:33:20+00:00',
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_unblock(self):
     msg = message("""
@@ -421,7 +468,8 @@ link_body {
   displayTimestamp: 1640000000
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'actor': 'farcaster://123',
       'objectType': 'activity',
       'verb': 'undo',
@@ -433,8 +481,8 @@ link_body {
       },
       'published': '2021-12-20T11:33:20+00:00',
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_delete(self):
     msg = message("""
@@ -443,19 +491,20 @@ cast_remove_body {
   target_hash: "\\xab\\xcd\\x12\\x34"
 }
 """)
-    as1 = {
+    add_hash(msg)
+    obj = {
       'objectType': 'activity',
       'verb': 'delete',
       'actor': 'farcaster://123',
       'object': 'farcaster://123/0xabcd1234',
       'published': '2021-12-20T11:33:20+00:00',
     }
-    self.assertEqual(as1, to_as1(msg))
-    self.assertEqual(msg, from_as1(as1))
+    self.assertEqual(obj, to_as1(msg))
+    self.assertEqual(msg, from_as1(obj))
 
   def test_to_as1_empty(self):
     self.assertEqual({}, to_as1(None))
-    self.assertEqual({}, to_as1(message_pb2.Message()))
+    self.assertEqual({}, to_as1('not a message'))
 
   def test_to_as1_actor_minimal(self):
     resp = MessagesResponse(
@@ -496,6 +545,100 @@ cast_remove_body {
       ],
     }, to_as1(resp))
 
+  def test_from_as1_data_bytes(self):
+    msg = from_as1({
+      'objectType': 'note',
+      'author': 'farcaster://123',
+      'content': 'Hello Farcaster!',
+      'content_is_html': False,
+      'published': '2021-12-20T11:33:20+00:00',
+    })
+    self.assertEqual(r"""data {
+  type: MESSAGE_TYPE_CAST_ADD
+  fid: 123
+  timestamp: 1640000000
+  network: FARCASTER_NETWORK_MAINNET
+  cast_add_body {
+    text: "Hello Farcaster!"
+  }
+}
+hash: "\307$\376J&\253\237\270#\303\250\310(\207\027\232\020\270\204j"
+hash_scheme: HASH_SCHEME_BLAKE3
+data_bytes: "\010\001\020{\030\200\324\201\216\006 \001*\022\"\020Hello Farcaster!"
+""", str(msg))
+
+  def test_to_as1_hash_valid_data_only(self):
+    msg = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body { text: "Hello!" }
+""")
+    msg.hash = blake3(msg.data.SerializeToString()).digest()[:20]
+    msg.hash_scheme = HASH_SCHEME_BLAKE3
+    self.assertEqual('note', to_as1(msg)['objectType'])
+
+  def test_to_as1_hash_mismatch(self):
+    msg = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body { text: "Hello!" }
+""")
+    msg.data_bytes = msg.data.SerializeToString()
+    msg.hash = b'\x00' * 20
+    msg.hash_scheme = HASH_SCHEME_BLAKE3
+    with self.assertRaises(ValueError, msg='hash'):
+      to_as1(msg)
+
+  def test_to_as1_hash_mismatch_data_only(self):
+    msg = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body { text: "Hello!" }
+""")
+    msg.hash = b'\x00' * 20
+    msg.hash_scheme = HASH_SCHEME_BLAKE3
+    with self.assertRaises(ValueError, msg='hash'):
+      to_as1(msg)
+
+  def test_to_as1_deserializes_data_bytes(self):
+    data = text_format.Parse("""
+fid: 123
+timestamp: 1640000000
+network: FARCASTER_NETWORK_MAINNET
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body { text: "From data_bytes!" }
+""", MessageData())
+    data_bytes = data.SerializeToString()
+    hash_ = blake3(data_bytes).digest()[:20]
+    msg = message_pb2.Message()
+    msg.data_bytes = data_bytes
+    msg.hash = hash_
+    msg.hash_scheme = HASH_SCHEME_BLAKE3
+    self.assertEqual({
+      'objectType': 'note',
+      'id': f'farcaster://123/0x{hash_.hex()}',
+      'url': f'https://farcaster.xyz/~/conversations/0x{hash_.hex()}',
+      'author': 'farcaster://123',
+      'content': 'From data_bytes!',
+      'content_is_html': False,
+      'published': '2021-12-20T11:33:20+00:00',
+    }, to_as1(msg))
+
+  def test_to_as1_data_bytes_overwrites_data(self):
+    # data_bytes content should win over msg.data
+    data = text_format.Parse("""
+fid: 123
+timestamp: 1640000000
+network: FARCASTER_NETWORK_MAINNET
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body { text: "From data_bytes!" }
+""", MessageData())
+    data_bytes = data.SerializeToString()
+    msg = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body { text: "From msg.data!" }
+""")
+    msg.data_bytes = data_bytes
+    msg.hash = blake3(data_bytes).digest()[:20]
+    msg.hash_scheme = HASH_SCHEME_BLAKE3
+    self.assertEqual('From data_bytes!', to_as1(msg)['content'])
 
 
 def user_data_message(fid, user_data_type, value):
@@ -511,7 +654,7 @@ data {{
   }}
 }}
 """, message_pb2.Message())
-  return msg
+  return add_hash(msg)
 
 
 @patch('granary.farcaster.rpc_pb2_grpc.HubServiceStub')
@@ -562,10 +705,10 @@ class FarcasterClientTest(testutil.TestCase):
       fc.get_activities_response(user_id='not-an-int')
 
   def test_get_activities_response(self, mock_stub):
-    cast = message("""
+    cast = add_hash(message("""
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body { text: "Hello!" }
-""")
+"""))
     mock_stub.return_value.GetCastsByFid.return_value = \
       MessagesResponse(messages=[cast])
 
@@ -585,6 +728,8 @@ cast_add_body { text: "Hello!" }
         'actor': 'farcaster://123',
         'object': {
           'objectType': 'note',
+          'id': f'farcaster://123/0x{cast.hash.hex()}',
+          'url': f'https://farcaster.xyz/~/conversations/0x{cast.hash.hex()}',
           'author': 'farcaster://123',
           'content': 'Hello!',
           'content_is_html': False,
@@ -608,13 +753,13 @@ cast_add_body { text: "Hello!" }
   def test_get_activities_response_fetch_likes(self, mock_stub):
     mock_stub.return_value.GetCastsByFid.return_value = \
       MessagesResponse()
-    like = message("""
+    like = add_hash(message("""
 type: MESSAGE_TYPE_REACTION_ADD
 reaction_body {
   type: REACTION_TYPE_LIKE
   target_cast_id { fid: 456  hash: "\\xab\\xcd" }
 }
-""")
+"""))
     mock_stub.return_value.GetReactionsByFid.return_value = \
       MessagesResponse(messages=[like])
 
@@ -624,6 +769,7 @@ reaction_body {
     self.assertEqual([{
       'objectType': 'activity',
       'verb': 'like',
+      'id': f'farcaster://123/0x{like.hash.hex()}',
       'actor': 'farcaster://123',
       'object': {
         'id': 'farcaster://456/0xabcd',
@@ -635,10 +781,10 @@ reaction_body {
       ReactionsByFidRequest(fid=123, reaction_type=REACTION_TYPE_LIKE, reverse=True))
 
   def test_get_activities_response_fetch_mentions(self, mock_stub):
-    mention = message("""
+    mention = add_hash(message("""
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body { text: "Hey @alice!"  mentions: 123  mentions_positions: 4 }
-""")
+"""))
     mock_stub.return_value.GetCastsByFid.return_value = \
       MessagesResponse()
     mock_stub.return_value.GetCastsByMention.return_value = \
