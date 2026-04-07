@@ -310,6 +310,8 @@ Changelog
 
 * Start on [Farcaster](https://farcaster.xyz/) support! ([snarfed/bridgy-fed#447](https://github.com/snarfed/bridgy-fed/issues/447)).
 * Bug fix for converting HTML content to plain text when it includes square brackets (`[` and `]`) ([snarfed/bridgy-fed#1605](https://github.com/snarfed/bridgy-fed/issues/1605)).
+* `nostr`:
+  * `from_as1`: fix crash when converting an `article` object with no `id`.
 * `microformats2`:
   * `to_as1`: fix `quotation-of` h-cite attachments to have `objectType` `note`, enabling correct quote post conversion to ActivityPub ([snarfed/bridgy-fed#1146](https://github.com/snarfed/bridgy-fed/issues/1146)).
 * `atom`:

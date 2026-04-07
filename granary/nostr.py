@@ -501,7 +501,7 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None, multiple=False)
   elif type in ('article', 'comment', 'note'):
     if type == 'article':
       event['kind'] = KIND_ARTICLE
-      event['tags'].append(['d', id])
+      event['tags'].append(['d', id or ''])
     else:
       event['kind'] = KIND_NOTE
 

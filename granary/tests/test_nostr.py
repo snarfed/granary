@@ -900,6 +900,17 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(note, to_as1(event))
     self.assert_equals(event, from_as1(note))
 
+  def test_from_as1_article_no_id(self):
+    self.assert_equals({
+      'content': 'Something to say',
+      'tags': [['d', '']],
+      'created_at': 1641092645,
+      'kind': 30023
+    }, from_as1({
+      'objectType': 'article',
+      'content': 'Something to say',
+    }))
+
   def test_to_as1_relays(self):
     self.assert_equals({
       'id': f'nostr:{ID}',
