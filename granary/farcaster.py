@@ -392,6 +392,7 @@ def from_as1(obj):
   type = as1.object_type(obj)
   if type in ('post', 'update'):
     type = as1.object_type(as1.get_object(obj))
+    obj = as1.get_object(obj)
 
   inner_obj = as1.get_object(obj)
   inner_id = inner_obj.get('id')

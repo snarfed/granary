@@ -223,6 +223,28 @@ cast_add_body {
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
 
+  def test_cast_post_activity(self):
+    msg = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body {
+  text: "Hello Farcaster!"
+}
+""")
+    obj = {
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'id': f'farcaster://123/0x{msg.hash.hex()}',
+        'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
+        'author': 'farcaster://123',
+        'content': 'Hello Farcaster!',
+        'content_is_html': False,
+        'published': '2021-12-20T11:33:20+00:00',
+      },
+    }
+    self.assertEqual(msg, from_as1(obj))
+
   def test_reply(self):
     msg = message("""
 type: MESSAGE_TYPE_CAST_ADD
