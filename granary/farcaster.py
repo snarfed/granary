@@ -86,7 +86,7 @@ FARCASTER_URI_RE = re.compile(r'farcaster://(?P<fid>[0-9]+)(/0x(?P<hash>[0-9a-f]
 BLAKE3_HASH_LENGTH_BYTES = 20
 
 # https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md#name-server
-HANDLE_RE = re.compile(r'[a-z0-9][a-z0-9]{0,15}')
+HANDLE_RE = re.compile(r'[a-z0-9][a-z0-9-]{0,15}')
 
 logger = logging.getLogger(__name__)
 
