@@ -695,6 +695,33 @@ not RSS!
     del expected['sig']
     self.assert_equals({'items': [expected]}, resp.json)
 
+  def test_url_as1_to_farcaster(self):
+    note = {
+      'objectType': 'note',
+      'author': 'farcaster://123',
+      'content': 'Hello Farcaster!',
+      'published': '2021-12-20T11:33:20+00:00',
+    }
+    self.expect_requests_get('http://my/note', [note])
+    self.mox.ReplayAll()
+
+    resp = client.get('/url?url=http://my/note&input=as1&output=farcaster')
+    self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
+    self.assert_equals({
+      'items': [{
+        'data': {
+          'castAddBody': {'text': 'Hello Farcaster!'},
+          'fid': '123',
+          'network': 'FARCASTER_NETWORK_MAINNET',
+          'timestamp': 1640000000,
+          'type': 'MESSAGE_TYPE_CAST_ADD',
+        },
+        'dataBytes': 'CAEQexiA1IGOBiABKhIiEEhlbGxvIEZhcmNhc3RlciE=',
+        'hash': 'xyT+Siarn7gjw6jIKIcXmhC4hGo=',
+        'hashScheme': 'HASH_SCHEME_BLAKE3',
+      }],
+    }, resp.json)
+
   def test_url_nostr_to_as1(self):
     self.expect_requests_get('http://nostr/posts', test_nostr.NOTE_NOSTR)
     self.mox.ReplayAll()

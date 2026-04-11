@@ -8,6 +8,7 @@ import urllib.parse
 from xml.etree import ElementTree
 
 from flask import abort, Flask, redirect, render_template, request
+from google.protobuf.json_format import MessageToDict
 import flask_caching
 import flask_gae_static
 from google.cloud import ndb
@@ -112,6 +113,7 @@ FORMATS = {
   'as2': as2.CONTENT_TYPE,
   'atom': atom.CONTENT_TYPE,
   'bluesky': 'application/json',
+  'farcaster': 'application/json',
   'html': 'text/html; charset=utf-8',
   'json': 'application/json',
   'json-mf2': 'application/mf2+json',
@@ -422,6 +424,11 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
 
     elif format == 'bluesky':
       return {'feed': [bluesky.from_as1(a) for a in activities]}, headers
+
+    elif format == 'farcaster':
+      return {
+        'items': [MessageToDict(farcaster.from_as1(a)) for a in activities],
+      }, headers
 
     elif format == 'atom':
       hub = request.values.get('hub')
