@@ -6,7 +6,6 @@ https://snapchain.farcaster.xyz/
 
 TODO:
 * from_as1 actor support. probably return a list of Message?
-* message signatures
 * rel-alternate links via "Social Attestations." so complicated :(
   https://github.com/farcasterxyz/protocol/discussions/199
 * mapping FIDs <=> DNS domains. unclear whether/how much this is adopted
@@ -16,6 +15,12 @@ TODO:
   USER_DATA_TYPE_LOCATION)
 """
 from blake3 import blake3
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+  Ed25519PrivateKey,
+  Ed25519PublicKey,
+)
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 import copy
 from datetime import datetime, timezone
 from itertools import zip_longest
@@ -49,6 +54,7 @@ from .generated.farcaster.message_pb2 import (
   MESSAGE_TYPE_LINK_ADD,
   MESSAGE_TYPE_LINK_REMOVE,
   REACTION_TYPE_RECAST,
+  SIGNATURE_SCHEME_ED25519,
   USER_DATA_TYPE_BANNER,
   USER_DATA_TYPE_BIO,
   USER_DATA_TYPE_DISPLAY,
@@ -107,43 +113,65 @@ def uri(fid, hash=None):
   return uri
 
 
-def deserialize_data(msg):
+def deserialize(msg):
   """Deserializes and returns the ``MessageData`` for a given ``Message``.
 
   Prefers ``data_bytes`` over ``data`` per the Farcaster spec:
   https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md#hashing
   https://github.com/farcasterxyz/protocol/discussions/87
 
-  Requires and verifies ``hash``.
-
   Args:
     msg (message_pb2.Message)
 
   Returns:
-    MessageData or None
+    MessageData
 
   Raises:
-    ValueError: if ``hash`` is invalid or missing
+    ValueError: if neither ``data`` nor ``data_bytes`` is set
   """
   if msg.HasField('data_bytes'):
-    data_bytes = msg.data_bytes
     data = MessageData()
     data.ParseFromString(msg.data_bytes)
+    return data
+  elif msg.HasField('data'):
+    return msg.data
+  else:
+    raise ValueError(f'No data or data_bytes: {msg}')
+
+
+def verify(msg):
+  """Verifies a ``MessageData``'s hash and signature.
+
+  Args:
+    msg (message_pb2.Message)
+
+  Raises:
+    ValueError: if ``hash`` or ``signature`` are invalid or missing
+  """
+  if not msg.hash or not msg.signature or not msg.signer:
+    raise ValueError(f'Missing hash or signature or signer: {msg}')
+  if msg.signature_scheme != SIGNATURE_SCHEME_ED25519:
+    raise ValueError(f'Unknown signature scheme: {msg.signature_scheme}')
+
+  if msg.HasField('data_bytes'):
+    data_bytes = msg.data_bytes
   elif msg.HasField('data'):
     data_bytes = msg.data.SerializeToString()
-    data = msg.data
   else:
-    return None
+    raise ValueError(f'No data or data_bytes: {msg}')
 
   hash = blake3(data_bytes).digest()[:BLAKE3_HASH_LENGTH_BYTES]
   if hash != msg.hash:
     raise ValueError(f'Hash mismatch: expected {hash.hex()}, got {msg.hash.hex()}')
 
-  return data
+  try:
+    Ed25519PublicKey.from_public_bytes(msg.signer).verify(msg.signature, msg.hash)
+  except InvalidSignature as e:
+    raise ValueError(f'Signature verification failed: {e}') from e
 
 
-def serialize_data(msg):
-  """Serializes ``MessageData`` into ``data_bytes`` and ``hash``.
+def serialize_and_hash(msg):
+  """Serializes ``MessageData`` into ``data_bytes`` and computes ``hash``.
 
   Args:
     msg (message_pb2.Message)
@@ -151,6 +179,18 @@ def serialize_data(msg):
   msg.data_bytes = msg.data.SerializeToString()
   msg.hash = blake3(msg.data_bytes).digest()[:BLAKE3_HASH_LENGTH_BYTES]
   msg.hash_scheme = HASH_SCHEME_BLAKE3
+
+
+def sign(msg, privkey):
+  """Signs a ``Message`` and populates its ``signer`` and ``signature``.
+
+  Args:
+    msg (message_pb2.Message)
+    privkey (Ed25519PrivateKey): private key to sign with
+  """
+  msg.signature = privkey.sign(msg.hash)
+  msg.signer = privkey.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+  msg.signature_scheme = SIGNATURE_SCHEME_ED25519
 
 
 def to_as1(msg):
@@ -164,9 +204,6 @@ def to_as1(msg):
 
   Returns:
     dict: AS1 activity, object, or actor
-
-  Raises:
-    ValueError: if any message's hash is invalid
   """
   # actor, from GetUserDataByFid response
   if isinstance(msg, MessagesResponse):
@@ -174,7 +211,7 @@ def to_as1(msg):
     fid = None
 
     for m in msg.messages:
-      if (data := deserialize_data(m)) and data.type == MESSAGE_TYPE_USER_DATA_ADD:
+      if (data := deserialize(m)) and data.type == MESSAGE_TYPE_USER_DATA_ADD:
         if not fid:
           fid = data.fid
         assert data.fid == fid
@@ -204,8 +241,7 @@ def to_as1(msg):
   if not msg or not isinstance(msg, Message):
     return {}
 
-  data = deserialize_data(msg)
-  if not data:
+  if not (data := deserialize(msg)):
     return {}
 
   obj = {}  # AS1 return value
@@ -460,8 +496,7 @@ def from_as1(obj):
       data.link_body.target_fid = int(match['fid'])
     data.link_body.displayTimestamp = data.timestamp
 
-  # serialize data into data_bytes, generaet hash
-  serialize_data(msg)
+  serialize_and_hash(msg)
   return msg
 
 
