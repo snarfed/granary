@@ -409,6 +409,9 @@ def from_as1(obj):
                else util.now(tz=timezone.utc))
   data.timestamp = int(published.timestamp())
 
+  as1.convert_html_content_to_text(obj)
+  as1.expand_tags(obj)
+
   # posts
   if type in ('note', 'article', 'comment'):
     data.type = MESSAGE_TYPE_CAST_ADD

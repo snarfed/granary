@@ -584,6 +584,52 @@ hash_scheme: HASH_SCHEME_BLAKE3
 data_bytes: "\010\001\020{\030\200\324\201\216\006 \001*\022\"\020Hello Farcaster!"
 """, str(msg))
 
+  def test_from_as1_html_link_mention_hashtag(self):
+    self.assertEqual(message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body {
+  text: "foo bar @alice #news"
+  mentions: 456
+  mentions_positions: 8
+}
+"""), from_as1({
+      'objectType': 'note',
+      'author': 'farcaster://123',
+      'published': '2021-12-20T11:33:20+00:00',
+      'content': 'foo <a href="https://example.com">bar</a> @alice #news',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'farcaster://456',
+        'displayName': 'alice',
+      }, {
+        'objectType': 'hashtag',
+        'displayName': 'news',
+      }],
+    }))
+
+  def test_from_as1_plain_text_url_mention_hashtag(self):
+    self.assertEqual(message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body {
+  text: "foo @alice #news https://example.com"
+  mentions: 456
+  mentions_positions: 4
+}
+"""), from_as1({
+      'objectType': 'note',
+      'author': 'farcaster://123',
+      'published': '2021-12-20T11:33:20+00:00',
+      'content': 'foo @alice #news https://example.com',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'farcaster://456',
+        'displayName': 'alice',
+      }, {
+        'objectType': 'hashtag',
+        'displayName': 'news',
+      }],
+    }))
+
   def test_to_as1_deserializes_data_bytes(self):
     data = text_format.Parse("""
 fid: 123

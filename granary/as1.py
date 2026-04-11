@@ -746,13 +746,11 @@ def is_content_html(obj):
 def expand_tags(obj):
   """Expands mention, hashtag, article (link) tags and indices from content.
 
-  If ``obj.content`` is plain text, detects URLs, @-mentions, and hashtags and adds
-  them to ``obj.tags`` if they're not already there. If they are, but don't have
-  ``startIndex`` or ``length``, adds those fields. If ``obj.content`` is HTML, does
-  nothing.
+  If ``obj.content`` is plain text, detects @-mentions that aren't in ``obj.tags``
+  and adds them, and finds tags without ``startIndex`` or ``length`` in content and
+  popultes those fields.
 
-  Also, for ``mention`` and ``hashtag`` tags without ``startIndex``/``length``, tries
-  to infer and populate their indices by searching ``content`` for their ``name``.
+  If ``obj.content`` is HTML, does nothing.
 
   Modifies ``obj`` in place.
 
