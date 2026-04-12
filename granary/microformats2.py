@@ -513,7 +513,7 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   urls = []
   for u in get_string_urls(props.get('url')):
     if not util.is_url(u):
-      logging.info(f'ignoring bad u-url {u}')
+      logging.debug(f'ignoring bad u-url {u}')
       continue
     rel = rel_urls.get(u, {}) if rel_urls else {}
     urls.append({
