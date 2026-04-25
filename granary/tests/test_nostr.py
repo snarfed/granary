@@ -1185,7 +1185,9 @@ class NostrTest(testutil.TestCase):
     ]
     self.assert_equals(event, from_as1(follow, remote_relay='reelaay'), ignore=['id'])
 
-  @patch('requests.get', return_value=requests_response({'names': {'alice': PUBKEY}}))
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'names': {'alice': PUBKEY},
+  }))
   def test_nip05_to_npub(self, mock_get):
     npub = nostr.nip05_to_npub('alice@example.com')
     self.assertEqual(NPUB, npub)
@@ -1193,7 +1195,9 @@ class NostrTest(testutil.TestCase):
                              timeout=HTTP_TIMEOUT, stream=True,
                              headers={'User-Agent': util.user_agent})
 
-  @patch('requests.get', return_value=requests_response({'names': {'_': PUBKEY}}))
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'names': {'_': PUBKEY},
+  }))
   def test_nip05_to_npub_underscore_username(self, mock_get):
     npub = nostr.nip05_to_npub('_@example.com')
     self.assertEqual(NPUB, npub)
@@ -1201,7 +1205,9 @@ class NostrTest(testutil.TestCase):
                              timeout=HTTP_TIMEOUT, stream=True,
                              headers={'User-Agent': util.user_agent})
 
-  @patch('requests.get', return_value=requests_response({'names': {'_': PUBKEY}}))
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'names': {'_': PUBKEY},
+  }))
   def test_nip05_to_npub_bare_domain(self, mock_get):
     npub = nostr.nip05_to_npub('example.com')
     self.assertEqual(NPUB, npub)
@@ -1209,14 +1215,16 @@ class NostrTest(testutil.TestCase):
                              timeout=HTTP_TIMEOUT, stream=True,
                              headers={'User-Agent': util.user_agent})
 
-  @patch('requests.get', return_value=requests_response({'names': {'bob': PUBKEY}}))
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'names': {'bob': PUBKEY},
+  }))
   def test_nip05_to_npub_user_not_found(self, mock_get):
     with self.assertRaises(ValueError) as cm:
       nostr.nip05_to_npub('alice@example.com')
 
     self.assertEqual('User alice not found at example.com', str(cm.exception))
 
-  @patch('requests.get', return_value=requests_response('', status=404))
+  @patch.object(util.session, 'get', return_value=requests_response('', status=404))
   def test_nip05_to_npub_http_error(self, mock_get):
     with self.assertRaises(requests.HTTPError):
       nostr.nip05_to_npub('alice@example.com')
@@ -1225,7 +1233,7 @@ class NostrTest(testutil.TestCase):
                              timeout=HTTP_TIMEOUT, stream=True,
                              headers={'User-Agent': util.user_agent})
 
-  @patch('requests.get', return_value=requests_response('not json'))
+  @patch.object(util.session, 'get', return_value=requests_response('not json'))
   def test_nip05_to_npub_invalid_json(self, mock_get):
     with self.assertRaises(ValueError):
       nostr.nip05_to_npub('alice@example.com')

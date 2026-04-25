@@ -2016,9 +2016,9 @@ class Bluesky(Source):
     self._client = Client(pds_url, access_token=access_token,
                           refresh_token=refresh_token, auth=auth, headers=headers,
                           session_callback=session_callback, validate=True,
-                          **requests_kwargs)
+                          requests_session=util.session, **requests_kwargs)
     self._appview = Client(DEFAULT_APPVIEW, headers=headers, validate=True,
-                           **requests_kwargs)
+                           requests_session=util.session, **requests_kwargs)
 
   @classmethod
   def from_auth(cls, auth_entity, client_metadata=None, **kwargs):

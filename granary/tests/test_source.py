@@ -392,7 +392,7 @@ Watching  \t waves
     }
     self.assert_equals(obj, Source.postprocess_object(obj))
 
-  @patch('requests.get', return_value=testutil.requests_response("""\
+  @patch.object(util.session, 'get', return_value=testutil.requests_response("""\
 <html>
 <head>
   <title>A poast</title>
@@ -427,7 +427,7 @@ Watching  \t waves
       'content': 'fooey',
     }, first_link_to_attachment=True))
 
-  @patch('requests.get', return_value=testutil.requests_response(
+  @patch.object(util.session, 'get', return_value=testutil.requests_response(
     status=404, url='http://foo/bar'))
   def test_postprocess_object_first_link_to_attachment_fetch_fails(self, mock_get):
     self.assert_equals({
