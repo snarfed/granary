@@ -6,6 +6,7 @@ ActivityStreams 1 specs: http://activitystrea.ms/specs/
 """
 from collections import defaultdict
 import copy
+from datetime import timedelta
 import html
 import itertools
 import logging
@@ -255,9 +256,11 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
   duration = stream.get('duration')
   if duration is not None:
     if util.is_int(duration):
-      duration = str(duration)
+      duration = util.to_iso8601_duration(timedelta(seconds=int(duration)))
+    elif util.parse_iso8601_duration(duration):
+      pass
     else:
-      logger.warning('Ignoring duration %r; expected int, got %s',
+      logger.warning('Ignoring duration %r; expected int or ISO 8601, got %s',
                      duration, duration.__class__)
       duration = None
 

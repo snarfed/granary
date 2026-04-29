@@ -313,6 +313,7 @@ Changelog
 * `nostr`:
   * `from_as1`: fix crash when converting an `article` object with no `id`.
 * `microformats2`:
+  * `from_as1`: convert `stream.duration` (int seconds) to ISO 8601 duration string for the `duration` mf2 property; also accept ISO 8601 strings passed through from AS1.
   * `to_as1`: fix `quotation-of` h-cite attachments to have `objectType` `note`, enabling correct quote post conversion to ActivityPub ([snarfed/bridgy-fed#1146](https://github.com/snarfed/bridgy-fed/issues/1146)).
 * `atom`:
   * `from_as1`: include entry tags as `<category>` elements.

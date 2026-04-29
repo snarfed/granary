@@ -749,15 +749,28 @@ foo bar
       'shares': 'http://bar',
     }))
 
-  def test_from_as1_non_int_duration(self):
+  def test_from_as1_iso8601_duration(self):
     self.assert_equals({
       'type': ['h-entry'],
       'properties': {
         'video': ['http://vid/eo'],
+        'duration': ['PT1M'],
       },
     }, microformats2.from_as1({
       'objectType': 'video',
       'stream': [{'url': 'http://vid/eo', 'duration': 'PT1M'}],
+    }))
+
+  def test_from_as1_int_duration(self):
+    self.assert_equals({
+      'type': ['h-entry'],
+      'properties': {
+        'video': ['http://vid/eo'],
+        'duration': ['P0DT90S'],
+      },
+    }, microformats2.from_as1({
+      'objectType': 'video',
+      'stream': [{'url': 'http://vid/eo', 'duration': 90}],
     }))
 
   def test_get_string_urls(self):
