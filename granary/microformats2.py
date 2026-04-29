@@ -257,7 +257,8 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
     if util.is_int(duration):
       duration = str(duration)
     else:
-      logging('Ignoring duration %r; expected int, got %s', duration.__class__)
+      logger.warning('Ignoring duration %r; expected int, got %s',
+                     duration, duration.__class__)
       duration = None
 
   size = stream.get('size')
@@ -513,7 +514,7 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   urls = []
   for u in get_string_urls(props.get('url')):
     if not util.is_url(u):
-      logging.debug(f'ignoring bad u-url {u}')
+      logger.debug(f'ignoring bad u-url {u}')
       continue
     rel = rel_urls.get(u, {}) if rel_urls else {}
     urls.append({
@@ -616,7 +617,7 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   try:
     interpreted = mf2util.interpret({'items': [mf2]}, None)
   except (AttributeError, ValueError) as e:
-    logging.warning('mf2util.interpret failed')
+    logger.warning('mf2util.interpret failed')
 
   if interpreted:
     loc = interpreted.get('location')

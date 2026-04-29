@@ -749,6 +749,17 @@ foo bar
       'shares': 'http://bar',
     }))
 
+  def test_from_as1_non_int_duration(self):
+    self.assert_equals({
+      'type': ['h-entry'],
+      'properties': {
+        'video': ['http://vid/eo'],
+      },
+    }, microformats2.from_as1({
+      'objectType': 'video',
+      'stream': [{'url': 'http://vid/eo', 'duration': 'PT1M'}],
+    }))
+
   def test_get_string_urls(self):
     for expected, objs in (
         ([], []),
