@@ -1260,7 +1260,7 @@ class ClientTest(testutil.TestCase):
 
     FakeConnection.reset()
 
-    nostr.connect = fake_connect
+    nostr.websocket_connect = fake_connect
 
     self.nostr = nostr.Nostr(['ws://relay'], privkey=NSEC_URI)
 

@@ -50,10 +50,14 @@ import secrets
 import bech32
 from bs4 import BeautifulSoup
 from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
+from oauth_dropins.webutil.util import (
+  HTTP_TIMEOUT,
+  json_dumps,
+  json_loads,
+  websocket_connect,
+)
 import secp256k1
 from websockets.exceptions import ConnectionClosedOK
-from websockets.sync.client import connect
 
 from . import as1
 from .source import (
@@ -944,10 +948,10 @@ class Nostr(Source):
 
     # query for activities
     logger.debug(f'connecting to {self.relays[0]}')
-    with connect(self.relays[0],
-                 open_timeout=HTTP_TIMEOUT,
-                 close_timeout=HTTP_TIMEOUT,
-                 ) as websocket:
+    with websocket_connect(self.relays[0],
+                           open_timeout=HTTP_TIMEOUT,
+                           close_timeout=HTTP_TIMEOUT,
+                           ) as websocket:
       events = self.query(websocket, {
         'authors': [id],
         'kinds': [KIND_PROFILE],
@@ -994,10 +998,10 @@ class Nostr(Source):
 
     # query for activities
     logger.debug(f'connecting to {self.relays[0]}')
-    with connect(self.relays[0],
-                 open_timeout=HTTP_TIMEOUT,
-                 close_timeout=HTTP_TIMEOUT,
-                 ) as websocket:
+    with websocket_connect(self.relays[0],
+                           open_timeout=HTTP_TIMEOUT,
+                           close_timeout=HTTP_TIMEOUT,
+                           ) as websocket:
       events = self.query(websocket, filter)
       event_ids = [e['id'] for e in events]
       # maps raw Nostr id to activity
@@ -1121,10 +1125,10 @@ class Nostr(Source):
     assert not missing, f'missing {missing}'
 
     logger.debug(f'connecting to {self.relays[0]}')
-    with connect(self.relays[0],
-                 open_timeout=HTTP_TIMEOUT,
-                 close_timeout=HTTP_TIMEOUT,
-                 ) as websocket:
+    with websocket_connect(self.relays[0],
+                           open_timeout=HTTP_TIMEOUT,
+                           close_timeout=HTTP_TIMEOUT,
+                           ) as websocket:
       create = ['EVENT', event]
       logger.debug(f'{websocket.remote_address} <= {create}')
       try:
