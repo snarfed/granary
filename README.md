@@ -312,6 +312,7 @@ Changelog
 * Bug fix for converting HTML content to plain text when it includes square brackets (`[` and `]`) ([snarfed/bridgy-fed#1605](https://github.com/snarfed/bridgy-fed/issues/1605)).
 * `nostr`:
   * `from_as1`: fix crash when converting an `article` object with no `id`.
+  * `to_as1`: support [NIP-71](https://github.com/nostr-protocol/nips/blob/master/71.md) video events (kinds 21, 22, 34235, 34236), converting them to notes with video attachments. Also extracts `imeta` `image` (thumbnail) and `duration`, the top-level `published_at` tag, and the top-level `alt` tag (as a fallback `displayName` on the first video/audio attachment).
 * `microformats2`:
   * `from_as1`: convert `stream.duration` (int seconds) to ISO 8601 duration string for the `duration` mf2 property; also accept ISO 8601 strings passed through from AS1.
   * `to_as1`: fix `quotation-of` h-cite attachments to have `objectType` `note`, enabling correct quote post conversion to ActivityPub ([snarfed/bridgy-fed#1146](https://github.com/snarfed/bridgy-fed/issues/1146)).

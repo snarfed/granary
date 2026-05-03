@@ -23,6 +23,7 @@ NIPS implemented:
 * 39: external identities
 * 48: proxy tags
 * 50: search
+* 71: video
 * 92/94: image, video, audio attachments
 
 TODO:
@@ -95,16 +96,20 @@ ID_RE = re.compile(r'[0-9a-f]{64}')
 
 # Event kinds
 # https://github.com/nostr-protocol/nips#event-kinds
-KIND_PROFILE = 0          # NIP-01: user profile metadata
-KIND_NOTE = 1             # NIP-01: text note
-KIND_CONTACTS = 3         # NIP-02: contact list / followings
-KIND_DELETE = 5           # NIP-09: event deletion
-KIND_REPOST = 6           # NIP-18: repost
-KIND_REACTION = 7         # NIP-25: reactions (likes, dislikes, emojis)
-KIND_GENERIC_REPOST = 16  # NIP-18: generic repost
-KIND_AUTH = 22242         # NIP-42: client authentication
-KIND_ARTICLE = 30023      # NIP-23: long-form content
-KIND_RELAYS = 10002       # NIP-65: user relays
+KIND_PROFILE = 0               # NIP-01: user profile metadata
+KIND_NOTE = 1                  # NIP-01: text note
+KIND_CONTACTS = 3              # NIP-02: contact list / followings
+KIND_DELETE = 5                # NIP-09: event deletion
+KIND_REPOST = 6                # NIP-18: repost
+KIND_REACTION = 7              # NIP-25: reactions (likes, dislikes, emojis)
+KIND_GENERIC_REPOST = 16       # NIP-18: generic repost
+KIND_AUTH = 22242              # NIP-42: client authentication
+KIND_ARTICLE = 30023           # NIP-23: long-form content
+KIND_RELAYS = 10002            # NIP-65: user relays
+KIND_VIDEO = 21                # NIP-71: video event
+KIND_SHORT_VIDEO = 22          # NIP-71: short-form portrait video event
+KIND_VIDEO_ADDR = 34235        # NIP-71: addressable video event
+KIND_SHORT_VIDEO_ADDR = 34236  # NIP-71: addressable short video event
 
 # NIP-39
 # https://github.com/nostr-protocol/nips/blob/master/39.md#claim-types
@@ -727,9 +732,10 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
 
     obj['urls'].append(Nostr.object_url(nip05 or id_bech32))
 
-  elif kind in (KIND_NOTE, KIND_ARTICLE):  # note, article
+  elif kind in (KIND_NOTE, KIND_ARTICLE, KIND_VIDEO, KIND_SHORT_VIDEO,
+                KIND_VIDEO_ADDR, KIND_SHORT_VIDEO_ADDR):
     obj.update({
-      'objectType': 'note' if kind == KIND_NOTE else 'article',
+      'objectType': 'article' if kind == KIND_ARTICLE else 'note',
       'author': make_id(pubkey, 'npub'),
       'content': event.get('content'),
       'content_is_html': False,
@@ -739,9 +745,10 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
       'url': Nostr.object_url(id_bech32),
     })
 
-    if id:
+    if id and kind in (KIND_NOTE, KIND_ARTICLE):
       obj['id'] = make_id(id, 'note')
 
+    alt = None
     for tag in tags:
       type = tag[0]
       if type == 'd' and len(tag) >= 2 and tag[1] and not is_bech32(tag[1]):
@@ -753,6 +760,11 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
                            for t in tag[1:])
       elif type in ('title', 'summary'):
         obj[type] = tag[1]
+      elif type == 'alt' and len(tag) >= 2:  # NIP-31 / NIP-71 accessibility
+        alt = tag[1]
+      elif type == 'published_at' and len(tag) >= 2:
+        obj['published'] = datetime.fromtimestamp(
+          int(tag[1]), tz=timezone.utc).isoformat()
       elif type == 'subject':  # NIP-14 subject tag
         obj.setdefault('title', tag[1])
       elif type == 'location':
@@ -774,18 +786,30 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
               'displayName': metas.get('alt'),
             })
           elif type in ('video', 'audio'):
+            if (duration := metas.get('duration')):
+              duration = int(duration)
             obj['attachments'].append({
               'objectType': type,
               'displayName': metas.get('alt'),
               'stream': {
                 'url': url,
                 'mimeType': mime,
+                'duration': duration,
               },
             })
+            if image := metas.get('image'):
+              obj['image'].append(image)
           else:
             continue
           # remove from text content
           obj['content'] = obj['content'].replace(url, '').rstrip()
+
+    if alt:
+      for att in obj['attachments']:
+        if (att.get('objectType') in ('video', 'audio')
+            and not att.get('displayName')):
+          att['displayName'] = alt
+          break
 
     # convert NIP-27 user mentions in content to AS1 tags, and replace
     # URIs in content with mentioned users' handles
@@ -874,9 +898,9 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
     obj['author'] = make_id(pubkey, 'npub')
 
   # common fields
-  created_at = event.get('created_at')
-  if created_at:
-    obj['published'] = datetime.fromtimestamp(created_at, tz=timezone.utc).isoformat()
+  if created_at := event.get('created_at'):
+    published = datetime.fromtimestamp(created_at, tz=timezone.utc).isoformat()
+    obj.setdefault('published', published)
 
   if isinstance(obj.get('object'), list) and len(obj['object']) == 1:
     obj['object'] = obj['object'][0]

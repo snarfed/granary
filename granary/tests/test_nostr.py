@@ -34,6 +34,7 @@ from ..nostr import (
   KIND_REACTION,
   KIND_RELAYS,
   KIND_REPOST,
+  KIND_SHORT_VIDEO_ADDR,
   to_as1,
   uri_for,
   URI_RE,
@@ -821,6 +822,50 @@ class NostrTest(testutil.TestCase):
     note['attachments'][0]['stream']['mimeType'] = 'audio/mpeg'
     note['attachments'][1]['stream']['mimeType'] = 'video/quicktime'
     self.assert_equals(note, to_as1(event))
+
+  def test_to_as1_video_event_nip71(self):
+    # divine's format
+    event = {
+      'id': '3610771ea4970ac3ba7d20ceb9b6c7fb4d464e806f095f6c4960bc9f761d22bd',
+      'pubkey': PUBKEY,
+      'created_at': NOW_TS + 100,
+      'kind': KIND_SHORT_VIDEO_ADDR,
+      'content': '#windowsxp',
+      'tags': [
+        ['d', '5dKTqrPxXlx'],
+        ['imeta',
+         'url https://media.divine.video/abc',
+         'm video/mp4',
+         'image https://media.divine.video/abc.jpg',
+         'dim 480x480',
+         'duration 6'],
+        ['title', '#windowsxp'],
+        ['alt', 'Video: #windowsxp'],
+        ['published_at', str(NOW_TS)],
+        ['t', 'windowsxp'],
+      ],
+    }
+    self.assert_equals({
+      'objectType': 'note',
+      'id': '5dKTqrPxXlx',
+      'author': PUBKEY_URI,
+      'content': '#windowsxp',
+      'content_is_html': False,
+      'title': '#windowsxp',
+      'published': NOW_ISO,
+      'image': ['https://media.divine.video/abc.jpg'],
+      'attachments': [{
+        'objectType': 'video',
+        'displayName': 'Video: #windowsxp',
+        'stream': {
+          'url': 'https://media.divine.video/abc',
+          'mimeType': 'video/mp4',
+          'duration': 6,
+        },
+      }],
+      'tags': [{'objectType': 'hashtag', 'displayName': 'windowsxp'}],
+      'url': f'https://njump.me/{bech32_encode("nevent", event["id"])}',
+    }, to_as1(event))
 
   def test_to_as1_note_with_imeta_unknown_type(self):
     note = {
