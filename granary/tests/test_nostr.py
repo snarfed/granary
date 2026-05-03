@@ -915,13 +915,12 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(event, from_as1(note))
 
   def test_to_from_as1_article(self):
-    id = '2f395bebb3be5f4738a24f70fea33b7067902eea261fc7b24ba4559f32312acd'
+    id = 'd81d41c173115a08c1012d6ac041239f183e2afe06439a7542a323a308005e41'
     note = {
       'objectType': 'article',
       'id': 'http://art/icle',
       'author': PUBKEY_URI,
       'title': 'a thing',
-      'summary': 'about the thing',
       'content': 'Something to say',
       'content_is_html': False,
       'published': NOW_ISO,
@@ -938,7 +937,6 @@ class NostrTest(testutil.TestCase):
         ['published_at', str(NOW_TS)],
         ['title', 'a thing'],
         ['subject', 'a thing'],
-        ['summary', 'about the thing'],
         ['d', 'http://art/icle']
       ],
     }

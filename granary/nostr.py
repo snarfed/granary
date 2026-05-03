@@ -758,8 +758,8 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
       elif type == 't' and len(tag) >= 2:
         obj['tags'].extend({'objectType': 'hashtag', 'displayName': t}
                            for t in tag[1:])
-      elif type in ('title', 'summary'):
-        obj[type] = tag[1]
+      elif type == 'title':
+        obj['title'] = tag[1]
       elif type == 'alt' and len(tag) >= 2:  # NIP-31 / NIP-71 accessibility
         alt = tag[1]
       elif type == 'published_at' and len(tag) >= 2:
