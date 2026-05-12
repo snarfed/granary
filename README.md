@@ -309,23 +309,18 @@ Changelog
 ### 10.1 - unreleased
 
 * Start on [Farcaster](https://farcaster.xyz/) support! ([snarfed/bridgy-fed#447](https://github.com/snarfed/bridgy-fed/issues/447)).
-* Bug fix for converting HTML content to plain text when it includes square brackets (`[` and `]`) ([snarfed/bridgy-fed#1605](https://github.com/snarfed/bridgy-fed/issues/1605)).
-* `nostr`:
-  * `from_as1`: fix crash when converting an `article` object with no `id`.
-  * `to_as1`:
-    * Support [NIP-71](https://github.com/nostr-protocol/nips/blob/master/71.md) video events (kinds 21, 22, 34235, 34236), converting them to notes with video attachments. Also extracts `imeta` `image` (thumbnail) and `duration`, the top-level `published_at` tag, and the top-level `alt` tag (as a fallback `displayName` on the first video/audio attachment).
-    * Stop converting Nostr `summary` to AS1 `summary`.
-* `microformats2`:
-  * `from_as1`: convert `stream.duration` (int seconds) to ISO 8601 duration string for the `duration` mf2 property; also accept ISO 8601 strings passed through from AS1.
-  * `to_as1`: fix `quotation-of` h-cite attachments to have `objectType` `note`, enabling correct quote post conversion to ActivityPub ([snarfed/bridgy-fed#1146](https://github.com/snarfed/bridgy-fed/issues/1146)).
-* `atom`:
-  * `from_as1`: include entry tags as `<category>` elements.
+* `as1`:
+  * Bug fix for converting HTML content to plain text when it includes square brackets (`[` and `]`) ([snarfed/bridgy-fed#1605](https://github.com/snarfed/bridgy-fed/issues/1605)).
 * `as2`
   * `from_as1`:
     * Preserve the input object's `@context` field, and extend it, instead of overwriting it.
   * `to_as1`:
     * Handle multiply-valued `content`.
     * Handle `null` elements in `attachment`.
+* `atom`:
+  * `from_as1`:
+    * Include entry tags as `<category>` elements.
+    * If an object or activity doesn't have `url`, fall back to `id` for populating `link rel="self"`.
 * `bluesky`:
   * Convert `application` and `service` actors to/from the Bluesky `bot` self-label.
   * `from_as1`:
@@ -337,7 +332,14 @@ Changelog
     * Add support for `site.standard.document` records, converting them to AS1 `article` objects.
     * Add support for `site.standard.publication` records, converting them to AS1 `person` objects.
   * New `Bluesky.from_auth(auth_entity, client_metadata=None)` classmethod: creates a `Bluesky` instance from an `oauth_dropins.bluesky.BlueskyAuth` entity, handling both legacy app password sessions and OAuth DPoP tokens.
+* `microformats2`:
+  * `from_as1`: convert `stream.duration` (int seconds) to ISO 8601 duration string for the `duration` mf2 property; also accept ISO 8601 strings passed through from AS1.
+  * `to_as1`: fix `quotation-of` h-cite attachments to have `objectType` `note`, enabling correct quote post conversion to ActivityPub ([snarfed/bridgy-fed#1146](https://github.com/snarfed/bridgy-fed/issues/1146)).
 * `nostr`:
+  * `from_as1`: fix crash when converting an `article` object with no `id`.
+  * `to_as1`:
+    * Support [NIP-71](https://github.com/nostr-protocol/nips/blob/master/71.md) video events (kinds 21, 22, 34235, 34236), converting them to notes with video attachments. Also extracts `imeta` `image` (thumbnail) and `duration`, the top-level `published_at` tag, and the top-level `alt` tag (as a fallback `displayName` on the first video/audio attachment).
+    * Stop converting Nostr `summary` to AS1 `summary`.
   * `Nostr` constructor: raise `ValueError` on invalid relay URL.
   * `Nostr.query`: skip NIP-42 AUTH challenge gracefully when no `privkey` is set.
 

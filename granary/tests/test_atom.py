@@ -569,19 +569,19 @@ quoted text
 
   def test_object_only(self):
     out = atom.from_as1([{'object': {
-      'displayName': 'Den oberoende sociala webben 2015',
-      'id': 'http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/',
+      'displayName': 'Something',
+      'id': 'http://x/y',
       'author': {
         'image': {'url': 'http://voxpelli.com/avatar.jpg'},
-        'url': 'http://voxpelli.com/',
+        'url': 'http://x/',
       },
-      'url': 'http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/',
+      'url': 'http://x/y',
     }}], test_twitter.ACTOR)
 
     for expected in (
-        '<link rel="alternate" type="text/html" href="http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/" />',
-        '<link rel="self" href="http://voxpelli.com/2015/09/oberoende-sociala-webben-2015/" />',
-        '<uri>http://voxpelli.com/</uri>',
+        '<link rel="alternate" type="text/html" href="http://x/y" />',
+        '<link rel="self" href="http://x/y" />',
+        '<uri>http://x/</uri>',
         ):
       self.assert_multiline_in(expected, out)
 
@@ -591,6 +591,13 @@ quoted text
       'content': 'fooey barry',
     }], None)
     self.assert_multiline_in('fooey barry', out)
+
+  def test_from_as1_no_url_rel_self_link_fallback_to_id(self):
+    out = atom.from_as1([{
+      'id': 'http://x/y',
+      'content': 'foo',
+    }], None)
+    self.assert_multiline_in('<link rel="self" href="http://x/y" />', out)
 
   def test_attachments(self):
     got = atom.from_as1([{'object': {'attachments': [

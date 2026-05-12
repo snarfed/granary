@@ -72,7 +72,7 @@
     <georss:featureName>{{ location.displayName }}</georss:featureName>
   {% endif %}
 
-  <link rel="self" href="{{ url }}" />
+  <link rel="self" href="{{ url or activity.id }}" />
 
   {% for att in obj.attachments %}
     {% if att.objectType in ('audio', 'video') and att.stream.url %}
