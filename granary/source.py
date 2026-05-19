@@ -711,10 +711,9 @@ class Source(object, metaclass=SourceMeta):
           # couldn't convert lat or lon to float
           pass
 
-    if first_link_to_attachment and not obj.get('attachments'):
-      # parse lazily; parsing HTML content is expensive, and unnecessary unless
-      # we're actually going to use the first link
-      links = util.parse_html(obj.get('content') or '').find_all('a')
+    if (first_link_to_attachment and (content := obj.get('content'))
+        and not obj.get('attachments') and obj.get('content_is_html') is not False):
+      links = util.parse_html(content).find_all('a')
       if links and links[0].get('href'):
         try:
           if mf2 := util.fetch_mf2(links[0]['href'], metaformats=True):
