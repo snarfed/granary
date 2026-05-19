@@ -16,6 +16,7 @@ import re
 from urllib.parse import urlparse
 
 from oauth_dropins.webutil import util
+from oauth_dropins.webutil.util import json_dumps, json_loads
 
 from . import as1
 from .source import html_to_text, Source
@@ -509,7 +510,10 @@ def to_as1(obj, use_type=True, get_fn=None):
   elif not isinstance(obj, dict):
     raise ValueError(f'Expected dict, got {obj!r}')
 
-  obj = copy.deepcopy(obj)
+  # JSON round trip: same as copy.deepcopy for these JSON-safe AS2 objects, but
+  # ~2x faster, and this is a CPU hot spot
+  # https://github.com/snarfed/bridgy-fed/issues/2488
+  obj = json_loads(json_dumps(obj))
   for field in '@context', 'discoverable', 'indexable':
     obj.pop(field, None)
 
@@ -781,7 +785,7 @@ def to_as1(obj, use_type=True, get_fn=None):
     obj.setdefault('author', {}).update(attrib_as1 if isinstance(attrib_as1, dict)
                                         else {'id': attrib_as1})
 
-  return util.trim_nulls(Source.postprocess_object(obj))
+  return Source.postprocess_object(obj)
 
 
 def is_public(activity, unlisted=True):

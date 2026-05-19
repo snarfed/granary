@@ -711,20 +711,21 @@ class Source(object, metaclass=SourceMeta):
           # couldn't convert lat or lon to float
           pass
 
-    links = util.parse_html(obj.get('content') or '').find_all('a')
-
-    if (first_link_to_attachment and links and links[0].get('href')
-        and not obj.get('attachments')):
-      try:
-        if mf2 := util.fetch_mf2(links[0]['href'], metaformats=True):
-          entry = mf2util.find_first_entry(mf2, ['h-entry', 'h-card'])
-          obj['attachments'] = [{
-            **microformats2.to_as1(entry),
-            'objectType': 'link',
-          }]
-      except (AssertionError, ValueError, RequestException) as e:
-        logger.info(f"Couldn't generate preview embed for {links[0]['href']}: {e}")
-        util.interpret_http_exception(e)
+    if first_link_to_attachment and not obj.get('attachments'):
+      # parse lazily; parsing HTML content is expensive, and unnecessary unless
+      # we're actually going to use the first link
+      links = util.parse_html(obj.get('content') or '').find_all('a')
+      if links and links[0].get('href'):
+        try:
+          if mf2 := util.fetch_mf2(links[0]['href'], metaformats=True):
+            entry = mf2util.find_first_entry(mf2, ['h-entry', 'h-card'])
+            obj['attachments'] = [{
+              **microformats2.to_as1(entry),
+              'objectType': 'link',
+            }]
+        except (AssertionError, ValueError, RequestException) as e:
+          logger.info(f"Couldn't generate preview embed for {links[0]['href']}: {e}")
+          util.interpret_http_exception(e)
 
     return util.trim_nulls(obj)
 

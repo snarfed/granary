@@ -908,7 +908,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
   if obj.get('objectType') == 'activity' and (pubkey := event.get('pubkey')):
     obj['actor'] = make_id(pubkey, 'npub')
 
-  return util.trim_nulls(Source.postprocess_object(obj))
+  return Source.postprocess_object(obj)
 
 
 class Nostr(Source):

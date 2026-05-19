@@ -309,6 +309,7 @@ Changelog
 ### 10.1 - unreleased
 
 * Start on [Farcaster](https://farcaster.xyz/) support! ([snarfed/bridgy-fed#447](https://github.com/snarfed/bridgy-fed/issues/447)).
+* Speed up `to_as1` conversions: parse HTML content lazily in `Source.postprocess_object` (only when `first_link_to_attachment` is set), drop a redundant `trim_nulls` pass in `as2` and `nostr` `to_as1`, and copy the input via JSON round trip instead of `copy.deepcopy` in `as2.to_as1` ([snarfed/bridgy-fed#2488](https://github.com/snarfed/bridgy-fed/issues/2488)).
 * `as1`:
   * Bug fix for converting HTML content to plain text when it includes square brackets (`[` and `]`) ([snarfed/bridgy-fed#1605](https://github.com/snarfed/bridgy-fed/issues/1605)).
 * `as2`
