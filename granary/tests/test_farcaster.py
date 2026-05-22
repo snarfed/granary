@@ -6,6 +6,7 @@ import logging
 from unittest.mock import patch
 
 from google.protobuf import text_format
+import grpc
 from oauth_dropins.webutil import testutil, util
 
 from ..farcaster import (
@@ -28,7 +29,9 @@ from ..generated.farcaster.request_response_pb2 import (
   FidRequest,
   MessagesResponse,
   ReactionsByFidRequest,
+  UsernameProofRequest,
 )
+from ..generated.farcaster.username_proof_pb2 import UserNameProof
 
 PRIVKEY = Ed25519PrivateKey.generate()
 PUBKEY = PRIVKEY.public_key()
@@ -820,6 +823,28 @@ class FarcasterClientTest(testutil.TestCase):
 
     mock_stub.return_value.GetUserDataByFid.assert_called_once_with(
       FidRequest(fid=456))
+
+  def test_get_fid(self, mock_stub):
+    mock_stub.return_value.GetUsernameProof.return_value = \
+      UserNameProof(fid=456, name=b'alice')
+
+    fc = Farcaster('snap.chain:3383')
+    self.assertEqual(456, fc.get_fid('alice'))
+
+    mock_stub.return_value.GetUsernameProof.assert_called_once_with(
+      UsernameProofRequest(name=b'alice'))
+
+  def test_get_fid_not_found(self, mock_stub):
+    mock_stub.return_value.GetUsernameProof.return_value = UserNameProof()
+
+    fc = Farcaster('snap.chain:3383')
+    self.assertIsNone(fc.get_fid('nope'))
+
+  def test_get_fid_rpc_error(self, mock_stub):
+    mock_stub.return_value.GetUsernameProof.side_effect = grpc.RpcError('boom')
+
+    fc = Farcaster('snap.chain:3383')
+    self.assertIsNone(fc.get_fid('alice'))
 
   def test_get_activities_response_bad_user_id(self, mock_stub):
     fc = Farcaster('snap.chain:3383')

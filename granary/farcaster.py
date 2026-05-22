@@ -38,6 +38,7 @@ from .generated.farcaster.request_response_pb2 import (
   FidRequest,
   MessagesResponse,
   ReactionsByFidRequest,
+  UsernameProofRequest,
 )
 from .generated.farcaster.message_pb2 import (
   CastId,
@@ -508,7 +509,7 @@ class Farcaster(source.Source):
   """Farcaster source class. See file docstring and :class:`Source` for details.
 
   Attributes:
-    _hub (rpc_pb2_grpc.HubServiceStub): gRPC client
+    hub (rpc_pb2_grpc.HubServiceStub): gRPC client
   """
 
   DOMAIN = 'farcaster.xyz'
@@ -527,7 +528,7 @@ class Farcaster(source.Source):
     addr = f'{host}:{port}'
     logger.info(f'Connecting to Farcaster Snapchain node {addr}')
     channel = grpc.secure_channel(addr, grpc.ssl_channel_credentials())
-    self._hub = rpc_pb2_grpc.HubServiceStub(channel)
+    self.hub = rpc_pb2_grpc.HubServiceStub(channel)
 
   @classmethod
   def user_url(cls, fid):
@@ -552,8 +553,29 @@ class Farcaster(source.Source):
     Returns:
       dict: AS1 actor
     """
-    resp = self._hub.GetUserDataByFid(FidRequest(fid=fid))
+    resp = self.hub.GetUserDataByFid(FidRequest(fid=fid))
     return to_as1(resp)
+
+  def get_fid(self, username):
+    """Resolves a Farcaster username to its FID via the hub.
+
+    Uses the ``GetUsernameProof`` RPC:
+    https://snapchain.farcaster.xyz/reference/grpcapi/usernameproof
+
+    Args:
+      username (str): eg ``alice`` or ``alice.eth``
+
+    Returns:
+      int: FID, or None if the username isn't registered or the RPC fails
+    """
+    try:
+      proof = self.hub.GetUsernameProof(
+        UsernameProofRequest(name=username.encode('utf-8')))
+      if proof.fid:
+        return proof.fid
+
+    except grpc.RpcError as e:
+      logger.info(f'GetUsernameProof({username!r}) failed: {e}')
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
                               activity_id=None, fetch_replies=False,
@@ -594,19 +616,19 @@ class Farcaster(source.Source):
       if activity_id:
         cast_hash = bytes.fromhex(activity_id.removeprefix('farcaster:cast:'))
         add_activities(MessagesResponse(
-          messages=[self._hub.GetCast(CastId(fid=fid, hash=cast_hash))]))
+          messages=[self.hub.GetCast(CastId(fid=fid, hash=cast_hash))]))
       else:
-        add_activities(self._hub.GetCastsByFid(FidRequest(fid=fid, **page_kwargs)))
+        add_activities(self.hub.GetCastsByFid(FidRequest(fid=fid, **page_kwargs)))
 
       if fetch_mentions:
-        add_activities(self._hub.GetCastsByMention(FidRequest(fid=fid, **page_kwargs)))
+        add_activities(self.hub.GetCastsByMention(FidRequest(fid=fid, **page_kwargs)))
 
       if fetch_likes:
-        add_activities(self._hub.GetReactionsByFid(ReactionsByFidRequest(
+        add_activities(self.hub.GetReactionsByFid(ReactionsByFidRequest(
           fid=fid, reaction_type=REACTION_TYPE_LIKE, **page_kwargs)))
 
       if fetch_shares:
-        add_activities(self._hub.GetReactionsByFid(
+        add_activities(self.hub.GetReactionsByFid(
           ReactionsByFidRequest(
             fid=fid, reaction_type=REACTION_TYPE_RECAST, **page_kwargs)))
 
