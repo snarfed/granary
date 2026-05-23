@@ -57,6 +57,19 @@ data {
   return msg
 
 
+def user_data_message(fid, user_data_type, value):
+  return message(f"""
+fid: {fid}
+timestamp: 1640000000
+network: FARCASTER_NETWORK_MAINNET
+type: MESSAGE_TYPE_USER_DATA_ADD
+user_data_body {{
+  type: {user_data_type}
+  value: "{value}"
+}}
+""")
+
+
 class FarcasterTest(testutil.TestCase):
 
   def test_cast(self):
@@ -767,19 +780,6 @@ cast_add_body { text: "Hello!" }
 
     with self.assertRaisesRegex(ValueError, 'Signature verification failed'):
       verify(msg)
-
-
-def user_data_message(fid, user_data_type, value):
-  return message(f"""
-fid: {fid}
-timestamp: 1640000000
-network: FARCASTER_NETWORK_MAINNET
-type: MESSAGE_TYPE_USER_DATA_ADD
-user_data_body {{
-  type: {user_data_type}
-  value: "{value}"
-}}
-""")
 
 
 @patch('granary.farcaster.rpc_pb2_grpc.HubServiceStub')
