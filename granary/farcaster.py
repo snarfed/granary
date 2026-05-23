@@ -5,7 +5,6 @@ https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md
 https://snapchain.farcaster.xyz/
 
 TODO:
-* from_as1 actor support. probably return a list of Message?
 * rel-alternate links via "Social Attestations." so complicated :(
   https://github.com/farcasterxyz/protocol/discussions/199
 * mapping FIDs <=> DNS domains. unclear whether/how much this is adopted
@@ -384,16 +383,20 @@ def from_as1(obj):
     obj (dict): AS1 activity or object
 
   Returns:
-    message_pb2.Message: Farcaster Message protobuf
+    message_pb2.Message or list of message_pb2.Message: Farcaster Message
+      protobuf, or list of Messages if ``obj`` is an actor
   """
-  obj = copy.deepcopy(obj)
-  msg = Message()
-  data = msg.data
-
   type = as1.object_type(obj)
   if type in ('post', 'update'):
     type = as1.object_type(as1.get_object(obj))
     obj = as1.get_object(obj)
+
+  # actor/profile: return one USER_DATA Message per field
+  if type in as1.ACTOR_TYPES:
+    return _from_as1_actor(obj)
+
+  msg = Message()
+  data = msg.data
 
   inner_obj = as1.get_object(obj)
   inner_id = inner_obj.get('id')
@@ -503,6 +506,56 @@ def from_as1(obj):
 
   serialize_and_hash(msg)
   return msg
+
+
+def _from_as1_actor(obj):
+  """Converts an ActivityStreams 1 actor to Farcaster USER_DATA Messages.
+
+  Args:
+    obj (dict): AS1 actor
+
+  Returns:
+    list of message_pb2.Message:
+  """
+  assert as1.object_type(obj) in as1.ACTOR_TYPES
+
+  fid = None
+  if (match := FARCASTER_URI_RE.fullmatch(obj.get('id', ''))) and not match['hash']:
+    fid = int(match['fid'])
+
+  published = (util.parse_iso8601(obj['published']) if obj.get('published')
+               else util.now(tz=timezone.utc))
+  timestamp = int(published.timestamp())
+
+  def add(user_data_type, value):
+    msg = Message()
+    msg.data.type = MESSAGE_TYPE_USER_DATA_ADD
+    msg.data.network = FARCASTER_NETWORK_MAINNET
+    msg.data.timestamp = timestamp
+    if fid:
+      msg.data.fid = fid
+    msg.data.user_data_body.type = user_data_type
+    msg.data.user_data_body.value = value
+    serialize_and_hash(msg)
+    msgs.append(msg)
+
+  msgs = []
+  if val := obj.get('displayName'):
+    add(USER_DATA_TYPE_DISPLAY, val)
+  if val := obj.get('username'):
+    add(USER_DATA_TYPE_USERNAME, val)
+  if val := obj.get('summary'):
+    add(USER_DATA_TYPE_BIO, val)
+  for img in as1.get_objects(obj, 'image'):
+    if img.get('objectType') == 'featured':
+      if url := img.get('url'):
+        add(USER_DATA_TYPE_BANNER, url)
+    elif url := as1.get_url(img) or img.get('id'):
+      add(USER_DATA_TYPE_PFP, url)
+  if val := obj.get('url'):
+    add(USER_DATA_TYPE_URL, val)
+
+  return msgs
 
 
 class Farcaster(source.Source):

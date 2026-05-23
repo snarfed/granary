@@ -2,6 +2,7 @@
 from blake3 import blake3
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+from datetime import datetime, timezone
 import logging
 from unittest.mock import patch
 
@@ -41,12 +42,12 @@ logger = logging.getLogger(__name__)
 
 def message(data_text):
   """Generates a Message with data, data_bytes, hash, and signature."""
-  msg = text_format.Parse("""
-data {
+  msg = text_format.Parse(f"""
+data {{
   fid: 123
-  timestamp: 1640000000
+  timestamp: {testutil.NOW_SECONDS}
   network: FARCASTER_NETWORK_MAINNET
-}
+}}
 """, message_pb2.Message())
   text_format.Merge(data_text, msg.data)
 
@@ -60,7 +61,7 @@ data {
 def user_data_message(fid, user_data_type, value):
   return message(f"""
 fid: {fid}
-timestamp: 1640000000
+timestamp: {testutil.NOW_SECONDS}
 network: FARCASTER_NETWORK_MAINNET
 type: MESSAGE_TYPE_USER_DATA_ADD
 user_data_body {{
@@ -86,7 +87,7 @@ cast_add_body {
       'author': 'farcaster://123',
       'content': 'Hello Farcaster!',
       'content_is_html': False,
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     }
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
@@ -105,7 +106,7 @@ cast_add_body {
       'author': 'farcaster://123',
       'content': 'Hello Farcaster!',
       'content_is_html': False,
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     }, to_as1(msg))
 
   def test_cast_with_mentions(self):
@@ -124,7 +125,7 @@ cast_add_body {
       'author': 'farcaster://123',
       'content': 'Hey @alice!',
       'content_is_html': False,
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'tags': [{
         'objectType': 'mention',
         'url': 'farcaster://456',
@@ -151,7 +152,7 @@ cast_add_body {
       'author': 'farcaster://123',
       'content': 'Check this out',
       'content_is_html': False,
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'image': ['https://example.com/image.jpg'],
     }
     self.assertEqual(obj, to_as1(msg))
@@ -174,7 +175,7 @@ cast_add_body {
       'author': 'farcaster://123',
       'content': 'Watch this',
       'content_is_html': False,
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'attachments': [{
         'objectType': 'video',
         'stream': {'url': 'https://example.com/video.mp4'},
@@ -200,7 +201,7 @@ cast_add_body {
       'author': 'farcaster://123',
       'content': 'Read this',
       'content_is_html': False,
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'attachments': [{
         'objectType': 'link',
         'url': 'https://example.com/article',
@@ -229,7 +230,7 @@ cast_add_body {
       'author': 'farcaster://123',
       'content': 'Quoting this',
       'content_is_html': False,
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'attachments': [{
         'objectType': 'note',
         'id': 'farcaster://789/0xabcd123456',
@@ -256,7 +257,7 @@ cast_add_body {
         'author': 'farcaster://123',
         'content': 'Hello Farcaster!',
         'content_is_html': False,
-        'published': '2021-12-20T11:33:20+00:00',
+        'published': '2022-01-02T03:04:05+00:00',
       },
     }
     self.assertEqual(msg, from_as1(obj))
@@ -279,7 +280,7 @@ cast_add_body {
       'author': 'farcaster://123',
       'content': 'Replying',
       'content_is_html': False,
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'inReplyTo': {
         'id': 'farcaster://456/0xabcd789012',
         'author': 'farcaster://456',
@@ -304,7 +305,7 @@ reaction_body {
       'verb': 'like',
       'id': f'farcaster://123/0x{msg.hash.hex()}',
       'actor': 'farcaster://123',
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'object': {
         'id': 'farcaster://456/0xef78901234',
         'author': 'farcaster://456',
@@ -329,7 +330,7 @@ reaction_body {
       'verb': 'undo',
       'id': f'farcaster://123/0x{msg.hash.hex()}',
       'actor': 'farcaster://123',
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'object': {
         'objectType': 'activity',
         'verb': 'like',
@@ -354,10 +355,10 @@ reaction_body {
     obj = {
       'objectType': 'activity',
       'verb': 'like',
-      'id': 'farcaster://123/0xd01dd690b665a07927759660f4f1f2c0b0635ae8',
+      'id': 'farcaster://123/0x69291c4fa8c659e62b28724378a67ea02d83b6ee',
       'actor': 'farcaster://123',
       'object': 'https://example.com/post',
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     }
     self.assertEqual(msg, from_as1(obj))
     self.assertEqual(obj, to_as1(msg))
@@ -378,7 +379,7 @@ reaction_body {
       'verb': 'share',
       'id': f'farcaster://123/0x{msg.hash.hex()}',
       'actor': 'farcaster://123',
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'object': {
         'id': 'farcaster://456/0xef78901234',
         'author': 'farcaster://456',
@@ -403,7 +404,7 @@ reaction_body {
       'verb': 'undo',
       'id': f'farcaster://123/0x{msg.hash.hex()}',
       'actor': 'farcaster://123',
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'object': {
         'objectType': 'activity',
         'verb': 'share',
@@ -428,7 +429,7 @@ cast_add_body {
       'objectType': 'article',
       'author': 'farcaster://123',
       'content': 'Long form content here',
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     }
     self.assertEqual(msg, from_as1(obj))
 
@@ -438,7 +439,7 @@ type: MESSAGE_TYPE_LINK_ADD
 link_body {
   type: "follow"
   target_fid: 456
-  displayTimestamp: 1640000000
+  displayTimestamp: 1641092645
 }
 """)
     obj = {
@@ -446,7 +447,7 @@ link_body {
       'verb': 'follow',
       'actor': 'farcaster://123',
       'object': 'farcaster://456',
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     }
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
@@ -457,7 +458,7 @@ type: MESSAGE_TYPE_LINK_REMOVE
 link_body {
   type: "follow"
   target_fid: 456
-  displayTimestamp: 1640000000
+  displayTimestamp: 1641092645
 }
 """)
     obj = {
@@ -470,7 +471,7 @@ link_body {
         'actor': 'farcaster://123',
         'object': 'farcaster://456',
       },
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     }
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
@@ -481,7 +482,7 @@ type: MESSAGE_TYPE_LINK_ADD
 link_body {
   type: "block"
   target_fid: 456
-  displayTimestamp: 1640000000
+  displayTimestamp: 1641092645
 }
 """)
     obj = {
@@ -489,7 +490,7 @@ link_body {
       'verb': 'block',
       'actor': 'farcaster://123',
       'object': 'farcaster://456',
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     }
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
@@ -500,7 +501,7 @@ type: MESSAGE_TYPE_LINK_REMOVE
 link_body {
   type: "block"
   target_fid: 456
-  displayTimestamp: 1640000000
+  displayTimestamp: 1641092645
 }
 """)
     obj = {
@@ -513,7 +514,7 @@ link_body {
         'actor': 'farcaster://123',
         'object': 'farcaster://456',
       },
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     }
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
@@ -530,7 +531,7 @@ cast_remove_body {
       'verb': 'delete',
       'actor': 'farcaster://123',
       'object': 'farcaster://123/0xabcd1234',
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     }
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
@@ -578,26 +579,56 @@ cast_remove_body {
       ],
     }, to_as1(resp))
 
+  def test_from_as1_actor(self):
+    self.assertEqual([
+      user_data_message(456, 'USER_DATA_TYPE_DISPLAY', 'Alice'),
+      user_data_message(456, 'USER_DATA_TYPE_USERNAME', 'alice'),
+      user_data_message(456, 'USER_DATA_TYPE_BIO', 'Hello world'),
+      user_data_message(456, 'USER_DATA_TYPE_PFP', 'https://example.com/alice.jpg'),
+      user_data_message(456, 'USER_DATA_TYPE_BANNER', 'https://example.com/ban.jpg'),
+      user_data_message(456, 'USER_DATA_TYPE_URL', 'https://alice.com/'),
+    ], from_as1({
+      'objectType': 'person',
+      'id': 'farcaster://456',
+      'displayName': 'Alice',
+      'username': 'alice',
+      'summary': 'Hello world',
+      'image': [
+        'https://example.com/alice.jpg',
+        {'objectType': 'featured', 'url': 'https://example.com/ban.jpg'},
+      ],
+      'url': 'https://alice.com/',
+    }))
+
+  def test_from_as1_actor_minimal(self):
+    self.assertEqual([
+      user_data_message(123, 'USER_DATA_TYPE_DISPLAY', 'Bob'),
+    ], from_as1({
+      'objectType': 'person',
+      'id': 'farcaster://123',
+      'displayName': 'Bob',
+    }))
+
   def test_from_as1_data_bytes(self):
     msg = from_as1({
       'objectType': 'note',
       'author': 'farcaster://123',
       'content': 'Hello Farcaster!',
       'content_is_html': False,
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     })
     self.assertEqual(r"""data {
   type: MESSAGE_TYPE_CAST_ADD
   fid: 123
-  timestamp: 1640000000
+  timestamp: 1641092645
   network: FARCASTER_NETWORK_MAINNET
   cast_add_body {
     text: "Hello Farcaster!"
   }
 }
-hash: "\307$\376J&\253\237\270#\303\250\310(\207\027\232\020\270\204j"
+hash: "W\214W\311.\223\216^Q\322\377\013\227\221\344\301 W7\303"
 hash_scheme: HASH_SCHEME_BLAKE3
-data_bytes: "\010\001\020{\030\200\324\201\216\006 \001*\022\"\020Hello Farcaster!"
+data_bytes: "\010\001\020{\030\245\254\304\216\006 \001*\022\"\020Hello Farcaster!"
 """, str(msg))
 
   def test_from_as1_html_link_mention_hashtag(self):
@@ -611,7 +642,7 @@ cast_add_body {
 """), from_as1({
       'objectType': 'note',
       'author': 'farcaster://123',
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'content': 'foo <a href="https://example.com">bar</a> @alice #news',
       'tags': [{
         'objectType': 'mention',
@@ -634,7 +665,7 @@ cast_add_body {
 """), from_as1({
       'objectType': 'note',
       'author': 'farcaster://123',
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
       'content': 'foo @alice #news https://example.com',
       'tags': [{
         'objectType': 'mention',
@@ -649,7 +680,7 @@ cast_add_body {
   def test_to_as1_deserializes_data_bytes(self):
     data = text_format.Parse("""
 fid: 123
-timestamp: 1640000000
+timestamp: 1641092645
 network: FARCASTER_NETWORK_MAINNET
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body { text: "From data_bytes!" }
@@ -667,14 +698,14 @@ cast_add_body { text: "From data_bytes!" }
       'author': 'farcaster://123',
       'content': 'From data_bytes!',
       'content_is_html': False,
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     }, to_as1(msg))
 
   def test_to_as1_data_bytes_overwrites_data(self):
     # data_bytes content should win over msg.data
     data = text_format.Parse("""
 fid: 123
-timestamp: 1640000000
+timestamp: 1641092645
 network: FARCASTER_NETWORK_MAINNET
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body { text: "From data_bytes!" }
@@ -880,7 +911,7 @@ cast_add_body { text: "Hello!" }
           'author': 'farcaster://123',
           'content': 'Hello!',
           'content_is_html': False,
-          'published': '2021-12-20T11:33:20+00:00',
+          'published': '2022-01-02T03:04:05+00:00',
         },
       }],
     }, resp)
@@ -922,7 +953,7 @@ reaction_body {
         'id': 'farcaster://456/0xabcd',
         'author': 'farcaster://456',
       },
-      'published': '2021-12-20T11:33:20+00:00',
+      'published': '2022-01-02T03:04:05+00:00',
     }], resp['items'])
     mock_stub.return_value.GetReactionsByFid.assert_called_once_with(
       ReactionsByFidRequest(fid=123, reaction_type=REACTION_TYPE_LIKE, reverse=True))
