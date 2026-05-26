@@ -59,6 +59,8 @@ data {{
 
 
 def user_data_message(fid, user_data_type, value):
+  escaped = (value.replace('\\', '\\\\').replace('"', '\\"')
+             .replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t'))
   return message(f"""
 fid: {fid}
 timestamp: {testutil.NOW_SECONDS}
@@ -66,7 +68,7 @@ network: FARCASTER_NETWORK_MAINNET
 type: MESSAGE_TYPE_USER_DATA_ADD
 user_data_body {{
   type: {user_data_type}
-  value: "{value}"
+  value: "{escaped}"
 }}
 """)
 
