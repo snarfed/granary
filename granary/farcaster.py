@@ -578,9 +578,13 @@ class Farcaster(source.Source):
     """
     assert host
     assert port
+
     addr = f'{host}:{port}'
     logger.info(f'Connecting to Farcaster Snapchain node {addr}')
-    channel = grpc.secure_channel(addr, grpc.ssl_channel_credentials())
+
+    channel = grpc.intercept_channel(
+      grpc.secure_channel(addr, grpc.ssl_channel_credentials()),
+      util.GrpcLoggingInterceptor(logger=logger, level=logging.DEBUG))
     self.hub = rpc_pb2_grpc.HubServiceStub(channel)
 
   @classmethod

@@ -839,7 +839,7 @@ class FarcasterClientTest(testutil.TestCase):
         user_data_message(456, 'USER_DATA_TYPE_URL', 'https://alice.com/'),
       ])
 
-    fc = Farcaster('snap.chain:3383')
+    fc = Farcaster()
     self.assertEqual({
       'objectType': 'person',
       'id': 'farcaster://456',
@@ -861,7 +861,7 @@ class FarcasterClientTest(testutil.TestCase):
     mock_stub.return_value.GetUsernameProof.return_value = \
       UserNameProof(fid=456, name=b'alice')
 
-    fc = Farcaster('snap.chain:3383')
+    fc = Farcaster()
     self.assertEqual(456, fc.get_fid('alice'))
 
     mock_stub.return_value.GetUsernameProof.assert_called_once_with(
@@ -870,17 +870,17 @@ class FarcasterClientTest(testutil.TestCase):
   def test_get_fid_not_found(self, mock_stub):
     mock_stub.return_value.GetUsernameProof.return_value = UserNameProof()
 
-    fc = Farcaster('snap.chain:3383')
+    fc = Farcaster()
     self.assertIsNone(fc.get_fid('nope'))
 
   def test_get_fid_rpc_error(self, mock_stub):
     mock_stub.return_value.GetUsernameProof.side_effect = grpc.RpcError('boom')
 
-    fc = Farcaster('snap.chain:3383')
+    fc = Farcaster()
     self.assertIsNone(fc.get_fid('alice'))
 
   def test_get_activities_response_bad_user_id(self, mock_stub):
-    fc = Farcaster('snap.chain:3383')
+    fc = Farcaster()
     with self.assertRaisesRegex(ValueError, 'user_id must be a Farcaster FID'):
       fc.get_activities_response(user_id='not-an-int')
 
@@ -892,7 +892,7 @@ cast_add_body { text: "Hello!" }
     mock_stub.return_value.GetCastsByFid.return_value = \
       MessagesResponse(messages=[cast])
 
-    fc = Farcaster('snap.chain:3383')
+    fc = Farcaster()
     resp = fc.get_activities_response(user_id='123')
 
     self.assertEqual({
@@ -924,7 +924,7 @@ cast_add_body { text: "Hello!" }
     mock_stub.return_value.GetCastsByFid.return_value = \
       MessagesResponse()
 
-    fc = Farcaster('snap.chain:3383')
+    fc = Farcaster()
     fc.get_activities_response(user_id='123', count=10)
 
     mock_stub.return_value.GetCastsByFid.assert_called_once_with(
@@ -943,7 +943,7 @@ reaction_body {
     mock_stub.return_value.GetReactionsByFid.return_value = \
       MessagesResponse(messages=[like])
 
-    fc = Farcaster('snap.chain:3383')
+    fc = Farcaster('snap.chain')
     resp = fc.get_activities_response(user_id='123', fetch_likes=True)
 
     self.assertEqual([{
@@ -970,7 +970,7 @@ cast_add_body { text: "Hey @alice!"  mentions: 123  mentions_positions: 4 }
     mock_stub.return_value.GetCastsByMention.return_value = \
       MessagesResponse(messages=[mention])
 
-    fc = Farcaster('snap.chain:3383')
+    fc = Farcaster()
     resp = fc.get_activities_response(user_id='123', fetch_mentions=True)
 
     self.assertEqual(1, len(resp['items']))
