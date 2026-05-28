@@ -50,15 +50,15 @@ import secrets
 
 import bech32
 from bs4 import BeautifulSoup
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import (
+import secp256k1
+from websockets.exceptions import ConnectionClosedOK
+from webutil import util
+from webutil.util import (
   HTTP_TIMEOUT,
   json_dumps,
   json_loads,
   websocket_connect,
 )
-import secp256k1
-from websockets.exceptions import ConnectionClosedOK
 
 from . import as1
 from .source import (
@@ -342,6 +342,8 @@ def nip05_to_npub(nip05):
 
 def id_and_sign(event, privkey):
   """Populates a Nostr event's id and signature, in place.
+
+  https://github.com/nostr-protocol/nips/blob/master/01.md#events-and-signatures
 
   Args:
     event (dict)

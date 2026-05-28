@@ -29,7 +29,7 @@ import re
 from urllib.parse import urlparse
 
 import grpc
-from oauth_dropins.webutil import util
+from webutil import util
 
 from . import as1, source
 from .generated.farcaster import rpc_pb2_grpc
@@ -183,6 +183,8 @@ def serialize_and_hash(msg):
 
 def sign(msg, privkey):
   """Signs a ``Message`` and populates its ``signer`` and ``signature``.
+
+  https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md#2-message-specifications
 
   Args:
     msg (message_pb2.Message)

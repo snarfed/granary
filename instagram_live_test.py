@@ -11,11 +11,12 @@ import sys
 import time
 import unittest
 
-from oauth_dropins.webutil import util
 from oauth_dropins.instagram import INSTAGRAM_SESSIONID_COOKIE
+from requests.exceptions import HTTPError, ReadTimeout
+from webutil import util
+
 from granary import instagram
 from granary.source import FRIENDS, SELF
-from requests.exceptions import HTTPError, ReadTimeout
 
 logger = logging.getLogger(__name__)
 

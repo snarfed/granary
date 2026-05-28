@@ -52,9 +52,12 @@ setup(name='granary',
           'praw>=7.3.0',
           'pymediainfo',
           'python-dateutil>=2.8',
+          'pywebutil[google-cloud,html]>=1.0',
           'requests>=2.22',
           'secp256k1>=0.14.0',
           'websockets>=11.0',
       ],
-      tests_require=['mox3>=0.28'],
+      tests_require=[
+        'mox3 @ git+https://github.com/snarfed/mox3.git',
+      ],
 )

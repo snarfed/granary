@@ -7,11 +7,10 @@ import urllib.parse
 
 from mox3 import mox
 from oauth_dropins import twitter_auth
-from oauth_dropins.webutil import testutil
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
 from requests import RequestException
+from webutil import testutil, util
+from webutil.util import json_dumps, json_loads
 
 from .. import microformats2
 from .. import source

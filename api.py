@@ -29,9 +29,9 @@ import urllib.parse
 
 from cachetools import cached, LRUCache
 from flask import abort, request
-from oauth_dropins.webutil import flask_util, util
-from oauth_dropins.webutil.flask_util import error, get_required_param
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import flask_util, util
+from webutil.flask_util import error, get_required_param
+from webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest
 
 import app

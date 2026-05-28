@@ -10,7 +10,7 @@ from xml.etree import ElementTree
 import xml.sax.saxutils
 
 import jinja2
-from oauth_dropins.webutil import util
+from webutil import util
 
 from . import as1
 from . import microformats2

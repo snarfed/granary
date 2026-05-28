@@ -1,10 +1,9 @@
 """Tests for meetup.py."""
 import copy
 
-from oauth_dropins.webutil import testutil
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_dumps
 from granary.meetup import Meetup
+from webutil import testutil, util
+from webutil.util import json_dumps
 
 
 # test data

@@ -11,11 +11,7 @@ from urllib.parse import urljoin
 
 from lexrpc.base import AT_URI_RE
 from multiformats import CID
-from oauth_dropins.webutil.appengine_config import ndb_client
 from oauth_dropins.bluesky import BlueskyAuth
-from oauth_dropins.webutil import testutil, util
-from oauth_dropins.webutil.testutil import NOW, requests_response
-from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, trim_nulls
 import requests
 from requests.auth import HTTPBasicAuth
 from requests_oauth2client import (
@@ -25,6 +21,10 @@ from requests_oauth2client import (
   OAuth2Client,
   TokenSerializer,
 )
+from webutil.appengine_config import ndb_client
+from webutil import testutil, util
+from webutil.testutil import NOW, requests_response
+from webutil.util import HTTP_TIMEOUT, json_dumps, trim_nulls
 
 from .. import bluesky
 from ..bluesky import (

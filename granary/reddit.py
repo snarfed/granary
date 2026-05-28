@@ -17,9 +17,9 @@ import urllib.parse
 
 from cachetools import cachedmethod, TTLCache
 from oauth_dropins import reddit
-from oauth_dropins.webutil import util
 import praw
 from prawcore.exceptions import NotFound
+from webutil import util
 
 from . import source
 

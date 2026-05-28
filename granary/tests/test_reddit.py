@@ -3,10 +3,9 @@ import copy
 
 from mox3 import mox
 from oauth_dropins import reddit as oauth_reddit
-from oauth_dropins.webutil import testutil
-from oauth_dropins.webutil import util
+from webutil import testutil, util
 
-from granary import reddit
+from .. import reddit
 
 import praw
 from praw.models import Subreddit, User

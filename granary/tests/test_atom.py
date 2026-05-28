@@ -2,8 +2,8 @@
 import copy
 
 from mox3 import mox
-from oauth_dropins.webutil import testutil
 import requests
+from webutil import testutil
 
 from .. import atom
 from . import test_facebook

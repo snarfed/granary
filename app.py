@@ -22,14 +22,14 @@ from oauth_dropins import (
   twitter,
   reddit,
 )
-from oauth_dropins.webutil import (
+import requests
+from webutil import (
   appengine_config,
   appengine_info,
   flask_util,
   util,
 )
-from oauth_dropins.webutil.util import json_dumps, json_loads
-import requests
+from webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest, HTTPException
 
 from granary import (

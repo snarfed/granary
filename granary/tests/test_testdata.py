@@ -5,9 +5,8 @@ import glob
 import logging
 import os
 
-from oauth_dropins.webutil import testutil
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import testutil, util
+from webutil.util import json_dumps, json_loads
 
 from .. import as2, bluesky, jsonfeed, microformats2, rss
 

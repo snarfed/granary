@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from google.protobuf import text_format
 import grpc
-from oauth_dropins.webutil import testutil, util
+from webutil import testutil, util
 
 from ..farcaster import (
   BLAKE3_HASH_LENGTH_BYTES,

@@ -8,13 +8,12 @@ from threading import Semaphore
 from unittest.mock import patch
 from urllib.parse import urlparse
 
-from oauth_dropins.webutil import testutil
-from oauth_dropins.webutil.testutil import requests_response
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 import requests
 from secp256k1 import PrivateKey, PublicKey
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
+from webutil import testutil, util
+from webutil.testutil import requests_response
+from webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 
 from .. import nostr
 from ..nostr import (

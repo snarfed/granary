@@ -1,5 +1,5 @@
 """Unit tests for rss.py."""
-from oauth_dropins.webutil import testutil
+from webutil import testutil
 
 from .. import rss
 

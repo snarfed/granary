@@ -5,8 +5,8 @@ import re
 import urllib.error, urllib.parse, urllib.request
 
 from oauth_dropins import meetup
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_loads
+from webutil import util
+from webutil.util import json_loads
 
 from . import as1
 from . import source

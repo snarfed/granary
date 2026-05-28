@@ -5,7 +5,7 @@ JSON Feed spec: https://jsonfeed.org/version/1.1
 import mimetypes
 
 import mf2util
-from oauth_dropins.webutil import util
+from webutil import util
 
 from . import as1, microformats2
 from .source import Source

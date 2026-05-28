@@ -6,8 +6,8 @@ for full testdata tests.
 import copy
 import re
 
-from oauth_dropins.webutil import testutil
 import mf2py
+from webutil import testutil
 
 from .. import microformats2
 

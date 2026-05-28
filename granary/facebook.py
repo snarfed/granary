@@ -14,8 +14,8 @@ from bs4.element import NavigableString, Tag
 import dateutil.parser
 import mf2util
 import oauth_dropins.facebook
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import util
+from webutil.util import json_dumps, json_loads
 
 from . import as1
 from . import source

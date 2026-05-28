@@ -18,9 +18,9 @@ import urllib.parse
 import brevity
 import html2text
 import mf2util
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests import RequestException
+from webutil import util
+from webutil.util import json_dumps, json_loads
 
 from . import as1, microformats2
 

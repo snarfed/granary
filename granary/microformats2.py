@@ -18,8 +18,8 @@ import xml.sax.saxutils
 import dateutil.parser
 import humanfriendly
 import mf2util
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import (
+from webutil import util
+from webutil.util import (
   dedupe_urls,
   get_first,
   get_list,

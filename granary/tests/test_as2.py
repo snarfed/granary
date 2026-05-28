@@ -4,8 +4,9 @@ Most of the tests are in testdata/. This is just a few things that are too small
 for full testdata tests.
 """
 import copy
-from oauth_dropins.webutil import testutil, util
 from unittest.mock import MagicMock
+
+from webutil import testutil, util
 
 from .. import as2
 from ..as2 import is_public, PUBLICS

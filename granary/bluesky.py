@@ -21,11 +21,11 @@ from lexrpc import Client
 from lexrpc.base import AT_URI_RE, Base, LANG_RE
 from multiformats import CID
 from oauth_dropins import bluesky as oauth_bluesky
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import trim_nulls
 from pymediainfo import MediaInfo
 import requests
 from requests_oauth2client import OAuth2AccessTokenAuth, TokenSerializer
+from webutil import util
+from webutil.util import trim_nulls
 
 from . import as1
 from .as2 import QUOTE_RE_SUFFIX

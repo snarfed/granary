@@ -17,9 +17,9 @@ import string
 import urllib.parse, urllib.request
 import xml.sax.saxutils
 
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_dumps, json_loads
 import requests
+from webutil import util
+from webutil.util import json_dumps, json_loads
 
 from . import as1
 from . import source

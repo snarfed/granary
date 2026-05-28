@@ -1,8 +1,8 @@
 """Unit tests for mastodon.py."""
 import copy
 
-from oauth_dropins.webutil import testutil, util
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import testutil, util
+from webutil.util import json_dumps, json_loads
 from requests import HTTPError
 
 from .. import mastodon

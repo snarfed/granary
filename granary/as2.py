@@ -15,8 +15,8 @@ from os.path import splitext
 import re
 from urllib.parse import urlparse
 
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import util
+from webutil.util import json_dumps, json_loads
 
 from . import as1
 from .source import html_to_text, Source

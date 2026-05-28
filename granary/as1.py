@@ -10,7 +10,7 @@ from operator import itemgetter
 import re
 import string
 
-from oauth_dropins.webutil import util
+from webutil import util
 
 from . import source
 

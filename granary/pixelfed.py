@@ -7,7 +7,7 @@ import logging
 import urllib.parse
 from urllib.parse import urljoin
 
-from oauth_dropins.webutil import util
+from webutil import util
 
 from . import mastodon
 

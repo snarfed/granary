@@ -8,8 +8,8 @@ from urllib.parse import quote
 from granary import as2
 from granary.tests import test_bluesky, test_instagram, test_nostr
 from mox3 import mox
-from oauth_dropins.webutil import testutil, util
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import testutil, util
+from webutil.util import json_dumps, json_loads
 import requests
 
 from app import app

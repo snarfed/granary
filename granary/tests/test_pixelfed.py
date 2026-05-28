@@ -1,8 +1,8 @@
 """Unit tests for pixelfed.py."""
 import copy
 
-from oauth_dropins.webutil import testutil, util
-from oauth_dropins.webutil.util import json_dumps, json_loads
+from webutil import testutil, util
+from webutil.util import json_dumps, json_loads
 
 from .. import mastodon, pixelfed
 from . import test_mastodon

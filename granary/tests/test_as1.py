@@ -3,7 +3,7 @@ import copy
 import re
 from unittest.mock import patch
 
-from oauth_dropins.webutil import testutil, util
+from webutil import testutil, util
 
 from .. import as1
 

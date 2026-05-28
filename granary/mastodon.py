@@ -12,9 +12,9 @@ import logging
 import re
 from urllib.parse import urljoin
 
-from oauth_dropins.webutil import util
-from oauth_dropins.webutil.util import json_dumps, json_loads
 from requests import HTTPError, JSONDecodeError, RequestException
+from webutil import util
+from webutil.util import json_dumps, json_loads
 
 from . import as1
 from . import source

@@ -4,7 +4,7 @@ http://flask.pocoo.org/docs/2.0/config
 """
 import logging
 
-from oauth_dropins.webutil import appengine_info, util
+from webutil import appengine_info, util
 
 if appengine_info.DEBUG:
   ENV = 'development'

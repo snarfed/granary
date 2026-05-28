@@ -2,7 +2,7 @@
 import copy
 import socket
 
-from oauth_dropins.webutil import testutil
+from webutil import testutil
 
 from granary import instagram
 from granary import source

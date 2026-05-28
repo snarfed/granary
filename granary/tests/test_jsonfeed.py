@@ -1,5 +1,5 @@
 """Unit tests for jsonfeed.py."""
-from oauth_dropins.webutil import testutil
+from webutil import testutil
 
 from ..jsonfeed import from_as1, to_as1
 

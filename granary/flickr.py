@@ -15,8 +15,8 @@ import requests
 import mf2util
 import urllib.parse
 
-from oauth_dropins.webutil import util
 from oauth_dropins import flickr_auth
+from webutil import util
 
 from . import as1
 from . import source
