@@ -140,11 +140,6 @@ The useful methods are `get_activities()` and `get_actor()`, which returns the c
 The `microformats2.*_to_html()` functions are also useful for rendering ActivityStreams 1 objects as nicely formatted HTML.
 
 
-Troubleshooting/FAQ
----
-Check out the [oauth-dropins Troubleshooting/FAQ section](https://github.com/snarfed/oauth-dropins#troubleshootingfaq). It's pretty comprehensive and applies to this project too.
-
-
 Future work
 ---
 
@@ -318,6 +313,7 @@ Changelog
   * `to_as1`:
     * Handle multiply-valued `content`.
     * Handle `null` elements in `attachment`.
+    * For `Undo` `Follow` activities, populate the inner `Follow`'s id (if any) in a new `followId` field on the resulting `stop-following` activity ([snarfed/bridgy-fed#1631](https://github.com/snarfed/bridgy-fed/issues/1631)).
 * `atom`:
   * `from_as1`:
     * Include entry tags as `<category>` elements.

@@ -630,6 +630,9 @@ def to_as1(obj, use_type=True, get_fn=None):
     if (type == 'Undo' and isinstance(inner_objs, dict)
         and inner_objs.get('verb') == 'follow'):
       obj['verb'] = 'stop-following'
+      # custom field, used for tracking
+      # https://github.com/snarfed/bridgy-fed/issues/1631
+      obj['followId'] = inner_objs.get('id')
       inner_inner_obj = as1.get_object(inner_objs)
       inner_objs = (inner_inner_obj.get('id') or util.get_url(inner_inner_obj, 'url')
                     if isinstance(inner_inner_obj, dict) else inner_inner_obj)

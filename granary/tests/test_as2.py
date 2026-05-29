@@ -61,6 +61,27 @@ class ActivityStreams2Test(testutil.TestCase):
       'object': 'bob',
     }))
 
+  def test_to_as1_undo_follow_with_inner_id(self):
+    self.assertEqual({
+      'objectType': 'activity',
+      'verb': 'stop-following',
+      'id': 'http://undo',
+      'actor': 'http://alice',
+      'object': 'http://bob',
+      'followId': 'http://follow',
+    }, as2.to_as1({
+      '@context': as2.CONTEXT,
+      'type': 'Undo',
+      'id': 'http://undo',
+      'actor': 'http://alice',
+      'object': {
+        'type': 'Follow',
+        'id': 'http://follow',
+        'actor': 'http://alice',
+        'object': 'http://bob',
+      },
+    }))
+
   def test_from_as1_icon_prefers_mastodon_allowed_type(self):
     self.assertEqual({
       'type': 'Image',
