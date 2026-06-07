@@ -1646,8 +1646,14 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         image = img.get('image')
         if image:
           url = blob_to_url(blob=image, repo_did=repo_did, pds=pds)
-          ret.append({'url': url, 'displayName': img['alt']}
-                     if img.get('alt') else url)
+          as1_img = {'url': url}
+          if alt := img.get('alt'):
+            as1_img['displayName'] = alt
+          if aspect := img.get('aspectRatio'):
+            as1_img.update(**aspect)  # only has width and height
+          if list(as1_img.keys()) == ['url']:
+            as1_img = url
+          ret.append(as1_img)
 
   elif type == 'app.bsky.embed.video':
     ret = {}
@@ -1664,10 +1670,15 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         }
 
   elif type == 'app.bsky.embed.images#view':
-    ret = [{
-      'url': img.get('fullsize'),
-      'displayName': img.get('alt'),
-    } for img in obj.get('images', [])]
+    ret = []
+    for img in obj.get('images', []):
+      as1_img = {
+        'url': img.get('fullsize'),
+        'displayName': img.get('alt'),
+      }
+      if aspect := img.get('aspectRatio'):
+        as1_img.update(**aspect)  # only has width and height
+      ret.append(as1_img)
 
   elif type == 'app.bsky.embed.video#view':
     ret = {}

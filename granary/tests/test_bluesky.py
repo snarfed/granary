@@ -3575,6 +3575,32 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_post_view_with_image(self):
     self.assert_equals(POST_AS_IMAGES['object'], to_as1(POST_VIEW_BSKY_IMAGES))
 
+  def test_to_as1_post_with_image_aspect_ratio(self):
+    self.assert_equals([{
+      'url': NEW_BLOB_URL,
+      'width': 480,
+      'height': 640,
+    }], to_as1({
+      '$type': 'app.bsky.embed.images',
+      'images': [{
+        'image': NEW_BLOB,
+        'aspectRatio': {'width': 480, 'height': 640},
+      }],
+    }, repo_did='did:plc:foo'))
+
+  def test_to_as1_post_view_with_image_aspect_ratio(self):
+    self.assert_equals([{
+      'url': 'https://cdn.example/full.jpg',
+      'width': 480,
+      'height': 640,
+    }], to_as1({
+      '$type': 'app.bsky.embed.images#view',
+      'images': [{
+        'fullsize': 'https://cdn.example/full.jpg',
+        'aspectRatio': {'width': 480, 'height': 640},
+      }],
+    }))
+
   def test_to_as1_post_with_video(self):
     self.assert_equals(trim_nulls({
       **POST_AS_VIDEO['object'],
