@@ -82,6 +82,13 @@ DEFAULT_SNAPCHAIN_PORT = 3383
 # * farcaster://[fid]/0x[hash]
 FARCASTER_URI_RE = re.compile(r'farcaster://(?P<fid>[0-9]+)(/0x(?P<hash>[0-9a-f]+))?')
 
+# reference web client URLs
+# https://docs.farcaster.xyz/reference/farcaster/intent-urls#resource-urls
+WEB_RESOURCE_URL_RE = re.compile(
+  r'https://farcaster\.xyz/~/(?P<type>profiles|conversations)/(?P<id>.+)')
+WEB_URL_RE = re.compile(
+  r'https://farcaster\.xyz/(?P<username>[^/~][^/]*)(/(?P<hash>0x[0-9a-f]+))?')
+
 # https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md#hashing
 BLAKE3_HASH_LENGTH_BYTES = 20
 
@@ -111,6 +118,93 @@ def uri(fid, hash=None):
     uri += f'/0x{hash.hex()}'
 
   return uri
+
+
+def farcaster_uri_to_web_url(uri):
+  """Converts a ``farcaster://`` URI to a ``https://farcaster.xyz`` URL.
+
+  https://github.com/farcasterxyz/protocol/discussions/123
+  https://docs.farcaster.xyz/reference/farcaster/intent-urls#resource-urls
+
+  Args:
+    uri (str): ``farcaster://`` URI
+
+  Returns:
+    str: ``https://farcaster.xyz`` URL, or None
+
+  Raises:
+    ValueError: if uri is not a string or doesn't start with ``farcaster://``
+  """
+  if not uri:
+    return None
+
+  if not uri.startswith('farcaster://'):
+    raise ValueError(f'Expected farcaster:// URI, got {uri}')
+
+  if not (match := FARCASTER_URI_RE.fullmatch(uri)):
+    return None
+
+  if hash := match.group('hash'):
+    return f'https://farcaster.xyz/~/conversations/0x{hash}'
+
+  fid = match.group('fid')
+  return Farcaster.user_url(fid)
+
+
+def web_url_to_farcaster_uri(url, fid=None):
+  """Converts a ``https://farcaster.xyz`` URL to a ``farcaster://`` URI.
+
+  Supports tilde URLs:
+
+  * ``https://farcaster.xyz/~/profiles/[fid]``
+  * ``https://farcaster.xyz/~/conversations/0x[hash]``
+
+  And pretty URLs:
+
+  * ``https://farcaster.xyz/[username]``
+  * ``https://farcaster.xyz/[username]/0x[hash]``
+
+  Query strings and fragments are stripped before conversion. For tilde cast
+  URLs, ``fid`` is required to construct the URI.
+
+  https://docs.farcaster.xyz/reference/farcaster/intent-urls#resource-urls
+  https://github.com/farcasterxyz/protocol/discussions/123
+
+  Args:
+    url (str): ``farcaster.xyz`` URL
+    fid (int): Farcaster user ID, required for tilde cast/conversation URLs
+
+  Returns:
+    str: ``farcaster://`` URI, or None if fid is not provided for a tilde cast URL
+
+  Raises:
+    ValueError: if ``url`` can't be parsed as a ``farcaster.xyz`` URL
+  """
+  if not url:
+    return None
+
+  parsed = urlparse(url)
+  url = parsed._replace(query='', fragment='').geturl()
+
+  if match := WEB_RESOURCE_URL_RE.fullmatch(url):
+    type = match.group('type')
+    id = match.group('id')
+    if type == 'profiles':
+      return f'farcaster://{id}'
+    # conversations: id is 0x<hash>
+    if not fid:
+      return None
+    hash_hex = id.removeprefix('0x')
+    return f'farcaster://{fid}/0x{hash_hex}'
+
+  if match := WEB_URL_RE.fullmatch(url):
+    username = match.group('username')
+    hash = match.group('hash')
+    if hash:
+      return f'farcaster://{username}/{hash}'
+    return f'farcaster://{username}'
+
+  raise ValueError(f"{url} doesn't look like a farcaster.xyz URL")
 
 
 def deserialize(msg):

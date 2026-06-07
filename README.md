@@ -330,6 +330,8 @@ Changelog
     * Add support for `site.standard.publication` records, converting them to AS1 `person` objects.
     * Populate `width` and `height` on AS1 image objects from `aspectRatio` in `app.bsky.embed.images` and `app.bsky.embed.images#view` embeds.
   * New `Bluesky.from_auth(auth_entity, client_metadata=None)` classmethod: creates a `Bluesky` instance from an `oauth_dropins.bluesky.BlueskyAuth` entity, handling both legacy app password sessions and OAuth DPoP tokens.
+* `farcaster`:
+  * New `farcaster_uri_to_web_url` and `web_url_to_farcaster_uri` functions.
 * `microformats2`:
   * `from_as1`: convert `stream.duration` (int seconds) to ISO 8601 duration string for the `duration` mf2 property; also accept ISO 8601 strings passed through from AS1.
   * `to_as1`: fix `quotation-of` h-cite attachments to have `objectType` `note`, enabling correct quote post conversion to ActivityPub ([snarfed/bridgy-fed#1146](https://github.com/snarfed/bridgy-fed/issues/1146)).

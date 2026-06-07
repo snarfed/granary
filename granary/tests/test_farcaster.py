@@ -13,10 +13,12 @@ from webutil import testutil, util
 from ..farcaster import (
   BLAKE3_HASH_LENGTH_BYTES,
   Farcaster,
+  farcaster_uri_to_web_url,
   from_as1,
   sign,
   to_as1,
   verify,
+  web_url_to_farcaster_uri,
 )
 from ..generated.farcaster import message_pb2
 from ..generated.farcaster.message_pb2 import (
@@ -813,6 +815,42 @@ cast_add_body { text: "Hello!" }
 
     with self.assertRaisesRegex(ValueError, 'Signature verification failed'):
       verify(msg)
+
+  def test_farcaster_uri_to_web_url(self):
+    for uri, expected in [
+        (None, None),
+        ('', None),
+        ('farcaster://123', 'https://farcaster.xyz/~/profiles/123'),
+        ('farcaster://123/0xabcd', 'https://farcaster.xyz/~/conversations/0xabcd'),
+    ]:
+      with self.subTest(uri=uri):
+        self.assertEqual(expected, farcaster_uri_to_web_url(uri))
+
+    with self.assertRaises(ValueError):
+      farcaster_uri_to_web_url('https://farcaster.xyz/~/profiles/123')
+
+  def test_web_url_to_farcaster_uri(self):
+    for url, kwargs, expected in [
+        (None, {}, None),
+        ('', {}, None),
+        # tilde URLs
+        ('https://farcaster.xyz/~/profiles/123', {}, 'farcaster://123'),
+        ('https://farcaster.xyz/~/conversations/0xabcd', {}, None),
+        ('https://farcaster.xyz/~/conversations/0xabcd', {'fid': 123},
+         'farcaster://123/0xabcd'),
+        # pretty URLs
+        ('https://farcaster.xyz/snarfed.eth', {}, 'farcaster://snarfed.eth'),
+        ('https://farcaster.xyz/snarfed.eth/0xd687db55', {},
+         'farcaster://snarfed.eth/0xd687db55'),
+        # query and fragment stripped
+        ('https://farcaster.xyz/~/profiles/123?foo=bar', {}, 'farcaster://123'),
+        ('https://farcaster.xyz/snarfed.eth#foo', {}, 'farcaster://snarfed.eth'),
+    ]:
+      with self.subTest(url=url):
+        self.assertEqual(expected, web_url_to_farcaster_uri(url, **kwargs))
+
+    with self.assertRaises(ValueError):
+      web_url_to_farcaster_uri('https://example.com/foo')
 
 
 @patch('granary.farcaster.rpc_pb2_grpc.HubServiceStub')
