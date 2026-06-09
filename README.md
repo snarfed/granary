@@ -325,10 +325,12 @@ Changelog
     * De-dupe `tags` in output `site.standard.document` records.
     * Limit DM (`chat.bsky.convo.defs#messageInput`) output to record embeds only, not other types.
     * Convert raw domains in `mention` tags to home page URLs in `app.bsky.richtext.facet#link.uri`.
+    * Posts with more than 4 images now use `app.bsky.embed.gallery` instead of `app.bsky.embed.images`.
   * `to_as1`:
     * Add support for `site.standard.document` records, converting them to AS1 `article` objects.
     * Add support for `site.standard.publication` records, converting them to AS1 `person` objects.
     * Populate `width` and `height` on AS1 image objects from `aspectRatio` in `app.bsky.embed.images` and `app.bsky.embed.images#view` embeds.
+    * Support `app.bsky.embed.gallery` and `app.bsky.embed.gallery#view` embeds.
   * New `Bluesky.from_auth(auth_entity, client_metadata=None)` classmethod: creates a `Bluesky` instance from an `oauth_dropins.bluesky.BlueskyAuth` entity, handling both legacy app password sessions and OAuth DPoP tokens.
 * `farcaster`:
   * New `farcaster_uri_to_web_url` and `web_url_to_farcaster_uri` functions.

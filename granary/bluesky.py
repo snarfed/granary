@@ -478,7 +478,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       ``ref``, ``mimeType``, and ``size``) to use in the returned object. If not
       provided, or if this doesn't have an ``image`` or similar URL in the input
       object, its output blob will be omitted.
-    aspects (dict): optional mapping from str URL to int (width,height) tuple.
+    aspects (dict): optional mapping from str URL to int (width, height) tuple.
         Used to provide aspect ratio in image/video embeds.
     client (Bluesky or lexrpc.Client): optional; if provided, this will be used
       to make API calls to PDSes to fetch and populate CIDs for records
@@ -742,27 +742,46 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # images => embeds
     images_embed = images_record_embed = None
     if images := as1.get_objects(obj, 'image'):
-      images_embed = {
-        '$type': 'app.bsky.embed.images#view',
-        'images': [],
-      }
-      for img in images[:4]:
+      images_embed_items = []
+      use_gallery = len(images) > 4
+      if use_gallery:
+        images_embed = {
+          '$type': 'app.bsky.embed.gallery#view',
+          'items': images_embed_items,
+        }
+      else:
+        images_embed = {
+          '$type': 'app.bsky.embed.images#view',
+          'images': images_embed_items,
+        }
+
+      for img in images:
         url = img.get('url') or img.get('id')
         alt = img.get('displayName') or ''
-        images_embed['images'].append({
-          '$type': 'app.bsky.embed.images#viewImage',
-          'thumb': url,
+        images_embed_items.append({
+          '$type': ('app.bsky.embed.gallery#viewImage' if use_gallery
+                    else 'app.bsky.embed.images#viewImage'),
+          ('thumbnail' if use_gallery else 'thumb'): url,
           'fullsize': url,
           'alt': alt,
         })
+
         if blob := blobs.get(url):
           if not images_record_embed:
-            images_record_embed = {
-              '$type': 'app.bsky.embed.images',
-              'images': [],
-            }
+            images_record_items = []
+            if use_gallery:
+              images_record_embed = {
+                '$type': 'app.bsky.embed.gallery',
+                'items': images_record_items,
+              }
+            else:
+              images_record_embed = {
+                '$type': 'app.bsky.embed.images',
+                'images': images_record_items,
+              }
           image_record = {
-            '$type': 'app.bsky.embed.images#image',
+            '$type': ('app.bsky.embed.gallery#image' if use_gallery
+                      else 'app.bsky.embed.images#image'),
             'image': blob,
             'alt': alt,
           }
@@ -771,7 +790,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
               'width': aspect[0],
               'height': aspect[1]
             }
-          images_record_embed['images'].append(image_record)
+          images_record_items.append(image_record)
 
     # first video => embed
     attachments = util.get_list(obj, 'attachments')
@@ -1164,7 +1183,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       ret['embed'] = to_external_embed(obj, description=content or summary,
                                        blobs=blobs)
       if images_record_embed:
-        ret['embed']['external']['thumb'] = images_record_embed['images'][0]['image']
+        imgs = images_record_embed.get('images') or images_record_embed.get('items')
+        ret['embed']['external']['thumb'] = imgs[0]['image']
 
     if original_fields_prefix:
       ret.update({
@@ -1197,7 +1217,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
       if updated := obj.get('updated'):
         doc['updatedAt'] = from_as1_datetime(updated)
-      if images_record_embed and (imgs := images_record_embed.get('images')):
+      if images_record_embed:
+        imgs = images_record_embed.get('images') or images_record_embed.get('items')
         doc['coverImage'] = imgs[0]['image']  # blob
 
       if multiple:
@@ -1583,7 +1604,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     # embeds
     embed = obj.get('embed') or {}
     embed_type = embed.get('$type')
-    if embed_type == 'app.bsky.embed.images':
+    if embed_type in ('app.bsky.embed.images', 'app.bsky.embed.gallery'):
       ret['image'] = to_as1(embed, **kwargs)
     elif embed_type in ('app.bsky.embed.external',
                         'app.bsky.embed.record',
@@ -1598,7 +1619,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       media_type = media.get('$type')
       if media_type in ('app.bsky.embed.external', 'app.bsky.embed.video'):
         ret['attachments'].append(to_as1(media, **kwargs))
-      elif media_type == 'app.bsky.embed.images':
+      elif media_type in ('app.bsky.embed.images', 'app.bsky.embed.gallery'):
         ret['image'] = to_as1(media, **kwargs)
       else:
         assert False, f'Unknown embed media type: {media_type}'
@@ -1619,7 +1640,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     for embed in util.get_list(obj, 'embeds') + util.get_list(obj, 'embed'):
       embed_type = embed.get('$type')
 
-      if embed_type == 'app.bsky.embed.images#view':
+      if embed_type in ('app.bsky.embed.images#view', 'app.bsky.embed.gallery#view'):
         ret.setdefault('image', []).extend(to_as1(embed, **kwargs))
 
       elif embed_type in ('app.bsky.embed.external#view',
@@ -1634,17 +1655,16 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         media_type = media.get('$type')
         if media_type in ('app.bsky.embed.external#view', 'app.bsky.embed.video#view'):
           ret.setdefault('attachments', []).append(to_as1(media, **kwargs))
-        elif media_type == 'app.bsky.embed.images#view':
+        elif media_type in ('app.bsky.embed.images#view', 'app.bsky.embed.gallery#view'):
           ret.setdefault('image', []).extend(to_as1(media, **kwargs))
         else:
           assert False, f'Unknown embed media type: {media_type}'
 
-  elif type == 'app.bsky.embed.images':
+  elif type in ('app.bsky.embed.images', 'app.bsky.embed.gallery'):
     ret = []
     if repo_did and pds:
-      for img in obj.get('images', []):
-        image = img.get('image')
-        if image:
+      for img in obj.get('images') or obj.get('items') or []:
+        if image := img.get('image'):
           url = blob_to_url(blob=image, repo_did=repo_did, pds=pds)
           as1_img = {'url': url}
           if alt := img.get('alt'):
@@ -1669,9 +1689,9 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
           'displayName': obj.get('alt'),
         }
 
-  elif type == 'app.bsky.embed.images#view':
+  elif type in ('app.bsky.embed.images#view', 'app.bsky.embed.gallery#view'):
     ret = []
-    for img in obj.get('images', []):
+    for img in obj.get('images') or obj.get('items') or []:
       as1_img = {
         'url': img.get('fullsize'),
         'displayName': img.get('alt'),

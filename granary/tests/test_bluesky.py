@@ -327,6 +327,31 @@ POST_VIEW_BSKY_IMAGES['embed'] = {
   }],
 }
 
+GALLERY_URLS = [f'http://pic/{i}' for i in range(1, 6)]
+POST_AS_GALLERY = copy.deepcopy(POST_AS)
+POST_AS_GALLERY['object']['image'] = [{'url': url} for url in GALLERY_URLS]
+
+EMBED_GALLERY_RECORD = {
+  '$type': 'app.bsky.embed.gallery',
+  'items': [{
+    '$type': 'app.bsky.embed.gallery#image',
+    'alt': '',
+    'image': NEW_BLOB,
+  } for _ in GALLERY_URLS],
+}
+EMBED_GALLERY_VIEW = {
+  '$type': 'app.bsky.embed.gallery#view',
+  'items': [{
+    '$type': 'app.bsky.embed.gallery#viewImage',
+    'fullsize': url,
+    'thumbnail': url,
+  } for url in GALLERY_URLS],
+}
+POST_BSKY_GALLERY = {
+  **POST_BSKY,
+  'embed': EMBED_GALLERY_RECORD,
+}
+
 POST_AS_VIDEO = copy.deepcopy(POST_AS)
 POST_AS_VIDEO['object']['attachments'] = [{
   'objectType': 'video',
@@ -1917,6 +1942,24 @@ class BlueskyTest(testutil.TestCase):
     aspects = {NEW_BLOB_URL: (123, 456)}
     self.assert_equals(expected, self.from_as1(POST_AS_VIDEO, blobs=blobs,
                                                aspects=aspects))
+
+  def test_from_as1_post_with_gallery(self):
+    self.assert_equals(POST_BSKY, self.from_as1(POST_AS_GALLERY))
+
+  def test_from_as1_post_with_gallery_blobs(self):
+    blobs = {url: NEW_BLOB for url in GALLERY_URLS}
+    self.assert_equals(POST_BSKY_GALLERY, self.from_as1(POST_AS_GALLERY, blobs=blobs))
+
+  def test_from_as1_post_view_with_gallery(self):
+    self.assert_equals({
+      **POST_VIEW_BSKY,
+      'record': POST_BSKY_GALLERY,
+      'embed': EMBED_GALLERY_VIEW,
+    }, self.from_as1(
+      POST_AS_GALLERY,
+      out_type='app.bsky.feed.defs#postView',
+      blobs={url: NEW_BLOB for url in GALLERY_URLS},
+    ))
 
   def test_from_as1_post_with_audio(self):
     expected = copy.deepcopy(POST_BSKY_AUDIO)
@@ -3597,6 +3640,52 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.embed.images#view',
       'images': [{
         'fullsize': 'https://cdn.example/full.jpg',
+        'aspectRatio': {'width': 480, 'height': 640},
+      }],
+    }))
+
+  def test_to_as1_post_with_gallery(self):
+    self.assert_equals(trim_nulls({
+      **POST_AS_GALLERY['object'],
+      'id': None,
+      'url': None,
+      'author': 'did:plc:foo',
+      'image': [NEW_BLOB_URL] * len(GALLERY_URLS),
+    }), to_as1(POST_BSKY_GALLERY, repo_did='did:plc:foo'))
+
+  def test_to_as1_post_view_with_gallery(self):
+    self.assert_equals(POST_AS_GALLERY['object'], to_as1({
+      **POST_VIEW_BSKY,
+      'embed': EMBED_GALLERY_VIEW,
+    }))
+
+  def test_to_as1_gallery_embed(self):
+    self.assert_equals([{
+      'url': NEW_BLOB_URL,
+      'width': 480,
+      'height': 640,
+    }], to_as1({
+      '$type': 'app.bsky.embed.gallery',
+      'items': [{
+        '$type': 'app.bsky.embed.gallery#image',
+        'alt': '',
+        'image': NEW_BLOB,
+        'aspectRatio': {'width': 480, 'height': 640},
+      }],
+    }, repo_did='did:plc:foo'))
+
+  def test_to_as1_gallery_view_embed(self):
+    self.assert_equals([{
+      'url': 'https://cdn.example/full.jpg',
+      'width': 480,
+      'height': 640,
+    }], to_as1({
+      '$type': 'app.bsky.embed.gallery#view',
+      'items': [{
+        '$type': 'app.bsky.embed.gallery#viewImage',
+        'fullsize': 'https://cdn.example/full.jpg',
+        'alt': '',
+        'thumbnail': 'https://cdn.example/thumb.jpg',
         'aspectRatio': {'width': 480, 'height': 640},
       }],
     }))
