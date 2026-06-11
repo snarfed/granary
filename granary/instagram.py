@@ -1126,7 +1126,7 @@ class Instagram(source.Source):
       return resp.json()
     except ValueError:
       msg = f"Couldn't decode response as JSON:\n{resp.text}"
-      logger.error(msg, exc_info=True)
+      logger.warning(msg, exc_info=True)
       resp.status_code = 504
       raise requests.HTTPError('504 Bad response from Instagram\n' + msg,
                                response=resp)
