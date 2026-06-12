@@ -31,6 +31,7 @@ from webutil import (
 )
 from webutil.util import json_dumps, json_loads
 from werkzeug.exceptions import BadRequest, HTTPException
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from granary import (
   as1,
@@ -148,6 +149,13 @@ if appengine_info.DEBUG or appengine_info.LOCAL_SERVER:
 
 app.wsgi_app = flask_util.ndb_context_middleware(
     app.wsgi_app, client=appengine_config.ndb_client)
+
+# make Flask's request info (request.url etc) reflect the actual end user's HTTP
+# request (https, host, etc), based on X-Forwarded-* etc headers
+#
+# https://docs.cloud.google.com/functions/docs/reference/headers
+# https://werkzeug.palletsprojects.com/en/stable/middleware/proxy_fix/
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_for=1)
 
 cache = flask_caching.Cache(app)
 
@@ -449,7 +457,7 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
 
       return atom.activities_to_atom(
         activities, actor,
-        host_url=url or flask_util.request_host_url() + '/',
+        host_url=url or request.host_url + '/',
         request_url=request.url,
         xml_base=util.base_url(url),
         title=title,
