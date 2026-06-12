@@ -1578,7 +1578,13 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'id': uri,
       'url': at_uri_to_web_url(uri),
       'content': text,
-      'summary': '<br>'.join(content_warnings),
+      # originally I used <br> as the separator here, which is supposed to work
+      # because AS2 summary supports HTML:
+      # https://www.w3.org/TR/activitystreams-vocabulary/#dfn-summary
+      # ...but Mastodon doesn't support it :(
+      # https://github.com/snarfed/bridgy-fed/issues/2509
+      # https://github.com/mastodon/mastodon/issues/34079#issuecomment-2703397374
+      'summary': '; '.join(content_warnings),
       'inReplyTo': [{
         'id': in_reply_to,
         'url': at_uri_to_web_url(in_reply_to),

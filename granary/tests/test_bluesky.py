@@ -4245,7 +4245,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       'objectType' : 'note',
       'sensitive': True,
-      'summary': f'Sexually suggestive<br>Adult content',
+      'summary': f'Sexually suggestive; Adult content',
     }, to_as1({
       '$type': 'app.bsky.feed.post',
       'labels' : {

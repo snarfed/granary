@@ -331,6 +331,7 @@ Changelog
     * Add support for `site.standard.publication` records, converting them to AS1 `person` objects.
     * Populate `width` and `height` on AS1 image objects from `aspectRatio` in `app.bsky.embed.images` and `app.bsky.embed.images#view` embeds.
     * Support `app.bsky.embed.gallery` and `app.bsky.embed.gallery#view` embeds.
+    * Join multiple content warnings with `;` instead of `<br>` because [Mastodon doesn't support HTML in `summary`](https://github.com/mastodon/mastodon/issues/34079#issuecomment-2703397374).
   * New `Bluesky.from_auth(auth_entity, client_metadata=None)` classmethod: creates a `Bluesky` instance from an `oauth_dropins.bluesky.BlueskyAuth` entity, handling both legacy app password sessions and OAuth DPoP tokens.
 * `farcaster`:
   * New `farcaster_uri_to_web_url` and `web_url_to_farcaster_uri` functions.
