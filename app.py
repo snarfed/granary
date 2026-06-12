@@ -449,7 +449,7 @@ def make_response(response, actor=None, url=None, title=None, hfeed=None):
 
       return atom.activities_to_atom(
         activities, actor,
-        host_url=url or request.host_url + '/',
+        host_url=url or flask_util.request_host_url() + '/',
         request_url=request.url,
         xml_base=util.base_url(url),
         title=title,
