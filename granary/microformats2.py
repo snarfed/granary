@@ -1039,7 +1039,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
       tags.setdefault(as1.object_type(t), []).append(t)
 
   # linkify embedded mention tags inside content.
-  # TODO: duplicated in :func:`as2.link_tags`. unify?
+  # TODO: duplicated in :func:`as2.render_content`. unify?
   if mentions:
     mentions.sort(key=lambda t: t['startIndex'])
     last_end = 0
@@ -1057,7 +1057,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
   # no HTML tags in it, and it has a newline, then assume yes.
   # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
   # https://github.com/snarfed/granary/issues/80
-  if content and not obj.get('content_is_html') and '\n' in content:
+  if content and not as1.is_content_html(obj) and '\n' in content:
     if white_space_pre:
       content = f'<div style="white-space: pre">{content}</div>'
     else:

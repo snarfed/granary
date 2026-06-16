@@ -736,7 +736,13 @@ def is_content_html(obj):
   if (is_html := obj.get('content_is_html')) is not None:
     return is_html
 
-  content = obj.get('content') or ''
+  if not (content := obj.get('content')):
+    return False
+
+  # first, cheap substring check to avoid the full HTML parse if possible
+  if '<' not in content and '&' not in content:
+    return False
+
   # use html.parser to require HTML tags, not add them by default
   # https://www.crummy.com/software/BeautifulSoup/bs4/doc/#differences-between-parsers
   return (bool(util.parse_html(content, features='html.parser').find())

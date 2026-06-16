@@ -712,7 +712,7 @@ class Source(object, metaclass=SourceMeta):
           pass
 
     if (first_link_to_attachment and (content := obj.get('content'))
-        and not obj.get('attachments') and obj.get('content_is_html') is not False):
+        and not obj.get('attachments') and as1.is_content_html(obj)):
       links = util.parse_html(content).find_all('a')
       if links and links[0].get('href'):
         try:

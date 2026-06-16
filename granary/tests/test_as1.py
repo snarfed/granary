@@ -1342,6 +1342,10 @@ class As1Test(testutil.TestCase):
         {'content': ''},
         {'content': 'foo'},
         {'content': '<p>foo</p>', 'content_is_html': False},
+        # < > & chars alone aren't HTML without a real tag or entity
+        {'content': 'a < b'},
+        {'content': 'a > b'},
+        {'content': 'AT&T'},
     ):
       with self.subTest(obj=obj):
         self.assertFalse(as1.is_content_html(obj))

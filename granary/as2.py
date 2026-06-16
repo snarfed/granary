@@ -10,6 +10,7 @@
 """
 import copy
 import datetime
+import html
 import logging
 from os.path import splitext
 import re
@@ -27,8 +28,8 @@ logger = logging.getLogger(__name__)
 # https://www.w3.org/TR/activitypub/#retrieving-objects
 CONTENT_TYPE = 'application/activity+json'
 CONTENT_TYPE_LD = 'application/ld+json'
-CONTENT_TYPES = (CONTENT_TYPE, CONTENT_TYPE_LD)
 CONTENT_TYPE_LD_PROFILE = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
+CONTENT_TYPES = (CONTENT_TYPE, CONTENT_TYPE_LD, CONTENT_TYPE_LD_PROFILE)
 # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept
 CONNEG_HEADERS = {
     'Accept': f'{CONTENT_TYPE}, {CONTENT_TYPE_LD_PROFILE}',
@@ -298,12 +299,9 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
         util.add(obj['@context'], MISSKEY_QUOTE_CONTEXT)
         content = obj.get('content') or ''
         if not QUOTE_RE_SUFFIX.search(html_to_text(content)):
-          newlines = '<br><br>' if content else ''
-          url = url or id
-          content += f'<span class="quote-inline">{newlines}RE: <a href="{url}">{url}</a></span>'
-          set_content(obj, content)
-          # don't set content_is_html to True here because that blocks eg link_tags()
-          quote['name'] = f'RE: {url}'
+          # the inline RE: ... link is rendered into content later, in
+          # render_content, so that it isn't HTML-escaped along with content
+          quote['name'] = f'RE: {url or id}'
 
       quote.pop('id', None)
       quote.pop('url', None)
@@ -847,12 +845,17 @@ def address(actor):
         return match.expand(r'@\g<username>@\g<server>')
 
 
-def link_tags(obj):
-  """Adds HTML links to ``content`` for tags with ``startIndex`` and ``length``.
+def render_content(obj):
+  """Renders an AS2 object's plain text ``content`` to HTML.
 
-  ``content`` is modified in place. If ``content_is_html`` is ``true``, does
-  nothing. Otherwise, sets it to ``true`` if at least one link is added. Tags
-  without ``startIndex``/``length`` are ignored.
+  Escapes HTML, converts newlines to ``<br>`` and leading spaces to ``&nbsp;``,
+  adds links for tags with ``startIndex`` and ``length``, and appends the inline
+  ``RE: ...`` link for a quoted post. ``content`` is modified in place.
+
+  If :func:`as1.is_content_html` true, skips escaping, whitespace conversion,
+  and tag linking, but still appends the quoted post link. Otherwise, sets
+  ``content_is_html`` to ``True`` if it changes ``content``. Tags without
+  ``startIndex``/``length`` are ignored for linking.
 
   TODO: duplicated in :func:`microformats2.render_content`. unify?
 
@@ -860,47 +863,68 @@ def link_tags(obj):
     obj (dict): AS2 JSON object
   """
   content = obj.get('content')
-  if not content or obj.get('content_is_html'):
-    return
 
-  # extract indexed tags, preserving order
-  tags = [tag for tag in obj.get('tag', [])
-          if 'startIndex' in tag and 'length' in tag and
-          ('href' in tag or 'url' in tag)]
-  tags.sort(key=lambda t: t['startIndex'])
+  if content and not as1.is_content_html(obj):
+    # extract indexed tags, preserving order
+    tags = [tag for tag in obj.get('tag', [])
+            if 'startIndex' in tag and 'length' in tag and
+            ('href' in tag or 'url' in tag)]
+    tags.sort(key=lambda t: t['startIndex'])
 
-  # linkify embedded mention tags inside content.
-  last_end = 0
-  orig = content
-  linked = ''
-  for tag in tags:
-    url = tag.get('href') or tag.get('url')
-    # Mastodon web UI seems to need class="mention" to convert a mention link to
-    # point to the local instance's view of the remote actor profile, and mobile
-    # apps (and others?) need class="hashtag" to do it for hashtags
-    # https://github.com/snarfed/bridgy-fed/issues/887#issuecomment-2452141758
-    # https://github.com/snarfed/bridgy-fed/issues/1634#issuecomment-2577519871
-    #
-    # ...and rel="tag"/class="h-card" to prevent generating link previews for hashtag
-    # links and mentions. https://github.com/mastodon/mastodon/issues/35717
-    attrs = ''
-    if tag.get('type') == 'Mention':
-      attrs = 'class="mention h-card" '
-    elif tag.get('type') in ('Hashtag', 'Tag'):
-      attrs = 'class="hashtag" rel="tag" '
+    # linkify embedded mention tags inside content.
+    last_end = 0
+    orig = content
+    linked = ''
+    for tag in tags:
+      url = tag.get('href') or tag.get('url')
+      # Mastodon web UI seems to need class="mention" to convert a mention link to
+      # point to the local instance's view of the remote actor profile, and mobile
+      # apps (and others?) need class="hashtag" to do it for hashtags
+      # https://github.com/snarfed/bridgy-fed/issues/887#issuecomment-2452141758
+      # https://github.com/snarfed/bridgy-fed/issues/1634#issuecomment-2577519871
+      #
+      # ...and rel="tag"/class="h-card" to prevent generating link previews for hashtag
+      # links and mentions. https://github.com/mastodon/mastodon/issues/35717
+      attrs = ''
+      if tag.get('type') == 'Mention':
+        attrs = 'class="mention h-card" '
+      elif tag.get('type') in ('Hashtag', 'Tag'):
+        attrs = 'class="hashtag" rel="tag" '
 
-    start = tag['startIndex']
-    if start < last_end:
-      logger.warning(f'tag indices overlap! skipping {url}')
-      continue
-    end = start + tag['length']
-    linked = f"{linked}{orig[last_end:start]}<a {attrs}href=\"{url}\">{orig[start:end]}</a>"
-    last_end = end
+      start = tag['startIndex']
+      if start < last_end:
+        logger.warning(f'tag indices overlap! skipping {url}')
+        continue
+      end = start + tag['length']
+      linked = f'{linked}{html.escape(orig[last_end:start], quote=False)}<a {attrs}href="{html.escape(url, quote=True)}">{html.escape(orig[start:end], quote=False)}</a>'
+      last_end = end
+      del tag['startIndex']
+      del tag['length']
+
+    linked += html.escape(orig[last_end:], quote=False)
+
+    # convert newlines to <br> and line-leading spaces to &nbsp;, line by line
+    # so that whitespace is preserved without relying on CSS white-space
+    lines = []
+    for line in linked.split('\n'):
+      stripped = line.lstrip(' ')
+      lines.append('&nbsp;' * (len(line) - len(stripped)) + stripped)
+    content = '<br />'.join(lines)
+
+  # append the inline RE: ... link for a quoted post, recorded in from_as1
+  for tag in obj.get('tag', []):
+    name = tag.get('name') or ''
+    if (tag.get('type') == 'Link' and
+        tag.get('mediaType') in CONTENT_TYPES and
+        name.startswith('RE: ')):
+      url = name.removeprefix('RE: ')
+      newlines = '<br><br>' if content else ''
+      content = (content or '') + f'<span class="quote-inline">{newlines}RE: <a href="{url}">{url}</a></span>'
+      break
+
+  if content != obj.get('content'):
+    set_content(obj, content)
     obj['content_is_html'] = True
-    del tag['startIndex']
-    del tag['length']
-
-  set_content(obj, linked + orig[last_end:])
 
 
 def is_server_actor(actor):

@@ -209,7 +209,6 @@ class ActivityStreams2Test(testutil.TestCase):
     # https://github.com/snarfed/bridgy-fed/issues/461#issuecomment-2176620836
     self.assert_equals({
       'type': 'Note',
-      'content': '<span class="quote-inline">RE: <a href="http://the/url">http://the/url</a></span>',
       'tag': [{
         'type': 'Link',
         'mediaType': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
@@ -247,10 +246,8 @@ class ActivityStreams2Test(testutil.TestCase):
 
   def test_from_as1_quote_post_contentMap_html(self):
     self.assert_equals({
-      'content': 'foo<span class="quote-inline"><br><br>RE: <a href="http://the/url">http://the/url</a></span>',
-      'contentMap': {
-        'xyz': 'foo<span class="quote-inline"><br><br>RE: <a href="http://the/url">http://the/url</a></span>',
-      },
+      'content': 'foo',
+      'contentMap': {'xyz': 'foo'},
       'tag': [{
         'type': 'Link',
         'href': 'http://the/id',
@@ -963,8 +960,41 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
-  def test_link_tags_no_indices(self):
-    # no indices, should be a noop
+  def test_render_content_no_content(self):
+    obj = {'tag': [{'href': 'http://bar'}]}
+    as2.render_content(obj)
+    self.assert_equals({'tag': [{'href': 'http://bar'}]}, obj)
+
+  def test_render_content_escapes_non_html_content(self):
+    # content_is_html False forces escaping even though it has HTML chars
+    obj = {'content': 'a < b & c > "d"', 'content_is_html': False}
+    as2.render_content(obj)
+    self.assert_equals({
+      'content': 'a &lt; b &amp; c &gt; "d"',
+      'content_is_html': True,
+    }, obj)
+
+  def test_render_content_html_passthrough(self):
+    # content that looks like HTML is left alone, not escaped
+    obj = {'content': 'a <a href="http://x">link</a> b'}
+    as2.render_content(obj)
+    self.assert_equals({'content': 'a <a href="http://x">link</a> b'}, obj)
+
+  def test_render_content_newlines_and_leading_spaces(self):
+    obj = {'content': 'foo\n  bar'}
+    as2.render_content(obj)
+    self.assert_equals({
+      'content': 'foo<br />&nbsp;&nbsp;bar',
+      'content_is_html': True,
+    }, obj)
+
+  def test_render_content_already_html_noop(self):
+    obj = {'content': 'a < b', 'content_is_html': True}
+    as2.render_content(obj)
+    self.assert_equals({'content': 'a < b', 'content_is_html': True}, obj)
+
+  def test_render_content_no_indices(self):
+    # no indices, should still escape and convert whitespace
     obj = {
       'content': 'foo\nbar\nbaz',
       'tag': [
@@ -972,10 +1002,17 @@ class ActivityStreams2Test(testutil.TestCase):
         {'url': 'http://baz'},
       ],
     }
-    as2.link_tags(obj)
-    self.assert_equals('foo\nbar\nbaz', obj['content'])
+    as2.render_content(obj)
+    self.assert_equals({
+      'content': 'foo<br />bar<br />baz',
+      'content_is_html': True,
+      'tag': [
+        {'href': 'http://bar'},
+        {'url': 'http://baz'},
+      ],
+    }, obj)
 
-  def test_link_tags_indices(self):
+  def test_render_content_indices(self):
     # with indices, should link and then remove indices
     obj = {
       'content': 'foo\nbar\nbaz',
@@ -985,19 +1022,11 @@ class ActivityStreams2Test(testutil.TestCase):
         {'url': 'http://baz', 'startIndex': 8, 'length': 3},
       ],
     }
-    as2.link_tags(obj)
+    as2.render_content(obj)
     self.assert_equals({
-      'content': """\
-foo
-<a href="http://bar">bar</a>
-<a href="http://baz">baz</a>
-""",
+      'content': 'foo<br /><a href="http://bar">bar</a><br /><a href="http://baz">baz</a>',
       'contentMap': {
-        'xyz': """\
-foo
-<a href="http://bar">bar</a>
-<a href="http://baz">baz</a>
-"""},
+        'xyz': 'foo<br /><a href="http://bar">bar</a><br /><a href="http://baz">baz</a>'},
       'content_is_html': True,
       'tag': [
         {'href': 'http://bar'},
@@ -1005,7 +1034,7 @@ foo
       ],
     }, obj)
 
-  def test_link_tags_mention(self):
+  def test_render_content_mention(self):
     # Mention tag should include class="mention"
     obj = {
       'content': 'foo\nbar\nbaz',
@@ -1014,13 +1043,9 @@ foo
         {'url': 'http://baz', 'startIndex': 8, 'length': 3},
       ],
     }
-    as2.link_tags(obj)
+    as2.render_content(obj)
     self.assert_equals({
-      'content': """\
-foo
-<a class="mention h-card" href="http://bar">bar</a>
-<a href="http://baz">baz</a>
-""",
+      'content': 'foo<br /><a class="mention h-card" href="http://bar">bar</a><br /><a href="http://baz">baz</a>',
       'content_is_html': True,
       'tag': [
         {'href': 'http://bar', 'type': 'Mention'},
@@ -1028,7 +1053,7 @@ foo
       ],
     }, obj)
 
-  def test_link_tags_hashtag(self):
+  def test_render_content_hashtag(self):
     # Tag (hashtag) tag should include class="hashtag"
     obj = {
       'content': 'foo #bar #baz biff',
@@ -1037,7 +1062,7 @@ foo
         {'href': 'http://baz', 'startIndex': 9, 'length': 4, 'type': 'Hashtag'},
       ],
     }
-    as2.link_tags(obj)
+    as2.render_content(obj)
     self.assert_equals({
       'content': 'foo <a class="hashtag" rel="tag" href="http://bar">#bar</a> <a class="hashtag" rel="tag" href="http://baz">#baz</a> biff',
       'content_is_html': True,
@@ -1045,6 +1070,36 @@ foo
         {'href': 'http://bar', 'type': 'Tag'},
         {'href': 'http://baz', 'type': 'Hashtag'},
       ],
+    }, obj)
+
+  def test_render_content_quote(self):
+    tag = {
+      'type': 'Link',
+      'mediaType': as2.CONTENT_TYPE_LD_PROFILE,
+      'href': 'http://the/id',
+      'name': 'RE: http://the/url',
+    }
+    obj = {'content': 'foo', 'tag': [tag]}
+    as2.render_content(obj)
+    self.assert_equals({
+      'content': 'foo<span class="quote-inline"><br><br>RE: <a href="http://the/url">http://the/url</a></span>',
+      'content_is_html': True,
+      'tag': [tag],
+    }, obj)
+
+  def test_render_content_quote_no_content(self):
+    tag = {
+      'type': 'Link',
+      'mediaType': as2.CONTENT_TYPE_LD_PROFILE,
+      'href': 'http://the/id',
+      'name': 'RE: http://the/url',
+    }
+    obj = {'tag': [tag]}
+    as2.render_content(obj)
+    self.assert_equals({
+      'content': '<span class="quote-inline">RE: <a href="http://the/url">http://the/url</a></span>',
+      'content_is_html': True,
+      'tag': [tag],
     }, obj)
 
   def test_is_server_actor(self):

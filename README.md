@@ -301,12 +301,21 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 10.1 - unreleased
+### 11.0 - unreleased
+
+_Breaking changes:_
+
+* `as2`
+  * Rename `link_tags` to `render_content`, and expand it to also HTML-escape plain text `content`, convert newlines to `<br>`, and convert leading spaces to `&nbsp;`. It now renders even when there are no indexed tags. The inline `RE: ...` link for a quoted post is now rendered here too. ([bridgy-fed#990](https://github.com/snarfed/bridgy-fed/issues/990)
+  * `from_as1`: Stop rendering inline `RE: ...` link for quoted posts.
+
+_Non-breaking changes:_
 
 * Start on [Farcaster](https://farcaster.xyz/) support! ([snarfed/bridgy-fed#447](https://github.com/snarfed/bridgy-fed/issues/447)).
 * Speed up `to_as1` conversions: parse HTML content lazily in `Source.postprocess_object` (only when `first_link_to_attachment` is set), drop a redundant `trim_nulls` pass in `as2` and `nostr` `to_as1`, and copy the input via JSON round trip instead of `copy.deepcopy` in `as2.to_as1` ([snarfed/bridgy-fed#2488](https://github.com/snarfed/bridgy-fed/issues/2488)).
 * `as1`:
   * Bug fix for converting HTML content to plain text when it includes square brackets (`[` and `]`) ([snarfed/bridgy-fed#1605](https://github.com/snarfed/bridgy-fed/issues/1605)).
+  * Optimize `is_content_html` to avoid full HTML parsing in most cases, eg when `content` has no `<` or `&` characters.
 * `as2`
   * `from_as1`:
     * Preserve the input object's `@context` field, and extend it, instead of overwriting it.
