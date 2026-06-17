@@ -916,7 +916,8 @@ def render_content(obj):
     name = tag.get('name') or ''
     if (tag.get('type') == 'Link' and
         tag.get('mediaType') in CONTENT_TYPES and
-        name.startswith('RE: ')):
+        name.startswith('RE: ') and
+        not QUOTE_RE_SUFFIX.search(html_to_text(content))):
       url = name.removeprefix('RE: ')
       newlines = '<br><br>' if content else ''
       content = (content or '') + f'<span class="quote-inline">{newlines}RE: <a href="{url}">{url}</a></span>'

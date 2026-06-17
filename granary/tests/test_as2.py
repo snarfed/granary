@@ -1087,6 +1087,23 @@ class ActivityStreams2Test(testutil.TestCase):
       'tag': [tag],
     }, obj)
 
+  def test_render_content_quote_idempotent(self):
+    # calling twice (eg postprocess_as2 recursion) shouldn't double the RE: link
+    tag = {
+      'type': 'Link',
+      'mediaType': as2.CONTENT_TYPE_LD_PROFILE,
+      'href': 'http://the/id',
+      'name': 'RE: http://the/url',
+    }
+    obj = {'content': 'foo', 'tag': [tag]}
+    as2.render_content(obj)
+    as2.render_content(obj)
+    self.assert_equals({
+      'content': 'foo<span class="quote-inline"><br><br>RE: <a href="http://the/url">http://the/url</a></span>',
+      'content_is_html': True,
+      'tag': [tag],
+    }, obj)
+
   def test_render_content_quote_no_content(self):
     tag = {
       'type': 'Link',
