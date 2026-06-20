@@ -10,7 +10,7 @@ blinker==1.9.0
 cachelib==0.9.0
 cachetools==6.2.0
 carbox==0.3
-cbor2==5.8.0
+cbor2==5.9.0
 certifi==2026.6.17
 cffi==2.0.0
 charset-normalizer==3.4.7
