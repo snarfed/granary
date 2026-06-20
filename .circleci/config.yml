@@ -8,46 +8,37 @@ jobs:
   build:
     docker:
       # https://circleci.com/developer/orbs/orb/circleci/gcp-cli#executors-google
-      - image: google/cloud-sdk
+      - image: cimg/python:3.12
 
     steps:
       - checkout
 
       - restore_cache:
           keys:
-            - venv-9-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
-            - venv-9-{{ .Branch }}-{{ checksum "requirements.txt" }}
-            - venv-9-{{ .Branch }}
-            - venv-9
+            - venv-10-{{ .Branch }}
 
       - run:
           name: Install dependencies
           command: |
-            apt-get -y install automake libtool pkg-config virtualenv
-            virtualenv local
-            source local/bin/activate
-            pip install -U pip flake8
-            pip -V
             # make sure we install these at head, below
             pip uninstall -y brevity lexrpc oauth-dropins pywebutil
-            pip install -U -r requirements.txt
-            pip install coverage coveralls
+            pip install -r requirements.txt
+            pip install coverage coveralls flake8
 
       - run:
           name: Run tests
           no_output_timeout: 30m
           command: |
-            source local/bin/activate
-            python3 -m coverage run --source=. --omit=appengine_config.py,cron.py,granary/generated/\*,granary/tests/\*,oauth-dropins/\*,old_apps/\*,setup.py,test_\*,\*_live_test.py -m unittest discover -v
+            python -m coverage run --source=. --omit=appengine_config.py,cron.py,granary/generated/\*,granary/tests/\*,oauth-dropins/\*,test_\*,\*_live_test.py -m unittest discover -v
             # disabled for now, fails much of the time due to IG blocking us
             # PYTHONPATH= python3 ./instagram_live_test.py --debug
-            python3 -m coverage html -d /tmp/coverage_html
+            python -m coverage html -d /tmp/coverage_html
             if [ "$COVERALLS_REPO_TOKEN" != "" ]; then python3 -m coveralls || true; fi
 
             # check for unintentionally overridden test methods
             # https://flake8.pycqa.org/en/latest/user/error-codes.html#error-codes
             # https://flake8.pycqa.org/en/latest/user/options.html#cmdoption-flake8-select
-            python3 -m flake8 --select=F811 granary/tests/test_*.py
+            python -m flake8 --select=F811 granary/tests/test_*.py
 
       # # TODO: this is continuous deploy. find a way to get all of the API keys
       # # into circle - env var? - then re-enable this.
@@ -65,9 +56,9 @@ jobs:
       #       fi
 
       - save_cache:
-          key: venv-9-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
+          key: venv-10-{{ .Branch }}
           paths:
-            - "/root/project/local/lib/python3.11/site-packages/"
+            - /home/circleci/.pyenv
 
       - store_artifacts:
           path: /tmp/coverage_html

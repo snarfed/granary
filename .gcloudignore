@@ -48,4 +48,6 @@ TAGS
 TAGS/
 test/
 tests/
+uv.lock
+.venv/
 yarn.lock

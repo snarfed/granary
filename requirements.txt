@@ -1,5 +1,5 @@
 # These requirements are for the demo app at https://granary.io/ , *not* the
-# library! The library's dependencies are specified in setup.py.
+# library! The library's dependencies are specified in pyproject.toml.
 #
 # Note that App Engine / Cloud Build's default pip cache is overly aggressive
 # with GitHub dependency URLs like these. If I push a new commit to the branch
@@ -9,18 +9,13 @@
 # Use this to bust that cache: gcloud -q beta app deploy --no-cache ...
 
 git+https://github.com/snarfed/arroba.git#egg=arroba
-git+https://github.com/kylewm/brevity.git#egg=brevity
+git+https://github.com/snarfed/brevity.git@new-tlds#egg=brevity
 git+https://github.com/snarfed/lexrpc.git#egg=lexrpc
-git+https://github.com/snarfed/mox3.git#egg=mox3
 git+https://github.com/snarfed/oauth-dropins.git#egg=oauth_dropins
 # note that sfw (Socket firewall) breaks when attempting to install this
 # inside it, so we have to install it outside sfw
 git+https://github.com/snarfed/secp256k1-py.git@setup-requires-pycparser#egg=secp256k1
 git+https://github.com/snarfed/webutil.git#egg=pywebutil
-
-# required for mox3, not prod
-fixtures==4.2.8
-pbr==7.0.3
 
 async-timeout==5.0.1
 attrs==26.1.0
