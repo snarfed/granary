@@ -154,11 +154,11 @@ First, fork and clone this repo. Then, install the [Google Cloud SDK](https://cl
 
 ```shell
 gcloud config set project granary-demo
-python3 -m venv local
-source local/bin/activate
+python3 -m venv ~/.venv/granary
+source ~/.venv/granary/bin/activate
 pip install -r requirements.txt
 # needed to serve static files locally
-ln -s local/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
+ln -s ~/.venv/granary/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
 ```
 
 Now, run the tests to check that everything is set up ok:
@@ -181,7 +181,7 @@ If you want to work on [oauth-dropins](https://github.com/snarfed/oauth-dropins)
 To deploy to production:
 
 ```shell
-gcloud -q beta app deploy --no-cache granary-demo *.yaml
+gcloud -q app deploy --no-cache --project=granary-demo *.yaml
 ```
 
 The docs are built with [Sphinx](http://sphinx-doc.org/), including [apidoc](http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html), [autodoc](http://www.sphinx-doc.org/en/stable/ext/autodoc.html), and [napoleon](http://www.sphinx-doc.org/en/stable/ext/napoleon.html). Configuration is in [`docs/conf.py`](https://github.com/snarfed/granary/blob/master/docs/conf.py) To build them, first install Sphinx with `pip install sphinx`. (You may want to do this outside your virtualenv; if so, you'll need to reconfigure it to see system packages with `virtualenv --system-site-packages local`.) Then, run [`docs/build.sh`](https://github.com/snarfed/granary/blob/master/docs/build.sh).
@@ -228,13 +228,13 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
    python -m unittest discover
    kill %1
    ```
-1. Bump the version number in `setup.py` and `docs/conf.py`. `git grep` the old version number to make sure it only appears in the changelog. Change the current changelog entry in `README.md` for this new version from _unreleased_ to the current date.
-1. Bump the version specifiers in `setup.py` for `oauth-dropins`, `pywebutil`, `lexrpc`, and any other relevant dependencies to their most recent versions.
+1. Bump the version number in `pyproject.toml` and `docs/conf.py`. `git grep` the old version number to make sure it only appears in the changelog. Change the current changelog entry in `README.md` for this new version from _unreleased_ to the current date.
+1. Bump the version specifiers in `pyproject.toml` for `oauth-dropins`, `pywebutil`, `lexrpc`, and any other relevant dependencies to their most recent versions.
 1. Build the docs. If you added any new modules, add them to the appropriate file(s) in `docs/source/`. Then run `./docs/build.sh`. Check that the generated HTML looks fine by opening `docs/_build/html/index.html` and looking around.
 1. `git commit -am 'release vX.Y'`
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
    ```sh
-   python setup.py clean build sdist
+   python -m build
    setenv ver X.Y
    twine upload -r pypitest dist/granary-$ver.tar.gz
    ```
@@ -308,9 +308,12 @@ _Breaking changes:_
 * `as2`
   * Rename `link_tags` to `render_content`, and expand it to also HTML-escape plain text `content`, convert newlines to `<br>`, and convert leading spaces to `&nbsp;`. It now renders even when there are no indexed tags. The inline `RE: ...` link for a quoted post is now rendered here too. ([bridgy-fed#990](https://github.com/snarfed/bridgy-fed/issues/990)
   * `from_as1`: Stop rendering inline `RE: ...` link for quoted posts.
+* `reddit`:
+  * Remove deprecated `Reddit.praw_to_actor`, `user_to_actor`, `praw_to_object`, and `praw_to_activity` method aliases.
 
 _Non-breaking changes:_
 
+* Packaging: migrate from `setup.py` to `pyproject.toml`.
 * Start on [Farcaster](https://farcaster.xyz/) support! ([snarfed/bridgy-fed#447](https://github.com/snarfed/bridgy-fed/issues/447)).
 * Speed up `to_as1` conversions: parse HTML content lazily in `Source.postprocess_object` (only when `first_link_to_attachment` is set), drop a redundant `trim_nulls` pass in `as2` and `nostr` `to_as1`, and copy the input via JSON round trip instead of `copy.deepcopy` in `as2.to_as1` ([snarfed/bridgy-fed#2488](https://github.com/snarfed/bridgy-fed/issues/2488)).
 * `as1`:

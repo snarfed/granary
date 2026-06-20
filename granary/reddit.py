@@ -94,9 +94,6 @@ class Reddit(source.Source):
 
     return self.to_as1_actor(user)
 
-  praw_to_actor = praw_to_as1_actor
-  """Deprecated! Use :meth:`praw_to_as1_actor` instead."""
-
   def to_as1_actor(self, user):
     """Converts a dict user to an actor.
 
@@ -138,9 +135,6 @@ class Reddit(source.Source):
       'username': username,
       'description': description,
     })
-
-  user_to_actor = to_as1_actor
-  """Deprecated! Use :meth:`to_as1_actor` instead."""
 
   def to_as1_object(self, thing, type):
     """Converts a PRAW object to an AS1 object.
@@ -209,9 +203,6 @@ class Reddit(source.Source):
 
     return self.postprocess_object(obj)
 
-  praw_to_object = to_as1_object
-  """Deprecated! Use :meth:`to_as1_object` instead."""
-
   def to_as1_activity(self, thing, type):
     """Converts a PRAW submission or comment to an activity.
 
@@ -227,7 +218,7 @@ class Reddit(source.Source):
     Returns:
       dict: ActivityStreams activity
     """
-    obj = self.praw_to_object(thing, type)
+    obj = self.to_as1_object(thing, type)
     if not obj:
       return {}
 
@@ -239,9 +230,6 @@ class Reddit(source.Source):
       'object': obj,
     }
     return self.postprocess_activity(activity)
-
-  praw_to_activity = to_as1_activity
-  """Deprecated! Use :meth:`to_as1_activity` instead."""
 
   def _fetch_replies(self, activities, cache=None):
     """Fetches and injects comments into a list of activities, in place.
@@ -263,7 +251,7 @@ class Reddit(source.Source):
       # for v0 we will use just the top level comments because threading is hard.
       # feature request: https://github.com/snarfed/bridgy/issues/1014
       subm.comments.replace_more()
-      replies = [self.praw_to_activity(top_level_comment, 'comment')
+      replies = [self.to_as1_activity(top_level_comment, 'comment')
                  for top_level_comment in subm.comments]
       items = [r.get('object') for r in replies]
       activity['object']['replies'] = {
@@ -291,7 +279,7 @@ class Reddit(source.Source):
     else:
       submissions = self._redditor(user_id).submissions.new(limit=count)
 
-    activities = [self.praw_to_activity(s, 'submission') for s in submissions]
+    activities = [self.to_as1_activity(s, 'submission') for s in submissions]
 
     if fetch_replies:
       self._fetch_replies(activities, cache=cache)
@@ -322,7 +310,7 @@ class Reddit(source.Source):
     Returns:
       dict: ActivityStreams object
     """
-    return self.praw_to_object(self.api.comment(id=comment_id), 'comment')
+    return self.to_as1_object(self.api.comment(id=comment_id), 'comment')
 
   def user_url(self, username):
     """Returns the Reddit URL for a given user."""
