@@ -68,6 +68,7 @@ app = [
     'flask-caching',
     'flask-gae-static',
     'google-cloud-ndb>=1.10.1',
+    'gunicorn',
     'ujson',
     'werkzeug>=2.0',
 ]
@@ -79,16 +80,29 @@ build = [
     'build',
 ]
 
+# keep these sections in sync with requirements.txt
 [tool.uv.sources]
 arroba =            { editable = true, path = "../arroba" }
 brevity =           { editable = true, path = "../brevity" }
-flask-gae-static =  { editable = true, path = "../flask-gae-static" }
 lexrpc =            { editable = true, path = "../lexrpc" }
-mf2util =           { editable = true, path = "../mf2util" }
 mox3 =              { editable = true, path = "../mox3" }
 oauth-dropins =     { editable = true, path = "../oauth-dropins" }
 pywebutil =         { editable = true, path = "../webutil" }
 secp256k1 =         { editable = true, path = "../secp256k1-py" }
+
+# we currently use these from PyPI
+# flask-gae-static =  { editable = true, path = "../flask-gae-static" }
+# mf2util =           { editable = true, path = "../mf2util" }
+
+[tool.uv.pip]
+no-emit-package = [
+    'arroba',
+    'brevity',
+    'lexrpc',
+    'oauth-dropins',
+    'pywebutil',
+    'secp256k1',
+]
 
 [tool.deptry]
 exclude = ['.venv', 'build', 'dist', 'docs', 'granary/generated']
