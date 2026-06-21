@@ -234,10 +234,6 @@ def url():
     raise BadRequest(f'Invalid input: {input}, expected one of {INPUTS!r}')
 
   orig_url = request.values['url']
-  # TODO: revert if/when it's back up
-  if orig_url.startswith('https://rss-bridge.netlib.re/'):
-    return 'Sorry, rss-bridge.netlib.re is down right now.', 502
-
   try:
     fragment = urllib.parse.urlparse(orig_url).fragment
   except ValueError as e:
