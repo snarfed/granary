@@ -6,6 +6,15 @@ version: 2.1
 
 jobs:
   build:
+    parameters:
+      # how to install dependencies:
+      # * pinned: requirements.txt versions
+      # * lowest-direct: pyproject.toml versions, lowest possible versions
+      #   at or above our declared version specifiers
+      deps:
+        type: enum
+        enum: [pinned, lowest-direct]
+
     docker:
       # https://circleci.com/developer/orbs/orb/circleci/gcp-cli#executors-google
       - image: cimg/python:3.12
@@ -15,7 +24,7 @@ jobs:
 
       - restore_cache:
           keys:
-            - venv-10-{{ .Branch }}
+            - venv-10-{{ .Branch }}-<< parameters.deps >>
 
       - run:
           name: Install dependencies
@@ -23,12 +32,26 @@ jobs:
             sudo apt-get update
             sudo apt-get -y install automake libtool pkg-config
 
-            # make sure we install these at head, below
-            pip uninstall -y brevity lexrpc oauth-dropins pywebutil
-            pip install -r requirements.txt
-            # TODO: remove
-            pip install .[tests]
-            pip install coverage coveralls flake8
+            pip install -U uv
+
+            case "<< parameters.deps >>" in
+              pinned)
+                # force our own packages to reinstall at head from the git refs
+                uv pip uninstall --system brevity lexrpc oauth-dropins pywebutil || true
+                uv pip install --system -r requirements.txt
+                # test-only deps (mox3, mf2py); --no-sources since sibling repos
+                # aren't checked out in CI
+                uv pip install --system --no-sources '.[tests]'
+                ;;
+              lowest-direct)
+                # resolve third-party packages at lowest-direct floors
+                uv pip install --system --no-sources --resolution=lowest-direct '.[app,tests]'
+                # reinstall own packages at head, overriding PyPI floor versions
+                grep 'git+' requirements.txt | xargs uv pip install --system --no-sources
+                ;;
+            esac
+
+            uv pip install --system coverage coveralls flake8
 
       - run:
           name: Run tests
@@ -61,9 +84,18 @@ jobs:
       #       fi
 
       - save_cache:
-          key: venv-10-{{ .Branch }}
+          key: venv-10-{{ .Branch }}-<< parameters.deps >>
           paths:
             - /home/circleci/.pyenv
 
       - store_artifacts:
           path: /tmp/coverage_html
+
+workflows:
+  build:
+    jobs:
+      # runs the job twice in parallel, once per deps strategy; both must pass
+      - build:
+          matrix:
+            parameters:
+              deps: [pinned, lowest-direct]
