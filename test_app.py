@@ -3,6 +3,7 @@ import copy
 from io import BytesIO
 import os.path
 import socket
+import urllib.parse
 from urllib.parse import quote
 
 from granary import as2
@@ -769,9 +770,21 @@ not RSS!
                        requests.exceptions.InvalidURL('foo'))
 
   def test_url_bad_url_invalid_brackets(self):
-    resp = client.get('/url?url=http://[DOMAIN]/&input=html&output=atom')
+    url = 'http://[DOMAIN]/'
+    # Python 3.11+ rejects invalid IPv6 brackets when parsing the URL; older
+    # versions don't, so the bad URL instead fails when we try to fetch it.
+    try:
+      urllib.parse.urlparse(url)
+    except ValueError:
+      expected = 'Invalid url'
+    else:
+      self.expect_requests_get(mox.IgnoreArg()).AndRaise(
+        requests.exceptions.InvalidURL('foo'))
+      self.mox.ReplayAll()
+      expected = 'Bad URL'
+    resp = client.get(f'/url?url={url}&input=html&output=atom')
     self.assert_equals(400, resp.status_code)
-    self.assertIn('Invalid url', resp.get_data(as_text=True))
+    self.assertIn(expected, resp.get_data(as_text=True))
 
   def test_url_fetch_fails(self):
     self.expect_requests_get('http://my/posts.html').AndRaise(socket.timeout(''))
