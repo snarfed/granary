@@ -33,19 +33,19 @@ classifiers = [
 urls = { Homepage = 'https://granary.io/' }
 
 dependencies = [
-    'blake3',
+    'blake3>=0.4.0',
     'beautifulsoup4>=4.8',
-    'bech32',
+    'bech32>=1.2.0',
     # we need some features in unreleased v0.2.18, eg ellipsis
     'brevity @ git+https://github.com/snarfed/brevity.git',
     'cachetools>=5.0.0',
-    'cryptography>=35.0.0',
+    'cryptography>=41.0.0',
     'feedgen>=0.9',
     'feedparser>=6.0.0',
-    'grpcio>=1.0',
+    'grpcio>=1.59.0',
     'html2text>=2019.8.11',
     'humanfriendly>=4.18',
-    'jinja2>=2.10',
+    'jinja2>=3.0.0',
     'lexrpc>=2.1',
     'mf2util>=0.5.0',
     'multiformats>=0.3.1',
@@ -53,8 +53,8 @@ dependencies = [
     'praw>=7.3.0',
     'prawcore>=2.1',
     'protobuf>=6.31.1',
-    'pymediainfo',
-    'python-dateutil>=2.8',
+    'pymediainfo>=6.0.0',
+    'python-dateutil>=2.8.1',
     'pywebutil[google-cloud,html]>=1.0',
     'requests>=2.22',
     'requests-oauth2client>=1.8.0',
@@ -64,13 +64,13 @@ dependencies = [
 
 [project.optional-dependencies]
 app = [
-    'flask>=2.0.1',
-    'flask-caching',
-    'flask-gae-static',
+    'flask>=3.0.0',
+    'flask-caching>=1.10.0',
+    'flask-gae-static>=1.0',
     'google-cloud-ndb>=1.10.1',
-    'gunicorn',
-    'ujson',
-    'werkzeug>=2.0',
+    'gunicorn>=20.1.0',
+    'ujson>=5.7.0',
+    'werkzeug>=3.0.0',
 ]
 tests = [
     'mf2py>=2.0',
@@ -111,5 +111,6 @@ exclude = ['.venv', 'build', 'dist', 'docs', 'granary/generated']
 # these deps aren't used in the codebase but we want to keep them in the local venv
 DEP002 = [
     'build',
+    'gunicorn',
     'ujson',
 ]
