@@ -9,7 +9,6 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ['granary*']
-exclude = ['granary.tests*']
 
 [project]
 name = 'granary'
@@ -95,17 +94,10 @@ secp256k1 =         { editable = true, path = "../secp256k1-py" }
 # mf2util =           { editable = true, path = "../mf2util" }
 
 [tool.uv.pip]
-no-emit-package = [
-    'arroba',
-    'brevity',
-    'lexrpc',
-    'oauth-dropins',
-    'pywebutil',
-    'secp256k1',
-]
+# this is in ~/.config/uv/uv.toml
 
 [tool.deptry]
-exclude = ['.venv', 'build', 'dist', 'docs', 'granary/generated']
+extend_exclude = ['build', 'dist', 'docs', 'granary/generated']
 
 [tool.deptry.per_rule_ignores]
 # these deps aren't used in the codebase but we want to keep them in the local venv
