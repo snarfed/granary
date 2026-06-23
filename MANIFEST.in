@@ -3,4 +3,3 @@
 include README.md
 recursive-include granary *
 recursive-exclude granary *.pyc .git*
-recursive-exclude granary/tests *
