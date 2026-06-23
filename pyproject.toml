@@ -79,6 +79,8 @@ tests = [
 ]
 build = [
     'build',
+    'sphinx>=7.0.0',
+    'sphinx-rtd-theme>=3.0.0',
 ]
 
 # keep these sections in sync with requirements.txt
@@ -104,5 +106,7 @@ extend_exclude = ['build', 'dist', 'docs', 'granary/generated']
 DEP002 = [
     'build',
     'gunicorn',
+    'sphinx',
+    'sphinx-rtd-theme',
     'ujson',
 ]
