@@ -236,7 +236,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
 1. `git commit -am 'release vX.Y'`
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
    ```sh
-   python -m build
+   uv build
    setenv ver X.Y
    twine upload -r pypitest dist/granary-$ver.tar.gz
    ```
