@@ -38,8 +38,7 @@ dependencies = [
     'blake3>=0.4.0',
     'beautifulsoup4>=4.8',
     'bech32>=1.2.0',
-    # we need some features in unreleased v0.2.18, eg ellipsis
-    'brevity @ git+https://github.com/snarfed/brevity.git',
+    'brevity @ git+https://github.com/snarfed/brevity.git@new-tlds',
     'cachetools>=5.0.0',
     'cryptography>=41.0.0',
     'feedgen>=0.9',
