@@ -9,7 +9,6 @@ blake3==1.0.8
 blinker==1.9.0
 cachelib==0.9.0
 cachetools==6.2.0
-carbox==0.3
 cbor2==5.9.0
 certifi==2026.6.17
 cffi==2.0.0
