@@ -149,9 +149,6 @@ class Meetup(source.Source):
         'description': None,
     })
 
-  user_to_actor = to_as1_actor
-  """Deprecated! Use :func:`to_as1_actor` instead."""
-
   def user_url(self, user_id):
     """Returns the URL for a user's profile."""
     return f'https://www.meetup.com/members/{user_id}/'

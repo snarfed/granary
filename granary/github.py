@@ -930,9 +930,6 @@ class GitHub(source.Source):
 
     return self.postprocess_object(actor)
 
-  user_to_actor = to_as1_actor
-  """Deprecated! Use :meth:`to_as1_actor` instead."""
-
   def _to_as1(self, input, repo_id=False):
     """Starts to convert a GraphQL or REST API object to ActivityStreams.
 

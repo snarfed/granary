@@ -1496,9 +1496,6 @@ class Twitter(source.Source):
       'description': user.get('description'),
     })
 
-  user_to_actor = to_as1_actor
-  """Deprecated! Use :meth:`to_as1_actor` instead."""
-
   def retweet_to_as1(self, retweet):
     """Converts a retweet to an AS1 share activity.
 

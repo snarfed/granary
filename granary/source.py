@@ -610,8 +610,9 @@ class Source(object, metaclass=SourceMeta):
     """
     raise NotImplementedError()
 
-  user_to_actor = to_as1_actor
-  """Deprecated! Use :meth:`to_as1_actor` instead."""
+  def user_to_actor(self, user):
+    """Deprecated! Use :meth:`to_as1_actor` instead."""
+    return self.to_as1_actor(user)
 
   def _get_activity(self, user_id, activity_id, **kwargs):
     activities = self.get_activities(user_id=user_id, activity_id=activity_id,

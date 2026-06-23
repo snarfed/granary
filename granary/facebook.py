@@ -1417,9 +1417,6 @@ class Facebook(source.Source):
 
     return util.trim_nulls(actor)
 
-  user_to_actor = to_as1_actor
-  """Deprecated! Use :meth:`to_as1_actor` instead."""
-
   def event_to_as1_object(self, event, rsvps=None):
     """Converts an event to an AS1 object.
 

@@ -530,9 +530,6 @@ class Mastodon(source.Source):
 
     return util.trim_nulls(ret)
 
-  user_to_actor = to_as1_actor
-  """Deprecated! Use :meth:`to_as1_actor` instead."""
-
   def actor_id(self, user):
     """Returns the ActivityPub actor id for an API user object.
 

@@ -504,9 +504,6 @@ class Flickr(source.Source):
 
     return self.postprocess_object(obj)
 
-  user_to_actor = to_as1_actor
-  """Deprecated! Use :meth:`to_as1_actor` instead."""
-
   def get_comment(self, comment_id, activity_id=None, activity_author_id=None,
                   activity=None):
     """Returns an ActivityStreams comment object.

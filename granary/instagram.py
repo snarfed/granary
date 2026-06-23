@@ -755,9 +755,6 @@ class Instagram(source.Source):
 
     return util.trim_nulls(actor)
 
-  user_to_actor = to_as1_actor
-  """Deprecated! Use :meth:`to_as1_actor` instead."""
-
   def base_object(self, obj):
     """Extends the default base_object() to avoid using shortcodes as object ids.
     """

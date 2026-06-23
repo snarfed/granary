@@ -2132,9 +2132,6 @@ class Bluesky(Source):
     """
     return to_as1(user, **kwargs)
 
-  user_to_actor = to_as1_actor
-  """Deprecated! Use :meth:`to_as1_actor` instead."""
-
   @classmethod
   def post_url(cls, handle, tid):
     """Returns the post URL for a given handle and tid.
