@@ -10,6 +10,10 @@ include-package-data = true
 [tool.setuptools.packages.find]
 include = ['granary*']
 
+[project.urls]
+Homepage = 'https://granary.io/'
+Documentation = 'https://granary.readthedocs.io/'
+
 [project]
 name = 'granary'
 version = '10.0'
@@ -29,7 +33,6 @@ classifiers = [
     'Programming Language :: Python :: 3.9',
     'Topic :: Software Development :: Libraries :: Python Modules',
 ]
-urls = { Homepage = 'https://granary.io/' }
 
 dependencies = [
     'blake3>=0.4.0',
@@ -83,15 +86,13 @@ build = [
 [tool.uv.sources]
 arroba =            { editable = true, path = "../arroba" }
 brevity =           { editable = true, path = "../brevity" }
+flask-gae-static =  { editable = true, path = "../flask-gae-static" }
 lexrpc =            { editable = true, path = "../lexrpc" }
+mf2util =           { editable = true, path = "../mf2util" }
 mox3 =              { editable = true, path = "../mox3" }
 oauth-dropins =     { editable = true, path = "../oauth-dropins" }
 pywebutil =         { editable = true, path = "../webutil" }
 secp256k1 =         { editable = true, path = "../secp256k1-py" }
-
-# we currently use these from PyPI
-# flask-gae-static =  { editable = true, path = "../flask-gae-static" }
-# mf2util =           { editable = true, path = "../mf2util" }
 
 [tool.uv.pip]
 # this is in ~/.config/uv/uv.toml
