@@ -846,16 +846,33 @@ def address(actor):
 
 
 def render_content(obj):
-  """Renders an AS2 object's plain text ``content`` to HTML.
+  """Renders an AS2 object's plain text ``content`` to HTML, in place.
 
-  Escapes HTML, converts newlines to ``<br>`` and leading spaces to ``&nbsp;``,
-  adds links for tags with ``startIndex`` and ``length``, and appends the inline
-  ``RE: ...`` link for a quoted post. ``content`` is modified in place.
+  THIS IS THE ONE AND ONLY PLACE WE CONVERT PLAIN TEXT ``content`` TO HTML, and
+  it does the *whole* conversion in a single pass. The invariant that keeps this
+  from getting brittle:
 
-  If :func:`as1.is_content_html` true, skips escaping, whitespace conversion,
-  and tag linking, but still appends the quoted post link. Otherwise, sets
-  ``content_is_html`` to ``True`` if it changes ``content``. Tags without
-  ``startIndex``/``length`` are ignored for linking.
+    ``content`` is plain text (with facet ``tag``\\ s carrying ``startIndex`` /
+    ``length`` indices into it) until this function converts it to HTML exactly
+    once. NOTHING may inject HTML into ``content`` before this runs; everything
+    that adds HTML (eg link attachments moved into content, ``<p>`` wrapping)
+    MUST do so *after*, by concatenating onto the already-rendered HTML.
+
+  Why: the facet indices only make sense against the original plain text, and
+  ``is_content_html`` can't reliably tell plain from HTML once ``content`` is a
+  hybrid of the two. So if you find yourself adding HTML to ``content`` and then
+  expecting this to linkify/escape it, that's the bug - move your HTML injection
+  after this call instead.
+
+  Specifically, this escapes HTML, converts newlines to ``<br>`` and leading
+  spaces to ``&nbsp;``, adds links for ``tag``\\ s with ``startIndex`` and
+  ``length``, and appends the inline ``RE: ...`` link for a quoted post.
+
+  If :func:`as1.is_content_html` is true - ie ``content`` is already HTML, from
+  the explicit ``content_is_html`` flag or by sniffing - this is a noop, which
+  also makes it idempotent: a second call sees the HTML it produced and skips.
+  Otherwise it sets ``content_is_html`` to ``True`` if it changes ``content``.
+  Tags without ``startIndex``/``length`` are ignored for linking.
 
   TODO: duplicated in :func:`microformats2.render_content`. unify?
 
@@ -863,8 +880,9 @@ def render_content(obj):
     obj (dict): AS2 JSON object
   """
   content = obj.get('content')
+  is_html = as1.is_content_html(obj)
 
-  if content and not as1.is_content_html(obj):
+  if content and not is_html:
     # extract indexed tags, preserving order
     tags = [tag for tag in obj.get('tag', [])
             if 'startIndex' in tag and 'length' in tag and
@@ -911,17 +929,19 @@ def render_content(obj):
       lines.append('&nbsp;' * (len(line) - len(stripped)) + stripped)
     content = '<br />'.join(lines)
 
-  # append the inline RE: ... link for a quoted post, recorded in from_as1
-  for tag in obj.get('tag', []):
-    name = tag.get('name') or ''
-    if (tag.get('type') == 'Link' and
-        tag.get('mediaType') in CONTENT_TYPES and
-        name.startswith('RE: ') and
-        not QUOTE_RE_SUFFIX.search(html_to_text(content))):
-      url = name.removeprefix('RE: ')
-      newlines = '<br><br>' if content else ''
-      content = (content or '') + f'<span class="quote-inline">{newlines}RE: <a href="{url}">{url}</a></span>'
-      break
+  # append the inline RE: ... link for a quoted post, recorded in from_as1.
+  # gated on is_html (like the rendering above) so it's idempotent: once we've
+  # rendered, content is HTML and a repeat call skips this.
+  if not is_html:
+    for tag in obj.get('tag', []):
+      name = tag.get('name') or ''
+      if (tag.get('type') == 'Link' and
+          tag.get('mediaType') in CONTENT_TYPES and
+          name.startswith('RE: ')):
+        url = name.removeprefix('RE: ')
+        newlines = '<br><br>' if content else ''
+        content = (content or '') + f'<span class="quote-inline">{newlines}RE: <a href="{url}">{url}</a></span>'
+        break
 
   if content != obj.get('content'):
     set_content(obj, content)
