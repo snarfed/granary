@@ -15,8 +15,8 @@ from ..farcaster import (
   Farcaster,
   farcaster_uri_to_web_url,
   from_as1,
+  hash_and_sign,
   hash_for,
-  sign,
   to_as1,
   uri,
   verify,
@@ -737,15 +737,16 @@ cast_add_body { text: "Hello!" }
     self.assertEqual(expected, msg.hash)
     self.assertEqual(HASH_SCHEME_BLAKE3, msg.hash_scheme)
 
-  def test_sign(self):
+  def test_hash_and_sign(self):
     msg = message("""
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body {
   text: "Hello Farcaster!"
 }
 """)
-    sign(msg, PRIVKEY)
+    hash_and_sign(msg, PRIVKEY)
 
+    self.assertEqual(HASH_SCHEME_BLAKE3, msg.hash_scheme)
     self.assertEqual(SIGNATURE_SCHEME_ED25519, msg.signature_scheme)
     self.assertEqual(msg.signer, PUBKEY.public_bytes(Encoding.Raw, PublicFormat.Raw))
 
@@ -758,7 +759,7 @@ cast_add_body {
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body { text: "Hello!" }
 """)
-    sign(msg, PRIVKEY)
+    hash_and_sign(msg, PRIVKEY)
     msg.ClearField('data_bytes')
     verify(msg)  # shouldn't raise
 
@@ -767,7 +768,7 @@ cast_add_body { text: "Hello!" }
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body { text: "Hello!" }
 """)
-    sign(msg, PRIVKEY)
+    hash_and_sign(msg, PRIVKEY)
     msg.ClearField('hash')
 
     with self.assertRaisesRegex(ValueError, 'Missing hash'):
@@ -778,7 +779,7 @@ cast_add_body { text: "Hello!" }
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body { text: "Hello!" }
 """)
-    sign(msg, PRIVKEY)
+    hash_and_sign(msg, PRIVKEY)
     msg.hash = b'\x00' * 20
 
     with self.assertRaisesRegex(ValueError, 'Hash mismatch'):
@@ -789,7 +790,7 @@ cast_add_body { text: "Hello!" }
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body { text: "Hello!" }
 """)
-    sign(msg, PRIVKEY)
+    hash_and_sign(msg, PRIVKEY)
     msg.hash = b'\x00' * 20
     msg.ClearField('data_bytes')
 

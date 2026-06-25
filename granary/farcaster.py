@@ -287,18 +287,23 @@ def hash_for(msg):
   return msg.hash
 
 
-def sign(msg, privkey):
-  """Signs a ``Message`` and populates its ``signer`` and ``signature``.
+def hash_and_sign(msg, privkey):
+  """Hashes and signs a ``Message``, populating ``hash``, ``signer``, and ``signature``.
 
   https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md#2-message-specifications
 
   Args:
     msg (message_pb2.Message)
     privkey (Ed25519PrivateKey): private key to sign with
+
+  Returns:
+    message_pb2.Message: msg, populated with hash and signature fields
   """
+  hash_for(msg)
   msg.signature = privkey.sign(msg.hash)
   msg.signer = privkey.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
   msg.signature_scheme = SIGNATURE_SCHEME_ED25519
+  return msg
 
 
 def to_as1(msg):
