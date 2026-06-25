@@ -70,15 +70,17 @@ BSKY_APP_TYPE_TO_COLLECTION = {
 }
 
 # maps AS1 objectType/verb to possible output Bluesky lexicon types.
-# used in from_as1
+# used in from_as1.
+#
+# Order here is meaningful, starting with most preferred type to convert to.
 POST_TYPES = as1.POST_TYPES | set(['bookmark'])
 FROM_AS1_TYPES = {
   as1.ACTOR_TYPES: (
     'app.bsky.actor.profile',
+    'site.standard.publication',
     'app.bsky.actor.defs#profileView',
     'app.bsky.actor.defs#profileViewBasic',
     'app.bsky.actor.defs#profileViewDetailed',
-    'site.standard.publication',
   ),
   tuple(set(POST_TYPES) - set(['article'])): (
     'app.bsky.feed.post',
@@ -86,10 +88,10 @@ FROM_AS1_TYPES = {
     'app.bsky.feed.defs#postView',
   ),
   ('article',): (
+    'site.standard.document',
     'app.bsky.feed.post',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#postView',
-    'site.standard.document',
   ),
   ('block',): (
     'app.bsky.graph.block',
