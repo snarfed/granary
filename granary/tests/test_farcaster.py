@@ -15,6 +15,7 @@ from ..farcaster import (
   Farcaster,
   farcaster_uri_to_web_url,
   from_as1,
+  hash_for,
   sign,
   to_as1,
   uri,
@@ -724,6 +725,17 @@ cast_add_body { text: "From msg.data!" }
     msg.hash = blake3(data_bytes).digest()[:20]
     msg.hash_scheme = HASH_SCHEME_BLAKE3
     self.assertEqual('From data_bytes!', to_as1(msg)['content'])
+
+  def test_hash_for(self):
+    msg = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body { text: "Hello!" }
+""")
+    got = hash_for(msg)
+    expected = blake3(msg.data_bytes).digest()[:BLAKE3_HASH_LENGTH_BYTES]
+    self.assertEqual(expected, got)
+    self.assertEqual(expected, msg.hash)
+    self.assertEqual(HASH_SCHEME_BLAKE3, msg.hash_scheme)
 
   def test_sign(self):
     msg = message("""

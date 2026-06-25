@@ -272,15 +272,19 @@ def verify(msg):
     raise ValueError(f'Signature verification failed: {e}') from e
 
 
-def serialize_and_hash(msg):
+def hash_for(msg):
   """Serializes ``MessageData`` into ``data_bytes`` and computes ``hash``.
 
   Args:
     msg (message_pb2.Message)
+
+  Returns:
+    bytes: the blake3 hash, also stored in ``msg.hash``
   """
   msg.data_bytes = msg.data.SerializeToString()
   msg.hash = blake3(msg.data_bytes).digest()[:BLAKE3_HASH_LENGTH_BYTES]
   msg.hash_scheme = HASH_SCHEME_BLAKE3
+  return msg.hash
 
 
 def sign(msg, privkey):
@@ -612,7 +616,7 @@ def from_as1(obj):
       data.link_body.target_fid = int(match['fid'])
     data.link_body.displayTimestamp = data.timestamp
 
-  serialize_and_hash(msg)
+  hash_for(msg)
   return msg
 
 
@@ -645,7 +649,7 @@ def _from_as1_actor(obj):
       msg.data.fid = fid
     msg.data.user_data_body.type = user_data_type
     msg.data.user_data_body.value = value
-    serialize_and_hash(msg)
+    hash_for(msg)
     msgs.append(msg)
 
   msgs = []
