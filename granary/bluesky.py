@@ -75,38 +75,40 @@ BSKY_APP_TYPE_TO_COLLECTION = {
 # Order here is meaningful, starting with most preferred type to convert to.
 POST_TYPES = as1.POST_TYPES | set(['bookmark'])
 FROM_AS1_TYPES = {
-  as1.ACTOR_TYPES: (
+  type: (
     'app.bsky.actor.profile',
     'site.standard.publication',
     'app.bsky.actor.defs#profileView',
     'app.bsky.actor.defs#profileViewBasic',
     'app.bsky.actor.defs#profileViewDetailed',
-  ),
-  tuple(set(POST_TYPES) - set(['article'])): (
+  ) for type in as1.ACTOR_TYPES
+} | {
+  type: (
     'app.bsky.feed.post',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#postView',
-  ),
-  ('article',): (
+  ) for type in POST_TYPES
+} | {
+  'article': (
     'site.standard.document',
     'app.bsky.feed.post',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#postView',
   ),
-  ('block',): (
+  'block': (
     'app.bsky.graph.block',
     'app.bsky.graph.listblock',
   ),
-  ('flag',): (
+  'flag': (
     'com.atproto.moderation.createReport#input',
   ),
-  ('follow',): (
+  'follow': (
     'app.bsky.graph.follow',
   ),
-  ('like',): (
+  'like': (
     'app.bsky.feed.like',
   ),
-  ('share',): (
+  'share': (
     'app.bsky.feed.repost',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#reasonRepost',
@@ -533,11 +535,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     aspects = {}
 
   # validate out_type
-  if out_type:
-    for in_types, out_types in FROM_AS1_TYPES.items():
-      if type in in_types and out_type in out_types:
-        break
-    else:
+  if out_type and out_type not in FROM_AS1_TYPES.get(type, []):
       raise ValueError(f"{type} {verb} doesn't support out_type {out_type}")
 
   # summary can be HTML; convert to plain text
