@@ -273,7 +273,7 @@ def verify(msg):
 
 
 def hash_for(msg):
-  """Serializes ``MessageData`` into ``data_bytes`` and computes ``hash``.
+  """Serializes ``MessageData`` into ``data_bytes`` and populates ``hash``.
 
   Args:
     msg (message_pb2.Message)
@@ -288,7 +288,9 @@ def hash_for(msg):
 
 
 def hash_and_sign(msg, privkey):
-  """Hashes and signs a ``Message``, populating ``hash``, ``signer``, and ``signature``.
+  """Hashes and signs a ``Message``.
+
+  Populates the ``hash``, ``signer``, and ``signature`` fields.
 
   https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md#2-message-specifications
 

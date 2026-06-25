@@ -310,6 +310,9 @@ _Breaking changes:_
 * `as2`
   * Rename `link_tags` to `render_content`, and expand it to also HTML-escape plain text `content`, convert newlines to `<br>`, and convert leading spaces to `&nbsp;`. It now renders even when there are no indexed tags. The inline `RE: ...` link for a quoted post is now rendered here too. ([bridgy-fed#990](https://github.com/snarfed/bridgy-fed/issues/990)
   * `from_as1`: Stop rendering inline `RE: ...` link for quoted posts.
+* `nostr`:
+  * `verify` now raises `ValueError` on failure instead of returning `False`.
+  * Rename `sign` to `hash_and_sign`.
 * `reddit`:
   * Remove deprecated `Reddit.praw_to_actor`, `user_to_actor`, `praw_to_object`, and `praw_to_activity` method aliases.
 

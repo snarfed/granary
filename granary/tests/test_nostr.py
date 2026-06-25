@@ -226,9 +226,10 @@ class NostrTest(testutil.TestCase):
         {**NOTE_NOSTR, 'pubkey': 'bad', 'sig': SIG},
     ):
       with self.subTest(event=bad):
-        self.assertFalse(nostr.verify(bad))
+        with self.assertRaises(ValueError):
+          nostr.verify(bad)
 
-    self.assertTrue(nostr.verify(NOTE_NOSTR))
+    nostr.verify(NOTE_NOSTR)  # shouldn't raise
 
   def test_pubkey_from_privkey(self):
     self.assertEqual(PUBKEY, nostr.pubkey_from_privkey(PRIVKEY))

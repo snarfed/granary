@@ -369,18 +369,17 @@ def verify(event):
   Args:
     event (dict)
 
-  Returns:
-    bool: True if the signature is valid, False otherwise, eg if the signature is
-      invalid, or if the ``id`` or ``sig`` or ``pubkey`` fields are missing, or if
-      ``id`` is not the event's correct hash
+  Raises:
+    ValueError: if the signature is invalid, or if the ``id`` or ``sig`` or
+      ``pubkey`` fields are missing, or if ``id`` is not the event's correct hash
   """
   if (not (sig := event.get('sig'))
       or not (id := event.get('id'))
       or not (pubkey := event.get('pubkey'))):
-    return False
+    raise ValueError(f'Missing id or sig or pubkey: {event}')
 
   if id != id_for(event):
-    return False
+    raise ValueError(f'id mismatch: expected {id_for(event)}, got {id}')
 
   # secp256k1-py generates and expects 33-byte public keys, not 32. the difference
   # seems to be a prefix byte that's always either 0x02 or 0x03. not sure why, but it
@@ -388,13 +387,14 @@ def verify(event):
   # it still generates and verifies signatures fine.
   # https://github.com/snarfed/bridgy-fed/issues/446#issuecomment-2925960330
   if len(pubkey) != 64:
-    return False
+    raise ValueError(f'pubkey must be 64 hex chars, got {len(pubkey)}: {pubkey}')
 
   try:
     key = secp256k1.PublicKey(bytes.fromhex('02' + pubkey), raw=True)
-    return key.schnorr_verify(bytes.fromhex(id), bytes.fromhex(sig), None, raw=True)
-  except (TypeError, ValueError):
-    return False
+    if not key.schnorr_verify(bytes.fromhex(id), bytes.fromhex(sig), None, raw=True):
+      raise ValueError(f'Signature verification failed for event {id}')
+  except (TypeError, ValueError) as e:
+    raise ValueError(f'Signature verification failed: {e}') from e
 
 
 def pubkey_from_privkey(privkey):
@@ -1092,9 +1092,10 @@ class Nostr(Source):
           break
         elif resp[:2] == ['EVENT', subscription]:
           event = resp[2]
-          if verify(event):
+          try:
+            verify(event)
             events.append(event)
-          else:
+          except ValueError:
             logger.warning(f'Invalid signature for event {event.get("id")}')
         elif resp[0] == 'AUTH' and len(resp) >= 2:
           if not self.privkey:
