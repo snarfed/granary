@@ -77,10 +77,13 @@ DEFAULT_SNAPCHAIN_HOST = 'crackle.farcaster.xyz'
 DEFAULT_SNAPCHAIN_PORT = 3383
 
 # farcaster:// URIs: https://github.com/farcasterxyz/protocol/discussions/123
-# we only support:
+# we support:
 # * farcaster://[fid]
+# * farcaster://@[username]
 # * farcaster://[fid]/0x[hash]
-FARCASTER_URI_RE = re.compile(r'farcaster://(?P<fid>[0-9]+)(/0x(?P<hash>[0-9a-f]+))?')
+# * farcaster://@[username]/0x[hash]
+FARCASTER_URI_RE = re.compile(
+  r'farcaster://((?P<fid>[0-9]+)|@(?P<username>[a-z0-9][a-z0-9.-]*))(/0x(?P<hash>[0-9a-f]+))?')
 
 # reference web client URLs
 # https://docs.farcaster.xyz/reference/farcaster/intent-urls#resource-urls
@@ -98,26 +101,31 @@ HANDLE_RE = re.compile(r'[a-z0-9][a-z0-9-]{0,15}')
 logger = logging.getLogger(__name__)
 
 
-def uri(fid, hash=None):
+def uri(fid_or_username, hash=None):
   """Generates and returns a ``farcaster://`` URI.
 
   https://github.com/farcasterxyz/protocol/discussions/123
 
   Args:
-    fid (int)
+    fid_or_username (int or str): numeric FID or username string (without
+      leading ``@``)
     hash (bytes)
 
   Returns:
     str
   """
-  assert util.is_int(fid)
+  if util.is_int(fid_or_username):
+    authority = fid_or_username
+  else:
+    assert isinstance(fid_or_username, str)
+    authority = f'@{fid_or_username}'
 
-  uri = f'farcaster://{fid}'
+  result = f'farcaster://{authority}'
   if hash:
     assert isinstance(hash, bytes)
-    uri += f'/0x{hash.hex()}'
+    result += f'/0x{hash.hex()}'
 
-  return uri
+  return result
 
 
 def farcaster_uri_to_web_url(uri):
@@ -144,14 +152,19 @@ def farcaster_uri_to_web_url(uri):
   if not (match := FARCASTER_URI_RE.fullmatch(uri)):
     return None
 
-  if hash := match.group('hash'):
-    return f'https://farcaster.xyz/~/conversations/0x{hash}'
+  hash = match.group('hash')
+  if username := match.group('username'):
+    if hash:
+      return f'https://farcaster.xyz/{username}/0x{hash}'
+    return f'https://farcaster.xyz/{username}'
 
   fid = match.group('fid')
+  if hash:
+    return f'https://farcaster.xyz/~/conversations/0x{hash}'
   return Farcaster.user_url(fid)
 
 
-def web_url_to_farcaster_uri(url, fid=None):
+def web_url_to_farcaster_uri(url):
   """Converts a ``https://farcaster.xyz`` URL to a ``farcaster://`` URI.
 
   Supports tilde URLs:
@@ -164,18 +177,17 @@ def web_url_to_farcaster_uri(url, fid=None):
   * ``https://farcaster.xyz/[username]``
   * ``https://farcaster.xyz/[username]/0x[hash]``
 
-  Query strings and fragments are stripped before conversion. For tilde cast
-  URLs, ``fid`` is required to construct the URI.
+  Query strings and fragments are stripped before conversion. Tilde
+  conversation URLs return None since they contain no username or FID.
 
   https://docs.farcaster.xyz/reference/farcaster/intent-urls#resource-urls
   https://github.com/farcasterxyz/protocol/discussions/123
 
   Args:
     url (str): ``farcaster.xyz`` URL
-    fid (int): Farcaster user ID, required for tilde cast/conversation URLs
 
   Returns:
-    str: ``farcaster://`` URI, or None if fid is not provided for a tilde cast URL
+    str: ``farcaster://`` URI, or None for tilde conversation URLs
 
   Raises:
     ValueError: if ``url`` can't be parsed as a ``farcaster.xyz`` URL
@@ -191,18 +203,14 @@ def web_url_to_farcaster_uri(url, fid=None):
     id = match.group('id')
     if type == 'profiles':
       return f'farcaster://{id}'
-    # conversations: id is 0x<hash>
-    if not fid:
-      return None
-    hash_hex = id.removeprefix('0x')
-    return f'farcaster://{fid}/0x{hash_hex}'
+    return None  # conversations: no username or FID available
 
   if match := WEB_URL_RE.fullmatch(url):
     username = match.group('username')
     hash = match.group('hash')
     if hash:
-      return f'farcaster://{username}/{hash}'
-    return f'farcaster://{username}'
+      return f'farcaster://@{username}/{hash}'
+    return f'farcaster://@{username}'
 
   raise ValueError(f"{url} doesn't look like a farcaster.xyz URL")
 
@@ -500,7 +508,8 @@ def from_as1(obj):
   inner_type = as1.object_type(inner_obj)
   author = as1.get_owner(obj)
 
-  if (match := FARCASTER_URI_RE.fullmatch(author)) and not match['hash']:
+  if ((match := FARCASTER_URI_RE.fullmatch(author))
+      and match['fid'] and not match['hash']):
     data.fid = int(match['fid'])
 
   data.network = FARCASTER_NETWORK_MAINNET
@@ -526,7 +535,7 @@ def from_as1(obj):
     for tag in as1.get_objects(obj, 'tags'):
       if tag.get('objectType') == 'mention':
         match = FARCASTER_URI_RE.fullmatch(tag.get('url', ''))
-        if match and not match['hash']:
+        if match and match['fid'] and not match['hash']:
           cast.mentions.append(int(match['fid']))
           if 'startIndex' in tag:
             cast.mentions_positions.append(tag['startIndex'])
@@ -540,7 +549,8 @@ def from_as1(obj):
       att_type = as1.object_type(att)
       if att_type == 'note':
         author = att.get('author', '')
-        if (match := FARCASTER_URI_RE.fullmatch(att.get('id', ''))) and match['hash']:
+        if ((match := FARCASTER_URI_RE.fullmatch(att.get('id', '')))
+            and match['fid'] and match['hash']):
           embed = cast.embeds.add()
           embed.cast_id.fid = int(match['fid'])
           embed.cast_id.hash = bytes.fromhex(match['hash'])
@@ -553,12 +563,13 @@ def from_as1(obj):
 
     # reply
     if ((in_reply_to := as1.get_object(obj, 'inReplyTo'))
-            and (id := in_reply_to.get('id'))):
-        if (match := FARCASTER_URI_RE.fullmatch(id)) and match['hash']:
-            cast.parent_cast_id.fid = int(match['fid'])
-            cast.parent_cast_id.hash = bytes.fromhex(match['hash'])
-        elif util.is_web(id):
-          cast.parent_url = id
+        and (id := in_reply_to.get('id'))):
+      if ((match := FARCASTER_URI_RE.fullmatch(id))
+          and match['fid'] and match['hash']):
+        cast.parent_cast_id.fid = int(match['fid'])
+        cast.parent_cast_id.hash = bytes.fromhex(match['hash'])
+      elif util.is_web(id):
+        cast.parent_url = id
 
   # likes/reposts
   elif type in ('like', 'share'):
@@ -566,7 +577,7 @@ def from_as1(obj):
     reaction = data.reaction_body
     reaction.type = REACTION_TYPE_LIKE if type == 'like' else REACTION_TYPE_RECAST
 
-    if inner_id_match and inner_id_match['hash']:
+    if inner_id_match and inner_id_match['fid'] and inner_id_match['hash']:
       reaction.target_cast_id.fid = int(inner_id_match['fid'])
       reaction.target_cast_id.hash = bytes.fromhex(inner_id_match['hash'])
     elif util.is_web(inner_id):
@@ -576,7 +587,7 @@ def from_as1(obj):
   elif type in ('follow', 'block'):
     data.type = MESSAGE_TYPE_LINK_ADD
     data.link_body.type = type
-    if inner_id_match and not inner_id_match['hash']:
+    if inner_id_match and inner_id_match['fid'] and not inner_id_match['hash']:
       data.link_body.target_fid = int(inner_id_match['fid'])
     data.link_body.displayTimestamp = data.timestamp
 
@@ -596,7 +607,8 @@ def from_as1(obj):
     data.type = MESSAGE_TYPE_LINK_REMOVE
     data.link_body.type = inner_type
     target_id = as1.get_object(inner_obj).get('id', '')
-    if (match := FARCASTER_URI_RE.fullmatch(target_id)) and not match['hash']:
+    if ((match := FARCASTER_URI_RE.fullmatch(target_id))
+        and match['fid'] and not match['hash']):
       data.link_body.target_fid = int(match['fid'])
     data.link_body.displayTimestamp = data.timestamp
 
@@ -616,7 +628,8 @@ def _from_as1_actor(obj):
   assert as1.object_type(obj) in as1.ACTOR_TYPES
 
   fid = None
-  if (match := FARCASTER_URI_RE.fullmatch(obj.get('id', ''))) and not match['hash']:
+  if ((match := FARCASTER_URI_RE.fullmatch(obj.get('id', '')))
+      and match['fid'] and not match['hash']):
     fid = int(match['fid'])
 
   published = (util.parse_iso8601(obj['published']) if obj.get('published')

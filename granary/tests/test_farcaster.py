@@ -17,6 +17,7 @@ from ..farcaster import (
   from_as1,
   sign,
   to_as1,
+  uri,
   verify,
   web_url_to_farcaster_uri,
 )
@@ -816,12 +817,25 @@ cast_add_body { text: "Hello!" }
     with self.assertRaisesRegex(ValueError, 'Signature verification failed'):
       verify(msg)
 
+  def test_uri(self):
+    HASH = bytes.fromhex('abcd')
+    for fid_or_username, hash, expected in [
+        (123, None, 'farcaster://123'),
+        (123, HASH, 'farcaster://123/0xabcd'),
+        ('snarfed', None, 'farcaster://@snarfed'),
+        ('snarfed', HASH, 'farcaster://@snarfed/0xabcd'),
+    ]:
+      with self.subTest(fid_or_username=fid_or_username):
+        self.assertEqual(expected, uri(fid_or_username, hash=hash))
+
   def test_farcaster_uri_to_web_url(self):
     for uri, expected in [
         (None, None),
         ('', None),
         ('farcaster://123', 'https://farcaster.xyz/~/profiles/123'),
         ('farcaster://123/0xabcd', 'https://farcaster.xyz/~/conversations/0xabcd'),
+        ('farcaster://@snarfed', 'https://farcaster.xyz/snarfed'),
+        ('farcaster://@snarfed/0xabcd', 'https://farcaster.xyz/snarfed/0xabcd'),
     ]:
       with self.subTest(uri=uri):
         self.assertEqual(expected, farcaster_uri_to_web_url(uri))
@@ -836,15 +850,13 @@ cast_add_body { text: "Hello!" }
         # tilde URLs
         ('https://farcaster.xyz/~/profiles/123', {}, 'farcaster://123'),
         ('https://farcaster.xyz/~/conversations/0xabcd', {}, None),
-        ('https://farcaster.xyz/~/conversations/0xabcd', {'fid': 123},
-         'farcaster://123/0xabcd'),
         # pretty URLs
-        ('https://farcaster.xyz/snarfed.eth', {}, 'farcaster://snarfed.eth'),
-        ('https://farcaster.xyz/snarfed.eth/0xd687db55', {},
-         'farcaster://snarfed.eth/0xd687db55'),
+        ('https://farcaster.xyz/snarfed', {}, 'farcaster://@snarfed'),
+        ('https://farcaster.xyz/snarfed/0xd687db55', {},
+         'farcaster://@snarfed/0xd687db55'),
         # query and fragment stripped
         ('https://farcaster.xyz/~/profiles/123?foo=bar', {}, 'farcaster://123'),
-        ('https://farcaster.xyz/snarfed.eth#foo', {}, 'farcaster://snarfed.eth'),
+        ('https://farcaster.xyz/snarfed#foo', {}, 'farcaster://@snarfed'),
     ]:
       with self.subTest(url=url):
         self.assertEqual(expected, web_url_to_farcaster_uri(url, **kwargs))
