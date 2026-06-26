@@ -1,11 +1,11 @@
 """Unit tests for farcaster.py."""
-from blake3 import blake3
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from datetime import datetime, timezone
 import logging
 from unittest.mock import patch
 
+from blake3 import blake3
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from google.protobuf import text_format
 import grpc
 from webutil import testutil, util
@@ -78,6 +78,9 @@ user_data_body {{
 
 
 class FarcasterTest(testutil.TestCase):
+
+  def setUp(self):
+    Farcaster.get_fid.cache_clear()
 
   def test_cast(self):
     msg = message("""

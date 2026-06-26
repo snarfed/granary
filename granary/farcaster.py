@@ -13,21 +13,23 @@ TODO:
   (it's a geo:... URL string, https://tools.ietf.org/html/rfc5870, in
   USER_DATA_TYPE_LOCATION)
 """
+import copy
+from datetime import datetime, timedelta, timezone
+from itertools import zip_longest
+import logging
+import mimetypes
+import re
+import threading
+from urllib.parse import urlparse
+
 from blake3 import blake3
+from cachetools import cached, TTLCache
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
   Ed25519PrivateKey,
   Ed25519PublicKey,
 )
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-import copy
-from datetime import datetime, timezone
-from itertools import zip_longest
-import logging
-import mimetypes
-import re
-from urllib.parse import urlparse
-
 import grpc
 from webutil import util
 
@@ -97,6 +99,9 @@ BLAKE3_HASH_LENGTH_BYTES = 20
 
 # https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md#name-server
 HANDLE_RE = re.compile(r'[a-z0-9][a-z0-9-]{0,15}')
+
+CACHE_SIZE = 5000
+CACHE_TTL = timedelta(hours=6)
 
 logger = logging.getLogger(__name__)
 
@@ -733,6 +738,8 @@ class Farcaster(source.Source):
     resp = self.hub.GetUserDataByFid(FidRequest(fid=fid))
     return to_as1(resp)
 
+  @cached(TTLCache(maxsize=CACHE_SIZE, ttl=CACHE_TTL.total_seconds()),
+          lock=threading.Lock())
   def get_fid(self, username):
     """Resolves a Farcaster username to its FID via the hub.
 
