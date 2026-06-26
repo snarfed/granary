@@ -39,7 +39,7 @@ dependencies = [
     'beautifulsoup4>=4.8',
     'bech32>=1.2.0',
     'brevity @ git+https://github.com/snarfed/brevity.git@new-tlds',
-    'cachetools>=5.0.0',
+    'cachetools>=5.2.0',
     'cryptography>=41.0.0',
     'feedgen>=0.9',
     'feedparser>=6.0.0',
