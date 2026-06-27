@@ -205,7 +205,7 @@ def web_url_to_farcaster_uri(url):
 
   if match := WEB_RESOURCE_URL_RE.fullmatch(url):
     if match['type'] == 'profiles':
-      return f'farcaster://{match['id']}'
+      return f'farcaster://{match["id"]}'
     return None  # conversations: no username or FID available
 
   if match := WEB_URL_RE.fullmatch(url):
