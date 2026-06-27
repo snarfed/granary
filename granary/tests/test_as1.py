@@ -837,6 +837,10 @@ class As1Test(testutil.TestCase):
         (['x', 'y'], {'verb': 'post', 'tags': ['x', 'y']}),
         (['x', 'y'], {'verb': 'update', 'tags': ['x', 'y']}),
         (['x', 'y'], {'verb': 'delete', 'tags': ['x', 'y']}),
+        (['http://x', 'http://x/'], {
+          'verb': 'delete',
+          'tags': ['http://x', 'http://x/'],
+        }),
     ]:
       with self.subTest(expected=expected, obj=obj):
         self.assertCountEqual(expected, as1.targets(obj))

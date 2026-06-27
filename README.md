@@ -324,6 +324,7 @@ _Non-breaking changes:_
 * `as1`:
   * Bug fix for converting HTML content to plain text when it includes square brackets (`[` and `]`) ([snarfed/bridgy-fed#1605](https://github.com/snarfed/bridgy-fed/issues/1605)).
   * Optimize `is_content_html` to avoid full HTML parsing in most cases, eg when `content` has no `<` or `&` characters.
+  * `targets`: don't add trailing slashes to output targets.
 * `as2`
   * `from_as1`:
     * Preserve the input object's `@context` field, and extend it, instead of overwriting it.

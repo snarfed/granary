@@ -687,7 +687,7 @@ def targets(obj):
       if not o_targets:
         logger.warning(f'{verb} missing target id/URL')
 
-  return util.dedupe_urls(targets)
+  return util.dedupe_urls(targets, trailing_slash=False)
 
 
 def quoted_posts(obj):
