@@ -44,11 +44,11 @@ PUBKEY = PRIVKEY.public_key()
 logger = logging.getLogger(__name__)
 
 
-def message(data_text):
+def message(data_text, fid=123):
   """Generates a Message with data, data_bytes, hash, and signature."""
   msg = text_format.Parse(f"""
 data {{
-  fid: 123
+  fid: {fid}
   timestamp: {testutil.NOW_SECONDS}
   network: FARCASTER_NETWORK_MAINNET
 }}

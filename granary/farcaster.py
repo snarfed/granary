@@ -157,13 +157,13 @@ def farcaster_uri_to_web_url(uri):
   if not (match := FARCASTER_URI_RE.fullmatch(uri)):
     return None
 
-  hash = match.group('hash')
-  if username := match.group('username'):
+  hash = match['hash']
+  if username := match['username']:
     if hash:
       return f'https://farcaster.xyz/{username}/0x{hash}'
     return f'https://farcaster.xyz/{username}'
 
-  fid = match.group('fid')
+  fid = match['fid']
   if hash:
     return f'https://farcaster.xyz/~/conversations/0x{hash}'
   return Farcaster.user_url(fid)
@@ -204,15 +204,13 @@ def web_url_to_farcaster_uri(url):
   url = parsed._replace(query='', fragment='').geturl()
 
   if match := WEB_RESOURCE_URL_RE.fullmatch(url):
-    type = match.group('type')
-    id = match.group('id')
-    if type == 'profiles':
-      return f'farcaster://{id}'
+    if match['type'] == 'profiles':
+      return f'farcaster://{match['id']}'
     return None  # conversations: no username or FID available
 
   if match := WEB_URL_RE.fullmatch(url):
-    username = match.group('username')
-    hash = match.group('hash')
+    username = match['username']
+    hash = match['hash']
     if hash:
       return f'farcaster://@{username}/{hash}'
     return f'farcaster://@{username}'
