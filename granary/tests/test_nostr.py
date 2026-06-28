@@ -147,7 +147,7 @@ def fake_connect(uri, open_timeout=None, close_timeout=None, **kwargs):
   yield FakeConnection
 
 
-class NostrTest(testutil.TestCase):
+class NostrTest(testutil.BaseTestCase):
 
   def setUp(self):
     super().setUp()
@@ -1292,24 +1292,32 @@ class NostrTest(testutil.TestCase):
           nostr.nip05_to_npub(bad)
 
 
-class ClientTest(testutil.TestCase):
-  last_token = None
+_last_token = 0
+
+def _fake_token_urlsafe(length):
+  """Stub for :func:`secrets.token_urlsafe` that returns ``towkin 1``, ``2``...
+
+  The counter is reset in :meth:`ClientTest.setUp` before each test.
+  """
+  global _last_token
+  _last_token += 1
+  return f'towkin {_last_token}'
+
+
+@patch.object(secrets, 'token_urlsafe', _fake_token_urlsafe)
+class ClientTest(testutil.BaseTestCase):
 
   def setUp(self):
     super().setUp()
 
-    self.last_token = 0
-    self.mox.stubs.Set(secrets, 'token_urlsafe', self.token)
+    global _last_token
+    _last_token = 0
 
     FakeConnection.reset()
 
     nostr.websocket_connect = fake_connect
 
     self.nostr = nostr.Nostr(['ws://relay'], privkey=NSEC_URI)
-
-  def token(self, length):
-    self.last_token += 1
-    return f'towkin {self.last_token}'
 
   def test_constructor_without_privkey(self):
     nostr.Nostr(['ws://relay'])  # just check that we don't crash

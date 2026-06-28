@@ -1,8 +1,12 @@
 """Tests for meetup.py."""
 import copy
+import io
+from unittest.mock import patch
+import urllib.error, urllib.request
 
 from granary.meetup import Meetup
 from webutil import testutil, util
+from webutil.testutil import UrlopenResult
 from webutil.util import json_dumps
 
 
@@ -69,41 +73,32 @@ ACTOR = {
         'description': None,
         }
 
-class MeetupTest(testutil.TestCase):
+class MeetupTest(testutil.BaseTestCase):
 
     def setUp(self):
         super(MeetupTest, self).setUp()
         self.meetup = Meetup('token-here')
 
-    def test_create_rsvp_yes(self):
-        self.expect_urlopen(
-                url='https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps',
-                data='response=yes',
-                response='',
-                headers={
-                    'Authorization': 'Bearer token-here'
-                    }
-                )
-        self.mox.ReplayAll()
+    def assert_rsvp_request(self, mock_urlopen, url, data=b'response=yes'):
+        req = mock_urlopen.call_args.args[0]
+        self.assertEqual(url, req.full_url)
+        self.assertEqual(data, req.data)
+        self.assertEqual('Bearer token-here', req.headers['Authorization'])
 
+    @patch.object(util.urllib.request, 'urlopen', return_value=UrlopenResult(200, ''))
+    def test_create_rsvp_yes(self, mock_urlopen):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['verb'] = 'rsvp-yes'
         created = self.meetup.create(rsvp)
         self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
                 f'{created.content}\n{rsvp}')
+        self.assert_rsvp_request(
+          mock_urlopen,
+          'https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps')
 
-    def test_create_rsvp_yes_with_www(self):
-        self.expect_urlopen(
-                url='https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps',
-                data='response=yes',
-                response='',
-                headers={
-                    'Authorization': 'Bearer token-here'
-                    }
-                )
-        self.mox.ReplayAll()
-
+    @patch.object(util.urllib.request, 'urlopen', return_value=UrlopenResult(200, ''))
+    def test_create_rsvp_yes_with_www(self, mock_urlopen):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['object'][0]['url'] = 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439'
         rsvp['verb'] = 'rsvp-yes'
@@ -111,18 +106,12 @@ class MeetupTest(testutil.TestCase):
         self.assert_equals({'url': 'https://www.meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
                 f'{created.content}\n{rsvp}')
+        self.assert_rsvp_request(
+          mock_urlopen,
+          'https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps')
 
-    def test_create_rsvp_yes_with_non_numeric_event_id(self):
-        self.expect_urlopen(
-                url='https://api.meetup.com/NottsJS/events/qhnpfqyzcblb/rsvps',
-                data='response=yes',
-                response='',
-                headers={
-                    'Authorization': 'Bearer token-here'
-                    }
-                )
-        self.mox.ReplayAll()
-
+    @patch.object(util.urllib.request, 'urlopen', return_value=UrlopenResult(200, ''))
+    def test_create_rsvp_yes_with_non_numeric_event_id(self, mock_urlopen):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['object'][0]['url'] = 'https://www.meetup.com/NottsJS/events/qhnpfqyzcblb'
         rsvp['verb'] = 'rsvp-yes'
@@ -130,6 +119,9 @@ class MeetupTest(testutil.TestCase):
         self.assert_equals({'url': 'https://www.meetup.com/NottsJS/events/qhnpfqyzcblb#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
                 f'{created.content}\n{rsvp}')
+        self.assert_rsvp_request(
+          mock_urlopen,
+          'https://api.meetup.com/NottsJS/events/qhnpfqyzcblb/rsvps')
 
     def test_preview_create_rsvp_yes(self):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
@@ -147,17 +139,8 @@ class MeetupTest(testutil.TestCase):
         self.assertIn('Invalid Preview parameter, must be True or False', result.error_plain)
         self.assertIn('Invalid Preview parameter, must be True or False', result.error_html)
 
-    def test_create_rsvp_no(self):
-        self.expect_urlopen(
-                url='https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps',
-                data='response=no',
-                response='',
-                headers={
-                    'Authorization': 'Bearer token-here'
-                    }
-                )
-        self.mox.ReplayAll()
-
+    @patch.object(util.urllib.request, 'urlopen', return_value=UrlopenResult(200, ''))
+    def test_create_rsvp_no(self, mock_urlopen):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['verb'] = 'rsvp-no'
         created = self.meetup.create(rsvp)
@@ -165,24 +148,22 @@ class MeetupTest(testutil.TestCase):
         self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
                 f'{created.content}\n{rsvp}')
+        self.assert_rsvp_request(
+          mock_urlopen,
+          'https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps',
+          data=b'response=no')
 
-    def test_create_rsvp_handles_url_with_trailing_slash(self):
-        self.expect_urlopen(
-                url='https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps',
-                data='response=yes',
-                response='',
-                headers={
-                    'Authorization': 'Bearer token-here'
-                    }
-                )
-        self.mox.ReplayAll()
-
+    @patch.object(util.urllib.request, 'urlopen', return_value=UrlopenResult(200, ''))
+    def test_create_rsvp_handles_url_with_trailing_slash(self, mock_urlopen):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
         rsvp['object'][0]['url'] = 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/'
         created = self.meetup.create(rsvp)
         self.assert_equals({'url': 'https://meetup.com/PHPMiNDS-in-Nottingham/events/264008439/#rsvp-by-http%3A%2F%2Flocalhost%2Fpost%2Fwibble%2F', 'type': 'rsvp'},
                 created.content,
                 f'{created.content}\n{rsvp}')
+        self.assert_rsvp_request(
+          mock_urlopen,
+          'https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps')
 
     def test_create_rsvp_does_not_support_rsvp_interested(self):
         rsvp = copy.deepcopy(RSVP_ACTIVITY)
@@ -230,16 +211,15 @@ class MeetupTest(testutil.TestCase):
         self.assertIn('RSVP not to Meetup.com or missing in-reply-to', result.error_html)
 
     def test_create_rsvp_with_in_reply_to_object_with_no_url_property(self):
-        self.expect_urlopen(
-            url='https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps',
-            data='response=yes',
-            status=498,
-            response=json_dumps({'errors': [{'code':'0', 'message':'foo biff'}]}),
-            headers={'Authorization': 'Bearer token-here'},
-        )
-        self.mox.ReplayAll()
+        body = json_dumps({'errors': [{'code': '0', 'message': 'foo biff'}]})
+        url = 'https://api.meetup.com/PHPMiNDS-in-Nottingham/events/264008439/rsvps'
+        err = urllib.error.HTTPError(
+          url, 498, 'message', {},
+          urllib.request.addinfourl(io.StringIO(body), {}, url, 498))
 
-        result = self.meetup.create(RSVP_ACTIVITY)
+        with patch.object(util.urllib.request, 'urlopen', side_effect=err):
+            result = self.meetup.create(RSVP_ACTIVITY)
+
         self.assertTrue(result.abort)
         self.assertIn('From Meetup: 498 error: foo biff', result.error_plain)
         self.assertIn('From Meetup: 498 error: foo biff', result.error_html)

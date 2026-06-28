@@ -1,9 +1,10 @@
 """Unit tests for atom.py."""
 import copy
+from unittest.mock import patch
 
-from mox3 import mox
 import requests
-from webutil import testutil
+from webutil import testutil, util
+from webutil.testutil import requests_response
 
 from .. import atom
 from . import test_facebook
@@ -118,7 +119,7 @@ INSTAGRAM_ACTIVITY = {
 }
 
 
-class AtomTest(testutil.TestCase):
+class AtomTest(testutil.BaseTestCase):
 
   def test_from_as1(self):
     for test_module in test_facebook, test_instagram, test_twitter:
@@ -826,12 +827,11 @@ going to Homebrew Website Club
 </ol></div></body>
 """
 
-    self.expect_requests_get(
-      'https://my.site/author', html,
-      response_headers={'content-type': 'text/html; charset=utf-8'})
-    self.mox.ReplayAll()
-
-    got = atom.html_to_atom(html, 'https://my.site/', fetch_author=True)
+    with patch.object(util.session, 'get', return_value=requests_response(
+        html, url='https://my.site/author',
+        headers={'content-type': 'text/html; charset=utf-8'})) as mock_get:
+      got = atom.html_to_atom(html, 'https://my.site/', fetch_author=True)
+    self.assertEqual('https://my.site/author', mock_get.call_args.args[0])
     self.assert_multiline_in("""\
 <author>
 <activity:object-type>http://activitystrea.ms/schema/1.0/person</activity:object-type>

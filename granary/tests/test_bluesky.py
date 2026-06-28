@@ -651,7 +651,7 @@ STARTER_PACK_EMBED = {
 }
 
 
-class BlueskyTest(testutil.TestCase):
+class BlueskyTest(testutil.BaseTestCase):
 
   def setUp(self):
     super().setUp()

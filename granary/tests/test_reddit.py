@@ -1,7 +1,7 @@
 """Unit tests for reddit.py."""
 import copy
 
-from mox3 import mox
+from unittest.mock import MagicMock
 from oauth_dropins import reddit as oauth_reddit
 from webutil import testutil, util
 
@@ -160,13 +160,13 @@ ACTIVITY_WITH_COMMENT['object']['replies'] = {
 MISSING_OBJECT = {}
 
 
-class RedditTest(testutil.TestCase):
+class RedditTest(testutil.BaseTestCase):
 
   def setUp(self):
     super(RedditTest, self).setUp()
     oauth_reddit.REDDIT_APP_KEY = oauth_reddit.REDDIT_APP_LOCAL = 'foo'
     self.reddit = reddit.Reddit('token-here')
-    self.api = self.reddit.api = self.mox.CreateMockAnything(praw.Reddit)
+    self.api = self.reddit.api = MagicMock()
 
     self.redditor = FakeRedditor()
     self.submission_selftext = FakeSubmission(self.redditor)
@@ -231,84 +231,71 @@ class RedditTest(testutil.TestCase):
       self.reddit.post_id('https://www.reddit.com/r/xyz/comments/lhzukq/abc/'))
 
   def test_get_activities_user_id(self):
-    self.api.redditor('plfff').AndReturn(self.redditor)
-    self.redditor.submissions = self.mox.CreateMock(SubListing)
-    self.redditor.submissions.new(limit=None).AndReturn(
-      [self.submission_selftext, self.submission_link])
-    self.mox.ReplayAll()
+    self.api.redditor.return_value = self.redditor
+    self.redditor.submissions = MagicMock(spec=SubListing)
+    self.redditor.submissions.new.return_value = [
+      self.submission_selftext, self.submission_link]
 
     self.assert_equals([ACTIVITY_WITH_SELFTEXT, ACTIVITY_WITH_LINK],
                        self.reddit.get_activities(user_id='plfff'))
+    self.api.redditor.assert_called_once_with('plfff')
+    self.redditor.submissions.new.assert_called_once_with(limit=None)
 
   def test_get_activities_default_user(self):
-    self.api.user = self.mox.CreateMock(User)
-    self.api.user.me().AndReturn(self.redditor)
-    self.redditor.submissions = self.mox.CreateMock(SubListing)
-    self.redditor.submissions.new(limit=None).AndReturn(
-      [self.submission_selftext, self.submission_link])
-    self.mox.ReplayAll()
+    self.api.user = MagicMock(spec=User)
+    self.api.user.me.return_value = self.redditor
+    self.redditor.submissions = MagicMock(spec=SubListing)
+    self.redditor.submissions.new.return_value = [
+      self.submission_selftext, self.submission_link]
 
     self.assert_equals([ACTIVITY_WITH_SELFTEXT, ACTIVITY_WITH_LINK],
                        self.reddit.get_activities())
+    self.redditor.submissions.new.assert_called_once_with(limit=None)
 
   def test_get_activities_activity_id(self):
-    self.api.submission(id='abc').AndReturn(self.submission_selftext)
-    self.mox.ReplayAll()
+    self.api.submission.return_value = self.submission_selftext
 
     self.assert_equals([ACTIVITY_WITH_SELFTEXT],
                        self.reddit.get_activities(activity_id='abc'))
+    self.api.submission.assert_called_once_with(id='abc')
 
   def test_get_activities_search_query(self):
-    subreddit = self.mox.CreateMock(Subreddit)
-    self.mox.StubOutWithMock(self.api, 'subreddit')
-    self.api.subreddit('all').AndReturn(subreddit)
-    subreddit.search('foo bar', sort='new', limit=None).AndReturn(
-      [self.submission_selftext, self.submission_link])
-    self.mox.ReplayAll()
+    subreddit = MagicMock(spec=Subreddit)
+    self.api.subreddit.return_value = subreddit
+    subreddit.search.return_value = [self.submission_selftext, self.submission_link]
 
     self.assert_equals([ACTIVITY_WITH_SELFTEXT, ACTIVITY_WITH_LINK],
                        self.reddit.get_activities(search_query='foo bar'))
+    self.api.subreddit.assert_called_once_with('all')
+    subreddit.search.assert_called_once_with('foo bar', sort='new', limit=None)
 
   def test_get_activities_fetch_replies(self):
-    self.api.submission(id='ezv3f2').MultipleTimes().AndReturn(self.submission_selftext)
+    self.api.submission.return_value = self.submission_selftext
     self.submission_selftext.comments = CommentForest(self.submission_selftext,
                                                       comments=[self.comment])
-    self.mox.StubOutWithMock(self.submission_selftext.comments, 'replace_more')
-    self.submission_selftext.comments.replace_more()
-    self.mox.ReplayAll()
+    self.submission_selftext.comments.replace_more = MagicMock()
 
     self.assert_equals(
       [ACTIVITY_WITH_COMMENT],
       self.reddit.get_activities(activity_id='ezv3f2', fetch_replies=True))
+    self.api.submission.assert_called_with(id='ezv3f2')
+    self.submission_selftext.comments.replace_more.assert_called_once_with()
 
   def test_get_activities_cache_comments(self):
-    # get first_activities() call, fetches comments
     self.submission_selftext.num_comments = 1
-    for _ in range(2):
-      self.api.submission(id='ezv3f2').AndReturn(self.submission_selftext)
-
     comments = CommentForest(self.submission_selftext, comments=[self.comment])
     self.submission_selftext.comments = comments
-    self.mox.StubOutWithMock(comments, 'replace_more')
-    comments.replace_more()
+    comments.replace_more = MagicMock()
 
-    # second call, comment count is unchanged, skips comment fetch
-    for _ in range(2):
-      self.api.submission(id='ezv3f2').AndReturn(self.submission_selftext)
-
-    # third call, comment count is different, skips comment fetch
     other_sub = FakeSubmission(self.redditor)
     other_sub.num_comments = 2
     other_sub.comments = comments
-    for _ in range(2):
-      self.api.submission(id='ezv3f2').AndReturn(other_sub)
-    comments.replace_more()
 
-    # fourth call, comment count is unchanged, skips comment fetch
-    for _ in range(2):
-      self.api.submission(id='ezv3f2').AndReturn(other_sub)
+    # first two get_activities() calls return submission_selftext (num_comments
+    # 1), second two return other_sub (num_comments 2)
+    self.api.submission.side_effect = (
+      [self.submission_selftext] * 4 + [other_sub] * 4)
 
-    self.mox.ReplayAll()
     cache = {}
     for num_comments in (1, 2):
       # not cached
@@ -324,19 +311,16 @@ class RedditTest(testutil.TestCase):
       self.assert_equals(num_comments, cache['ARR ezv3f2'])
 
   def test_get_comment(self):
-    self.api.comment(id='xyz').AndReturn(self.comment)
-    self.mox.ReplayAll()
-
+    self.api.comment.return_value = self.comment
     self.assert_equals(COMMENT_OBJECT, self.reddit.get_comment('xyz'))
+    self.api.comment.assert_called_once_with(id='xyz')
 
   def test_get_actor(self):
-    self.api.redditor('schnarfed').AndReturn(self.redditor)
-    self.mox.ReplayAll()
-
+    self.api.redditor.return_value = self.redditor
     self.assert_equals(ACTOR, self.reddit.get_actor('schnarfed'))
+    self.api.redditor.assert_called_once_with('schnarfed')
 
   def test_get_actor_missing(self):
-    self.api.redditor('schnarfed').AndReturn(self.comment)
-    self.mox.ReplayAll()
-
+    self.api.redditor.return_value = self.comment
     self.assert_equals(MISSING_OBJECT, self.reddit.get_actor('schnarfed'))
+    self.api.redditor.assert_called_once_with('schnarfed')

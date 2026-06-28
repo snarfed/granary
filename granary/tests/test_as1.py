@@ -4,6 +4,7 @@ import re
 from unittest.mock import patch
 
 from webutil import testutil, util
+from webutil.testutil import requests_response
 
 from .. import as1
 
@@ -458,6 +459,7 @@ class As1Test(testutil.TestCase):
     self.assert_equals(originals, got[0])
     self.assert_equals(mentions or [], got[1])
 
+  @testutil.head_returns_200
   def test_original_post_discovery(self):
     check = self.check_original_post_discovery
 
@@ -557,28 +559,31 @@ class As1Test(testutil.TestCase):
     check({'targetUrl': 'http://or.ig/'}, ['http://or.ig/'])
 
   def test_original_post_discovery_max_redirect_fetches(self):
-    self.expect_requests_head('http://other/link', redirected_url='http://a'
-                              ).InAnyOrder()
-    self.expect_requests_head('http://sho.rt/post', redirected_url='http://b'
-                              ).InAnyOrder()
-    self.mox.ReplayAll()
+    redirects = {
+      'http://other/link': 'http://a',
+      'http://sho.rt/post': 'http://b',
+    }
+    def head(url, **kwargs):
+      return requests_response('', redirected_url=redirects[url])
 
     obj = {
       'content': 'asdf http://other/link qwert',
       'upstreamDuplicates': ['http://sho.rt/post', 'http://next/post'],
     }
-    self.check_original_post_discovery(
-      obj, ['http://a/', 'http://b/', 'http://next/post'], max_redirect_fetches=2)
+    with patch.object(util.session, 'head', side_effect=head) as mock_head:
+      self.check_original_post_discovery(
+        obj, ['http://a/', 'http://b/', 'http://next/post'], max_redirect_fetches=2)
 
-  def test_original_post_discovery_follow_redirects_false(self):
-    self.expect_requests_head('http://other/link',
-                              redirected_url='http://other/link/redirected'
-                             ).MultipleTimes()
-    self.expect_requests_head('http://sho.rt/post',
-                              redirected_url='http://or.ig/post/redirected'
-                             ).MultipleTimes()
-    self.mox.ReplayAll()
+    # only the first two candidates are resolved; http://next/post is over the limit
+    self.assertCountEqual(['http://other/link', 'http://sho.rt/post'],
+                          [call.args[0] for call in mock_head.call_args_list])
 
+  @patch.object(util.session, 'head', side_effect=lambda url, **kwargs:
+                requests_response('', redirected_url={
+                  'http://other/link': 'http://other/link/redirected',
+                  'http://sho.rt/post': 'http://or.ig/post/redirected',
+                }[url]))
+  def test_original_post_discovery_follow_redirects_false(self, _):
     obj = {
       'content': 'asdf http://other/link qwert',
       'upstreamDuplicates': ['http://sho.rt/post'],
@@ -592,6 +597,7 @@ class As1Test(testutil.TestCase):
     check(obj, ['http://or.ig/post/redirected', 'http://other/link/redirected'],
           include_redirect_sources=False)
 
+  @testutil.head_returns_200
   def test_original_post_discovery_excludes(self):
     """Should exclude reserved hosts, non-http(s) URLs, and missing domains."""
     obj = {
@@ -617,6 +623,7 @@ class As1Test(testutil.TestCase):
     self.check_original_post_discovery(
       obj, ['http://sho.rt/post'], include_reserved_hosts=False)
 
+  @testutil.head_returns_200
   def test_original_post_discovery_exclude_hosts(self):
     obj = {
       'content': 'http://other/link https://x.test/ http://y.local/path',

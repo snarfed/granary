@@ -5,14 +5,16 @@ for full testdata tests.
 """
 import copy
 import re
+from unittest.mock import patch
 
 import mf2py
-from webutil import testutil
+from webutil import testutil, util
+from webutil.testutil import requests_response
 
 from .. import microformats2
 
 
-class Microformats2Test(testutil.TestCase):
+class Microformats2Test(testutil.BaseTestCase):
 
   def test_to_as1_post_type_discovery(self):
     for prop, verb in ('like-of', 'like'), ('repost-of', 'share'):
@@ -979,15 +981,14 @@ foo bar
       },
     }))
 
-  def test_to_as1_authorship_fetch_mf2_func(self):
-    self.expect_requests_get('http://example.com', """
+  @patch.object(util.session, 'get', return_value=requests_response("""
 <div class="h-card">
 <a class="p-name u-url" rel="me" href="/">Ms. ☕ Baz</a>
 <img class="u-photo" src="/my/pic" alt="my pic" />
 </div>
-""", response_headers={'content-type': 'text/html; charset=utf-8'})
-    self.mox.ReplayAll()
-
+""", url='http://example.com',
+    headers={'content-type': 'text/html; charset=utf-8'}))
+  def test_to_as1_authorship_fetch_mf2_func(self, mock_get):
     self.assert_equals({
       'objectType': 'note',
       'content': 'foo',
@@ -1007,6 +1008,7 @@ foo bar
         'author': ['http://example.com'],
       },
     }, fetch_mf2=True))
+    self.assertEqual('http://example.com', mock_get.call_args.args[0])
 
   def test_to_as1_embedded_responses(self):
     """Post with embedded responses as compound objects.

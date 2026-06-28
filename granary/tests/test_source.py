@@ -43,100 +43,84 @@ class FakeHTMLSource(Source):
   EMBED_POST = '%(content)s'
 
 
-class SourceTest(testutil.TestCase):
+class SourceTest(testutil.BaseTestCase):
 
   def setUp(self):
     super(SourceTest, self).setUp()
     self.source = FakeSource()
-    self.mox.StubOutWithMock(self.source, 'get_activities')
-    self.mox.StubOutWithMock(self.source, 'get_event')
 
-  def test_get_like(self):
-    self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_likes=True).AndReturn([ACTIVITY])
-    self.mox.ReplayAll()
+  @patch.object(FakeSource, 'get_activities', return_value=[ACTIVITY])
+  def test_get_like(self, mock_get_activities):
     self.assert_equals(LIKES[1], self.source.get_like('author', 'activity', '6'))
+    mock_get_activities.assert_called_once_with(
+      user_id='author', activity_id='activity', fetch_likes=True)
 
   def test_get_like_with_activity(self):
     # skips fetch
     self.assert_equals(LIKES[1], self.source.get_like(
       'author', 'activity', '6', activity=ACTIVITY))
 
-  def test_get_like_numeric_id(self):
-    self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_likes=True).AndReturn([ACTIVITY])
-    self.mox.ReplayAll()
+  @patch.object(FakeSource, 'get_activities', return_value=[ACTIVITY])
+  def test_get_like_numeric_id(self, _):
     self.assert_equals(LIKES[0], self.source.get_like('author', 'activity', '5'))
 
   def test_get_like_not_found(self):
     activity = copy.deepcopy(ACTIVITY)
     del activity['object']['tags']
-    self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_likes=True).AndReturn([activity])
-    self.mox.ReplayAll()
+    with patch.object(FakeSource, 'get_activities', return_value=[activity]):
+      self.assert_equals(None, self.source.get_like('author', 'activity', '6'))
+
+  @patch.object(FakeSource, 'get_activities', return_value=[])
+  def test_get_like_no_activity(self, _):
     self.assert_equals(None, self.source.get_like('author', 'activity', '6'))
 
-  def test_get_like_no_activity(self):
-    self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_likes=True).AndReturn([])
-    self.mox.ReplayAll()
-    self.assert_equals(None, self.source.get_like('author', 'activity', '6'))
-
-  def test_get_reaction(self):
-    self.source.get_activities(
-      user_id='author', activity_id='activity', fetch_likes=True
-      ).AndReturn([ACTIVITY])
-    self.mox.ReplayAll()
+  @patch.object(FakeSource, 'get_activities', return_value=[ACTIVITY])
+  def test_get_reaction(self, mock_get_activities):
     self.assert_equals(REACTIONS[0], self.source.get_reaction(
       'author', 'activity', '5', 'apple'))
+    mock_get_activities.assert_called_once_with(
+      user_id='author', activity_id='activity', fetch_likes=True)
 
   def test_get_reaction_with_activity(self):
     # skips fetch
     self.assert_equals(REACTIONS[0], self.source.get_reaction(
       'author', 'activity', '5', 'apple', activity=ACTIVITY))
 
-  def test_get_reaction_not_found(self):
-    self.source.get_activities(
-      user_id='author', activity_id='activity', fetch_likes=True
-      ).AndReturn([ACTIVITY])
-    self.mox.ReplayAll()
+  @patch.object(FakeSource, 'get_activities', return_value=[ACTIVITY])
+  def test_get_reaction_not_found(self, _):
     self.assertIsNone(self.source.get_reaction('author', 'activity', '5', 'foo'))
 
-  def test_get_share(self):
-    self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_shares=True).AndReturn([ACTIVITY])
-    self.mox.ReplayAll()
+  @patch.object(FakeSource, 'get_activities', return_value=[ACTIVITY])
+  def test_get_share(self, mock_get_activities):
     self.assert_equals(SHARES[0], self.source.get_share('author', 'activity', '3'))
+    mock_get_activities.assert_called_once_with(
+      user_id='author', activity_id='activity', fetch_shares=True)
 
   def test_get_share_with_activity(self):
     # skips fetch
     self.assert_equals(SHARES[0], self.source.get_share(
       'author', 'activity', '3', activity=ACTIVITY))
 
-  def test_get_share_not_found(self):
-    self.source.get_activities(user_id='author', activity_id='activity',
-                               fetch_shares=True).AndReturn([ACTIVITY])
-    self.mox.ReplayAll()
+  @patch.object(FakeSource, 'get_activities', return_value=[ACTIVITY])
+  def test_get_share_not_found(self, _):
     self.assert_equals(None, self.source.get_share('author', 'activity', '6'))
 
-
-  def test_get_rsvp(self):
-    self.source.get_event('1').MultipleTimes().AndReturn(EVENT_ACTIVITY_WITH_RSVPS)
-    self.mox.ReplayAll()
+  @patch.object(FakeSource, 'get_event', return_value=EVENT_ACTIVITY_WITH_RSVPS)
+  def test_get_rsvp(self, _):
     self.assert_equals(RSVP_YES, self.source.get_rsvp('unused', '1', '11500'))
     self.assert_equals(RSVP_MAYBE, self.source.get_rsvp('unused', '1', '987'))
     self.assert_equals(INVITE, self.source.get_rsvp('unused', '1', '555'))
 
-  def test_get_rsvp_not_found(self):
-    self.source.get_event('1').AndReturn(EVENT_ACTIVITY_WITH_RSVPS)
-    self.source.get_event('2').AndReturn({'object': EVENT})
-    self.mox.ReplayAll()
+  @patch.object(FakeSource, 'get_event', side_effect=lambda id: {
+    '1': EVENT_ACTIVITY_WITH_RSVPS,
+    '2': {'object': EVENT},
+  }[id])
+  def test_get_rsvp_not_found(self, _):
     self.assert_equals(None, self.source.get_rsvp('123', '1', 'xyz'))
     self.assert_equals(None, self.source.get_rsvp('123', '2', '11500'))
 
-  def test_get_rsvp_event_not_found(self):
-    self.source.get_event('1').AndReturn(None)
-    self.mox.ReplayAll()
+  @patch.object(FakeSource, 'get_event', return_value=None)
+  def test_get_rsvp_event_not_found(self, _):
     self.assert_equals(None, self.source.get_rsvp('123', '1', '456'))
 
   def test_get_rsvp_with_event(self):

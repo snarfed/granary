@@ -1,7 +1,9 @@
 """Unit tests for pixelfed.py."""
 import copy
+from unittest.mock import patch
 
 from webutil import testutil, util
+from webutil.testutil import requests_response
 from webutil.util import json_dumps, json_loads
 
 from .. import mastodon, pixelfed
@@ -29,7 +31,7 @@ REPLY_ACTIVITY['actor']['id'] = 'http://foo.com/users/snarfed'
 REPLY_ACTIVITY['object'] = REPLY_OBJECT
 
 
-class PixelfedTest(testutil.TestCase):
+class PixelfedTest(testutil.BaseTestCase):
 
   def setUp(self):
     super(PixelfedTest, self).setUp()
@@ -49,17 +51,15 @@ class PixelfedTest(testutil.TestCase):
     self.assert_equals('http://foo.com/p/bar/123',
                        self.pixelfed.status_url('bar', 123))
 
-  def test_get_activities_fetch_mentions(self):
-    self.expect_requests_get(
-      test_mastodon.INSTANCE + test_mastodon.API_TIMELINE,
-      params={},
-      response=[REPLY_STATUS],
-      headers={'Authorization': 'Bearer towkin'},
-      content_type='application/json')
-    self.mox.ReplayAll()
-
+  @patch.object(util.session, 'get',
+               return_value=requests_response([REPLY_STATUS]))
+  def test_get_activities_fetch_mentions(self, mock_get):
     self.assert_equals([REPLY_ACTIVITY],
                        self.pixelfed.get_activities(fetch_mentions=True))
+    self.assertEqual(test_mastodon.INSTANCE + test_mastodon.API_TIMELINE,
+                     mock_get.call_args.args[0])
+    self.assertEqual('Bearer towkin',
+                     mock_get.call_args.kwargs['headers']['Authorization'])
 
   def test_actor_id(self):
     local_user = {
