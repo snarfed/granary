@@ -40,12 +40,9 @@ jobs:
             case "<< parameters.deps >>" in
               pinned)
                 # force our own packages to reinstall at head from the git refs.
-                # --no-sources since the [tool.uv.sources] editable paths point at
-                # sibling repos that aren't checked out in CI.
                 uv pip uninstall --system brevity lexrpc oauth-dropins pywebutil || true
+                # --no-sources since our other repos aren't checked out here
                 uv pip install --system --no-sources -r requirements.txt
-                # test-only deps (mox3, mf2py); --no-sources since sibling repos
-                # aren't checked out in CI
                 uv pip install --system --no-sources '.[tests]'
                 ;;
               lowest-direct)

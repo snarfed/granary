@@ -370,7 +370,7 @@ def get_labels_graphql_response(labels):
   })
 
 
-class GitHubTest(testutil.BaseTestCase):
+class GitHubTest(testutil.TestCase):
 
   def setUp(self):
     super(GitHubTest, self).setUp()
@@ -378,16 +378,8 @@ class GitHubTest(testutil.BaseTestCase):
     self.batch = []
     self.batch_responses = []
 
-    self.mock_get = self.start_patch('get')    # v3 REST GETs
-    self.mock_post = self.start_patch('post')  # GraphQL, REST POSTs, markdown
-
-  def start_patch(self, method):
-    # TODO: replace with self.enterContext(patch.object(...)) once our Python
-    # floor is >= 3.11.
-    patcher = patch.object(util.session, method)
-    mock = patcher.start()
-    self.addCleanup(patcher.stop)
-    return mock
+    self.mock_get = self.start_patch(util.session, 'get')
+    self.mock_post = self.start_patch(util.session, 'post')
 
   # call assertion helpers
   def assert_graphql(self, query):

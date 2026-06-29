@@ -73,7 +73,7 @@ ACTOR = {
         'description': None,
         }
 
-class MeetupTest(testutil.BaseTestCase):
+class MeetupTest(testutil.TestCase):
 
     def setUp(self):
         super(MeetupTest, self).setUp()

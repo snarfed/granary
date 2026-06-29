@@ -576,7 +576,7 @@ def lookup_users_results():
           for _, user_id in LOOKUP_USERS]
 
 
-class FlickrTest(testutil.BaseTestCase):
+class FlickrTest(testutil.TestCase):
 
   def setUp(self):
     super(FlickrTest, self).setUp()
@@ -589,14 +589,6 @@ class FlickrTest(testutil.BaseTestCase):
     # HTML in two tests, so those patch it inline.)
     self.mock_urlopen = self.start_patch(util.urllib.request, 'urlopen')
     self.mock_post = self.start_patch(util.session, 'post')
-
-  def start_patch(self, obj, attr):
-    # TODO: replace with self.enterContext(patch.object(...)) once our Python
-    # floor is >= 3.11.
-    patcher = patch.object(obj, attr)
-    mock = patcher.start()
-    self.addCleanup(patcher.stop)
-    return mock
 
   def api_url(self, method, params):
     params = {

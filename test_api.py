@@ -1,6 +1,7 @@
 """Unit tests for api.py."""
 import copy
 import socket
+from unittest.mock import patch
 
 from webutil import testutil
 
@@ -33,29 +34,28 @@ class ApiTest(testutil.TestCase):
   def setUp(self):
     super(ApiTest, self).setUp()
     app.testing = True
-    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
+    self.mock_get_activities = self.start_patch(FakeSource, 'get_activities_response')
+    self.mock_get_actor = self.start_patch(FakeSource, 'get_actor')
 
   def reset(self):
-    self.mox.UnsetStubs()
-    self.mox.ResetAll()
+    self.mock_get_activities.reset_mock(return_value=True, side_effect=True)
+    self.mock_get_actor.reset_mock(return_value=True, side_effect=True)
     api.SOURCE = FakeSource
-    self.mox.StubOutWithMock(FakeSource, 'get_activities_response')
 
   def get_response(self, url, *args, **kwargs):
     start_index = kwargs.setdefault('start_index', 0)
     kwargs.setdefault('count', api.ITEMS_PER_PAGE_DEFAULT)
     method = kwargs.pop('method', 'GET')
 
-    FakeSource.get_activities_response(*args, **kwargs).AndReturn({
-        'startIndex': start_index,
-        'itemsPerPage': 1,
-        'totalResults': 9,
-        'items': self.activities,
-        'filtered': False,
-        'sorted': False,
-        'updatedSince': False,
-        })
-    self.mox.ReplayAll()
+    self.mock_get_activities.return_value = {
+      'startIndex': start_index,
+      'itemsPerPage': 1,
+      'totalResults': 9,
+      'items': self.activities,
+      'filtered': False,
+      'sorted': False,
+      'updatedSince': False,
+    }
 
     return client.open(url, method=method)
 
@@ -63,14 +63,14 @@ class ApiTest(testutil.TestCase):
     resp = self.get_response('/fake' + url, *args, **kwargs)
     self.assertEqual(200, resp.status_code)
     self.assert_equals({
-        'startIndex': int(kwargs.get('start_index', 0)),
-        'itemsPerPage': 1,
-        'totalResults': 9,
-        'items': [{'foo': '☕ bar'}],
-        'filtered': False,
-        'sorted': False,
-        'updatedSince': False,
-        }, resp.json)
+      'startIndex': int(kwargs.get('start_index', 0)),
+      'itemsPerPage': 1,
+      'totalResults': 9,
+      'items': [{'foo': '☕ bar'}],
+      'filtered': False,
+      'sorted': False,
+      'updatedSince': False,
+    }, resp.json)
     return resp
 
   def test_all_defaults(self):
@@ -95,29 +95,23 @@ class ApiTest(testutil.TestCase):
     self.check_request('/123/@self/', '123', '@self')
 
   def test_blocks(self):
-    self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
+    mock_blocklist = self.start_patch(FakeSource, 'get_blocklist')
     blocks = [{'blockee': '1'}, {'blockee': '2'}]
-    FakeSource.get_blocklist().AndReturn(blocks)
-    self.mox.ReplayAll()
-
+    mock_blocklist.return_value = blocks
     resp = client.get('/fake/123/@blocks/')
     self.assertEqual(200, resp.status_code)
     self.assert_equals({'items': blocks}, resp.json)
 
   def test_blocks_rate_limited(self):
-    self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
-    FakeSource.get_blocklist().AndRaise(source.RateLimited('foo', partial=[]))
-    self.mox.ReplayAll()
-
+    mock_blocklist = self.start_patch(FakeSource, 'get_blocklist')
+    mock_blocklist.side_effect = source.RateLimited('foo', partial=[])
     resp = client.get('/fake/123/@blocks/')
     self.assertEqual(429, resp.status_code)
 
   def test_blocks_rate_limited_partial(self):
-    self.mox.StubOutWithMock(FakeSource, 'get_blocklist')
+    mock_blocklist = self.start_patch(FakeSource, 'get_blocklist')
     blocks = [{'blockee': '1'}, {'blockee': '2'}]
-    FakeSource.get_blocklist().AndRaise(source.RateLimited('foo', partial=blocks))
-    self.mox.ReplayAll()
-
+    mock_blocklist.side_effect = source.RateLimited('foo', partial=blocks)
     resp = client.get('/fake/123/@blocks/')
     self.assertEqual(200, resp.status_code)
     self.assert_equals({'items': blocks}, resp.json)
@@ -189,8 +183,7 @@ class ApiTest(testutil.TestCase):
     for test_module in test_facebook, test_instagram, test_twitter:
       with self.subTest(test_module):
         self.reset()
-        self.mox.StubOutWithMock(FakeSource, 'get_actor')
-        FakeSource.get_actor('456').AndReturn(test_module.ACTOR)
+        self.mock_get_actor.return_value = test_module.ACTOR
         self.activities = [copy.deepcopy(test_module.ACTIVITY)]
 
         # include access_token param to check that it gets stripped
@@ -211,9 +204,7 @@ class ApiTest(testutil.TestCase):
     self.assertEqual(400, resp.status_code)
 
   def test_atom_format_cant_fetch_actor(self):
-    self.mox.StubOutWithMock(FakeSource, 'get_actor')
-    FakeSource.get_actor('456').AndRaise(ValueError('foo'))
-
+    self.mock_get_actor.side_effect = ValueError('foo')
     resp = self.get_response('/fake/456/?format=atom', '456')
     self.assertEqual(400, resp.status_code)
 
@@ -261,10 +252,7 @@ class ApiTest(testutil.TestCase):
     self.get_response('/fake/?shares=false', include_shares=False)
 
   def test_get_activities_connection_error(self):
-    FakeSource.get_activities_response(
-      None, start_index=0, count=api.ITEMS_PER_PAGE_DEFAULT
-    ).AndRaise(socket.timeout(''))
-    self.mox.ReplayAll()
+    self.mock_get_activities.side_effect = socket.timeout('')
     resp = client.get('/fake/@me')
     self.assertEqual(504, resp.status_code)
 
@@ -280,12 +268,8 @@ class ApiTest(testutil.TestCase):
     self.assertEqual('Unknown site bad', resp.get_data(as_text=True))
 
   def test_farcaster(self):
-    self.mox.StubOutWithMock(Farcaster, 'get_activities_response')
-    Farcaster.get_activities_response(
-      None, start_index=0, count=api.ITEMS_PER_PAGE_DEFAULT,
-    ).AndReturn({'items': []})
-    self.mox.ReplayAll()
-
+    mock_farcaster = self.start_patch(Farcaster, 'get_activities_response')
+    mock_farcaster.return_value = {'items': []}
     resp = client.get('/farcaster/@me/')
     self.assertEqual(200, resp.status_code)
 

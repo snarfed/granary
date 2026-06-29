@@ -14,7 +14,7 @@ from webutil.testutil import requests_response
 from .. import microformats2
 
 
-class Microformats2Test(testutil.BaseTestCase):
+class Microformats2Test(testutil.TestCase):
 
   def test_to_as1_post_type_discovery(self):
     for prop, verb in ('like-of', 'like'), ('repost-of', 'share'):

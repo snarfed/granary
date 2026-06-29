@@ -119,7 +119,7 @@ INSTAGRAM_ACTIVITY = {
 }
 
 
-class AtomTest(testutil.BaseTestCase):
+class AtomTest(testutil.TestCase):
 
   def test_from_as1(self):
     for test_module in test_facebook, test_instagram, test_twitter:

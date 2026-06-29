@@ -2,12 +2,14 @@
 import copy
 from datetime import datetime
 import os
+import urllib.error
 import urllib.parse
+from unittest.mock import patch
 
 from bs4.element import NavigableString
-from mox3 import mox
 import oauth_dropins.facebook
 from webutil import testutil, util
+from webutil.testutil import requests_response, UrlopenResult
 from webutil.util import json_dumps, json_loads
 
 from .. import facebook
@@ -1348,39 +1350,36 @@ class FacebookTest(testutil.TestCase):
     self.fb = Facebook()
     self.fbscrape = Facebook(scrape=True, cookie_c_user='CU', cookie_xs='XS')
     util.now = lambda **kwargs: datetime(1999, 1, 1)
+    self.mock_urlopen = self.start_patch(util.urllib.request, 'urlopen')
+    self.mock_get = self.start_patch(util.session, 'get')
 
-  def expect_urlopen(self, url, response=None, **kwargs):
+  def assert_urlopen(self, url, data=None):
+    """Assert mock_urlopen was called with this URL (full or relative to API_BASE)."""
     if not url.startswith('http'):
       url = API_BASE + url
-    return super(FacebookTest, self).expect_urlopen(
-      url, response=json_dumps(response), **kwargs)
+    super().assert_urlopen(url, data=data)
 
-  def expect_requests_get(self, url, resp='', cookie=None, **kwargs):
-    kwargs.setdefault('allow_redirects', False)
-    # override user agent for facebook scraping (specific to facebook tests)
-    kwargs.setdefault('headers', {})['User-Agent'] = SCRAPE_USER_AGENT
-    if cookie:
-      kwargs['headers']['Cookie'] = cookie
-    url = urllib.parse.urljoin(M_HTML_BASE_URL, url)
-    return super(FacebookTest, self).expect_requests_get(url, resp, **kwargs)
+  def assert_requests_get(self, url, **kwargs):
+    if not url.startswith('http'):
+      url = M_HTML_BASE_URL + url
+    super().assert_requests_get(url, **kwargs)
 
   def test_get_actor(self):
-    self.expect_urlopen('foo', USER)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(USER))
     self.assert_equals(ACTOR, self.fb.get_actor('foo'))
+    self.assert_urlopen('foo')
 
   def test_get_actor_default(self):
-    self.expect_urlopen('me', USER)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(USER))
     self.assert_equals(ACTOR, self.fb.get_actor())
+    self.assert_urlopen('me')
 
   def test_get_activities_defaults(self):
     resp = {'data': [
           {'id': '1_2', 'message': 'foo'},
           {'id': '3_4', 'message': 'bar'},
           ]}
-    self.expect_urlopen('me/home?offset=0', resp)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(resp))
 
     self.assert_equals([
         {'id': tag_uri('2'),
@@ -1402,89 +1401,104 @@ class FacebookTest(testutil.TestCase):
          'url': 'https://www.facebook.com/3/posts/4',
          'verb': 'post'}],
       self.fb.get_activities())
+    self.assert_urlopen('me/home?offset=0')
 
   def test_get_activities_fetch_shares(self):
-    self.expect_urlopen('me/home?offset=0',
-                        {'data': [
-                          {'id': '1_2', 'message': 'foo'},
-                          {'id': '3_4', 'message': 'bar'},
-                        ]})
-    self.expect_urlopen(API_SHARES % '1_2,3_4', {
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [
+        {'id': '1_2', 'message': 'foo'},
+        {'id': '3_4', 'message': 'bar'},
+      ]})),
+      UrlopenResult(200, json_dumps({
         '1_2': {'data': [SHARE, SHARE]},
         '3_4': {'data': []},
-      })
-    self.mox.ReplayAll()
+      })),
+    ]
 
     got = self.fb.get_activities(fetch_shares=True)
     self.assert_equals([SHARE_OBJ, SHARE_OBJ], got[0]['object']['tags'])
     self.assertNotIn('tags', got[1])
     self.assertNotIn('tags', got[1]['object'])
+    self.assert_urlopen('me/home?offset=0')
+    self.assert_urlopen(API_SHARES % '1_2,3_4')
 
   def test_get_activities_home_returns_bool(self):
-    self.expect_urlopen('me/home?offset=0', True)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(True))
     self.assert_equals([], self.fb.get_activities())
+    self.assert_urlopen('me/home?offset=0')
 
   def test_get_activities_fetch_shares_returns_list(self):
-    self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
-    self.expect_urlopen(API_SHARES % '1_2', ['asdf'])
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [{'id': '1_2'}]})),
+      UrlopenResult(200, json_dumps(['asdf'])),
+    ]
 
     got = self.fb.get_activities(fetch_shares=True)
     self.assertNotIn('tags', got[0]['object'])
     self.assertNotIn('tags', got[0])
+    self.assert_urlopen('me/home?offset=0')
+    self.assert_urlopen(API_SHARES % '1_2')
 
   def test_get_activities_fetch_shares_returns_bool(self):
-    self.expect_urlopen('me/home?offset=0', {'data': [{'id': '1_2'}]})
-    self.expect_urlopen(API_SHARES % '1_2', {'1_2': False})
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [{'id': '1_2'}]})),
+      UrlopenResult(200, json_dumps({'1_2': False})),
+    ]
 
     got = self.fb.get_activities(fetch_shares=True)
     self.assertNotIn('tags', got[0]['object'])
     self.assertNotIn('tags', got[0])
+    self.assert_urlopen('me/home?offset=0')
+    self.assert_urlopen(API_SHARES % '1_2')
 
   def test_get_activities_self_empty(self):
-    self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_ME_PHOTOS, {})
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({})),
+      UrlopenResult(200, json_dumps({})),
+    ]
     self.assert_equals([], self.fb.get_activities(group_id=source.SELF))
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_ME_PHOTOS)
 
   def test_get_activities_self_photo_and_event(self):
-    self.expect_urlopen(API_ME_POSTS, {'data': [PHOTO_POST]})
-    self.expect_urlopen(API_ME_PHOTOS, {'data': [PHOTO]})
-    self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
-
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [PHOTO_POST]})),
+      UrlopenResult(200, json_dumps({'data': [PHOTO]})),
+      UrlopenResult(200, json_dumps({'data': [EVENT]})),
+    ]
     self.assert_equals(
       [EVENT_ACTIVITY, PHOTO_ACTIVITY],
       self.fb.get_activities(group_id=source.SELF, fetch_events=True))
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_ME_PHOTOS)
+    self.assert_urlopen(API_USER_EVENTS)
 
   def test_get_activities_self_merge_photos(self):
     """https://github.com/snarfed/bridgy/issues/562"""
-    self.expect_urlopen(API_ME_POSTS, {'data': [
-      {'id': '1', 'object_id': '11',   # has photo but no album
-       'privacy': {'value': 'EVERYONE'}},
-      {'id': '3', 'object_id': '33'},  # has photo but no album
-      {'id': '5', 'object_id': '55'},  # no photo
-      {'id': '6', 'object_id': '66',   # this is a consolidated post
-       'privacy': {'value': 'CUSTOM'}},
-      {'id': '7', 'object_id': '77',   # ditto, and photo has no album
-       'privacy': {'value': 'CUSTOM'}},
-    ]})
-    self.expect_urlopen(API_ME_PHOTOS, {'data': [
-      {'id': '11'},
-      {'id': '22', 'album': {'id': '222'}},  # no matching post
-      {'id': '33', 'album': {'id': '333'}},  # no matching album
-      {'id': '44', 'album': {'id': '444'}},  # no matching post or album
-      {'id': '66', 'album': {'id': '666'}},  # consolidated posts...
-      {'id': '77'},
-    ]})
-    self.expect_urlopen(API_ALBUMS % 'me', {'data': [
-      {'id': '222', 'privacy': 'friends'},   # no post
-      {'id': '666', 'privacy': 'everyone'},  # consolidated post
-    ]})
-
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [
+        {'id': '1', 'object_id': '11',   # has photo but no album
+         'privacy': {'value': 'EVERYONE'}},
+        {'id': '3', 'object_id': '33'},  # has photo but no album
+        {'id': '5', 'object_id': '55'},  # no photo
+        {'id': '6', 'object_id': '66',   # this is a consolidated post
+         'privacy': {'value': 'CUSTOM'}},
+        {'id': '7', 'object_id': '77',   # ditto, and photo has no album
+         'privacy': {'value': 'CUSTOM'}},
+      ]})),
+      UrlopenResult(200, json_dumps({'data': [
+        {'id': '11'},
+        {'id': '22', 'album': {'id': '222'}},  # no matching post
+        {'id': '33', 'album': {'id': '333'}},  # no matching album
+        {'id': '44', 'album': {'id': '444'}},  # no matching post or album
+        {'id': '66', 'album': {'id': '666'}},  # consolidated posts...
+        {'id': '77'},
+      ]})),
+      UrlopenResult(200, json_dumps({'data': [
+        {'id': '222', 'privacy': 'friends'},   # no post
+        {'id': '666', 'privacy': 'everyone'},  # consolidated post
+      ]})),
+    ]
     self.assert_equals([
       {'fb_id': '11', 'to': [{'objectType':'group', 'alias':'@public'}]},
       {'fb_id': '22', 'to': [{'objectType':'group', 'alias':'@private'}]},
@@ -1495,116 +1509,132 @@ class FacebookTest(testutil.TestCase):
       {'fb_id': '77', 'to': [{'objectType': 'unknown'}]},
     ], [{k: v for k, v in activity['object'].items() if k in ('fb_id', 'to')}
         for activity in self.fb.get_activities(group_id=source.SELF)])
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_ME_PHOTOS)
+    self.assert_urlopen(API_ALBUMS % 'me')
 
   def test_get_activities_user_id_merge_photos(self):
-    self.expect_urlopen(API_SELF_POSTS % ('567', 0), {'data': []})
-    self.expect_urlopen(API_PHOTOS_UPLOADED % '567', {'data': [
-      {'album': {'id': '222'}},
-    ]})
-    self.expect_urlopen(API_ALBUMS % '567', {'data': []})
-
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': []})),
+      UrlopenResult(200, json_dumps({'data': [
+        {'album': {'id': '222'}},
+      ]})),
+      UrlopenResult(200, json_dumps({'data': []})),
+    ]
     self.assert_equals([], self.fb.get_activities(user_id='567', group_id=source.SELF))
+    self.assert_urlopen(API_SELF_POSTS % ('567', 0))
+    self.assert_urlopen(API_PHOTOS_UPLOADED % '567')
+    self.assert_urlopen(API_ALBUMS % '567')
 
   def test_get_activities_self_photos_returns_list(self):
-    self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_ME_PHOTOS, [])
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({})),
+      UrlopenResult(200, json_dumps([])),
+    ]
     self.assert_equals([], self.fb.get_activities(group_id=source.SELF))
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_ME_PHOTOS)
 
   def test_get_activities_self_owned_event_rsvps(self):
-    self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_ME_PHOTOS, {})
-    self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
-
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({})),
+      UrlopenResult(200, json_dumps({})),
+      UrlopenResult(200, json_dumps({'data': [EVENT]})),
+    ]
     self.assert_equals([EVENT_ACTIVITY], self.fb.get_activities(
       group_id=source.SELF, fetch_events=True, event_owner_id=EVENT['owner']['id']))
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_ME_PHOTOS)
+    self.assert_urlopen(API_USER_EVENTS)
 
   def test_get_activities_self_unowned_event_no_rsvps(self):
-    self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_ME_PHOTOS, {})
-    self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
-
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({})),
+      UrlopenResult(200, json_dumps({})),
+      UrlopenResult(200, json_dumps({'data': [EVENT]})),
+    ]
     self.assert_equals([], self.fb.get_activities(
       group_id=source.SELF, fetch_events=True, event_owner_id='xyz'))
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_ME_PHOTOS)
+    self.assert_urlopen(API_USER_EVENTS)
 
   def test_get_activities_self_events_returns_list(self):
-    self.expect_urlopen(API_ME_POSTS, {})
-    self.expect_urlopen(API_ME_PHOTOS, {})
-    self.expect_urlopen(API_USER_EVENTS, [])
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({})),
+      UrlopenResult(200, json_dumps({})),
+      UrlopenResult(200, json_dumps([])),
+    ]
     self.assert_equals([], self.fb.get_activities(
       group_id=source.SELF, fetch_events=True))
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_ME_PHOTOS)
+    self.assert_urlopen(API_USER_EVENTS)
 
   def test_get_activities_passes_through_access_token(self):
-    self.expect_urlopen('me/home?offset=0&access_token=asdf', {"id": 123})
-    self.mox.ReplayAll()
-
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'id': 123}))
     self.fb = Facebook(access_token='asdf')
     self.fb.get_activities()
+    self.assert_urlopen('me/home?offset=0&access_token=asdf')
 
   def test_get_activities_activity_id_overrides_others(self):
-    self.expect_urlopen(API_OBJECT % ('123', '000'), POST)
-    self.mox.ReplayAll()
-
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(POST))
     # activity id overrides user, group, app id and ignores startIndex and count
     self.assert_equals([ACTIVITY], self.fb.get_activities(
         user_id='123', group_id='456', app_id='789', activity_id='000',
         start_index=3, count=6))
+    self.assert_urlopen(API_OBJECT % ('123', '000'))
 
   def test_get_activities_activity_id_not_found(self):
-    self.expect_urlopen(API_OBJECT % ('0', '0'), {
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({
       'error': {
         'message': '(#803) Some of the aliases you requested do not exist: 0',
         'type': 'OAuthException',
         'code': 803
       }
-    })
-    self.mox.ReplayAll()
+    }))
     self.assert_equals([], self.fb.get_activities(activity_id='0_0'))
+    self.assert_urlopen(API_OBJECT % ('0', '0'))
 
   def test_get_activities_start_index_and_count(self):
-    self.expect_urlopen('me/home?offset=3&limit=5', {})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({}))
     self.fb.get_activities(start_index=3, count=5)
+    self.assert_urlopen('me/home?offset=3&limit=5')
 
   def test_get_activities_start_index_count_zero(self):
-    self.expect_urlopen('me/home?offset=0', {'data': [POST, FB_NOTE]})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': [POST, FB_NOTE]}))
     self.assert_equals([ACTIVITY, FB_NOTE_ACTIVITY],
                        self.fb.get_activities(start_index=0, count=0))
+    self.assert_urlopen('me/home?offset=0')
 
   def test_get_activities_count_past_end(self):
-    self.expect_urlopen('me/home?offset=0&limit=9', {'data': [POST]})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': [POST]}))
     self.assert_equals([ACTIVITY], self.fb.get_activities(count=9))
+    self.assert_urlopen('me/home?offset=0&limit=9')
 
   def test_get_activities_start_index_past_end(self):
-    self.expect_urlopen('me/home?offset=0', {'data': [POST]})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': [POST]}))
     self.assert_equals([ACTIVITY], self.fb.get_activities(offset=9))
+    self.assert_urlopen('me/home?offset=0')
 
   def test_get_activities_activity_id_with_underscore(self):
-    self.expect_urlopen(API_OBJECT % ('12', '34'), {'id': '123'})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'id': '123'}))
     obj = self.fb.get_activities(activity_id='12_34')[0]['object']
     self.assertEqual('123', obj['fb_id'])
+    self.assert_urlopen(API_OBJECT % ('12', '34'))
 
   def test_get_activities_activity_id_with_user_id(self):
-    self.expect_urlopen(API_OBJECT % ('12', '34'), {'id': '123'})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'id': '123'}))
     obj = self.fb.get_activities(activity_id='34', user_id='12')[0]['object']
     self.assertEqual('123', obj['fb_id'])
+    self.assert_urlopen(API_OBJECT % ('12', '34'))
 
   def test_get_activities_activity_id_no_underscore_or_user_id(self):
     with self.assertRaises(ValueError):
       self.fb.get_activities(activity_id='34')
 
   def test_get_activities_response_not_json(self):
-    super().expect_urlopen(API_BASE + 'me/home?offset=0', 'not json')
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, 'not json')
 
     try:
       self.fb.get_activities()
@@ -1613,47 +1643,50 @@ class FacebookTest(testutil.TestCase):
       self.assertEqual(502, e.code)
       self.assertEqual('Non-JSON response! Returning synthetic HTTP 502.\nnot json',
                        e.reason)
+    self.assert_urlopen('me/home?offset=0')
 
   def test_get_activities_request_etag(self):
-    self.expect_urlopen('me/home?offset=0', {},
-                        headers={'If-none-match': '"my etag"'})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({}))
     self.fb.get_activities_response(etag='"my etag"')
+    self.assert_urlopen('me/home?offset=0')
 
   def test_get_activities_response_etag(self):
-    self.expect_urlopen('me/home?offset=0', {},
-                        response_headers={'ETag': '"my etag"'})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({}),
+                                                   headers={'ETag': '"my etag"'})
     self.assert_equals('"my etag"',
                        self.fb.get_activities_response()['etag'])
+    self.assert_urlopen('me/home?offset=0')
 
   def test_get_activities_304_not_modified(self):
     """Requests with matching ETags return 304 Not Modified."""
-    self.expect_urlopen('me/home?offset=0', {}, status=304)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = urllib.error.HTTPError(
+      API_BASE + 'me/home?offset=0', 304, 'Not Modified', {}, None)
     self.assert_equals([], self.fb.get_activities_response()['items'])
 
   def test_get_activities_sharedposts_400(self):
-    self.expect_urlopen('me/home?offset=0',
-                        {'data': [{'id': '1_2'}, {'id': '3_4'}]})
-    self.expect_urlopen(API_SHARES % '1_2,3_4', status=400)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [{'id': '1_2'}, {'id': '3_4'}]})),
+      urllib.error.HTTPError(None, 400, 'Bad Request', {}, None),
+    ]
 
     got = self.fb.get_activities(fetch_shares=True)
     for activity in got:
       self.assertNotIn('tags', activity)
       self.assertNotIn('tags', activity['object'])
+    self.assert_urlopen('me/home?offset=0')
+    self.assert_urlopen(API_SHARES % '1_2,3_4')
 
   def test_get_activities_too_many_ids(self):
     ids = ['1', '2', '3', '4', '5']
-    self.expect_urlopen('me/home?offset=0', {'data': [{'id': id} for id in ids]})
-    self.expect_urlopen(API_SHARES % '1,2', {'1': {'data': [{'id': '222'}]}})
-    self.expect_urlopen(API_SHARES % '3,4', {'2': {'data': [{'id': '444'}]}})
-    self.expect_urlopen(API_SHARES % '5', {})
-    self.expect_urlopen(API_COMMENTS_ALL % '1,2', {'1': {'data': [{'id': '111'}]}})
-    self.expect_urlopen(API_COMMENTS_ALL % '3,4', {'1': {'data': [{'id': '333'}]}})
-    self.expect_urlopen(API_COMMENTS_ALL % '5', {})
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [{'id': id} for id in ids]})),
+      UrlopenResult(200, json_dumps({'1': {'data': [{'id': '222'}]}})),
+      UrlopenResult(200, json_dumps({'2': {'data': [{'id': '444'}]}})),
+      UrlopenResult(200, json_dumps({})),
+      UrlopenResult(200, json_dumps({'1': {'data': [{'id': '111'}]}})),
+      UrlopenResult(200, json_dumps({'1': {'data': [{'id': '333'}]}})),
+      UrlopenResult(200, json_dumps({})),
+    ]
 
     try:
       orig_max_ids = facebook.MAX_IDS
@@ -1670,144 +1703,171 @@ class FacebookTest(testutil.TestCase):
 
     obj1 = activities[1]['object']
     self.assert_equals(['444'], [t['fb_id'] for t in obj1['tags']])
+    self.assert_urlopen('me/home?offset=0')
+    self.assert_urlopen(API_SHARES % '1,2')
+    self.assert_urlopen(API_SHARES % '3,4')
+    self.assert_urlopen(API_SHARES % '5')
+    self.assert_urlopen(API_COMMENTS_ALL % '1,2')
+    self.assert_urlopen(API_COMMENTS_ALL % '3,4')
+    self.assert_urlopen(API_COMMENTS_ALL % '5')
 
   def test_get_event(self):
-    self.expect_urlopen(API_EVENT % '145304994', EVENT)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(EVENT))
     self.assert_equals(EVENT_ACTIVITY, self.fb.get_event('145304994'))
+    self.assert_urlopen(API_EVENT % '145304994')
 
   def test_get_event_user_id_not_owner(self):
-    self.expect_urlopen(API_EVENT % '145304994', EVENT)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(EVENT))
     got = self.fb.get_event('145304994', owner_id='xyz')
     self.assert_equals(None, got)
+    self.assert_urlopen(API_EVENT % '145304994')
 
   def test_get_event_user_id_owner(self):
-    self.expect_urlopen(API_EVENT % '145304994', EVENT)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(EVENT))
     got = self.fb.get_event('145304994', owner_id=EVENT['owner']['id'])
     self.assert_equals(EVENT_ACTIVITY, got)
+    self.assert_urlopen(API_EVENT % '145304994')
 
   def test_get_event_returns_list(self):
-    self.expect_urlopen(API_EVENT % '145304994', ['xyz'])
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(['xyz']))
     self.assertIsNone(self.fb.get_event('145304994'))
+    self.assert_urlopen(API_EVENT % '145304994')
 
   def test_get_event_400s(self):
-    self.expect_urlopen(API_EVENT % '145304994', status=400)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = urllib.error.HTTPError(None, 400, 'Bad Request', {}, None)
     self.assertIsNone(self.fb.get_event('145304994'))
 
   def test_get_activities_group_excludes_shared_story(self):
-    self.expect_urlopen(
-      'me/home?offset=0',
-      {'data': [{'id': '1_2', 'status_type': 'shared_story'}]})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(
+      {'data': [{'id': '1_2', 'status_type': 'shared_story'}]}))
     self.assert_equals([], self.fb.get_activities())
+    self.assert_urlopen('me/home?offset=0')
 
   def test_get_activities_self_includes_shared_story(self):
     post = {'id': '1', 'status_type': 'shared_story'}
     activity = self.fb.post_to_as1_activity(post)
 
-    self.expect_urlopen(API_ME_POSTS, {'data': [post]})
-    self.expect_urlopen(API_ME_PHOTOS, {})
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [post]})),
+      UrlopenResult(200, json_dumps({})),
+    ]
     self.assert_equals([activity], self.fb.get_activities(group_id=source.SELF))
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_ME_PHOTOS)
 
   def test_get_activities_fetch_replies(self):
     post2 = copy.deepcopy(POST)
     post2['id'] = '222'
     post3 = copy.deepcopy(POST)
     post3['id'] = '333'
-    self.expect_urlopen('me/home?offset=0',
-                        {'data': [POST, post2, post3]})
-    self.expect_urlopen(API_COMMENTS_ALL % '212038_10100176064482163,222,333',
-      {'222': {'data': [{'id': '777', 'message': 'foo'},
-                        {'id': '888', 'message': 'bar'}]},
-       '333': {'data': [{'id': '999', 'message': 'baz'},
-                        {'id': COMMENTS[0]['id'], 'message': 'omitted!'}]},
-      })
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [POST, post2, post3]})),
+      UrlopenResult(200, json_dumps({
+        '222': {'data': [{'id': '777', 'message': 'foo'},
+                         {'id': '888', 'message': 'bar'}]},
+        '333': {'data': [{'id': '999', 'message': 'baz'},
+                         {'id': COMMENTS[0]['id'], 'message': 'omitted!'}]},
+      })),
+    ]
 
     activities = self.fb.get_activities(fetch_replies=True)
     base_ids = ['547822715231468_6796480', '124561947600007_672819']
     self.assert_equals([base_ids, base_ids + ['777', '888'], base_ids + ['999']],
                        [[c['fb_id'] for c in a['object']['replies']['items']]
                         for a in activities])
+    self.assert_urlopen('me/home?offset=0')
+    self.assert_urlopen(API_COMMENTS_ALL % '212038_10100176064482163,222,333')
 
   def test_get_activities_fetch_replies_400s(self):
     post = copy.deepcopy(POST)
     del post['comments']
-    self.expect_urlopen('me/home?offset=0', {'data': [post]})
-    self.expect_urlopen(API_COMMENTS_ALL % '212038_10100176064482163', status=400)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [post]})),
+      urllib.error.HTTPError(None, 400, 'Bad Request', {}, None),
+    ]
 
     activity = copy.deepcopy(ACTIVITY)
     del activity['object']['replies']
     self.assert_equals([activity], self.fb.get_activities(fetch_replies=True))
+    self.assert_urlopen('me/home?offset=0')
+    self.assert_urlopen(API_COMMENTS_ALL % '212038_10100176064482163')
 
   def test_get_activities_skips_extras_if_no_posts(self):
-    self.expect_urlopen(API_ME_POSTS, {'data': []})
-    self.expect_urlopen(API_ME_PHOTOS, {})
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': []})),
+      UrlopenResult(200, json_dumps({})),
+    ]
     self.assert_equals([], self.fb.get_activities(
       group_id=source.SELF, fetch_shares=True, fetch_replies=True))
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_ME_PHOTOS)
 
   def test_get_activities_extras_skips_notes_includes_links(self):
-    # first call returns just notes
-    self.expect_urlopen(API_ME_POSTS,
-                        {'data': [FB_NOTE, FB_CREATED_NOTE]})
-    self.expect_urlopen(API_ME_PHOTOS, {})
-
-    # second call returns notes and link
-    self.expect_urlopen(API_ME_POSTS,
-                        {'data': [FB_NOTE, FB_CREATED_NOTE, FB_LINK]})
-    self.expect_urlopen(API_ME_PHOTOS, {})
-    self.expect_urlopen(API_SHARES % '555', [])
-    self.expect_urlopen(API_COMMENTS_ALL % '555', {})
-
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      # first call returns just notes
+      UrlopenResult(200, json_dumps({'data': [FB_NOTE, FB_CREATED_NOTE]})),
+      UrlopenResult(200, json_dumps({})),
+      # second call returns notes and link
+      UrlopenResult(200, json_dumps({'data': [FB_NOTE, FB_CREATED_NOTE, FB_LINK]})),
+      UrlopenResult(200, json_dumps({})),
+      UrlopenResult(200, json_dumps([])),
+      UrlopenResult(200, json_dumps({})),
+    ]
 
     for expected in ([FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY],
                      [FB_NOTE_ACTIVITY, FB_NOTE_ACTIVITY, FB_LINK_ACTIVITY]):
       self.assert_equals(expected, self.fb.get_activities(
         group_id=source.SELF, fetch_shares=True, fetch_replies=True))
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_ME_PHOTOS)
+    self.assert_urlopen(API_SHARES % '555')
+    self.assert_urlopen(API_COMMENTS_ALL % '555')
 
   def test_get_activities_matches_extras_with_correct_activity(self):
-    self.expect_urlopen(API_ME_POSTS, {'data': [POST]})
-    self.expect_urlopen(API_ME_PHOTOS, {})
-    self.expect_urlopen(API_USER_EVENTS, {'data': [EVENT]})
-    self.expect_urlopen(API_SHARES % '212038_10100176064482163',
-                        {'212038_10100176064482163': {'data': [SHARE]}})
-    self.expect_urlopen(API_COMMENTS_ALL % '212038_10100176064482163',
-                        {'212038_10100176064482163': {'data': COMMENTS}})
-
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [POST]})),
+      UrlopenResult(200, json_dumps({})),
+      UrlopenResult(200, json_dumps({'data': [EVENT]})),
+      UrlopenResult(200, json_dumps({'212038_10100176064482163': {'data': [SHARE]}})),
+      UrlopenResult(200, json_dumps({'212038_10100176064482163': {'data': COMMENTS}})),
+    ]
     activity = copy.deepcopy(ACTIVITY)
     activity['object']['tags'].append(SHARE_OBJ)
     self.assert_equals([EVENT_ACTIVITY, activity], self.fb.get_activities(
       group_id=source.SELF, fetch_events=True, fetch_shares=True, fetch_replies=True))
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_ME_PHOTOS)
+    self.assert_urlopen(API_USER_EVENTS)
+    self.assert_urlopen(API_SHARES % '212038_10100176064482163')
+    self.assert_urlopen(API_COMMENTS_ALL % '212038_10100176064482163')
 
   def test_get_activities_self_fetch_news(self):
-    self.expect_urlopen(API_ME_POSTS, {'data': [POST]})
-    self.expect_urlopen(API_NEWS_PUBLISHES % 'me', {'data': [FB_NEWS_PUBLISH]})
-    self.expect_urlopen(API_ME_PHOTOS, {})
-    # should only fetch sharedposts for POST, not FB_NEWS_PUBLISH
-    self.expect_urlopen(API_SHARES % '212038_10100176064482163', {})
-
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [POST]})),
+      UrlopenResult(200, json_dumps({'data': [FB_NEWS_PUBLISH]})),
+      UrlopenResult(200, json_dumps({})),
+      # should only fetch sharedposts for POST, not FB_NEWS_PUBLISH
+      UrlopenResult(200, json_dumps({})),
+    ]
     got = self.fb.get_activities(group_id=source.SELF, fetch_news=True,
                                  fetch_shares=True)
     self.assert_equals([ACTIVITY, FB_NEWS_PUBLISH_ACTIVITY], got)
+    self.assert_urlopen(API_ME_POSTS)
+    self.assert_urlopen(API_NEWS_PUBLISHES % 'me')
+    self.assert_urlopen(API_ME_PHOTOS)
+    self.assert_urlopen(API_SHARES % '212038_10100176064482163')
 
   def test_get_activities_user_id_fetch_news(self):
-    self.expect_urlopen(API_SELF_POSTS % ('567', 0), {'data': []})
-    self.expect_urlopen(API_NEWS_PUBLISHES % '567', {'data': [FB_NEWS_PUBLISH]})
-    self.expect_urlopen(API_PHOTOS_UPLOADED % '567', {})
-
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': []})),
+      UrlopenResult(200, json_dumps({'data': [FB_NEWS_PUBLISH]})),
+      UrlopenResult(200, json_dumps({})),
+    ]
     got = self.fb.get_activities(group_id=source.SELF, user_id='567', fetch_news=True)
     self.assert_equals([FB_NEWS_PUBLISH_ACTIVITY], got)
+    self.assert_urlopen(API_SELF_POSTS % ('567', 0))
+    self.assert_urlopen(API_NEWS_PUBLISHES % '567')
+    self.assert_urlopen(API_PHOTOS_UPLOADED % '567')
 
   def test_get_activities_canonicalizes_ids_with_colons(self):
     """https://github.com/snarfed/bridgy/issues/305"""
@@ -1823,10 +1883,9 @@ class FacebookTest(testutil.TestCase):
     reply['url'] = 'https://www.facebook.com/12345/posts/547822715231468?comment_id=6796480'
     reply['inReplyTo'][0]['url'] = 'https://www.facebook.com/12345/posts/547822715231468'
 
-    self.expect_urlopen('me/home?offset=0', {'data': [post]})
-    self.mox.ReplayAll()
-
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': [post]}))
     self.assert_equals([activity], self.fb.get_activities())
+    self.assert_urlopen('me/home?offset=0')
 
   def test_get_activities_ignores_bad_comment_ids(self):
     """https://github.com/snarfed/bridgy/issues/305"""
@@ -1837,36 +1896,36 @@ class FacebookTest(testutil.TestCase):
     post_with_bad_comment['comments']['data'].append(
       {'id': '12^34', 'message': 'bad to the bone'})
 
-    self.expect_urlopen('me/home?offset=0', {'data': [bad_post, post_with_bad_comment]})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(
+      {'data': [bad_post, post_with_bad_comment]}))
 
     # should only get the base activity, without the extra comment, and not the
     # bad activity at all
     self.assert_equals([ACTIVITY], self.fb.get_activities())
+    self.assert_urlopen('me/home?offset=0')
 
   def test_get_activities_search_not_implemented(self):
     with self.assertRaises(NotImplementedError):
       self.fb.get_activities(search_query='foo')
 
   def test_get_activities_scrape_timeline(self):
-    self.expect_requests_get('x?v=timeline', MBASIC_HTML_TIMELINE,
-                             cookie='c_user=CU; xs=XS')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      MBASIC_HTML_TIMELINE, url=M_HTML_BASE_URL + 'x?v=timeline')
 
     activities = self.fbscrape.get_activities(user_id='x', group_id=source.SELF)
     self.assert_equals(MBASIC_FEED_ACTIVITIES, activities)
+    self.assert_requests_get('x?v=timeline')
 
   def test_get_activities_scrape_timeline_fetch_replies_likes(self):
-    self.expect_requests_get('212038?v=timeline', MBASIC_HTML_TIMELINE,
-                             cookie='c_user=CU; xs=XS')
-    self.expect_requests_get('123', MBASIC_HTML_POST.replace('456', '123'),
-                             cookie='c_user=CU; xs=XS')
-    self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS')
-    self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=123',
-                             MBASIC_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
-    self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=456',
-                             MBASIC_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response(MBASIC_HTML_TIMELINE, url=M_HTML_BASE_URL + '212038?v=timeline'),
+      requests_response(MBASIC_HTML_POST.replace('456', '123'), url=M_HTML_BASE_URL + '123'),
+      requests_response(MBASIC_HTML_POST, url=M_HTML_BASE_URL + '456'),
+      requests_response(MBASIC_HTML_REACTIONS,
+        url=M_HTML_BASE_URL + 'ufi/reaction/profile/browser/?ft_ent_identifier=123'),
+      requests_response(MBASIC_HTML_REACTIONS,
+        url=M_HTML_BASE_URL + 'ufi/reaction/profile/browser/?ft_ent_identifier=456'),
+    ]
 
     expected = copy.deepcopy(MBASIC_ACTIVITIES_REPLIES_REACTIONS)
     obj_123 = expected[0]['object']
@@ -1879,117 +1938,133 @@ class FacebookTest(testutil.TestCase):
     activities = self.fbscrape.get_activities(user_id='212038', group_id=source.SELF,
                                               fetch_replies=True, fetch_likes=True)
     self.assert_equals(expected, activities)
+    self.assert_requests_get('212038?v=timeline', cookie='c_user=CU; xs=XS')
+    self.assert_requests_get('123', cookie='c_user=CU; xs=XS')
+    self.assert_requests_get('456', cookie='c_user=CU; xs=XS')
+    self.assert_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=123',
+                             cookie='c_user=CU; xs=XS')
+    self.assert_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=456',
+                             cookie='c_user=CU; xs=XS')
 
   def test_get_activities_scrape_post(self):
-    self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS',
-                             allow_redirects=True)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      MBASIC_HTML_POST, url=M_HTML_BASE_URL + '456')
 
     activities = self.fbscrape.get_activities(user_id='212038', activity_id='456')
     self.assert_equals([MBASIC_ACTIVITY], activities)
+    self.assert_requests_get('456', cookie='c_user=CU; xs=XS')
 
   def test_get_activities_scrape_post_fetch_likes(self):
-    self.expect_requests_get('456', MBASIC_HTML_POST, cookie='c_user=CU; xs=XS',
-                             allow_redirects=True)
-    self.expect_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=456',
-                             MBASIC_HTML_REACTIONS, cookie='c_user=CU; xs=XS')
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response(MBASIC_HTML_POST, url=M_HTML_BASE_URL + '456'),
+      requests_response(MBASIC_HTML_REACTIONS,
+        url=M_HTML_BASE_URL + 'ufi/reaction/profile/browser/?ft_ent_identifier=456'),
+    ]
 
     activities = self.fbscrape.get_activities(user_id='212038', activity_id='456',
                                               fetch_likes=True)
     self.assert_equals([MBASIC_ACTIVITY_REACTIONS], activities)
+    self.assert_requests_get('456', cookie='c_user=CU; xs=XS')
+    self.assert_requests_get('ufi/reaction/profile/browser/?ft_ent_identifier=456',
+                             cookie='c_user=CU; xs=XS')
 
   def test_get_comment(self):
-    self.expect_urlopen(API_COMMENT % '123_456', COMMENTS[0])
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(COMMENTS[0]))
     self.assert_equals(COMMENT_OBJS[0], self.fb.get_comment('123_456'))
+    self.assert_urlopen(API_COMMENT % '123_456')
 
   def test_get_comment_activity_author_id(self):
-    self.expect_urlopen(API_COMMENT % '123_456', COMMENTS[0])
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(COMMENTS[0]))
 
     obj = self.fb.get_comment('123_456', activity_author_id='my-author')
     self.assert_equals(
       'https://www.facebook.com/my-author/posts/547822715231468?comment_id=6796480',
       obj['url'])
+    self.assert_urlopen(API_COMMENT % '123_456')
 
   def test_get_comment_400s_id_with_underscore(self):
-    self.expect_urlopen(
-      '123_456_789?fields=id,message,from,created_time,message_tags,parent,attachment',
-      {}, status=400)
-    self.expect_urlopen(API_COMMENT % '789', COMMENTS[0])
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      urllib.error.HTTPError(None, 400, 'Bad Request', {}, None),
+      UrlopenResult(200, json_dumps(COMMENTS[0])),
+    ]
     self.assert_equals(COMMENT_OBJS[0], self.fb.get_comment('123_456_789'))
+    self.assert_urlopen(API_COMMENT % '789')
 
   def test_get_comment_400s_id_without_underscore(self):
-    self.expect_urlopen(
-      '123?fields=id,message,from,created_time,message_tags,parent,attachment',
-      {}, status=400)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = urllib.error.HTTPError(None, 400, 'Bad Request', {}, None)
     self.assertRaises(urllib.error.HTTPError, self.fb.get_comment, '123')
 
   def test_get_comment_with_activity(self):
     # still makes the API call, since the comment might be paged out or nested
-    self.expect_urlopen(API_COMMENT % '123', COMMENTS[0])
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(COMMENTS[0]))
     self.assert_equals(COMMENT_OBJS[0], self.fb.get_comment('123', activity=ACTIVITY))
+    self.assert_urlopen(API_COMMENT % '123')
 
   def test_get_share(self):
-    self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': SHARE['id']}]}})
-    self.expect_urlopen(API_OBJECT % tuple(SHARE['id'].split('_')), SHARE)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'1_2': {'data': [{'id': SHARE['id']}]}})),
+      UrlopenResult(200, json_dumps(SHARE)),
+    ]
     self.assert_equals(SHARE_OBJ, self.fb.get_share('1', '2', SHARE['id']))
+    self.assert_urlopen(API_SHARES % '1_2')
+    self.assert_urlopen(API_OBJECT % tuple(SHARE['id'].split('_')))
 
   def test_get_share_without_user_id_prefix(self):
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'1_2': {'data': [{'id': SHARE['id']}]}})),
+      UrlopenResult(200, json_dumps(SHARE)),
+    ]
     user_id, share_id = SHARE['id'].split('_')
-    self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': SHARE['id']}]}})
-    self.expect_urlopen(API_OBJECT % (user_id, share_id), SHARE)
-    self.mox.ReplayAll()
     self.assert_equals(SHARE_OBJ, self.fb.get_share('1', '2', share_id))
+    self.assert_urlopen(API_SHARES % '1_2')
+    self.assert_urlopen(API_OBJECT % (user_id, share_id))
 
   def test_get_share_missing(self):
-    self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': '34_56'}]}})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(
+      {'1_2': {'data': [{'id': '34_56'}]}}))
     self.assertIsNone(self.fb.get_share('1', '2', '78'))
+    self.assert_urlopen(API_SHARES % '1_2')
 
   def test_get_share_400s(self):
-    self.expect_urlopen(API_SHARES % '1_2', {}, status=400)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = urllib.error.HTTPError(None, 400, 'Bad Request', {}, None)
     self.assertIsNone(self.fb.get_share('1', '2', '_'))
 
   def test_get_share_obj_400s(self):
-    self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': SHARE['id']}]}})
-    self.expect_urlopen(API_OBJECT % tuple(SHARE['id'].split('_')), SHARE,
-                        status=400)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'1_2': {'data': [{'id': SHARE['id']}]}})),
+      urllib.error.HTTPError(None, 400, 'Bad Request', {}, None),
+    ]
     self.assertIsNone(self.fb.get_share('1', '2', SHARE['id']))
+    self.assert_urlopen(API_SHARES % '1_2')
 
   def test_get_share_500s(self):
-    self.expect_urlopen(API_SHARES % '1_2', {}, status=500)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = urllib.error.HTTPError(None, 500, 'Server Error', {}, None)
     self.assertRaises(urllib.error.HTTPError, self.fb.get_share, '1', '2', '_')
 
   def test_get_share_with_activity(self):
-    self.expect_urlopen(API_SHARES % '1_2', {'1_2': {'data': [{'id': SHARE['id']}]}})
-    self.expect_urlopen(API_OBJECT % tuple(SHARE['id'].split('_')), SHARE)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'1_2': {'data': [{'id': SHARE['id']}]}})),
+      UrlopenResult(200, json_dumps(SHARE)),
+    ]
     self.assert_equals(SHARE_OBJ,
                        self.fb.get_share('1', '2', SHARE['id'], activity=ACTIVITY))
+    self.assert_urlopen(API_SHARES % '1_2')
+    self.assert_urlopen(API_OBJECT % tuple(SHARE['id'].split('_')))
 
   def test_get_like(self):
-    self.expect_urlopen(API_OBJECT % ('123', '000'), POST)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(POST))
     self.assert_equals(LIKE_OBJS[1], self.fb.get_like('123', '000', '683713'))
+    self.assert_urlopen(API_OBJECT % ('123', '000'))
 
   def test_get_like_not_found(self):
-    self.expect_urlopen(API_OBJECT % ('123', '000'), POST)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(POST))
     self.assert_equals(None, self.fb.get_like('123', '000', '999'))
+    self.assert_urlopen(API_OBJECT % ('123', '000'))
 
   def test_get_like_no_activity(self):
-    self.expect_urlopen(API_OBJECT % ('123', '000'), {})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({}))
     self.assert_equals(None, self.fb.get_like('123', '000', '683713'))
+    self.assert_urlopen(API_OBJECT % ('123', '000'))
 
   def test_get_like_with_activity(self):
     # skips API call
@@ -1997,23 +2072,24 @@ class FacebookTest(testutil.TestCase):
                        self.fb.get_like('123', '000', '683713', activity=ACTIVITY))
 
   def test_get_rsvp(self):
-    for _ in RSVPS_TO_OBJS:
-      self.expect_urlopen(API_EVENT % '1', EVENT)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps(EVENT)) for _ in RSVPS_TO_OBJS
+    ]
 
     for rsvp, obj in RSVPS_TO_OBJS:
       user_id = (obj.get('object') or obj.get('actor'))['numeric_id']
       self.assert_equals(obj, self.fb.get_rsvp('unused', '1', user_id))
+    self.assert_urlopen(API_EVENT % '1')
 
   def test_get_rsvp_not_found(self):
-    self.expect_urlopen(API_EVENT % '1', EVENT)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(EVENT))
     self.assert_equals(None, self.fb.get_rsvp('123', '1', '456'))
+    self.assert_urlopen(API_EVENT % '1')
 
   def test_get_rsvp_event_not_found(self):
-    self.expect_urlopen(API_EVENT % '1', {})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({}))
     self.assert_equals(None, self.fb.get_rsvp('123', '1', '456'))
+    self.assert_urlopen(API_EVENT % '1')
 
   def test_get_rsvp_with_event(self):
     # skips API call
@@ -2021,9 +2097,9 @@ class FacebookTest(testutil.TestCase):
       'unused', '1', '11500', event=EVENT_ACTIVITY))
 
   def test_get_albums_empty(self):
-    self.expect_urlopen(API_ALBUMS % '000', {'data': []})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': []}))
     self.assert_equals([], self.fb.get_albums(user_id='000'))
+    self.assert_urlopen(API_ALBUMS % '000')
 
   def test_get_albums(self):
     album_2 = copy.deepcopy(ALBUM)
@@ -2034,36 +2110,38 @@ class FacebookTest(testutil.TestCase):
       'fb_id': '2',
     })
 
-    self.expect_urlopen(API_ALBUMS % 'me', {'data': [ALBUM, album_2]})
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': [ALBUM, album_2]}))
     self.assert_equals([ALBUM_OBJ, album_2_obj], self.fb.get_albums())
+    self.assert_urlopen(API_ALBUMS % 'me')
 
   def test_get_reaction_full_id(self):
-    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(POST))
     self.assert_equals(REACTION_OBJS[1], self.fb.get_reaction(
       '123', '10100176064482163', '100006', '10100176064482163_sad_by_100006'))
+    self.assert_urlopen(API_OBJECT % ('123', '10100176064482163'))
 
   def test_get_reaction_short_id(self):
-    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(POST))
     self.assert_equals(REACTION_OBJS[1], self.fb.get_reaction(
       '123', '10100176064482163', '100006', 'sad'))
+    self.assert_urlopen(API_OBJECT % ('123', '10100176064482163'))
 
   def test_get_reaction_ignores_likes(self):
-    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(POST))
     self.assertIsNone(self.fb.get_reaction(
       '123', '10100176064482163', '100004', 'like'))
+    self.assert_urlopen(API_OBJECT % ('123', '10100176064482163'))
 
   def test_get_reaction_missing(self):
-    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
-    self.expect_urlopen(API_OBJECT % ('123', '10100176064482163'), POST)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps(POST)),
+      UrlopenResult(200, json_dumps(POST)),
+    ]
     self.assertIsNone(self.fb.get_reaction(
       '123', '10100176064482163', '100006', 'wow'))
     self.assertIsNone(self.fb.get_reaction(
       '123', '10100176064482163', '100009', 'sad'))
+    self.assert_urlopen(API_OBJECT % ('123', '10100176064482163'))
 
   def test_get_reaction_with_activity(self):
     # skips API call
@@ -2574,13 +2652,7 @@ http://b http://c""",
     self.assert_equals(ALBUM_OBJ, self.fb.album_to_as1(ALBUM))
 
   def test_create_post(self):
-    self.expect_urlopen(API_PUBLISH_POST, {'id': '123_456'},
-                        data=urllib.parse.urlencode((
-                          # sorted; order matters.
-                          ('message', 'my msg'),
-                          ('tags', '234,345,456'),
-                        )))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'id': '123_456'}))
 
     obj = copy.deepcopy(POST_OBJ)
     del obj['image']
@@ -2593,16 +2665,18 @@ http://b http://c""",
       'url': 'https://www.facebook.com/123/posts/456',
       'type': 'post',
     }, self.fb.create(obj).content)
+    self.assert_urlopen(API_PUBLISH_POST,
+                        data=urllib.parse.urlencode((
+                          ('message', 'my msg'),
+                          ('tags', '234,345,456'),
+                        )))
 
     preview = self.fb.preview_create(obj)
     self.assertEqual('<span class="verb">post</span>:', preview.description)
     self.assertEqual('my msg<br /><br /><em>with <a href="https://www.facebook.com/234">Friend 1</a>, <a href="https://www.facebook.com/345">Friend 2</a>, <a href="https://www.facebook.com/456">Friend 3</a></em>', preview.content)
 
   def test_create_post_include_link(self):
-    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.parse.urlencode({
-      'message': 'my content\n\n(Originally published at: http://obj.co)',
-    }))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({}))
 
     obj = copy.deepcopy(POST_OBJ)
     del obj['image']
@@ -2615,16 +2689,16 @@ http://b http://c""",
         'url': 'http://obj.co',
         })
     self.fb.create(obj, include_link=source.INCLUDE_LINK)
+    self.assert_urlopen(API_PUBLISH_POST, data=urllib.parse.urlencode({
+      'message': 'my content\n\n(Originally published at: http://obj.co)',
+    }))
     preview = self.fb.preview_create(obj, include_link=source.INCLUDE_LINK)
     self.assertEqual(
       'my content\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)
 
   def test_create_post_with_title(self):
-    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.parse.urlencode({
-      'message': 'my title\n\nmy content\n\n(Originally published at: http://obj.co)',
-    }))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({}))
 
     obj = copy.deepcopy(POST_OBJ)
     del obj['image']
@@ -2637,16 +2711,16 @@ http://b http://c""",
         'url': 'http://obj.co',
         })
     self.fb.create(obj, include_link=source.INCLUDE_LINK)
+    self.assert_urlopen(API_PUBLISH_POST, data=urllib.parse.urlencode({
+      'message': 'my title\n\nmy content\n\n(Originally published at: http://obj.co)',
+    }))
     preview = self.fb.preview_create(obj, include_link=source.INCLUDE_LINK)
     self.assertEqual(
       'my title\n\nmy content\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)
 
   def test_create_post_with_no_title(self):
-    self.expect_urlopen(API_PUBLISH_POST, {}, data=urllib.parse.urlencode({
-      'message': 'my\ncontent\n\n(Originally published at: http://obj.co)',
-    }))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({}))
 
     obj = copy.deepcopy(POST_OBJ)
     del obj['image']
@@ -2659,15 +2733,16 @@ http://b http://c""",
         'url': 'http://obj.co',
         })
     self.fb.create(obj, include_link=source.INCLUDE_LINK)
+    self.assert_urlopen(API_PUBLISH_POST, data=urllib.parse.urlencode({
+      'message': 'my\ncontent\n\n(Originally published at: http://obj.co)',
+    }))
     preview = self.fb.preview_create(obj, include_link=source.INCLUDE_LINK)
     self.assertEqual(
       'my\ncontent\n\n(Originally published at: <a href="http://obj.co">http://obj.co</a>)',
       preview.content)
 
   def test_create_comment(self):
-    self.expect_urlopen('547822715231468/comments', {'id': '456_789'},
-                        data='message=my+cmt')
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'id': '456_789'}))
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
     # summary should override content
@@ -2677,6 +2752,7 @@ http://b http://c""",
       'url': 'https://www.facebook.com/547822715231468?comment_id=456_789',
       'type': 'comment'
     }, self.fb.create(obj).content)
+    self.assert_urlopen('547822715231468/comments', data='message=my+cmt')
 
     preview = self.fb.preview_create(obj)
     self.assertEqual('my cmt', preview.content)
@@ -2684,8 +2760,6 @@ http://b http://c""",
     self.assertIn('<div class="fb-post" data-href="https://www.facebook.com/547822715231468">', preview.description)
 
   def test_create_comment_other_domain(self):
-    self.mox.ReplayAll()
-
     obj = copy.deepcopy(COMMENT_OBJS[0])
     obj.update({'summary': 'my cmt', 'inReplyTo': [{'url': 'http://other'}]})
 
@@ -2703,10 +2777,9 @@ http://b http://c""",
         'https://www.facebook.com/333?comment_id=456_789',
       }
 
-    for _ in urls:
-      self.expect_urlopen('333/comments', {'id': '456_789'},
-                          data='message=my+cmt')
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'id': '456_789'})) for _ in urls
+    ]
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
     for post_url, cmt_url in urls.items():
@@ -2719,16 +2792,10 @@ http://b http://c""",
         'url': cmt_url,
         'type': 'comment',
       }, self.fb.create(obj).content)
+    self.assert_urlopen('333/comments', data='message=my+cmt')
 
   def test_create_comment_with_photo(self):
-    self.expect_urlopen(
-      '547822715231468/comments', {'id': '456_789'},
-      data=urllib.parse.urlencode((
-        # sorted; order matters.
-        ('message', 'cc Sam G, Michael M'),
-        ('attachment_url', 'http://pict/ure'),
-      )))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'id': '456_789'}))
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
     obj.update({
@@ -2740,6 +2807,12 @@ http://b http://c""",
       'url': 'https://www.facebook.com/547822715231468?comment_id=456_789',
       'type': 'comment'
     }, self.fb.create(obj).content)
+    self.assert_urlopen(
+      '547822715231468/comments',
+      data=urllib.parse.urlencode((
+        ('message', 'cc Sam G, Michael M'),
+        ('attachment_url', 'http://pict/ure'),
+      )))
 
     preview = self.fb.preview_create(obj)
     self.assertEqual('cc Sam G, Michael M<br /><br /><img src="http://pict/ure" />',
@@ -2748,9 +2821,7 @@ http://b http://c""",
     self.assertIn('<div class="fb-post" data-href="https://www.facebook.com/547822715231468">', preview.description)
 
   def test_create_comment_m_facebook_com(self):
-    self.expect_urlopen('12_90/comments', {'id': '456_789'},
-                        data='message=cc+Sam+G%2C+Michael+M')
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'id': '456_789'}))
 
     obj = copy.deepcopy(COMMENT_OBJS[0])
     obj['inReplyTo'] = {
@@ -2762,17 +2833,12 @@ http://b http://c""",
       'url': 'https://www.facebook.com/12_90?comment_id=456_789',
       'type': 'comment'
     }, created.content, created)
+    self.assert_urlopen('12_90/comments', data='message=cc+Sam+G%2C+Michael+M')
 
   def test_create_like(self):
-    for url in ('212038_1234/likes',
-                '1234/likes',
-                '135_79/likes',
-                '78_90/likes',
-                '12_90/likes',
-                '12/likes',
-                ):
-      self.expect_urlopen(url, {"success": True}, data='')
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'success': True})) for _ in range(6)
+    ]
 
     like = copy.deepcopy(LIKE_OBJS[0])
     for url in (
@@ -2783,8 +2849,13 @@ http://b http://c""",
         'https://www.facebook.com/photo.php?fbid=12&set=a.34.56.78&type=1&comment_id=90&offset=0&total_comments=3&pnref=story',
         'https://www.facebook.com/media/set/?set=a.12.34.56'):
       like['object']['url'] = url
-      self.assert_equals({'url': url, 'type': 'like'},
-                         self.fb.create(like).content)
+      self.assert_equals({'url': url, 'type': 'like'}, self.fb.create(like).content)
+    self.assert_urlopen('212038_1234/likes', data='')
+    self.assert_urlopen('1234/likes', data='')
+    self.assert_urlopen('135_79/likes', data='')
+    self.assert_urlopen('78_90/likes', data='')
+    self.assert_urlopen('12_90/likes', data='')
+    self.assert_urlopen('12/likes', data='')
 
   def test_create_like_page(self):
     result = self.fb.create({
@@ -2814,8 +2885,7 @@ http://b http://c""",
   def test_create_like_comment_preview(self):
     like = copy.deepcopy(LIKE_OBJS[0])
     like['object']['url'] = 'https://www.facebook.com/foo/posts/135?reply_comment_id=79'
-    self.expect_urlopen('135_79', COMMENTS[0])
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(COMMENTS[0]))
 
     preview = self.fb.preview_create(like)
     self.assert_equals("""\
@@ -2824,27 +2894,32 @@ http://b http://c""",
 <a class="h-card" href="https://www.facebook.com/212038">
   <img class="profile u-photo" src="https://graph.facebook.com/v4.0/212038/picture?type=large" width="32px" /> Ryan Barrett</a>:
 cc Sam G, Michael M<br />""", preview.description)
+    self.assert_urlopen('135_79')
 
   def test_preview_like_comment_sanitizes_html(self):
     like = copy.deepcopy(LIKE_OBJS[0])
     like['object']['url'] = 'https://www.facebook.com/foo/posts/135?reply_comment_id=79'
-    self.expect_urlopen('135_79', {
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({
       **COMMENTS[0],
       'message': 'hello <script>alert("xss")</script> world',
-    })
-    self.mox.ReplayAll()
+    }))
 
     preview = self.fb.preview_create(like)
     self.assertIn('hello world', preview.description)
     self.assertNotIn('<script>', preview.description)
     self.assertNotIn('alert', preview.description)
+    self.assert_urlopen('135_79')
 
   def test_create_rsvp(self):
-    for endpoint in 'attending', 'declined', 'maybe':
-      self.expect_urlopen(API_EVENT % '234', EVENT)
-      self.expect_urlopen('234/' + endpoint, {"success": True}, data='')
-    self.expect_urlopen(API_EVENT % '234', EVENT)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps(EVENT)),
+      UrlopenResult(200, json_dumps({'success': True})),
+      UrlopenResult(200, json_dumps(EVENT)),
+      UrlopenResult(200, json_dumps({'success': True})),
+      UrlopenResult(200, json_dumps(EVENT)),
+      UrlopenResult(200, json_dumps({'success': True})),
+      UrlopenResult(200, json_dumps(EVENT)),
+    ]
 
     for rsvp in RSVP_YES_OBJ, RSVP_NO_OBJ, RSVP_MAYBE_OBJ:
       rsvp = copy.deepcopy(rsvp)
@@ -2853,6 +2928,10 @@ cc Sam G, Michael M<br />""", preview.description)
       self.assert_equals({'url': 'https://www.facebook.com/234/', 'type': 'rsvp'},
                          created.content,
                          f'{created.content}\n{rsvp}')
+    self.assert_urlopen(API_EVENT % '234')
+    self.assert_urlopen('234/attending', data='')
+    self.assert_urlopen('234/declined', data='')
+    self.assert_urlopen('234/maybe', data='')
 
     preview = self.fb.preview_create(rsvp)
     self.assertEqual('<span class="verb">RSVP maybe</span> to '
@@ -2879,9 +2958,10 @@ cc Sam G, Michael M<br />""", preview.description)
 
   def test_create_rsvp_multi_instance_event_error(self):
     """Facebook API doesn't allow RSVPing to multi-instance aka recurring events."""
-    for _ in range(2):
-      self.expect_urlopen(API_EVENT % '234', MULTI_EVENT)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps(MULTI_EVENT)),
+      UrlopenResult(200, json_dumps(MULTI_EVENT)),
+    ]
 
     rsvp = copy.deepcopy(RSVP_YES_OBJ)
     rsvp['inReplyTo'] = [{'url': 'https://www.facebook.com/234/'}]
@@ -2894,16 +2974,18 @@ cc Sam G, Michael M<br />""", preview.description)
     preview = self.fb.preview_create(rsvp)
     self.assertTrue(preview.abort)
     self.assertEqual(expected, preview.error_html)
+    self.assert_urlopen(API_EVENT % '234')
 
   def test_create_rsvp_single_multi_instance_event_single_instance_url(self):
     """We should handle single-instance URLs of multi-instance aka recurring events.
 
     e.g. https://www.facebook.com/events/999/?event_time_id=234
     """
-    self.expect_urlopen(API_EVENT % '234', EVENT)
-    self.expect_urlopen('234/attending', {"success": True}, data='')
-    self.expect_urlopen(API_EVENT % '234', EVENT)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps(EVENT)),
+      UrlopenResult(200, json_dumps({'success': True})),
+      UrlopenResult(200, json_dumps(EVENT)),
+    ]
 
     rsvp = copy.deepcopy(RSVP_YES_OBJ)
     rsvp['inReplyTo'] = [{
@@ -2913,6 +2995,8 @@ cc Sam G, Michael M<br />""", preview.description)
     created = self.fb.create(rsvp)
     self.assert_equals({'url': 'https://www.facebook.com/234', 'type': 'rsvp'},
                        created.content, f'{created.content}\n{rsvp}')
+    self.assert_urlopen(API_EVENT % '234')
+    self.assert_urlopen('234/attending', data='')
 
     preview = self.fb.preview_create(rsvp)
     self.assertEqual(
@@ -2968,15 +3052,18 @@ cc Sam G, Michael M<br />""", preview.description)
                       preview.content)
 
     # test create
-    self.expect_urlopen(API_ALBUMS % 'me', {'data': []})
-    self.expect_urlopen(API_PUBLISH_PHOTO, {'id': '123_456'},
-                        data='message=my+caption&url=http%3A%2F%2Fmy%2Fpictur%C3%A9')
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': []})),
+      UrlopenResult(200, json_dumps({'id': '123_456'})),
+    ]
     self.assert_equals({
       'id': '123_456',
       'url': 'https://www.facebook.com/123/posts/456',
       'type': 'post',
     }, self.fb.create(obj).content)
+    self.assert_urlopen(API_ALBUMS % 'me')
+    self.assert_urlopen(API_PUBLISH_PHOTO,
+                        data='message=my+caption&url=http%3A%2F%2Fmy%2Fpictur%C3%A9')
 
   def test_create_with_photo_uses_timeline_photos_album(self):
     """https://github.com/snarfed/bridgy/issues/571"""
@@ -2985,16 +3072,19 @@ cc Sam G, Michael M<br />""", preview.description)
       'image': [{'url': 'http://my/picture'}],
     }
 
-    self.expect_urlopen(API_ALBUMS % 'me', {'data': [
-      {'id': '1', 'name': 'foo bar'},
-      {'id': '2', 'type': 'wall'},
-    ]})
-    self.expect_urlopen('2/photos', {}, data=urllib.parse.urlencode((
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [
+        {'id': '1', 'name': 'foo bar'},
+        {'id': '2', 'type': 'wall'},
+      ]})),
+      UrlopenResult(200, json_dumps({})),
+    ]
+    self.assert_equals({'type': 'post', 'url': None}, self.fb.create(obj).content)
+    self.assert_urlopen(API_ALBUMS % 'me')
+    self.assert_urlopen('2/photos', data=urllib.parse.urlencode((
       ('message', ''),
       ('url', 'http://my/picture'),
     )))
-    self.mox.ReplayAll()
-    self.assert_equals({'type': 'post', 'url': None}, self.fb.create(obj).content)
 
   def test_create_with_photo_and_person_tags(self):
     obj = {
@@ -3019,19 +3109,21 @@ cc Sam G, Michael M<br />""", preview.description)
       preview.content)
 
     # test create
-    self.expect_urlopen(API_ALBUMS % 'me', {'data': []})
-    self.expect_urlopen(
-      API_PUBLISH_PHOTO, {'id': '123_456'}, data=urllib.parse.urlencode((
-        ('message', ''),
-        ('url', 'http://my/picture'),
-        ('tags', json_dumps([{'tag_uid': '234'}, {'tag_uid': '345'}])),
-      )))
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': []})),
+      UrlopenResult(200, json_dumps({'id': '123_456'})),
+    ]
     self.assert_equals({
       'id': '123_456',
       'url': 'https://www.facebook.com/123/posts/456',
       'type': 'post',
     }, self.fb.create(obj).content)
+    self.assert_urlopen(API_ALBUMS % 'me')
+    self.assert_urlopen(API_PUBLISH_PHOTO, data=urllib.parse.urlencode((
+      ('message', ''),
+      ('url', 'http://my/picture'),
+      ('tags', json_dumps([{'tag_uid': '234'}, {'tag_uid': '345'}])),
+    )))
 
   def test_create_with_video(self):
     obj = {
@@ -3049,31 +3141,29 @@ cc Sam G, Michael M<br />""", preview.description)
                       preview.content)
 
     # test create
-    self.expect_urlopen(API_UPLOAD_VIDEO, {}, data=urllib.parse.urlencode({
-      'file_url': 'http://my/video', 'description': 'my\ncaption'}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({}))
     self.assert_equals({'type': 'post', 'url': None}, self.fb.create(obj).content)
+    self.assert_urlopen(API_UPLOAD_VIDEO, data=urllib.parse.urlencode({
+      'file_url': 'http://my/video', 'description': 'my\ncaption'}))
 
   def test_create_notification(self):
     oauth_dropins.facebook.FACEBOOK_APP_ID = 'my_app_id'
     oauth_dropins.facebook.FACEBOOK_APP_SECRET = 'my_app_secret'
-    params = {
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(''))
+    self.fb.create_notification('my-username', 'my text', 'my link')
+    self.assert_urlopen('my-username/notifications', data=urllib.parse.urlencode({
       'template': 'my text',
       'href': 'my link',
       'access_token': 'my_app_id|my_app_secret',
-      }
-    self.expect_urlopen('my-username/notifications', '',
-                        data=urllib.parse.urlencode(params))
-    self.mox.ReplayAll()
-    self.fb.create_notification('my-username', 'my text', 'my link')
+    }))
 
   def test_base_object_resolve_numeric_id(self):
-    self.expect_urlopen('MyPage', PAGE)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(PAGE))
 
     self.assert_equals(PAGE_ACTOR, self.fb.base_object(
       {'object': {'url': 'https://facebook.com/MyPage'}},
       resolve_numeric_id=True))
+    self.assert_urlopen('MyPage')
 
   def test_base_object_recurring_event_instance(self):
     got = self.fb.base_object(
@@ -3136,17 +3226,16 @@ cc Sam G, Michael M<br />""", preview.description)
       check(expected, id, True)
 
   def test_resolve_object_id(self):
-    for _ in range(3):
-      self.expect_urlopen(API_OBJECT % ('111', '222'),
-                          {'id': '0', 'object_id': '333'})
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'id': '0', 'object_id': '333'})) for _ in range(3)
+    ]
 
     for id in '222', '222:0', '111_222_9':
       self.assertEqual('333', self.fb.resolve_object_id(111, id))
+    self.assert_urlopen(API_OBJECT % ('111', '222'))
 
   def test_resolve_object_id_fetch_400s(self):
-    self.expect_urlopen(API_OBJECT % ('111', '222'), {}, status=400)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = urllib.error.HTTPError(None, 400, 'Bad Request', {}, None)
     self.assertIsNone(self.fb.resolve_object_id('111', '222'))
 
   def test_resolve_object_id_with_activity(self):
@@ -3195,23 +3284,21 @@ cc Sam G, Michael M<br />""", preview.description)
       }}))
 
   def test_urlopen_batch(self):
-    self.expect_urlopen('',
-      data='batch=[{"method":"GET","relative_url":"abc"},'
-                  '{"method":"GET","relative_url":"def"}]',
-      response=[{'code': 200, 'body': '{"abc": 1}'},
-                {'code': 200, 'body': '{"def": 2}'}])
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps([
+      {'code': 200, 'body': '{"abc": 1}'},
+      {'code': 200, 'body': '{"def": 2}'},
+    ]))
 
     self.assert_equals(({'abc': 1}, {'def': 2}),
                        self.fb.urlopen_batch(('abc', 'def')))
+    self.assert_urlopen('', data='batch=[{"method":"GET","relative_url":"abc"},'
+                                     '{"method":"GET","relative_url":"def"}]')
 
   def test_urlopen_batch_error(self):
-    self.expect_urlopen('',
-      data='batch=[{"method":"GET","relative_url":"abc"},'
-                  '{"method":"GET","relative_url":"def"}]',
-      response=[{'code': 304},
-                {'code': 499, 'body': 'error body'}])
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps([
+      {'code': 304},
+      {'code': 499, 'body': 'error body'},
+    ]))
 
     try:
       self.fb.urlopen_batch(('abc', 'def'))
@@ -3219,16 +3306,14 @@ cc Sam G, Michael M<br />""", preview.description)
     except urllib.error.HTTPError as e:
       self.assertEqual(499, e.code)
       self.assertEqual('error body', e.reason)
+    self.assert_urlopen('', data='batch=[{"method":"GET","relative_url":"abc"},'
+                                     '{"method":"GET","relative_url":"def"}]')
 
   def test_urlopen_batch_full(self):
-    self.expect_urlopen('',
-      data='batch=[{"headers":[{"name":"U","value":"V"},'
-                              '{"name":"X","value":"Y"}],'
-                   '"method":"GET","relative_url":"abc"},'
-                  '{"method":"GET","relative_url":"def"}]',
-      response=[{'code': 200, 'body': '{"json": true}'},
-                {'code': 200, 'body': 'not json'}])
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps([
+      {'code': 200, 'body': '{"json": true}'},
+      {'code': 200, 'body': 'not json'},
+    ]))
 
     self.assert_equals(
       [{'code': 200, 'body': {"json": True}},
@@ -3236,18 +3321,20 @@ cc Sam G, Michael M<br />""", preview.description)
       self.fb.urlopen_batch_full((
         {'relative_url': 'abc', 'headers': {'X': 'Y', 'U': 'V'}},
         {'relative_url': 'def'})))
+    self.assert_urlopen('', data='batch=[{"headers":[{"name":"U","value":"V"},'
+                                     '{"name":"X","value":"Y"}],'
+                                     '"method":"GET","relative_url":"abc"},'
+                                     '{"method":"GET","relative_url":"def"}]')
 
   def test_urlopen_batch_full_errors(self):
     resps = [{'code': 501},
              {'code': 499, 'body': 'error body'}]
-    self.expect_urlopen('',
-      data='batch=[{"method":"GET","relative_url":"abc"},'
-                  '{"method":"GET","relative_url":"def"}]',
-      response=resps)
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps(resps))
 
     self.assert_equals(resps, self.fb.urlopen_batch_full(
       [{'relative_url': 'abc'}, {'relative_url': 'def'}]))
+    self.assert_urlopen('', data='batch=[{"method":"GET","relative_url":"abc"},'
+                                     '{"method":"GET","relative_url":"def"}]')
 
   def test_email_to_as1_comment_user_id(self):
     self.assert_equals(EMAIL_COMMENT_OBJ_USER_ID,

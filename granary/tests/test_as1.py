@@ -4,7 +4,7 @@ import re
 from unittest.mock import patch
 
 from webutil import testutil, util
-from webutil.testutil import requests_response
+from webutil.testutil import head_returns_200, requests_response
 
 from .. import as1
 
@@ -558,21 +558,18 @@ class As1Test(testutil.TestCase):
     # bookmarks should include targetUrl
     check({'targetUrl': 'http://or.ig/'}, ['http://or.ig/'])
 
-  def test_original_post_discovery_max_redirect_fetches(self):
-    redirects = {
-      'http://other/link': 'http://a',
-      'http://sho.rt/post': 'http://b',
-    }
-    def head(url, **kwargs):
-      return requests_response('', redirected_url=redirects[url])
-
+  @patch.object(util.session, 'head', side_effect=[
+    requests_response('', redirected_url='http://a'),
+    requests_response('', redirected_url='http://b'),
+  ])
+  def test_original_post_discovery_max_redirect_fetches(self, mock_head):
     obj = {
       'content': 'asdf http://other/link qwert',
       'upstreamDuplicates': ['http://sho.rt/post', 'http://next/post'],
     }
-    with patch.object(util.session, 'head', side_effect=head) as mock_head:
-      self.check_original_post_discovery(
-        obj, ['http://a/', 'http://b/', 'http://next/post'], max_redirect_fetches=2)
+
+    self.check_original_post_discovery(
+      obj, ['http://a/', 'http://b/', 'http://next/post'], max_redirect_fetches=2)
 
     # only the first two candidates are resolved; http://next/post is over the limit
     self.assertCountEqual(['http://other/link', 'http://sho.rt/post'],

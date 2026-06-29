@@ -31,7 +31,7 @@ REPLY_ACTIVITY['actor']['id'] = 'http://foo.com/users/snarfed'
 REPLY_ACTIVITY['object'] = REPLY_OBJECT
 
 
-class PixelfedTest(testutil.BaseTestCase):
+class PixelfedTest(testutil.TestCase):
 
   def setUp(self):
     super(PixelfedTest, self).setUp()

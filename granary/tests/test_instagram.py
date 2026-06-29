@@ -1,11 +1,14 @@
 """Unit tests for instagram.py."""
 import copy
 import datetime
+import io
 import logging
+import urllib.error
 import urllib.parse
+from unittest.mock import patch
 
-from mox3 import mox
 from webutil import testutil, util
+from webutil.testutil import requests_response, UrlopenResult
 from webutil.util import json_dumps, json_loads
 import requests
 
@@ -1300,166 +1303,155 @@ class InstagramTest(testutil.TestCase):
     super(InstagramTest, self).setUp()
     self.instagram = Instagram()
     instagram._last_rate_limited = instagram._last_rate_limited_exc = None
+    self.mock_urlopen = self.start_patch(util.urllib.request, 'urlopen')
+    self.mock_get = self.start_patch(util.session, 'get')
 
-  def expect_requests_get(self, url, resp='', cookie=None, **kwargs):
-    kwargs.setdefault('allow_redirects', False)
-    if cookie:
-      # instagram scraper sets USER-AGENT and App ID headers when cookie that
-      # begins with sessionid= is set
-      kwargs.setdefault('headers', HEADERS)['Cookie'] = 'sessionid=' + cookie
+  def assert_requests_get(self, url, **kwargs):
     if not url.startswith('http'):
       url = HTML_BASE_URL + url
-    return super(InstagramTest, self).expect_requests_get(url, resp, **kwargs)
+    super().assert_requests_get(url, **kwargs)
 
   def test_get_actor(self):
-    self.expect_urlopen('https://api.instagram.com/v1/users/foo',
-                        json_dumps({'data': USER}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': USER}))
     self.assert_equals(ACTOR, self.instagram.get_actor('foo'))
+    self.assert_urlopen('https://api.instagram.com/v1/users/foo')
 
   def test_get_actor_default(self):
-    self.expect_urlopen('https://api.instagram.com/v1/users/self',
-                        json_dumps({'data': USER}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': USER}))
     self.assert_equals(ACTOR, self.instagram.get_actor())
+    self.assert_urlopen('https://api.instagram.com/v1/users/self')
 
   def test_get_actor_scrape(self):
-    self.expect_requests_get('foo/', HTML_PROFILE_COMPLETE)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(HTML_PROFILE_COMPLETE)
     self.assert_equals(HTML_ACTOR, Instagram(scrape=True).get_actor('foo'))
+    self.assert_requests_get('foo/')
 
   def test_get_activities_self(self):
-    self.expect_urlopen('https://api.instagram.com/v1/users/self/media/recent',
-                        json_dumps({'data': []}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': []}))
     self.assert_equals([], self.instagram.get_activities(group_id=source.SELF))
+    self.assert_urlopen('https://api.instagram.com/v1/users/self/media/recent')
 
   def test_get_activities_self_fetch_likes(self):
-    self.expect_urlopen('https://api.instagram.com/v1/users/self/media/recent',
-                        json_dumps({'data': [MEDIA]}))
-    self.expect_urlopen('https://api.instagram.com/v1/users/self/media/liked',
-                        json_dumps({'data': [MEDIA_WITH_LIKES]}))
-    self.expect_urlopen('https://api.instagram.com/v1/users/self',
-                        json_dumps({'data': LIKES[0]}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': [MEDIA]})),
+      UrlopenResult(200, json_dumps({'data': [MEDIA_WITH_LIKES]})),
+      UrlopenResult(200, json_dumps({'data': LIKES[0]})),
+    ]
     self.assert_equals(
       [ACTIVITY, LIKE_OBJS[0]],
       self.instagram.get_activities(group_id=source.SELF, fetch_likes=True))
+    self.assert_urlopen('https://api.instagram.com/v1/users/self/media/recent')
+    self.assert_urlopen('https://api.instagram.com/v1/users/self/media/liked')
+    self.assert_urlopen('https://api.instagram.com/v1/users/self')
 
   def test_get_activities_passes_through_access_token(self):
-    self.expect_urlopen(
-      'https://api.instagram.com/v1/users/self/feed?access_token=asdf',
-      json_dumps({'meta': {'code': 200}, 'data': []}))
-    self.mox.ReplayAll()
-
+    self.mock_urlopen.return_value = UrlopenResult(
+      200, json_dumps({'meta': {'code': 200}, 'data': []}))
     self.instagram = Instagram(access_token='asdf')
     self.instagram.get_activities()
+    self.assert_urlopen(
+      'https://api.instagram.com/v1/users/self/feed?access_token=asdf')
 
   def test_get_activities_activity_id_shortcode(self):
-    self.expect_urlopen('https://api.instagram.com/v1/media/000',
-                        json_dumps({'data': MEDIA}))
-    self.mox.ReplayAll()
-
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': MEDIA}))
     # activity id overrides user, group, app id and ignores startIndex and count
     self.assert_equals([ACTIVITY], self.instagram.get_activities(
         user_id='123', group_id='456', app_id='789', activity_id='000',
         start_index=3, count=6))
+    self.assert_urlopen('https://api.instagram.com/v1/media/000')
 
   def test_get_activities_activity_id_not_found(self):
-    self.expect_urlopen('https://api.instagram.com/v1/media/000',
-                        '{"meta":{"error_type":"APINotFoundError"}}',
-                        status=400)
-    self.mox.ReplayAll()
+    body = '{"meta":{"error_type":"APINotFoundError"}}'.encode()
+    self.mock_urlopen.side_effect = urllib.error.HTTPError(
+      'url', 400, 'message', {}, io.BytesIO(body))
     self.assert_equals([], self.instagram.get_activities(activity_id='000'))
+    self.assert_urlopen('https://api.instagram.com/v1/media/000')
 
   def test_get_activities_with_likes(self):
-    self.expect_urlopen('https://api.instagram.com/v1/users/self/feed',
-                        json_dumps({'data': [MEDIA_WITH_LIKES]}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(
+      200, json_dumps({'data': [MEDIA_WITH_LIKES]}))
     self.assert_equals([ACTIVITY_WITH_LIKES], self.instagram.get_activities())
+    self.assert_urlopen('https://api.instagram.com/v1/users/self/feed')
 
   def test_get_activities_other_400_error(self):
-    self.expect_urlopen('https://api.instagram.com/v1/media/000',
-                        'BAD REQUEST', status=400)
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = urllib.error.HTTPError(
+      'url', 400, 'message', {}, None)
     self.assertRaises(urllib.error.HTTPError, self.instagram.get_activities,
                       activity_id='000')
+    self.assert_urlopen('https://api.instagram.com/v1/media/000')
 
   def test_get_activities_min_id(self):
-    self.expect_urlopen(
-      'https://api.instagram.com/v1/users/self/media/recent?min_id=135',
-      json_dumps({'data': []}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': []}))
     self.instagram.get_activities(group_id=source.SELF, min_id='135')
+    self.assert_urlopen(
+      'https://api.instagram.com/v1/users/self/media/recent?min_id=135')
 
   def test_get_activities_search(self):
-    self.expect_urlopen('https://api.instagram.com/v1/tags/indieweb/media/recent',
-                        json_dumps({'data': [MEDIA]}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': [MEDIA]}))
     self.assert_equals([ACTIVITY], self.instagram.get_activities(
       group_id=source.SEARCH, search_query='#indieweb'))
+    self.assert_urlopen('https://api.instagram.com/v1/tags/indieweb/media/recent')
 
   def test_get_activities_search_non_hashtag(self):
     with self.assertRaises(ValueError):
       self.instagram.get_activities(search_query='foo')
 
   def test_get_activities_scrape_self(self):
-    self.expect_requests_get('x/', HTML_PROFILE_COMPLETE +
-                             # check that we ignore this for profile fetches
-                             ' not-logged-in ')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      HTML_PROFILE_COMPLETE + ' not-logged-in ')
     self.assert_equals(HTML_ACTIVITIES, self.instagram.get_activities(
       user_id='x', group_id=source.SELF, scrape=True))
+    self.assert_requests_get('x/')
 
   def test_get_activities_response_scrape_self_viewer(self):
-    self.expect_requests_get('x/', HTML_PROFILE_COMPLETE)
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(HTML_PROFILE_COMPLETE)
     resp = self.instagram.get_activities_response(
       user_id='x', group_id=source.SELF, scrape=True)
     self.assert_equals(HTML_ACTIVITIES, resp['items'])
     self.assert_equals(HTML_VIEWER_PUBLIC, resp['actor'])
+    self.assert_requests_get('x/')
 
   def test_get_activities_scrape_self_fetch_extras(self):
-    self.expect_requests_get('x/', HTML_PROFILE_COMPLETE, cookie='kuky')
-    self.expect_requests_get('p/ABC123/', HTML_PHOTO_COMPLETE, cookie='kuky')
-    self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
-                             HTML_PHOTO_LIKES_RESPONSE, cookie='kuky')
-    self.expect_requests_get('p/XYZ789/', HTML_VIDEO_COMPLETE, cookie='kuky')
-    self.expect_requests_get(instagram.HTML_LIKES_URL % 'XYZ789', {}, cookie='kuky')
-
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response(HTML_PROFILE_COMPLETE),
+      requests_response(HTML_PHOTO_COMPLETE),
+      requests_response(HTML_PHOTO_LIKES_RESPONSE),
+      requests_response(HTML_VIDEO_COMPLETE),
+      requests_response({}),
+    ]
     self.assert_equals(HTML_ACTIVITIES_FULL_LIKES, self.instagram.get_activities(
       user_id='x', group_id=source.SELF, fetch_likes=True, fetch_replies=True,
       scrape=True, cookie='kuky'))
+    self.assert_requests_get('x/', cookie='sessionid=kuky')
+    self.assert_requests_get('p/ABC123/', cookie='sessionid=kuky')
+    self.assert_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
+                             cookie='sessionid=kuky')
+    self.assert_requests_get('p/XYZ789/', cookie='sessionid=kuky')
+    self.assert_requests_get(instagram.HTML_LIKES_URL % 'XYZ789',
+                             cookie='sessionid=kuky')
 
   def test_get_activities_scrape_fetch_extras_cache(self):
-    # first time, cache is cold
-    self.expect_requests_get('x/', HTML_PROFILE_COMPLETE, cookie='kuky')
-    self.expect_requests_get('p/ABC123/', HTML_PHOTO_COMPLETE, cookie='kuky')
-    self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
-                             HTML_PHOTO_LIKES_RESPONSE, cookie='kuky')
-    self.expect_requests_get('p/XYZ789/', HTML_VIDEO_COMPLETE, cookie='kuky')
-    self.expect_requests_get(instagram.HTML_LIKES_URL % 'XYZ789', {}, cookie='kuky')
-
-    # second time, comment and like counts are unchanged, so no media page fetches
-    self.expect_requests_get('x/', HTML_PROFILE_COMPLETE, cookie='kuky')
-
     # third time, video comment count changes, like counts stay the same
     profile = copy.deepcopy(HTML_PROFILE)
     profile['entry_data']['ProfilePage'][0]['graphql']['user']\
       ['edge_owner_to_timeline_media']['edges'][1]['node']\
       ['edge_media_to_comment']['count'] = 3
-    self.expect_requests_get('x/',
-                             HTML_HEADER + json_dumps(profile) + HTML_FOOTER,
-                             cookie='kuky')
     video = copy.deepcopy(HTML_VIDEO_FULL)
     video['edge_media_to_comment']['count'] = 4
-    self.expect_requests_get('p/XYZ789/',
-                             HTML_HEADER + json_dumps(video) + HTML_FOOTER,
-                             cookie='kuky')
 
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      # first time, cache is cold
+      requests_response(HTML_PROFILE_COMPLETE),
+      requests_response(HTML_PHOTO_COMPLETE),
+      requests_response(HTML_PHOTO_LIKES_RESPONSE),
+      requests_response(HTML_VIDEO_COMPLETE),
+      requests_response({}),
+      # second time, comment and like counts are unchanged, so no media page fetches
+      requests_response(HTML_PROFILE_COMPLETE),
+      # third time, video comment count changes, like counts stay the same
+      requests_response(HTML_HEADER + json_dumps(profile) + HTML_FOOTER),
+      requests_response(HTML_HEADER + json_dumps(video) + HTML_FOOTER),
+    ]
 
     cache = {}
     for _ in range(3):
@@ -1473,16 +1465,23 @@ class InstagramTest(testutil.TestCase):
       'AIC 789_456': 1,  # video
       'AIL 789_456': 9,
     }, cache)
+    self.assert_requests_get('x/', cookie='sessionid=kuky')
+    self.assert_requests_get('p/ABC123/', cookie='sessionid=kuky')
+    self.assert_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
+                             cookie='sessionid=kuky')
+    self.assert_requests_get('p/XYZ789/', cookie='sessionid=kuky')
+    self.assert_requests_get(instagram.HTML_LIKES_URL % 'XYZ789',
+                             cookie='sessionid=kuky')
 
   def test_get_activities_scrape_missing_data(self):
-    self.expect_requests_get('x/', """
+    self.mock_get.return_value = requests_response("""
 <!DOCTYPE html>
 <html><body>
 </body></html>
 """)
-    self.mox.ReplayAll()
     self.assert_equals([], self.instagram.get_activities(
       user_id='x', group_id=source.SELF, scrape=True))
+    self.assert_requests_get('x/')
 
   def test_get_activities_scrape_fetch_likes_no_cookie_error(self):
     with self.assertRaises(NotImplementedError):
@@ -1490,72 +1489,67 @@ class InstagramTest(testutil.TestCase):
                                     fetch_likes=True, scrape=True)
 
   def test_get_activities_scrape_friends_cookie(self):
-    self.expect_requests_get(HTML_BASE_URL, HTML_FEED_COMPLETE, cookie='kuky')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(HTML_FEED_COMPLETE)
     self.assert_equals(HTML_ACTIVITIES_FULL, self.instagram.get_activities(
       user_id='self', group_id=source.FRIENDS, scrape=True, cookie='kuky'))
+    self.assert_requests_get(HTML_BASE_URL, cookie='sessionid=kuky')
 
   def test_get_activities_response_scrape_friends_viewer(self):
-    self.expect_requests_get(HTML_BASE_URL, HTML_FEED_COMPLETE, cookie='kuky')
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(HTML_FEED_COMPLETE)
     resp = self.instagram.get_activities_response(
       group_id=source.FRIENDS, scrape=True, cookie='kuky')
     self.assert_equals(HTML_ACTIVITIES_FULL, resp['items'])
     self.assert_equals(HTML_VIEWER, resp['actor'])
+    self.assert_requests_get(HTML_BASE_URL, cookie='sessionid=kuky')
 
   def test_get_activities_scrape_cookie_not_logged_in(self):
-    self.expect_requests_get(HTML_BASE_URL, '<html>not-logged-in</html>',
-                             cookie='kuky')
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response('<html>not-logged-in</html>')
     with self.assertRaises(requests.HTTPError) as cm:
       self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
                                     cookie='kuky')
 
     self.assertEqual('401 Unauthorized', str(cm.exception))
     self.assertEqual(401, cm.exception.response.status_code)
+    self.assert_requests_get(HTML_BASE_URL, cookie='sessionid=kuky')
 
   def test_get_activities_scrape_activity_id(self):
-    self.expect_requests_get('p/BDG6Ms_J0vQ/', HTML_PHOTO_COMPLETE)
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(HTML_PHOTO_COMPLETE)
     resp = self.instagram.get_activities_response(
       group_id=source.SELF, scrape=True, activity_id='1208909509631101904_942513')
     self.assert_equals([HTML_PHOTO_ACTIVITY_FULL], resp['items'])
     self.assertIsNone(resp['actor'])
+    self.assert_requests_get('p/BDG6Ms_J0vQ/')
 
   def test_get_activities_scrape_activity_id_shortcode(self):
-    self.expect_requests_get('p/BDG6Ms_J0vQ/', HTML_PHOTO_COMPLETE)
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(HTML_PHOTO_COMPLETE)
     resp = self.instagram.get_activities_response(
       group_id=source.SELF, scrape=True, activity_id='BDG6Ms_J0vQ')
     self.assert_equals([HTML_PHOTO_ACTIVITY_FULL], resp['items'])
+    self.assert_requests_get('p/BDG6Ms_J0vQ/')
 
   def test_get_activities_scrape_activity_id_shortcode_404(self):
-    self.expect_requests_get('p/B7/', status_code=404)
-    self.expect_requests_get('p/123_ABC/', HTML_PHOTO_COMPLETE)
-    self.mox.ReplayAll()
-
+    self.mock_get.side_effect = [
+      requests_response(status=404),
+      requests_response(HTML_PHOTO_COMPLETE),
+    ]
     resp = self.instagram.get_activities_response(
       group_id=source.SELF, scrape=True, activity_id='123_ABC')
     self.assert_equals([HTML_PHOTO_ACTIVITY_FULL], resp['items'])
+    self.assert_requests_get('p/B7/')
+    self.assert_requests_get('p/123_ABC/')
 
   def test_get_activities_scrape_cookie_redirects_to_login(self):
-    self.expect_requests_get(
-      HTML_BASE_URL,
-      status_code=302,
+    self.mock_get.return_value = requests_response(
+      status=302,
       redirected_url='https://www.instagram.com/accounts/login/?next=/',
-      cookie='kuky')
-    self.mox.ReplayAll()
-
+      allow_redirects=False)
     with self.assertRaises(requests.HTTPError) as cm:
       self.instagram.get_activities(group_id=source.FRIENDS, scrape=True,
                                     cookie='kuky')
 
     self.assertEqual('401 Unauthorized', str(cm.exception))
     self.assertEqual(401, cm.exception.response.status_code)
+    self.assert_requests_get(HTML_BASE_URL, cookie='sessionid=kuky')
 
   def test_get_activities_scrape_options_not_implemented(self):
     for group_id in None, source.ALL, source.SEARCH:
@@ -1571,21 +1565,21 @@ class InstagramTest(testutil.TestCase):
       self.instagram.get_activities(group_id=source.FRIENDS, scrape=True)
 
   def test_get_activities_scrape_not_found(self):
-    self.expect_requests_get('foo/', status_code=404)
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(status=404)
     resp = self.instagram.get_activities_response(
       group_id=source.SELF, user_id='foo', scrape=True)
     self.assertIsNone(resp['actor'])
     self.assertEqual([], resp['items'])
+    self.assert_requests_get('foo/')
 
   def test_get_activities_scrape_rate_limited(self):
-    # first attempt: rate limited
-    self.expect_requests_get(HTML_BASE_URL, status_code=429, cookie='kuky')
-    # third attempt ignore rate limit lock. fourth limit is past lock.
-    for _ in range(2):
-      self.expect_requests_get('x/', HTML_PROFILE_COMPLETE)
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      # first attempt: rate limited
+      requests_response(status=429),
+      # third attempt ignore rate limit lock. fourth limit is past lock.
+      requests_response(HTML_PROFILE_COMPLETE),
+      requests_response(HTML_PROFILE_COMPLETE),
+    ]
 
     # first attempt makes the fetch, gets the 429 response, and sets the
     # global rate limit lock. second attempt sees the lock and short circuits.
@@ -1608,34 +1602,32 @@ class InstagramTest(testutil.TestCase):
                                      datetime.timedelta(seconds=5))
     self.assert_equals(HTML_ACTIVITIES, Instagram().get_activities(
       user_id='x', group_id=source.SELF, scrape=True))
+    self.assert_requests_get(HTML_BASE_URL, cookie='sessionid=kuky')
+    self.assert_requests_get('x/')
 
   def test_get_video(self):
-    self.expect_urlopen('https://api.instagram.com/v1/media/5678',
-                        json_dumps({'data': VIDEO}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': VIDEO}))
     self.assert_equals([VIDEO_ACTIVITY],
                        self.instagram.get_activities(activity_id='5678'))
+    self.assert_urlopen('https://api.instagram.com/v1/media/5678')
 
   def test_get_comment(self):
-    self.expect_urlopen('https://api.instagram.com/v1/media/123_456',
-                        json_dumps({'data': MEDIA}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': MEDIA}))
     self.assert_equals(COMMENT_OBJS[0],
                        self.instagram.get_comment('110', activity_id='123_456'))
+    self.assert_urlopen('https://api.instagram.com/v1/media/123_456')
 
   def test_get_comment_not_found(self):
-    self.expect_urlopen('https://api.instagram.com/v1/media/123_456',
-                        json_dumps({'data': MEDIA}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': MEDIA}))
     self.assertIsNone(self.instagram.get_comment('111', activity_id='123_456'))
+    self.assert_urlopen('https://api.instagram.com/v1/media/123_456')
 
   def test_get_comment_scrape(self):
-    self.expect_requests_get('p/BDG6Ms_J0vQ/', HTML_VIDEO_COMPLETE)
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(HTML_VIDEO_COMPLETE)
     ig = Instagram(scrape=True)
     self.assert_equals(HTML_VIDEO_ACTIVITY_FULL['object']['replies']['items'][0],
                        ig.get_comment('110', activity_id='1208909509631101904_942513'))
+    self.assert_requests_get('p/BDG6Ms_J0vQ/')
 
   def test_get_comment_with_activity(self):
     # skips API call
@@ -1643,34 +1635,34 @@ class InstagramTest(testutil.TestCase):
                           self.instagram.get_comment('110', activity=ACTIVITY))
 
   def test_get_like(self):
-    self.expect_urlopen('https://api.instagram.com/v1/media/000',
-                        json_dumps({'data': MEDIA_WITH_LIKES}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(
+      200, json_dumps({'data': MEDIA_WITH_LIKES}))
     self.assert_equals(LIKE_OBJS[1], self.instagram.get_like('123', '000', '9'))
+    self.assert_urlopen('https://api.instagram.com/v1/media/000')
 
   def test_get_like_not_found(self):
-    self.expect_urlopen('https://api.instagram.com/v1/media/000',
-                        json_dumps({'data': MEDIA}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, json_dumps({'data': MEDIA}))
     self.assertIsNone(self.instagram.get_like('123', '000', 'xyz'))
+    self.assert_urlopen('https://api.instagram.com/v1/media/000')
 
   def test_get_like_no_activity(self):
-    self.expect_urlopen('https://api.instagram.com/v1/media/000',
-                        '{"meta":{"error_type":"APINotFoundError"}}',
-                        status=400)
-    self.mox.ReplayAll()
+    body = '{"meta":{"error_type":"APINotFoundError"}}'.encode()
+    self.mock_urlopen.side_effect = urllib.error.HTTPError(
+      'url', 400, 'message', {}, io.BytesIO(body))
     self.assertIsNone(self.instagram.get_like('123', '000', '9'))
+    self.assert_urlopen('https://api.instagram.com/v1/media/000')
 
   def test_get_like_scrape(self):
-    self.expect_requests_get('p/BDG6Ms_J0vQ/', HTML_PHOTO_COMPLETE,
-                             cookie='kuky')
-    self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
-                             HTML_PHOTO_LIKES_RESPONSE, cookie='kuky')
-    self.mox.ReplayAll()
-
+    self.mock_get.side_effect = [
+      requests_response(HTML_PHOTO_COMPLETE),
+      requests_response(HTML_PHOTO_LIKES_RESPONSE),
+    ]
     ig = Instagram(scrape=True, cookie='kuky')
     self.assert_equals(LIKE_OBJS[0],
                        ig.get_like('456', '1208909509631101904_942513', '8'))
+    self.assert_requests_get('p/BDG6Ms_J0vQ/', cookie='sessionid=kuky')
+    self.assert_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
+                             cookie='sessionid=kuky')
 
   def test_media_to_as1(self):
     self.assert_equals(ACTIVITY, self.instagram.media_to_as1(MEDIA))
@@ -1737,38 +1729,33 @@ class InstagramTest(testutil.TestCase):
     to_publish = copy.deepcopy(LIKE_OBJS[0])
     del to_publish['url']
 
-    self.mox.ReplayAll()
     preview = self.instagram.preview_create(to_publish)
 
     self.assertIn('like', preview.description)
     self.assertIn('this post', preview.description)
 
   def test_create_like(self):
-    self.expect_urlopen(
-      'https://api.instagram.com/v1/media/shortcode/ABC123',
-      json_dumps({'data': MEDIA}))
-
-    self.expect_urlopen(
-      'https://api.instagram.com/v1/media/123_456/likes',
-      '{"meta":{"status":200}}', data='access_token=None')
-
-    self.expect_urlopen(
-      'https://api.instagram.com/v1/users/self',
-      json_dumps({'data': {
+    self.mock_urlopen.side_effect = [
+      UrlopenResult(200, json_dumps({'data': MEDIA})),
+      UrlopenResult(200, '{"meta":{"status":200}}'),
+      UrlopenResult(200, json_dumps({'data': {
         'id': '8',
         'username': 'alizz',
         'full_name': 'Alice',
         'profile_picture': 'http://alice/picture',
-      }}))
+      }})),
+    ]
 
     # like obj doesn't have url or id prior to publishing
     to_publish = copy.deepcopy(LIKE_OBJS[0])
     del to_publish['id']
     del to_publish['url']
 
-    self.mox.ReplayAll()
     self.assertEqual(source.creation_result(LIKE_OBJS[0]),
                      self.instagram.create(to_publish))
+    self.assert_urlopen('https://api.instagram.com/v1/media/shortcode/ABC123')
+    self.assert_urlopen('https://api.instagram.com/v1/media/123_456/likes')
+    self.assert_urlopen('https://api.instagram.com/v1/users/self')
 
   def test_preview_comment(self):
     # comment obj doesn't have a url prior to publishing
@@ -1776,7 +1763,6 @@ class InstagramTest(testutil.TestCase):
     to_publish['content'] = 'very<br />cute'
     del to_publish['url']
 
-    self.mox.ReplayAll()
     preview = Instagram(allow_comment_creation=True).preview_create(to_publish)
 
     self.assertIn('comment', preview.description)
@@ -1784,13 +1770,7 @@ class InstagramTest(testutil.TestCase):
     self.assertIn('very\ncute', preview.content)
 
   def test_create_comment(self):
-    self.expect_urlopen(
-      'https://api.instagram.com/v1/media/123_456/comments',
-      '{"meta":{"status":200}}',
-      data=urllib.parse.urlencode({'access_token': self.instagram.access_token,
-                             'text': COMMENTS[0]['text']}))
-
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = UrlopenResult(200, '{"meta":{"status":200}}')
     to_publish = copy.deepcopy(COMMENT_OBJS[0])
     del to_publish['url']
 
@@ -1801,23 +1781,19 @@ class InstagramTest(testutil.TestCase):
     #                       self.instagram.create(to_publish))
     self.assertTrue(result.content)
     self.assertFalse(result.abort)
+    self.assert_urlopen('https://api.instagram.com/v1/media/123_456/comments')
 
   def test_create_comment_unauthorized(self):
     # a more realistic test. this is what happens when you try to
     # create comments with the API, with an unapproved app
-    self.expect_urlopen(
-      'https://api.instagram.com/v1/media/123_456/comments',
-      data=urllib.parse.urlencode({'access_token': self.instagram.access_token,
-                             'text': COMMENTS[0]['text']}),
-      response='{"meta": {"code": 400, "error_type": u"OAuthPermissionsException", "error_message": "This request requires scope=comments, but this access token is not authorized with this scope. The user must re-authorize your application with scope=comments to be granted write permissions."}}',
-      status=400)
-
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = urllib.error.HTTPError(
+      'url', 400, 'message', {}, None)
     to_publish = copy.deepcopy(COMMENT_OBJS[0])
     del to_publish['url']
 
     self.assertRaises(urllib.error.HTTPError, Instagram(
       allow_comment_creation=True).create, to_publish)
+    self.assert_urlopen('https://api.instagram.com/v1/media/123_456/comments')
 
   def test_create_comments_disabled(self):
     """Check that comment creation raises a sensible error when it's
@@ -1931,11 +1907,7 @@ class InstagramTest(testutil.TestCase):
 
   def test_scraped_to_as1_photo_fetch_extras(self):
     self.instagram.cookie = 'kuky'
-    self.expect_requests_get(
-      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE,
-      headers=mox.IgnoreArg())
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(HTML_PHOTO_LIKES_RESPONSE)
     activities, viewer = self.instagram.scraped_to_as1(
       HTML_PHOTO_COMPLETE, fetch_extras=True)
     self.assert_equals([HTML_PHOTO_ACTIVITY_LIKES], activities)
@@ -1956,11 +1928,7 @@ class InstagramTest(testutil.TestCase):
 
   def test_scraped_to_activity_photo_fetch_extras(self):
     self.instagram.cookie = 'kuky'
-    self.expect_requests_get(
-      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE,
-      headers=mox.IgnoreArg())
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(HTML_PHOTO_LIKES_RESPONSE)
     activity, actor = self.instagram.scraped_to_activity(
       HTML_PHOTO_COMPLETE, fetch_extras=True)
     self.assert_equals(HTML_PHOTO_ACTIVITY_LIKES, activity)
@@ -1969,11 +1937,7 @@ class InstagramTest(testutil.TestCase):
   def test_scraped_to_as1_photo_edge_media_to_parent_comment(self):
     """https://github.com/snarfed/granary/issues/164"""
     self.instagram.cookie = 'kuky'
-    self.expect_requests_get(
-      instagram.HTML_LIKES_URL % 'ABC123', HTML_PHOTO_LIKES_RESPONSE,
-      headers=mox.IgnoreArg())
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(HTML_PHOTO_LIKES_RESPONSE)
     page = copy.deepcopy(HTML_PHOTO_PAGE)
     media = page['entry_data']['PostPage'][0]['graphql']['shortcode_media']
     media['edge_media_to_parent_comment'] = media.pop('edge_media_to_comment')
@@ -2035,21 +1999,17 @@ class InstagramTest(testutil.TestCase):
     self.assertIsNone(viewer)
 
   def test_scraped_to_as1_photos_v2_fetch_extras(self):
-    self.expect_requests_get(instagram.HTML_LIKES_URL % 'ABC123',
-                             HTML_PHOTO_LIKES_RESPONSE, cookie='kuky')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(HTML_PHOTO_LIKES_RESPONSE)
     ig = Instagram(scrape=True, cookie='kuky')
     html = HTML_HEADER_2 + json_dumps({'items': [HTML_PHOTO_V2_FULL]}) + HTML_FOOTER
     activities, _ = ig.scraped_to_as1(html, fetch_extras=True)
     self.assert_equals([HTML_PHOTO_ACTIVITY_V2_LIKES], activities)
 
   def test_scraped_to_as1_video_v2_fetch_comments(self):
-    self.expect_requests_get(instagram.HTML_COMMENTS_URL % '789',
-                             HTML_VIDEO_V2_COMMENTS_RESPONSE, cookie='kuky')
-    self.expect_requests_get(instagram.HTML_LIKES_URL % 'XYZ789',
-                             {}, cookie='kuky')
-    self.mox.ReplayAll()
-
+    self.mock_get.side_effect = [
+      requests_response(HTML_VIDEO_V2_COMMENTS_RESPONSE),
+      requests_response({}),
+    ]
     video_empty_comments = copy.deepcopy(HTML_VIDEO_V2_FULL)
     video_empty_comments['comments'] = []
     ig = Instagram(scrape=True, cookie='kuky')
@@ -2124,10 +2084,7 @@ class InstagramTest(testutil.TestCase):
 
   def test_scraped_to_as1_preload_fetch(self):
     """https://github.com/snarfed/granary/issues/140"""
-    url = urllib.parse.urljoin(HTML_BASE_URL, HTML_PRELOAD_URL)
-    self.expect_requests_get(url, HTML_PRELOAD_DATA, cookie='kuky')
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(HTML_PRELOAD_DATA)
     html = HTML_HEADER_PRELOAD + json_dumps(HTML_USELESS_FEED) + HTML_FOOTER
     activities, viewer = self.instagram.scraped_to_as1(html, cookie='kuky')
 
@@ -2137,10 +2094,7 @@ class InstagramTest(testutil.TestCase):
 
   def test_scraped_to_as1_preload_fetch_bad_json(self):
     """https://console.cloud.google.com/errors/CP_w8ai-7JLfvAE"""
-    url = urllib.parse.urljoin(HTML_BASE_URL, HTML_PRELOAD_URL)
-    self.expect_requests_get(url, '{bad: ["json', cookie='kuky')
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response('{bad: ["json')
     html = HTML_HEADER_PRELOAD + json_dumps(HTML_USELESS_FEED) + HTML_FOOTER
     with self.assertRaises(requests.HTTPError) as cm:
       self.instagram.scraped_to_as1(html, cookie='kuky')

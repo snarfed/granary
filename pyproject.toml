@@ -38,7 +38,7 @@ dependencies = [
     'blake3>=0.4.0',
     'beautifulsoup4>=4.8',
     'bech32>=1.2.0',
-    'brevity @ git+https://github.com/snarfed/brevity.git@new-tlds',
+    'brevity>=0.2.17',
     'cachetools>=5.2.0',
     'cryptography>=41.0.0',
     'feedgen>=0.9',
@@ -75,7 +75,6 @@ app = [
 ]
 tests = [
     'mf2py>=2.0',
-    'mox3 @ git+https://github.com/snarfed/mox3.git',
 ]
 docs = [
     'sphinx>=7.0.0',
@@ -89,7 +88,6 @@ brevity =           { editable = true, path = "../brevity" }
 flask-gae-static =  { editable = true, path = "../flask-gae-static" }
 lexrpc =            { editable = true, path = "../lexrpc" }
 mf2util =           { editable = true, path = "../mf2util" }
-mox3 =              { editable = true, path = "../mox3" }
 oauth-dropins =     { editable = true, path = "../oauth-dropins" }
 pywebutil =         { editable = true, path = "../webutil" }
 secp256k1 =         { editable = true, path = "../secp256k1-py" }

@@ -1,7 +1,6 @@
 """Unit tests for rss.py."""
-from webutil import testutil
-
 from .. import rss
+from webutil import testutil
 
 
 class RssTest(testutil.TestCase):

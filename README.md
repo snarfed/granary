@@ -362,6 +362,8 @@ _Non-breaking changes:_
   * `Nostr` constructor: raise `ValueError` on invalid relay URL.
   * `Nostr.query`: skip NIP-42 AUTH challenge gracefully when no `privkey` is set.
 
+Migrate tests from `mox3` to `unittest.mock`.
+
 
 ### 10.0 - 2026-02-08
 

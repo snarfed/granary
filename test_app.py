@@ -8,8 +8,8 @@ from urllib.parse import quote
 
 from granary import as2
 from granary.tests import test_bluesky, test_instagram, test_nostr
-from mox3 import mox
 from webutil import testutil, util
+from webutil.testutil import requests_response
 from webutil.util import json_dumps, json_loads
 import requests
 
@@ -188,8 +188,9 @@ RSS_ACTIVITIES = json_loads(util.read(os.path.join(
 
 class AppTest(testutil.TestCase):
 
-  def expect_requests_get(self, *args, **kwargs):
-    return super(AppTest, self).expect_requests_get(*args, stream=True, **kwargs)
+  def setUp(self):
+    super().setUp()
+    self.mock_get = self.start_patch(util.session, 'get')
 
   def test_front_page_farcaster(self):
     resp = client.get('/?site=farcaster')
@@ -203,8 +204,7 @@ class AppTest(testutil.TestCase):
         self.assert_equals(400, resp.status_code)
 
   def test_url_as1_to_mf2_json(self):
-    self.expect_requests_get('http://my/posts.json', AS1)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(AS1)
 
     resp = client.get('/url?url=http://my/posts.json&input=as1&output=mf2-json')
     self.assert_equals(200, resp.status_code)
@@ -212,8 +212,7 @@ class AppTest(testutil.TestCase):
     self.assert_equals(MF2, resp.json)
 
   def test_url_as1_to_as2(self):
-    self.expect_requests_get('http://my/posts.json', AS1)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(AS1)
 
     resp = client.get('/url?url=http://my/posts.json&input=as1&output=as2')
     self.assert_equals(200, resp.status_code)
@@ -221,8 +220,7 @@ class AppTest(testutil.TestCase):
     self.assert_equals(AS2_RESPONSE, resp.json)
 
   def test_url_as1_response_to_as2(self):
-    self.expect_requests_get('http://my/posts.json', AS1_RESPONSE)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(AS1_RESPONSE)
 
     resp = client.get('/url?url=http://my/posts.json&input=as1&output=as2')
     self.assert_equals(200, resp.status_code)
@@ -231,9 +229,7 @@ class AppTest(testutil.TestCase):
     self.assert_equals(AS2_RESPONSE, resp.json)
 
   def test_url_as2_to_as1(self):
-    self.expect_requests_get('http://my/posts.json', AS2,
-                             headers={'Accept': as2.CONTENT_TYPE})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(AS2)
 
     resp = client.get('/url?url=http://my/posts.json&input=as2&output=as1')
     self.assert_equals(200, resp.status_code)
@@ -241,9 +237,7 @@ class AppTest(testutil.TestCase):
     self.assert_equals(AS1_RESPONSE, resp.json)
 
   def test_url_as2_response_to_as1(self):
-    self.expect_requests_get('http://my/posts.json', AS2_RESPONSE,
-                             headers={'Accept': as2.CONTENT_TYPE})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(AS2_RESPONSE)
 
     resp = client.get('/url?url=http://my/posts.json&input=as2&output=as1')
     self.assert_equals(200, resp.status_code)
@@ -251,8 +245,7 @@ class AppTest(testutil.TestCase):
     self.assert_equals(AS1_RESPONSE, resp.json)
 
   def test_url_as1_to_jsonfeed(self):
-    self.expect_requests_get('http://my/posts.json', AS1)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(AS1)
 
     path = '/url?url=http://my/posts.json&input=as1&output=jsonfeed'
     resp = client.get(path)
@@ -264,8 +257,7 @@ class AppTest(testutil.TestCase):
     self.assert_equals(expected, resp.json)
 
   def test_url_as1_to_jsonfeed_not_list(self):
-    self.expect_requests_get('http://my/posts.json', {'foo': 'bar'})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response({'foo': 'bar'})
 
     path = '/url?url=http://my/posts.json&input=as1&output=jsonfeed'
     resp = client.get(path)
@@ -278,8 +270,7 @@ class AppTest(testutil.TestCase):
     }, resp.json)
 
   def test_url_jsonfeed_to_json_mf2(self):
-    self.expect_requests_get('http://my/feed.json', JSONFEED)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(JSONFEED)
 
     path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
     resp = client.get(path)
@@ -291,8 +282,8 @@ class AppTest(testutil.TestCase):
     self.assert_equals(expected, resp.json)
 
   def test_url_bad_jsonfeed(self):
-    self.expect_requests_get('http://my/feed.json', ['not', 'jsonfeed'])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(['not', 'jsonfeed'],
+                                                   url='http://my/feed.json')
 
     path = '/url?url=http://my/feed.json&input=jsonfeed&output=json-mf2'
     resp = client.get(path)
@@ -301,8 +292,7 @@ class AppTest(testutil.TestCase):
                   resp.get_data(as_text=True))
 
   def test_url_json_mf2_to_html(self):
-    self.expect_requests_get('http://my/posts.json', MF2)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(MF2)
 
     resp = client.get('/url?url=http://my/posts.json&input=json-mf2&output=html')
     self.assert_equals(200, resp.status_code)
@@ -313,8 +303,7 @@ class AppTest(testutil.TestCase):
 
   def test_url_html_to_as1(self):
     html = HTML % {'body_class': 'h-feed', 'extra': ''}
-    self.expect_requests_get('http://my/posts.html', html)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(html)
 
     resp = client.get('/url?url=http://my/posts.html&input=html')
     self.assert_equals(200, resp.status_code)
@@ -343,7 +332,7 @@ class AppTest(testutil.TestCase):
     }], resp.json['items'])
 
   def test_url_html_to_atom(self):
-    self.expect_requests_get('http://my/posts.html', HTML % {
+    self.mock_get.return_value = requests_response(HTML % {
       'body_class': 'h-feed',
       'extra': """
 <span>my title</span>
@@ -352,10 +341,7 @@ class AppTest(testutil.TestCase):
   <img src="http://my/picture" />
 </div>
 """,
-    }, response_headers={
-      'Content-Length': '123',
-    })
-    self.mox.ReplayAll()
+    }, url='http://my/posts.html', headers={'Content-Length': '123'})
 
     resp = client.get('/url?url=http://my/posts.html&input=html&output=atom')
     self.assert_equals(200, resp.status_code)
@@ -367,20 +353,21 @@ class AppTest(testutil.TestCase):
     https://github.com/snarfed/granary/issues/98
     https://github.com/kylewm/mf2util/issues/14
     """
-    self.expect_requests_get('http://my/posts.html', HTML % {
-      'body_class': 'h-feed',
-      'extra': """
+    self.mock_get.side_effect = [
+      requests_response(HTML % {
+        'body_class': 'h-feed',
+        'extra': """
 <span class="p-name">my title</span>
 <a href="/author" rel="author"></a>,
-"""
-    })
-    self.expect_requests_get('http://my/author', """
+""",
+      }, url='http://my/posts.html'),
+      requests_response("""
 <div class="h-card">
   <a class="u-url" href="http://my/author">Someone Else</a>
   <img class="u-photo" src="http://someone/picture" />
 </div>
-""", timeout=15)
-    self.mox.ReplayAll()
+""", url='http://my/author'),
+    ]
 
     resp = client.get('/url?url=http://my/posts.html&input=html&output=atom')
     self.assert_equals(200, resp.status_code)
@@ -406,14 +393,13 @@ class AppTest(testutil.TestCase):
 """, resp.get_data(as_text=True), ignore_blanks=True)
 
   def test_url_html_to_atom_skip_silo_rel_authors(self):
-    self.expect_requests_get('http://my/posts.html', HTML % {
+    self.mock_get.return_value = requests_response(HTML % {
       'body_class': 'h-feed',
       'extra': """
 <span class="p-name">my title</span>
 <a href="https://twitter.com/Author" rel="author"></a>,
-"""
-    })
-    self.mox.ReplayAll()
+""",
+    }, url='http://my/posts.html')
 
     resp = client.get('/url?url=http://my/posts.html&input=html&output=atom')
     self.assert_equals(200, resp.status_code)
@@ -437,8 +423,7 @@ class AppTest(testutil.TestCase):
 
   def test_url_html_to_json_mf2(self):
     html = HTML % {'body_class': 'h-feed', 'extra': ''}
-    self.expect_requests_get('http://my/posts.html', html)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(html)
 
     resp = client.get('/url?url=http://my/posts.html&input=html&output=json-mf2')
     self.assert_equals(200, resp.status_code)
@@ -451,8 +436,7 @@ class AppTest(testutil.TestCase):
 
   def test_url_html_to_html(self):
     html = HTML % {'body_class': 'h-feed', 'extra': ''}
-    self.expect_requests_get('http://my/posts.html', html)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(html)
 
     resp = client.get('/url?url=http://my/posts.html&input=html&output=html')
     self.assert_equals(200, resp.status_code)
@@ -474,8 +458,9 @@ baz baj
 
   def test_url_html_meta_charset(self):
     html = HTML % {'body_class': 'h-feed', 'extra': ''}
-    self.expect_requests_get('http://my/posts.html', html, encoding='ISO-8859-1')
-    self.mox.ReplayAll()
+    resp = requests_response(html)
+    resp.encoding = 'ISO-8859-1'
+    self.mock_get.return_value = resp
 
     resp = client.get('/url?url=http://my/posts.html&input=html&output=html')
     self.assert_equals(200, resp.status_code)
@@ -496,12 +481,11 @@ baz baj
 """, resp.get_data(as_text=True), ignore_blanks=True)
 
   def test_url_html_fragment(self):
-    self.expect_requests_get('http://my/posts.html#def', """
+    self.mock_get.return_value = requests_response("""
 <div id="abc" class="h-entry"></div>
 <div class="h-entry"></div>
 <div id="def" class="h-entry"><div class="e-content">foo</div></div>
 """)
-    self.mox.ReplayAll()
 
     resp = client.get('/url?url=http://my/posts.html%23def&input=html&output=as1')
     self.assert_equals(200, resp.status_code)
@@ -516,12 +500,11 @@ baz baj
     }], resp.json['items'])
 
   def test_url_html_fragment_not_found(self):
-    self.expect_requests_get('http://my/posts.html#xyz', """
+    self.mock_get.return_value = requests_response("""
 <div id="abc" class="h-entry"></div>
 <div id="def" class="h-entry"><div class="e-content">foo</div></div>
 <div class="h-entry"></div>
 """)
-    self.mox.ReplayAll()
 
     resp = client.get('/url?url=http://my/posts.html%23xyz&input=html&output=as1')
     self.assert_equals(400, resp.status_code)
@@ -535,8 +518,7 @@ baz baj
                   resp.get_data(as_text=True))
 
   def test_url_atom_to_as1(self):
-    self.expect_requests_get('http://feed', ATOM_CONTENT + '</feed>\n')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(ATOM_CONTENT + '</feed>\n')
 
     resp = client.get('/url?url=http://feed&input=atom&output=as1')
     self.assert_equals(200, resp.status_code)
@@ -577,8 +559,7 @@ baz baj
     }, resp.json)
 
   def test_url_atom_to_as1_parse_error(self):
-    self.expect_requests_get('http://feed', 'not valid xml')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('not valid xml', url='http://feed')
 
     resp = client.get('/url?url=http://feed&input=atom&output=as1')
     self.assert_equals(400, resp.status_code)
@@ -586,12 +567,11 @@ baz baj
                   resp.get_data(as_text=True))
 
   def test_url_atom_to_as1_not_atom(self):
-    self.expect_requests_get('http://feed', """\
+    self.mock_get.return_value = requests_response("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <rss>
 not atom!
-</rss>""")
-    self.mox.ReplayAll()
+</rss>""", url='http://feed')
 
     resp = client.get('/url?url=http://feed&input=atom&output=as1')
     self.assert_equals(400, resp.status_code)
@@ -599,8 +579,7 @@ not atom!
                   resp.get_data(as_text=True))
 
   def test_url_rss_to_as1(self):
-    self.expect_requests_get('http://feed', RSS_CONTENT)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(RSS_CONTENT)
 
     resp = client.get('/url?url=http://feed&input=rss&output=as1')
     self.assert_equals(200, resp.status_code)
@@ -609,8 +588,7 @@ not atom!
 
   def test_url_rss_to_as1_parse_error(self):
     """feedparser.parse returns empty on bad input RSS."""
-    self.expect_requests_get('http://feed', 'not valid xml')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('not valid xml')
 
     resp = client.get('/url?url=http://feed&input=rss&output=as1')
     self.assert_equals(200, resp.status_code)
@@ -618,12 +596,11 @@ not atom!
 
   def test_url_rss_to_as1_not_rss(self):
     """feedparser.parse returns empty on bad input RSS."""
-    self.expect_requests_get('http://feed', """\
+    self.mock_get.return_value = requests_response("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <atom>
 not RSS!
 </atom>""")
-    self.mox.ReplayAll()
 
     resp = client.get('/url?url=http://feed&input=rss&output=as1')
     self.assert_equals(200, resp.status_code)
@@ -639,8 +616,7 @@ not RSS!
       'displayName': 'My place',
       'url': 'http://my/place',
     }
-    self.expect_requests_get('http://my/posts.as', [activity])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([activity])
 
     resp = client.get('/url?url=http://my/posts.as&input=as1&output=atom&reader=false')
     self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
@@ -658,8 +634,7 @@ not RSS!
       },
       # no children
     }]}
-    self.expect_requests_get('http://my/posts', mf2)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(mf2)
 
     resp = client.get('/url?url=http://my/posts&input=json-mf2&output=atom')
     self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
@@ -667,11 +642,10 @@ not RSS!
     self.assertIn('<logo>https://foo/art.jpg</logo>', resp.get_data(as_text=True))
 
   def test_url_as1_to_bluesky(self):
-    self.expect_requests_get('http://my/posts', [
+    self.mock_get.return_value = requests_response([
       test_bluesky.POST_AS,
       test_bluesky.REPLY_AS,
     ])
-    self.mox.ReplayAll()
 
     resp = client.get('/url?url=http://my/posts&input=as1&output=bluesky')
     self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
@@ -683,8 +657,7 @@ not RSS!
     }, resp.json, ignore=['fooOriginalUrl', 'fooOriginalText'])
 
   def test_url_as1_to_nostr(self):
-    self.expect_requests_get('http://my/posts', [test_nostr.NOTE_AS1])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([test_nostr.NOTE_AS1])
 
     resp = client.get('/url?url=http://my/posts&input=as1&output=nostr')
     self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
@@ -703,8 +676,7 @@ not RSS!
       'content': 'Hello Farcaster!',
       'published': '2021-12-20T11:33:20+00:00',
     }
-    self.expect_requests_get('http://my/note', [note])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([note])
 
     resp = client.get('/url?url=http://my/note&input=as1&output=farcaster')
     self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
@@ -724,8 +696,7 @@ not RSS!
     }, resp.json)
 
   def test_url_nostr_to_as1(self):
-    self.expect_requests_get('http://nostr/posts', test_nostr.NOTE_NOSTR)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(test_nostr.NOTE_NOSTR)
 
     resp = client.get('/url?url=http://nostr/posts&input=nostr&output=as1')
     self.assert_equals(200, resp.status_code, resp.get_data(as_text=True))
@@ -736,17 +707,14 @@ not RSS!
     self.assert_equals(400, resp.status_code)
 
   def test_url_input_not_json(self):
-    self.expect_requests_get('http://my/posts', '<html><body>not JSON</body></html>'
-                        ).MultipleTimes()
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('<html><body>not JSON</body></html>')
 
     for input in 'as1', 'as2', 'activitystreams', 'json-mf2', 'jsonfeed':
       resp = client.get(f'/url?url=http://my/posts&input={input}')
       self.assert_equals(400, resp.status_code)
 
   def test_url_json_input_not_dict(self):
-    self.expect_requests_get('http://my/posts', '[1, 2]').MultipleTimes()
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('[1, 2]')
 
     for input in 'as2', 'json-mf2', 'jsonfeed':
       resp = client.get(f'/url?url=http://my/posts&input={input}')
@@ -756,8 +724,7 @@ not RSS!
     self.assert_equals(400, resp.status_code)
 
   def _test_bad_url(self, url, err):
-    self.expect_requests_get(mox.IgnoreArg()).AndRaise(err)
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = err
     resp = client.get(f'/url?url={url}&input=html')
     self.assert_equals(400, resp.status_code, resp.get_data(as_text=True))
 
@@ -778,40 +745,33 @@ not RSS!
     except ValueError:
       expected = 'Invalid url'
     else:
-      self.expect_requests_get(mox.IgnoreArg()).AndRaise(
-        requests.exceptions.InvalidURL('foo'))
-      self.mox.ReplayAll()
+      self.mock_get.side_effect = requests.exceptions.InvalidURL('foo')
       expected = 'Bad URL'
     resp = client.get(f'/url?url={url}&input=html&output=atom')
     self.assert_equals(400, resp.status_code)
     self.assertIn(expected, resp.get_data(as_text=True))
 
   def test_url_fetch_fails(self):
-    self.expect_requests_get('http://my/posts.html').AndRaise(socket.timeout(''))
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = socket.timeout('')
     resp = client.get('/url?url=http://my/posts.html&input=html')
     self.assert_equals(504, resp.status_code)
 
   def test_url_response_too_big(self):
-    self.expect_requests_get('http://my/posts.html', response_headers={
-      'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1),
-    })
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      '', headers={'Content-Length': str(util.MAX_HTTP_RESPONSE_SIZE + 1)})
     resp = client.get('/url?url=http://my/posts.html&input=html')
     self.assert_equals(util.HTTP_RESPONSE_TOO_BIG_STATUS_CODE, resp.status_code)
 
   def test_url_404(self):
-    self.expect_requests_get('http://my/posts.html', 'foo', status_code=404)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response('foo', status=404)
     resp = client.get('/url?url=http://my/posts.html&input=html')
     self.assert_equals(502, resp.status_code)
 
   def test_hub(self):
-    self.expect_requests_get('http://my/posts.html', HTML % {
+    self.mock_get.return_value = requests_response(HTML % {
       'body_class': '',
       'extra': '',
     })
-    self.mox.ReplayAll()
 
     url = '/url?url=http://my/posts.html&input=html&output=atom&hub=http://a/hub'
     resp = client.get(url)
@@ -830,8 +790,7 @@ not RSS!
     ), resp.headers.getlist('Link'))
 
   def test_encode_urls_in_link_headers(self):
-    self.expect_requests_get('http://my/as1', AS1)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(AS1)
 
     url = '/url?url=http://my/as1&input=as1&output=atom&hub=http://a/%E2%98%95'
     resp = client.get(url)
@@ -845,7 +804,7 @@ not RSS!
 
     https://console.cloud.google.com/errors/COyl7MTulffpuAE
     """
-    self.expect_requests_get('http://some/jf2', {
+    self.mock_get.return_value = requests_response({
       'data': {
         'type': 'feed',
         'items': [{
@@ -858,13 +817,11 @@ not RSS!
         },
       }],
     }})
-    self.mox.ReplayAll()
     resp = client.get('/url?url=http://some/jf2&input=mf2-json')
     self.assert_equals(400, resp.status_code)
 
   def test_url_head(self):
-    self.expect_requests_get('http://my/posts.json', AS1)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(AS1)
 
     resp = client.head('/url?url=http://my/posts.json&input=as1&output=mf2-json')
     self.assert_equals(200, resp.status_code)
@@ -872,8 +829,7 @@ not RSS!
     self.assert_equals('', resp.get_data(as_text=True))
 
   def test_url_head_bad_output(self):
-    self.expect_requests_get('http://my/posts.json', AS1)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(AS1)
 
     resp = client.head('/url?url=http://my/posts.json&input=as1&output=foo')
     self.assert_equals(400, resp.status_code)

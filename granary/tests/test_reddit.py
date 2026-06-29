@@ -160,7 +160,7 @@ ACTIVITY_WITH_COMMENT['object']['replies'] = {
 MISSING_OBJECT = {}
 
 
-class RedditTest(testutil.BaseTestCase):
+class RedditTest(testutil.TestCase):
 
   def setUp(self):
     super(RedditTest, self).setUp()

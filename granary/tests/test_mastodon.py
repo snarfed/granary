@@ -33,9 +33,6 @@ def tag_uri(name):
 
 INSTANCE = 'http://foo.com'
 
-# headers that util.requests_* add to every Mastodon API call
-AUTH_HEADERS = {'Authorization': 'Bearer towkin', 'User-Agent': util.user_agent}
-
 ACCOUNT = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#account
   'id': '23507',
   'username': 'snarfed',
@@ -328,23 +325,15 @@ OBJECT_WITH_EMOJI['content'] = """\
 bar</p> <img alt="two" src="http://foo.com/two" style="height: 1em">"""
 
 
-class MastodonTest(testutil.BaseTestCase):
+class MastodonTest(testutil.TestCase):
 
   def setUp(self):
     super(MastodonTest, self).setUp()
     self.mastodon = mastodon.Mastodon(INSTANCE, user_id=ACCOUNT['id'],
                                       access_token='towkin')
 
-    self.mock_get = self.start_patch('get')
-    self.mock_post = self.start_patch('post')
-
-  def start_patch(self, method):
-    # TODO: replace with self.enterContext(patch.object(...)) once our Python
-    # floor is >= 3.11.
-    patcher = patch.object(util.session, method)
-    mock = patcher.start()
-    self.addCleanup(patcher.stop)
-    return mock
+    self.mock_get = self.start_patch(util.session, 'get')
+    self.mock_post = self.start_patch(util.session, 'post')
 
   def assert_call(self, mock, path, **kwargs):
     """Asserts a Mastodon API call to ``INSTANCE + path``.
@@ -358,7 +347,10 @@ class MastodonTest(testutil.BaseTestCase):
     for c in mock.call_args_list:
       if c.args[0] != url:
         continue
-      self.assertEqual(AUTH_HEADERS, c.kwargs['headers'])
+      self.assertEqual({
+        'Authorization': 'Bearer towkin',
+        'User-Agent': util.user_agent,
+      }, c.kwargs['headers'])
       self.assertEqual(HTTP_TIMEOUT, c.kwargs['timeout'])
       self.assertTrue(c.kwargs['stream'])
       for key, val in kwargs.items():

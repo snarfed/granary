@@ -43,7 +43,7 @@ class FakeHTMLSource(Source):
   EMBED_POST = '%(content)s'
 
 
-class SourceTest(testutil.BaseTestCase):
+class SourceTest(testutil.TestCase):
 
   def setUp(self):
     super(SourceTest, self).setUp()

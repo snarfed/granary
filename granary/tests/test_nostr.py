@@ -147,7 +147,7 @@ def fake_connect(uri, open_timeout=None, close_timeout=None, **kwargs):
   yield FakeConnection
 
 
-class NostrTest(testutil.BaseTestCase):
+class NostrTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()
@@ -1305,7 +1305,7 @@ def _fake_token_urlsafe(length):
 
 
 @patch.object(secrets, 'token_urlsafe', _fake_token_urlsafe)
-class ClientTest(testutil.BaseTestCase):
+class ClientTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()
