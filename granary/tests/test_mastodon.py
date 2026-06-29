@@ -1,8 +1,10 @@
 """Unit tests for mastodon.py."""
 import copy
+from unittest.mock import patch
 
 from webutil import testutil, util
-from webutil.util import json_dumps, json_loads
+from webutil.testutil import requests_response
+from webutil.util import HTTP_TIMEOUT, json_dumps, json_loads
 from requests import HTTPError
 
 from .. import mastodon
@@ -30,6 +32,9 @@ def tag_uri(name):
   return util.tag_uri('foo.com', name)
 
 INSTANCE = 'http://foo.com'
+
+# headers that util.requests_* add to every Mastodon API call
+AUTH_HEADERS = {'Authorization': 'Bearer towkin', 'User-Agent': util.user_agent}
 
 ACCOUNT = {  # Mastodon; https://docs.joinmastodon.org/api/entities/#account
   'id': '23507',
@@ -323,64 +328,95 @@ OBJECT_WITH_EMOJI['content'] = """\
 bar</p> <img alt="two" src="http://foo.com/two" style="height: 1em">"""
 
 
-class MastodonTest(testutil.TestCase):
+class MastodonTest(testutil.BaseTestCase):
 
   def setUp(self):
     super(MastodonTest, self).setUp()
     self.mastodon = mastodon.Mastodon(INSTANCE, user_id=ACCOUNT['id'],
                                       access_token='towkin')
 
-  def expect_get(self, *args, **kwargs):
-    return self._expect_api(self.expect_requests_get, *args, **kwargs)
+    self.mock_get = self.start_patch('get')
+    self.mock_post = self.start_patch('post')
 
-  def expect_post(self, *args, **kwargs):
-    return self._expect_api(self.expect_requests_post, *args, **kwargs)
+  def start_patch(self, method):
+    # TODO: replace with self.enterContext(patch.object(...)) once our Python
+    # floor is >= 3.11.
+    patcher = patch.object(util.session, method)
+    mock = patcher.start()
+    self.addCleanup(patcher.stop)
+    return mock
 
-  def expect_delete(self, *args, **kwargs):
-    return self._expect_api(self.expect_requests_delete, *args, **kwargs)
+  def assert_call(self, mock, path, **kwargs):
+    """Asserts a Mastodon API call to ``INSTANCE + path``.
 
-  def _expect_api(self, fn, path, response=None, **kwargs):
-    kwargs.setdefault('headers', {}).update({
-      'Authorization': 'Bearer towkin',
-    })
-    kwargs.setdefault('content_type', 'application/json; charset=utf-8')
-    return fn(INSTANCE + path, response=response, **kwargs)
+    Checks the bearer token, User-Agent, timeout, and stream that
+    :func:`util.requests_*` add to every call. Extra kwargs (eg ``params``,
+    ``json``, ``data``) are checked too, if passed. Searches all calls made
+    to ``mock``, not just the most recent.
+    """
+    url = INSTANCE + path
+    for c in mock.call_args_list:
+      if c.args[0] != url:
+        continue
+      self.assertEqual(AUTH_HEADERS, c.kwargs['headers'])
+      self.assertEqual(HTTP_TIMEOUT, c.kwargs['timeout'])
+      self.assertTrue(c.kwargs['stream'])
+      for key, val in kwargs.items():
+        if val:
+          self.assert_equals(val, c.kwargs[key], key)
+      return
+    self.fail(f'No call to {url} in {[c.args[0] for c in mock.call_args_list]}')
+
+  def assert_get(self, path, **kwargs):
+    self.assert_call(self.mock_get, path, **kwargs)
+
+  def assert_post(self, path, **kwargs):
+    self.assert_call(self.mock_post, path, **kwargs)
 
   def test_constructor_look_up_user_id(self):
-    self.expect_get(API_VERIFY_CREDENTIALS, ACCOUNT)
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(ACCOUNT)
     m = mastodon.Mastodon(INSTANCE, access_token='towkin')
     self.assertEqual(ACCOUNT['id'], m.user_id)
+    self.assert_get(API_VERIFY_CREDENTIALS)
 
   def test_get_activities_defaults(self):
-    self.expect_get(API_TIMELINE, params={},
-                    response=[STATUS, REPLY_STATUS, MEDIA_STATUS])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([
+      STATUS,
+      REPLY_STATUS,
+      MEDIA_STATUS,
+    ])
     self.assert_equals([ACTIVITY, REPLY_ACTIVITY, MEDIA_ACTIVITY],
                        self.mastodon.get_activities())
+    self.assert_get(API_TIMELINE)
 
   def test_get_activities_group_id_friends(self):
-    self.expect_get(API_TIMELINE, params={},
-                    response=[STATUS, REPLY_STATUS, MEDIA_STATUS])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([
+      STATUS,
+      REPLY_STATUS,
+      MEDIA_STATUS,
+    ])
     self.assert_equals([ACTIVITY, REPLY_ACTIVITY, MEDIA_ACTIVITY],
                        self.mastodon.get_activities(group_id=source.FRIENDS))
+    self.assert_get(API_TIMELINE)
 
   def test_get_activities_include_shares_false(self):
-    self.expect_get(API_TIMELINE, params={},
-                    response=[STATUS, REBLOG_STATUS, REPLY_STATUS])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([
+      STATUS,
+      REBLOG_STATUS,
+      REPLY_STATUS,
+    ])
     self.assert_equals([ACTIVITY, REPLY_ACTIVITY],
                        self.mastodon.get_activities(include_shares=False))
+    self.assert_get(API_TIMELINE)
 
   def test_get_activities_fetch_replies(self):
-    self.expect_get(API_TIMELINE, params={}, response=[STATUS_WITH_COUNTS])
-    self.expect_get(API_CONTEXT % STATUS['id'], {
-      'ancestors': [],
-      'descendants': [REPLY_STATUS, REPLY_STATUS],
-    })
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response([STATUS_WITH_COUNTS]),
+      requests_response({
+        'ancestors': [],
+        'descendants': [REPLY_STATUS, REPLY_STATUS],
+      }),
+    ]
 
     with_replies = copy.deepcopy(ACTIVITY)
     with_replies['object']['replies'] = {
@@ -390,11 +426,14 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([with_replies], self.mastodon.get_activities(
       fetch_replies=True, cache=cache))
     self.assert_equals(1, cache['AMRE 123'])
+    self.assert_get(API_TIMELINE)
+    self.assert_get(API_CONTEXT % STATUS['id'])
 
   def test_get_activities_fetch_likes(self):
-    self.expect_get(API_TIMELINE, params={}, response=[STATUS_WITH_COUNTS])
-    self.expect_get(API_FAVORITED_BY % STATUS['id'], [ACCOUNT, ACCOUNT])
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response([STATUS_WITH_COUNTS]),
+      requests_response([ACCOUNT, ACCOUNT]),
+    ]
 
     with_likes = copy.deepcopy(ACTIVITY)
     with_likes['object']['tags'].extend([LIKE, LIKE])
@@ -402,11 +441,14 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([with_likes], self.mastodon.get_activities(
       fetch_likes=True, cache=cache))
     self.assert_equals(2, cache['AMF 123'])
+    self.assert_get(API_TIMELINE)
+    self.assert_get(API_FAVORITED_BY % STATUS['id'])
 
   def test_get_activities_fetch_shares(self):
-    self.expect_get(API_TIMELINE, params={}, response=[STATUS_WITH_COUNTS])
-    self.expect_get(API_REBLOGGED_BY % STATUS['id'], [ACCOUNT, ACCOUNT_REMOTE])
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response([STATUS_WITH_COUNTS]),
+      requests_response([ACCOUNT, ACCOUNT_REMOTE]),
+    ]
 
     with_shares = copy.deepcopy(ACTIVITY)
     with_shares['object']['tags'].extend([SHARE, SHARE_BY_REMOTE])
@@ -414,71 +456,72 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals([with_shares], self.mastodon.get_activities(
       fetch_shares=True, cache=cache))
     self.assert_equals(3, cache['AMRB 123'])
+    self.assert_get(API_TIMELINE)
+    self.assert_get(API_REBLOGGED_BY % STATUS['id'])
 
   def test_get_activities_fetch_replies_likes_shares_counts_zero(self):
-    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([STATUS])
     self.assert_equals([ACTIVITY], self.mastodon.get_activities(
       fetch_replies=True, fetch_likes=True, fetch_shares=True))
+    self.assert_get(API_TIMELINE)
 
   def test_get_activities_fetch_mentions(self):
-    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
-    self.expect_get(API_NOTIFICATIONS, [MENTION_NOTIFICATION], params={
-      'exclude_types[]': ['follow', 'favourite', 'reblog'],
-    })
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response([STATUS]),
+      requests_response([MENTION_NOTIFICATION]),
+    ]
     self.assert_equals([ACTIVITY, MEDIA_ACTIVITY],
                        self.mastodon.get_activities(fetch_mentions=True))
+    self.assert_get(API_TIMELINE)
+    self.assert_get(API_NOTIFICATIONS,
+                    params={'exclude_types[]': ['follow', 'favourite', 'reblog']})
 
   def test_get_activities_fetch_mentions_null_status(self):
     """https://console.cloud.google.com/errors/CNvulo670obn4AE"""
-    self.expect_get(API_TIMELINE, params={}, response=[])
-
     notif = copy.deepcopy(MENTION_NOTIFICATION)
     notif['status'] = None
-    self.expect_get(API_NOTIFICATIONS, [notif], params={
-      'exclude_types[]': ['follow', 'favourite', 'reblog'],
-    })
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response([]),
+      requests_response([notif]),
+    ]
     self.assert_equals([], self.mastodon.get_activities(fetch_mentions=True))
 
   def test_get_activities_activity_id(self):
-    self.expect_get(API_STATUS % '123', STATUS)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(STATUS)
     self.assert_equals([ACTIVITY], self.mastodon.get_activities(activity_id=123))
+    self.assert_get(API_STATUS % '123')
 
   def test_get_activities_self_user_id(self):
-    self.expect_get(API_ACCOUNT_STATUSES % '456', params={}, response=[STATUS])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([STATUS])
     self.assert_equals([ACTIVITY], self.mastodon.get_activities(
       group_id=source.SELF, user_id=456))
+    self.assert_get(API_ACCOUNT_STATUSES % '456')
 
   def test_get_activities_self_default_user(self):
-    self.expect_get(API_ACCOUNT_STATUSES % ACCOUNT['id'], params={},
-                    response=[STATUS])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([STATUS])
     self.assert_equals([ACTIVITY], self.mastodon.get_activities(group_id=source.SELF))
+    self.assert_get(API_ACCOUNT_STATUSES % ACCOUNT['id'])
 
   def test_get_activities_search_without_count(self):
-    self.expect_get(API_SEARCH, params={
+    self.mock_get.return_value = requests_response({'statuses': [STATUS, MEDIA_STATUS]})
+    self.assert_equals([ACTIVITY, MEDIA_ACTIVITY], self.mastodon.get_activities(
+        group_id=source.SEARCH, search_query='indieweb'))
+    self.assert_get(API_SEARCH, params={
       'q': 'indieweb',
       'resolve': True,
       'offset': 0,
-    }, response={'statuses': [STATUS, MEDIA_STATUS]})
-    self.mox.ReplayAll()
-    self.assert_equals([ACTIVITY, MEDIA_ACTIVITY], self.mastodon.get_activities(
-        group_id=source.SEARCH, search_query='indieweb'))
+    })
 
   def test_get_activities_search_with_count(self):
-    self.expect_get(API_SEARCH, params={
+    self.mock_get.return_value = requests_response({'statuses': [STATUS, MEDIA_STATUS]})
+    self.assert_equals([ACTIVITY, MEDIA_ACTIVITY], self.mastodon.get_activities(
+        group_id=source.SEARCH, search_query='indieweb', count=123))
+    self.assert_get(API_SEARCH, params={
       'q': 'indieweb',
       'resolve': True,
       'offset': 0,
       'limit': 123,
-    }, response={'statuses': [STATUS, MEDIA_STATUS]})
-    self.mox.ReplayAll()
-    self.assert_equals([ACTIVITY, MEDIA_ACTIVITY], self.mastodon.get_activities(
-        group_id=source.SEARCH, search_query='indieweb', count=123))
+    })
 
   def test_get_activities_search_no_query(self):
     with self.assertRaises(ValueError):
@@ -489,64 +532,60 @@ class MastodonTest(testutil.TestCase):
       self.mastodon.get_activities(group_id=source.FRIENDS, user_id='345')
 
   def test_get_activities_start_index_count(self):
-    self.expect_get(API_TIMELINE, params={'limit': 2},
-                    response=[STATUS, REPLY_STATUS])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([STATUS, REPLY_STATUS])
     self.assert_equals([REPLY_ACTIVITY],
                        self.mastodon.get_activities(start_index=1, count=1))
+    self.assert_get(API_TIMELINE, params={'limit': 2})
 
   def test_get_activities_start_index_count_zero(self):
-    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([STATUS])
     self.assert_equals([ACTIVITY],
                        self.mastodon.get_activities(start_index=0, count=0))
+    self.assert_get(API_TIMELINE)
 
   def test_get_activities_count_past_end(self):
-    self.expect_get(API_TIMELINE, params={'limit': 9}, response=[STATUS])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([STATUS])
     self.assert_equals([ACTIVITY], self.mastodon.get_activities(count=9))
+    self.assert_get(API_TIMELINE, params={'limit': 9})
 
   def test_get_activities_start_index_past_end(self):
-    self.expect_get(API_TIMELINE, params={}, response=[STATUS])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([STATUS])
     self.assert_equals([], self.mastodon.get_activities(start_index=9))
+    self.assert_get(API_TIMELINE)
 
   def test_get_activities_fetch_cache(self):
     statuses = [copy.deepcopy(STATUS), copy.deepcopy(STATUS)]
     statuses[0]['id'] += '_a'
     statuses[1]['id'] += '_b'
 
+    responses = []
     for count in (1, 2):
       for s in statuses:
         s['replies_count'] = s['reblogs_count'] = s['favourites_count'] = count
-      self.expect_get(API_TIMELINE, params={}, response=statuses)
+      # first fetch this iteration fetches details (counts changed)
+      responses.append(requests_response(copy.deepcopy(statuses)))
       for s in statuses:
-        self.expect_get(API_CONTEXT % s['id'], {})
-        self.expect_get(API_FAVORITED_BY % s['id'], {})
-        self.expect_get(API_REBLOGGED_BY % s['id'], [])
-      # shouldn't fetch this time because counts haven't changed
-      self.expect_get(API_TIMELINE, params={}, response=statuses)
+        responses.append(requests_response({}))   # context
+        responses.append(requests_response({}))   # favorited by
+        responses.append(requests_response([]))   # reblogged by
+      # shouldn't fetch details this time because counts haven't changed
+      responses.append(requests_response(copy.deepcopy(statuses)))
+    self.mock_get.side_effect = responses
 
-    self.mox.ReplayAll()
     cache = {}
     for _ in range(4):
       self.mastodon.get_activities(fetch_replies=True, fetch_shares=True,
                                    fetch_likes=True, cache=cache)
 
   def test_get_activities_returns_non_json(self):
-    self.expect_get(API_TIMELINE, params={}, response='<html>',
-                    content_type='text/html')
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response('<html>', content_type='text/html')
     with self.assertRaises(HTTPError) as e:
       self.mastodon.get_activities()
     self.assert_equals(502, e.exception.response.status_code)
 
   def test_get_activities_json_truncated(self):
-    self.expect_get(API_TIMELINE, params={}, response='{"foo": "bar", "oops',
-                    content_type='application/json')
-    self.mox.ReplayAll()
-
+    self.mock_get.return_value = requests_response(
+      '{"foo": "bar", "oops', content_type='application/json')
     with self.assertRaises(HTTPError) as e:
       self.mastodon.get_activities()
     self.assert_equals(502, e.exception.response.status_code)
@@ -557,10 +596,8 @@ class MastodonTest(testutil.TestCase):
 
     https://console.cloud.google.com/errors/detail/CMqz0Me7nebCsAE;time=P30D?project=brid-gy
     """
-    self.expect_get(API_TIMELINE, params={},
-                    response=[STATUS, REPLY_STATUS, MEDIA_STATUS],
-                    content_type='text/plain;charset=UTF-8')
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      [STATUS, REPLY_STATUS, MEDIA_STATUS], content_type='text/plain;charset=UTF-8')
     self.assert_equals([ACTIVITY, REPLY_ACTIVITY, MEDIA_ACTIVITY],
                         self.mastodon.get_activities())
 
@@ -577,7 +614,7 @@ class MastodonTest(testutil.TestCase):
         }
       }
     """
-    self.expect_get(API_TIMELINE, params={}, status_code=200, response={
+    self.mock_get.return_value = requests_response({
         'error': {
           'message': 'Authentication failed. Please ensure your token is correct.',
           'code': 'AUTHENTICATION_FAILED',
@@ -585,7 +622,6 @@ class MastodonTest(testutil.TestCase):
           'kind': 'client',
         }
     })
-    self.mox.ReplayAll()
 
     with self.assertRaises(HTTPError) as e:
       self.mastodon.get_activities()
@@ -596,19 +632,19 @@ class MastodonTest(testutil.TestCase):
       self.mastodon.get_activities(group_id=source.SEARCH, search_query=None)
 
   def test_get_actor(self):
-    self.expect_get(API_ACCOUNT % 1, ACCOUNT)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(ACCOUNT)
     self.assert_equals(ACTOR, self.mastodon.get_actor(1))
+    self.assert_get(API_ACCOUNT % 1)
 
   def test_get_actor_current_user(self):
-    self.expect_get(API_ACCOUNT % ACCOUNT['id'], ACCOUNT_REMOTE)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(ACCOUNT_REMOTE)
     self.assert_equals(ACTOR_REMOTE, self.mastodon.get_actor())
+    self.assert_get(API_ACCOUNT % ACCOUNT['id'])
 
   def test_get_comment(self):
-    self.expect_get(API_STATUS % 1, STATUS)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(STATUS)
     self.assert_equals(OBJECT, self.mastodon.get_comment(1))
+    self.assert_get(API_STATUS % 1)
 
   def test_to_as1_actor(self):
     self.assert_equals(ACTOR, self.mastodon.to_as1_actor(ACCOUNT))
@@ -695,21 +731,16 @@ class MastodonTest(testutil.TestCase):
       self.assertEqual(expected, got.content)
 
   def test_create_status(self):
-    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'},
-                     response=STATUS)
-    self.mox.ReplayAll()
-
+    self.mock_post.return_value = requests_response(STATUS)
     result = self.mastodon.create(OBJECT)
 
     self.assert_equals(STATUS, result.content, result)
     self.assertIsNone(result.error_plain)
     self.assertIsNone(result.error_html)
+    self.assert_post(API_STATUSES, json={'status': 'foo ☕ bar'})
 
   def test_create_bookmark(self):
-    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'},
-                     response=STATUS)
-    self.mox.ReplayAll()
-
+    self.mock_post.return_value = requests_response(STATUS)
     result = self.mastodon.create({
       'objectType': 'activity',
       'verb': 'post',
@@ -723,16 +754,16 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals(STATUS, result.content, result)
     self.assertIsNone(result.error_plain)
     self.assertIsNone(result.error_html)
+    self.assert_post(API_STATUSES, json={'status': 'foo ☕ bar'})
 
   def test_create_reply(self):
-    self.expect_post(API_STATUSES, json={
-      'status': 'foo ☕ bar',
-      'in_reply_to_id': '456',
-    }, response=STATUS)
-    self.mox.ReplayAll()
-
+    self.mock_post.return_value = requests_response(STATUS)
     result = self.mastodon.create(REPLY_OBJECT)
     self.assert_equals(STATUS, result.content, result)
+    self.assert_post(API_STATUSES, json={
+      'status': 'foo ☕ bar',
+      'in_reply_to_id': '456',
+    })
 
   def test_preview_reply(self):
     preview = self.mastodon.preview_create(REPLY_OBJECT)
@@ -769,23 +800,23 @@ class MastodonTest(testutil.TestCase):
     bad = {'url': 'http://bad/456'}
     remote = {'url': STATUS_REMOTE['uri']}
 
-    self.expect_get(API_SEARCH, params={'q': 'http://bad/456','resolve': True},
-                    status_code=404)
-    self.expect_get(API_SEARCH, params={'q': STATUS_REMOTE['uri'],'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response('', status=404),
+      requests_response({'statuses': [STATUS_REMOTE]}),
+    ]
 
     expected = copy.deepcopy(OBJECT_REMOTE)
     expected['id'] = STATUS_REMOTE['id']
     self.assert_equals(expected, self.mastodon.base_object({
       'inReplyTo': [bad, remote],
     }))
+    self.assert_equals(
+      [{'q': 'http://bad/456', 'resolve': True},
+       {'q': STATUS_REMOTE['uri'], 'resolve': True}],
+      [c.kwargs['params'] for c in self.mock_get.call_args_list])
 
   def test_base_object_account(self):
-    self.expect_get(API_SEARCH,
-                    params={'q': ACCOUNT_REMOTE['uri'], 'resolve': True},
-                    response={'accounts': [ACCOUNT_REMOTE]})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response({'accounts': [ACCOUNT_REMOTE]})
 
     expected = {
       **ACTOR_REMOTE,
@@ -794,6 +825,8 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals(expected, self.mastodon.base_object({
       'object': ACCOUNT_REMOTE['uri'],
     }))
+    self.assert_get(API_SEARCH,
+                     params={'q': ACCOUNT_REMOTE['uri'], 'resolve': True})
 
   def test_embed_post(self):
     embed = self.mastodon.embed_post({'url': 'http://foo.com/bar'})
@@ -806,25 +839,23 @@ class MastodonTest(testutil.TestCase):
 
   def test_create_reply_remote(self):
     url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.expect_post(API_STATUSES, json={
-      'status': 'foo ☕ bar',
-      'in_reply_to_id': STATUS_REMOTE['id'],
-    }, response=STATUS)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response({'statuses': [STATUS_REMOTE]})
+    self.mock_post.return_value = requests_response(STATUS)
 
     got = self.mastodon.create({
       'content': 'foo ☕ bar',
       'inReplyTo': [{'url': url}],
     })
     self.assert_equals(STATUS, got.content, got)
+    self.assert_get(API_SEARCH, params={'q': url, 'resolve': True})
+    self.assert_post(API_STATUSES, json={
+      'status': 'foo ☕ bar',
+      'in_reply_to_id': STATUS_REMOTE['id'],
+    })
 
   def test_preview_reply_remote(self):
     url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response({'statuses': [STATUS_REMOTE]})
 
     preview = self.mastodon.preview_create({
       'content': 'foo ☕ bar',
@@ -836,16 +867,17 @@ class MastodonTest(testutil.TestCase):
     self.assert_equals('foo ☕ bar', preview.content)
 
   def test_create_non_mastodon_reply(self):
-    self.expect_get(API_SEARCH, params={'q': 'http://not/mastodon', 'resolve': True},
-                    response={})
-    self.expect_post(API_STATUSES, json={'status': 'foo ☕ bar'}, response=STATUS)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response({})
+    self.mock_post.return_value = requests_response(STATUS)
 
     got = self.mastodon.create({
       'content': 'foo ☕ bar',
       'inReplyTo': [{'url': 'http://not/mastodon'}],
     })
     self.assert_equals(STATUS, got.content, got)
+    self.assert_get(API_SEARCH,
+                     params={'q': 'http://not/mastodon', 'resolve': True})
+    self.assert_post(API_STATUSES, json={'status': 'foo ☕ bar'})
 
   def test_create_favorite_with_like_verb(self):
     self._test_create_favorite('like')
@@ -854,14 +886,14 @@ class MastodonTest(testutil.TestCase):
     self._test_create_favorite('favorite')
 
   def _test_create_favorite(self, verb):
-    self.expect_post(API_FAVORITE % '123', STATUS)
-    self.mox.ReplayAll()
+    self.mock_post.return_value = requests_response(STATUS)
 
     obj = copy.deepcopy(LIKE)
     obj['verb'] = verb
     got = self.mastodon.create(obj).content
     self.assert_equals('like', got['type'])
     self.assert_equals('http://foo.com/@snarfed/123#favorited-by-23507', got['url'])
+    self.assert_post(API_FAVORITE % '123')
 
   def test_preview_favorite_with_like_verb(self):
     self._test_preview_favorite('like')
@@ -877,20 +909,18 @@ class MastodonTest(testutil.TestCase):
 
   def test_create_favorite_remote(self):
     url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.expect_post(API_FAVORITE % '999', STATUS_REMOTE)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response({'statuses': [STATUS_REMOTE]})
+    self.mock_post.return_value = requests_response(STATUS_REMOTE)
 
     got = self.mastodon.create(LIKE_REMOTE).content
     self.assert_equals('like', got['type'])
     self.assert_equals(url + '#favorited-by-23507', got['url'])
+    self.assert_get(API_SEARCH, params={'q': url, 'resolve': True})
+    self.assert_post(API_FAVORITE % '999')
 
   def test_preview_favorite_remote(self):
     url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response({'statuses': [STATUS_REMOTE]})
 
     preview = self.mastodon.preview_create(LIKE_REMOTE)
     self.assertIn(
@@ -898,12 +928,12 @@ class MastodonTest(testutil.TestCase):
       preview.description)
 
   def test_create_reblog(self):
-    self.expect_post(API_REBLOG % '123', STATUS)
-    self.mox.ReplayAll()
+    self.mock_post.return_value = requests_response(STATUS)
 
     got = self.mastodon.create(SHARE_ACTIVITY).content
     self.assert_equals('repost', got['type'])
     self.assert_equals('http://foo.com/@snarfed/123', got['url'])
+    self.assert_post(API_REBLOG % '123')
 
   def test_preview_reblog(self):
     preview = self.mastodon.preview_create(SHARE_ACTIVITY)
@@ -911,20 +941,18 @@ class MastodonTest(testutil.TestCase):
 
   def test_create_reblog_remote(self):
     url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.expect_post(API_REBLOG % '999', STATUS)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response({'statuses': [STATUS_REMOTE]})
+    self.mock_post.return_value = requests_response(STATUS)
 
     got = self.mastodon.create(SHARE_REMOTE).content
     self.assert_equals('repost', got['type'])
     self.assert_equals('http://foo.com/@snarfed/123', got['url'])
+    self.assert_get(API_SEARCH, params={'q': url, 'resolve': True})
+    self.assert_post(API_REBLOG % '999')
 
   def test_preview_reblog_remote(self):
     url = STATUS_REMOTE['url']
-    self.expect_get(API_SEARCH, params={'q': url, 'resolve': True},
-                    response={'statuses': [STATUS_REMOTE]})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response({'statuses': [STATUS_REMOTE]})
 
     preview = self.mastodon.preview_create(SHARE_REMOTE)
     self.assertIn(
@@ -933,10 +961,9 @@ class MastodonTest(testutil.TestCase):
 
   def test_create_follow(self):
     actor_url = 'https://foo.com/@other'
-    self.expect_get(API_SEARCH, params={'q': actor_url, 'resolve': True},
-                    response={'accounts': [{'id': '23507', 'url': actor_url}]})
-    self.expect_post(API_FOLLOW % '23507', {'id': '23507', 'following': True})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      {'accounts': [{'id': '23507', 'url': actor_url}]})
+    self.mock_post.return_value = requests_response({'id': '23507', 'following': True})
 
     result = self.mastodon.create({
       'objectType': 'activity',
@@ -949,12 +976,14 @@ class MastodonTest(testutil.TestCase):
       'following': True,
       'url': None,
     }, result.content)
+    self.assert_get(API_SEARCH,
+                     params={'q': actor_url, 'resolve': True})
+    self.assert_post(API_FOLLOW % '23507')
 
   def test_preview_follow(self):
     actor_url = 'https://foo.com/@other'
-    self.expect_get(API_SEARCH, params={'q': actor_url, 'resolve': True},
-                    response={'accounts': [{'id': '23507', 'url': actor_url}]})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      {'accounts': [{'id': '23507', 'url': actor_url}]})
 
     preview = self.mastodon.preview_create({
       'objectType': 'activity',
@@ -977,10 +1006,7 @@ class MastodonTest(testutil.TestCase):
     self.assertEqual('Could not find user  to follow.', result.error_html)
 
   def test_create_follow_not_found(self):
-    self.expect_get(API_SEARCH,
-                    params={'q': 'https://foo.com/@nonexistent', 'resolve': True},
-                    response={'accounts': []})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response({'accounts': []})
 
     result = self.mastodon.create({
       'objectType': 'activity',
@@ -1004,29 +1030,41 @@ class MastodonTest(testutil.TestCase):
     got = m.preview_create(OBJECT)
     self.assertEqual('foo ☕…', got.content)
 
-    self.expect_post(API_STATUSES, json={'status': 'foo ☕…'}, response=STATUS)
-    self.mox.ReplayAll()
-
+    self.mock_post.return_value = requests_response(STATUS)
     result = m.create(OBJECT)
     self.assert_equals(STATUS, result.content, result)
+    self.assert_post(API_STATUSES, json={'status': 'foo ☕…'})
 
   def test_create_with_media(self):
-    self.expect_requests_get('http://foo.com/video.mp4', 'pic 2')
-    self.expect_post(API_MEDIA, {'id': 'a'}, files={'file': b'pic 2'},
-                     data={'description': 'a fun video'})
-
-    self.expect_requests_get('http://foo.com/image.jpg', 'pic 1')
-    self.expect_post(API_MEDIA, {'id': 'b'}, files={'file': b'pic 1'}, data={})
-    self.expect_post(API_STATUSES, json={
-      'status': 'foo ☕ bar',
-      'media_ids': ['a', 'b'],
-    }, response=STATUS)
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response('pic 2'),  # video.mp4
+      requests_response('pic 1'),  # image.jpg
+    ]
+    self.mock_post.side_effect = [
+      requests_response({'id': 'a'}),   # API_MEDIA video
+      requests_response({'id': 'b'}),   # API_MEDIA image
+      requests_response(STATUS),        # API_STATUSES
+    ]
 
     obj = copy.deepcopy(MEDIA_OBJECT)
     del obj['image']['displayName']
     result = self.mastodon.create(obj)
     self.assert_equals(STATUS, result.content, result)
+
+    self.assertEqual(['http://foo.com/video.mp4', 'http://foo.com/image.jpg'],
+                     [c.args[0] for c in self.mock_get.call_args_list])
+    # files are uploaded as multipart streams, so check their contents separately
+    self.assertEqual(
+      [INSTANCE + API_MEDIA, INSTANCE + API_MEDIA, INSTANCE + API_STATUSES],
+      [c.args[0] for c in self.mock_post.call_args_list])
+    self.assertEqual({'description': 'a fun video'},
+                     self.mock_post.call_args_list[0].kwargs['data'])
+    self.assertEqual({}, self.mock_post.call_args_list[1].kwargs['data'])
+    self.assert_post(API_STATUSES, json={'status': 'foo ☕ bar', 'media_ids': ['a', 'b']})
+    self.assertEqual(
+      b'pic 2', self.mock_post.call_args_list[0].kwargs['files']['file'].read())
+    self.assertEqual(
+      b'pic 1', self.mock_post.call_args_list[1].kwargs['files']['file'].read())
 
   def test_create_with_too_many_media(self):
     image_urls = [f'http://my/picture/{i}' for i in range(mastodon.MAX_MEDIA)]
@@ -1050,30 +1088,44 @@ class MastodonTest(testutil.TestCase):
 &nbsp; <img src="http://my/picture/2" alt="" />""",
                      preview.content)
 
-    # test create
-    self.expect_requests_get('http://my/video', 'vid')
-    self.expect_post(API_MEDIA, {'id': '0'}, files={'file': b'vid'}, data={})
-    for i, url in enumerate(image_urls[:-1]):
-      self.expect_requests_get(f'http://my/picture/{i}', 'pic')
-      self.expect_post(API_MEDIA, {'id': str(i + 1)}, files={'file': b'pic'}, data={})
+    # test create: downloads the video then MAX_MEDIA-1 images
+    self.mock_get.side_effect = (
+      [requests_response('vid')] +
+      [requests_response('pic') for _ in image_urls[:-1]])
+    self.mock_post.side_effect = (
+      [requests_response({'id': str(i)}) for i in range(mastodon.MAX_MEDIA)] +
+      [requests_response(STATUS)])
 
-    self.expect_post(API_STATUSES, json={
-      'status': '',
-      'media_ids': ['0', '1', '2', '3'],
-    }, response=STATUS)
-    self.mox.ReplayAll()
     result = self.mastodon.create(obj)
     self.assert_equals(STATUS, result.content, result)
 
-  def test_delete(self):
-    self.expect_delete(API_STATUS % '456')
-    self.mox.ReplayAll()
+    # downloads the video then MAX_MEDIA - 1 images
+    self.assertEqual(['http://my/video'] + [f'http://my/picture/{i}'
+                                            for i in range(len(image_urls) - 1)],
+                     [c.args[0] for c in self.mock_get.call_args_list])
+    # video then images uploaded to API_MEDIA, then the status to API_STATUSES.
+    # files are uploaded as multipart streams, so check their contents separately.
+    self.assertEqual(
+      [INSTANCE + API_MEDIA] * mastodon.MAX_MEDIA + [INSTANCE + API_STATUSES],
+      [c.args[0] for c in self.mock_post.call_args_list])
+    for c in self.mock_post.call_args_list[:mastodon.MAX_MEDIA]:
+      self.assertEqual({}, c.kwargs['data'])
+    self.assert_post(API_STATUSES, json={'status': '', 'media_ids': ['0', '1', '2', '3']})
+    self.assertEqual(
+      b'vid', self.mock_post.call_args_list[0].kwargs['files']['file'].read())
+    for c in self.mock_post.call_args_list[1:mastodon.MAX_MEDIA]:
+      self.assertEqual(b'pic', c.kwargs['files']['file'].read())
 
-    result = self.mastodon.delete(456)
+  def test_delete(self):
+    with patch.object(util.session, 'delete',
+                      return_value=requests_response({})) as mock_delete:
+      result = self.mastodon.delete(456)
+
     self.assert_equals({'url': 'http://foo.com/web/statuses/456'},
                        result.content, result)
     self.assertIsNone(result.error_plain)
     self.assertIsNone(result.error_html)
+    self.assert_call(mock_delete, API_STATUS % '456')
 
   def test_preview_delete(self):
     got = self.mastodon.preview_delete('456')
@@ -1082,28 +1134,22 @@ class MastodonTest(testutil.TestCase):
     self.assertIsNone(got.error_html)
 
   def test_get_blocklist_ids(self):
-    self.expect_get(API_BLOCKS, [
-      {'id': 1},
-      {'id': 2},
-    ])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([{'id': 1}, {'id': 2}])
     self.assert_equals([1, 2], self.mastodon.get_blocklist_ids())
+    self.assert_get(API_BLOCKS)
 
   def test_get_blocklist_ids_paging(self):
-    self.expect_get(API_BLOCKS, [
-      {'id': 1},
-      {'id': 2},
-    ], response_headers={
-      'Link': '<http://foo.com/prev>; rel="prev", <http://foo.com/next>; rel="next"',
-    })
-    self.expect_get('/next', [
-      {'id': 3},
-      {'id': 4},
-    ], response_headers={
-      'Link': '<http://foo.com/prev>; rel="prev"',
-    })
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response([{'id': 1}, {'id': 2}], headers={
+        'Link': '<http://foo.com/prev>; rel="prev", <http://foo.com/next>; rel="next"',
+      }),
+      requests_response([{'id': 3}, {'id': 4}], headers={
+        'Link': '<http://foo.com/prev>; rel="prev"',
+      }),
+    ]
     self.assert_equals([1, 2, 3, 4], self.mastodon.get_blocklist_ids())
+    self.assertEqual([INSTANCE + API_BLOCKS, 'http://foo.com/next'],
+                     [c.args[0] for c in self.mock_get.call_args_list])
 
   def test_get_follows(self):
     self._test_get_follows_or_followers(self.mastodon.get_follows, mastodon.API_FOLLOWING)
@@ -1112,18 +1158,17 @@ class MastodonTest(testutil.TestCase):
     self._test_get_follows_or_followers(self.mastodon.get_followers, mastodon.API_FOLLOWERS)
 
   def _test_get_follows_or_followers(self, method, api_url):
-    self.expect_get(api_url % ACCOUNT['id'], [
-      {'id': 1, 'username': 'alice'},
-      {'id': 2, 'username': 'bob'},
-    ], response_headers={
-      'Link': '<http://foo.com/prev>; rel="prev", <http://foo.com/next>; rel="next"',
-    })
-    self.expect_get('/next', [
-      {'id': 3, 'username': 'eve'},
-    ], response_headers={
-      'Link': '<http://foo.com/prev>; rel="prev"',
-    })
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response([
+        {'id': 1, 'username': 'alice'},
+        {'id': 2, 'username': 'bob'},
+      ], headers={
+        'Link': '<http://foo.com/prev>; rel="prev", <http://foo.com/next>; rel="next"',
+      }),
+      requests_response([{'id': 3, 'username': 'eve'}], headers={
+        'Link': '<http://foo.com/prev>; rel="prev"',
+      }),
+    ]
     self.assert_equals([{
       'objectType': 'person',
       'id': 'tag:foo.com:alice',
@@ -1144,17 +1189,11 @@ class MastodonTest(testutil.TestCase):
       'displayName': 'eve',
     }], method())
 
+  @patch.object(mastodon, 'MAX_FOLLOWING', 3)
   def _test_get_follows_or_followers_max(self):
-    self.mox.StubOutWithMock(mastodon, 'MAX_FOLLOWING')
-    mastodon.MAX_FOLLOWING = 3
-
-    self.expect_get(mastodon.API_FOLLOWING % ACCOUNT['id'], [
-      {'id': 1},
-      {'id': 2},
-    ], response_headers={'Link': '<http://foo.com/next>; rel="next"'})
-    self.expect_get('/next', [
-      {'id': 3},
-      {'id': 4},
-    ])
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response([{'id': 1}, {'id': 2}],
+                        headers={'Link': '<http://foo.com/next>; rel="next"'}),
+      requests_response([{'id': 3}, {'id': 4}]),
+    ]
     self.assert_equals([{'id': 1}, {'id': 2}, {'id': 3}], self.mastodon.get_follows())

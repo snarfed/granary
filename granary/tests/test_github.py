@@ -1,9 +1,10 @@
 """Unit tests for github.py."""
 import copy
 from unittest import skip
+from unittest.mock import patch
 
-from mox3 import mox
 from webutil import testutil, util
+from webutil.testutil import requests_response
 from webutil.util import json_dumps, json_loads
 
 from .. import github
@@ -16,6 +17,7 @@ from ..github import (
   REST_COMMENTS,
   REST_ISSUE,
   REST_ISSUE_LABELS,
+  REST_MARKDOWN,
   REST_NOTIFICATIONS,
   REST_REACTIONS,
 )
@@ -353,7 +355,22 @@ EXPECTED_HEADERS = {
 }
 
 
-class GitHubTest(testutil.TestCase):
+# response builders (return a fake requests.Response for use as a mock
+# return_value or side_effect element)
+def graphql_response(data):
+  return requests_response({'data': data})
+
+ISSUE_GRAPHQL_RESPONSE = graphql_response({
+  'repository': {'issueOrPullRequest': ISSUE_GRAPHQL},
+})
+
+def get_labels_graphql_response(labels):
+  return graphql_response({
+    'repository': {'labels': {'nodes': [{'name': l} for l in labels]}},
+  })
+
+
+class GitHubTest(testutil.BaseTestCase):
 
   def setUp(self):
     super(GitHubTest, self).setUp()
@@ -361,69 +378,44 @@ class GitHubTest(testutil.TestCase):
     self.batch = []
     self.batch_responses = []
 
-  def expect_graphql(self, response=None, **kwargs):
-    return self.expect_requests_post(GRAPHQL_BASE, headers={
-        'Authorization': 'bearer a-towkin',
-      }, response={'data': response}, **kwargs)
+    self.mock_get = self.start_patch('get')    # v3 REST GETs
+    self.mock_post = self.start_patch('post')  # GraphQL, REST POSTs, markdown
 
-  def expect_rest(self, url, response=None, **kwargs):
-    kwargs.setdefault('headers', {}).update(EXPECTED_HEADERS)
-    return self.expect_requests_get(url, response=response, **kwargs)
+  def start_patch(self, method):
+    # TODO: replace with self.enterContext(patch.object(...)) once our Python
+    # floor is >= 3.11.
+    patcher = patch.object(util.session, method)
+    mock = patcher.start()
+    self.addCleanup(patcher.stop)
+    return mock
 
-  def expect_graphql_issue(self):
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_ISSUE_OR_PR % {
-        'owner': 'foo',
-        'repo': 'bar',
-        'number': 123,
-      },
-    }, response={
-      'repository': {
-        'issueOrPullRequest': ISSUE_GRAPHQL,
-      },
-    })
+  # call assertion helpers
+  def assert_graphql(self, query):
+    """Asserts a GraphQL POST with the given query was made."""
+    for c in self.mock_post.call_args_list:
+      if c.args[0] == GRAPHQL_BASE and c.kwargs['json'].get('query') == query:
+        self.assertEqual('bearer a-towkin', c.kwargs['headers']['Authorization'])
+        return
 
-  def expect_graphql_get_labels(self, labels):
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_REPO_LABELS % {
-        'owner': 'foo',
-        'repo': 'bar',
-      },
-    }, response={
-      'repository': {
-        'labels': {
-          'nodes': [{'name': l} for l in labels],
-        },
-      },
-    })
+    self.fail(f'No GraphQL call with query {query!r:.100} found')
 
-  def expect_graphql_add_reaction(self):
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_ADD_REACTION % {
-        'subject_id': ISSUE_GRAPHQL['id'],
-        'content': 'THUMBS_UP',
-      },
-    }, response={
-      'addReaction': {
-        'reaction': {
-          'id': 'DEF456',
-          'content': 'THUMBS_UP',
-          'user': {
-            'login': 'snarfed',
-          },
-        },
-      },
-    })
+  def assert_get(self, url, **kwargs):
+    self._assert_rest(self.mock_get, url, **kwargs)
 
-  def expect_markdown_render(self, body):
-    rendered = '<p>rendered!</p>'
-    self.expect_requests_post(
-      github.REST_MARKDOWN, headers=EXPECTED_HEADERS, response=rendered, json={
-        'text': body,
-        'mode': 'gfm',
-        'context': 'foo/bar',
-      })
-    return rendered
+  def assert_post(self, url, **kwargs):
+    self._assert_rest(self.mock_post, url, **kwargs)
+
+  def _assert_rest(self, mock, url, **kwargs):
+    """Asserts a REST GET to url was made."""
+    for c in mock.call_args_list:
+      if c.args[0] == url:
+        self.assertEqual('token a-towkin', c.kwargs['headers']['Authorization'])
+        for key, val in kwargs.items():
+          if val:
+            self.assert_equals(val, c.kwargs[key], key)
+        return
+
+    self.fail(f'No GET to {url} found in {[c.args[0] for c in mock.call_args_list]}')
 
   def test_base_id(self):
     for url, expected in (
@@ -451,16 +443,14 @@ class GitHubTest(testutil.TestCase):
     self.assert_equals({}, self.gh.to_as1_actor({}))
 
   def test_get_actor(self):
-    self.expect_graphql(json={'query': github.GRAPHQL_USER % {'login': 'foo'}},
-                        response={'user': USER_GRAPHQL})
-    self.mox.ReplayAll()
+    self.mock_post.return_value = graphql_response({'user': USER_GRAPHQL})
     self.assert_equals(ACTOR, self.gh.get_actor('foo'))
+    self.assert_graphql(github.GRAPHQL_USER % {'login': 'foo'})
 
   def test_get_actor_default(self):
-    self.expect_graphql(json={'query': github.GRAPHQL_VIEWER},
-                        response={'viewer': USER_GRAPHQL})
-    self.mox.ReplayAll()
+    self.mock_post.return_value = graphql_response({'viewer': USER_GRAPHQL})
     self.assert_equals(ACTOR, self.gh.get_actor())
+    self.assert_graphql( github.GRAPHQL_VIEWER)
 
   def test_get_activities_defaults(self):
     notifs = [copy.deepcopy(NOTIFICATION_PULL_REST),
@@ -472,54 +462,66 @@ class GitHubTest(testutil.TestCase):
       'repository': {'private': False},
     })
 
-    self.expect_rest(REST_NOTIFICATIONS, notifs)
-    self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], PULL_REST)
-    self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response(notifs),
+      requests_response(PULL_REST),
+      requests_response(ISSUE_REST),
+    ]
 
     obj_public_repo = copy.deepcopy(ISSUE_OBJ)
     obj_public_repo['to'] = [{'objectType': 'group', 'alias': '@public'}]
     self.assert_equals([PULL_OBJ, obj_public_repo], self.gh.get_activities())
+    self.assert_get(REST_NOTIFICATIONS)
+    self.assert_get(NOTIFICATION_PULL_REST['subject']['url'])
+    self.assert_get(NOTIFICATION_ISSUE_REST['subject']['url'])
 
   def test_get_activities_fetch_replies(self):
-    self.expect_rest(REST_NOTIFICATIONS, [NOTIFICATION_ISSUE_REST])
-    self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
-    self.expect_rest(ISSUE_REST['comments_url'], [COMMENT_REST, COMMENT_REST])
-    self.mox.ReplayAll()
-
+    self.mock_get.side_effect = [
+      requests_response([NOTIFICATION_ISSUE_REST]),
+      requests_response(ISSUE_REST),
+      requests_response([COMMENT_REST, COMMENT_REST]),
+    ]
     self.assert_equals([ISSUE_OBJ_WITH_REPLIES],
                        self.gh.get_activities(fetch_replies=True))
+    self.assert_get(REST_NOTIFICATIONS)
+    self.assert_get(NOTIFICATION_ISSUE_REST['subject']['url'])
+    self.assert_get(ISSUE_REST['comments_url'])
 
   def test_get_activities_fetch_likes(self):
-    self.expect_rest(REST_NOTIFICATIONS,
-                     [NOTIFICATION_PULL_REST, NOTIFICATION_ISSUE_REST])
-    self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], PULL_REST)
-    self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
-    self.expect_rest(REST_REACTIONS % ('foo', 'bar', 444), [])
-    self.expect_rest(REST_REACTIONS % ('foo', 'bar', 333),
-                     [REACTION_REST, REACTION_REST])
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response([NOTIFICATION_PULL_REST, NOTIFICATION_ISSUE_REST]),
+      requests_response(PULL_REST),
+      requests_response(ISSUE_REST),
+      requests_response([]),
+      requests_response([REACTION_REST, REACTION_REST]),
+    ]
 
     pull_obj = copy.deepcopy(PULL_OBJ)
     pull_obj['to'] = [{'objectType': 'group', 'alias': '@private'}]
     self.assert_equals([pull_obj, ISSUE_OBJ_WITH_REACTIONS],
                        self.gh.get_activities(fetch_likes=True))
+    self.assert_get(REST_NOTIFICATIONS)
+    self.assert_get(NOTIFICATION_PULL_REST['subject']['url'])
+    self.assert_get(NOTIFICATION_ISSUE_REST['subject']['url'])
+    self.assert_get(REST_REACTIONS % ('foo', 'bar', 444))
+    self.assert_get(REST_REACTIONS % ('foo', 'bar', 333))
 
   def test_get_activities_self_empty(self):
-    self.expect_rest(f'{REST_NOTIFICATIONS}&per_page=12', [])
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response([])
     self.assert_equals([], self.gh.get_activities(count=12))
+    self.assert_get(f'{REST_NOTIFICATIONS}&per_page=12')
 
   def test_get_activities_activity_id(self):
-    self.expect_rest(REST_ISSUE % ('foo', 'bar', 123), ISSUE_REST)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(ISSUE_REST)
     self.assert_equals([ISSUE_OBJ], self.gh.get_activities(activity_id='foo:bar:123'))
+    self.assert_get(REST_ISSUE % ('foo', 'bar', 123))
 
   def test_get_activities_activity_id_fetch_replies_likes(self):
-    self.expect_rest(REST_ISSUE % ('foo', 'bar', 333), ISSUE_REST)
-    self.expect_rest(ISSUE_REST['comments_url'], [COMMENT_REST, COMMENT_REST])
-    self.expect_rest(REST_REACTIONS % ('foo', 'bar', 333), [REACTION_REST, REACTION_REST])
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response(ISSUE_REST),
+      requests_response([COMMENT_REST, COMMENT_REST]),
+      requests_response([REACTION_REST, REACTION_REST]),
+    ]
 
     expected = copy.deepcopy(ISSUE_OBJ_WITH_REPLIES)
     expected['tags'].extend([REACTION_OBJ, REACTION_OBJ])
@@ -527,15 +529,17 @@ class GitHubTest(testutil.TestCase):
 
     self.assert_equals([expected], self.gh.get_activities(
       activity_id='foo:bar:333', fetch_replies=True, fetch_likes=True))
+    self.assert_get(REST_ISSUE % ('foo', 'bar', 333))
+    self.assert_get(ISSUE_REST['comments_url'])
+    self.assert_get(REST_REACTIONS % ('foo', 'bar', 333))
 
   def test_get_activities_etag_and_since(self):
-    self.expect_rest(REST_NOTIFICATIONS, [NOTIFICATION_ISSUE_REST],
-                     headers={'If-Modified-Since': 'Thu, 25 Oct 2012 15:16:27 GMT'},
-                     response_headers={'Last-Modified': 'Fri, 1 Jan 2099 12:00:00 GMT'})
-    self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
-    self.expect_rest(ISSUE_REST['comments_url'] + '?since=2012-10-25T15:16:27Z',
-                     [COMMENT_REST, COMMENT_REST])
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response([NOTIFICATION_ISSUE_REST],
+                        headers={'Last-Modified': 'Fri, 1 Jan 2099 12:00:00 GMT'}),
+      requests_response(ISSUE_REST),
+      requests_response([COMMENT_REST, COMMENT_REST]),
+    ]
 
     self.assert_equals({
       'etag': 'Fri, 1 Jan 2099 12:00:00 GMT',
@@ -548,12 +552,17 @@ class GitHubTest(testutil.TestCase):
       'updatedSince': False,
     }, self.gh.get_activities_response(etag='Thu, 25 Oct 2012 15:16:27 GMT',
                                        fetch_replies=True))
+    self.assert_get(REST_NOTIFICATIONS)
+    self.assert_get(NOTIFICATION_ISSUE_REST['subject']['url'])
+    self.assert_get(ISSUE_REST['comments_url'] + '?since=2012-10-25T15:16:27Z')
+    notif_call = next(c for c in self.mock_get.call_args_list
+                      if c.args[0] == REST_NOTIFICATIONS)
+    self.assertEqual('Thu, 25 Oct 2012 15:16:27 GMT',
+                     notif_call.kwargs['headers']['If-Modified-Since'])
 
   def test_get_activities_etag_returns_304(self):
-    self.expect_rest(REST_NOTIFICATIONS, status_code=304,
-                     headers={'If-Modified-Since': 'Thu, 25 Oct 2012 15:16:27 GMT'},
-                     response_headers={'Last-Modified': 'Fri, 1 Jan 2099 12:00:00 GMT'})
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(
+      '', status=304, headers={'Last-Modified': 'Fri, 1 Jan 2099 12:00:00 GMT'})
 
     resp = self.gh.get_activities_response(etag='Thu, 25 Oct 2012 15:16:27 GMT',
                                            fetch_replies=True)
@@ -570,12 +579,12 @@ class GitHubTest(testutil.TestCase):
     self._test_get_activities_activity_id_fails(451)
 
   def _test_get_activities_activity_id_fails(self, status):
-    self.expect_rest(REST_ISSUE % ('a', 'b', 1), {
+    self.mock_get.return_value = requests_response({
       'message': 'Not Found',
       'documentation_url': 'https://developer.github.com/v3',
-    }, status_code=status)
-    self.mox.ReplayAll()
+    }, status=status)
     self.assert_equals([], self.gh.get_activities(activity_id='a:b:1'))
+    self.assert_get(REST_ISSUE % ('a', 'b', 1))
 
   def test_get_activities_bad_activity_id(self):
     for bad in 'no_colons', 'one:colon', 'fo:ur:col:ons':
@@ -592,15 +601,18 @@ class GitHubTest(testutil.TestCase):
     self._test_get_activities_pr_fails(451)
 
   def _test_get_activities_pr_fails(self, status):
-    self.expect_rest(REST_NOTIFICATIONS,
-                     [NOTIFICATION_PULL_REST, NOTIFICATION_ISSUE_REST])
-    self.expect_rest(NOTIFICATION_PULL_REST['subject']['url'], '', status_code=status)
-    self.expect_rest(NOTIFICATION_ISSUE_REST['subject']['url'], ISSUE_REST)
-    self.mox.ReplayAll()
+    self.mock_get.side_effect = [
+      requests_response([NOTIFICATION_PULL_REST, NOTIFICATION_ISSUE_REST]),
+      requests_response('', status=status),
+      requests_response(ISSUE_REST),
+    ]
 
     obj_public_repo = copy.deepcopy(ISSUE_OBJ)
     obj_public_repo['to'] = [{'objectType': 'group', 'alias': '@private'}]
     self.assert_equals([obj_public_repo], self.gh.get_activities())
+    self.assert_get(REST_NOTIFICATIONS)
+    self.assert_get(NOTIFICATION_PULL_REST['subject']['url'])
+    self.assert_get(NOTIFICATION_ISSUE_REST['subject']['url'])
 
   def test_get_activities_search_not_implemented(self):
     with self.assertRaises(NotImplementedError):
@@ -640,18 +652,17 @@ class GitHubTest(testutil.TestCase):
     self.assert_equals({}, self.gh.issue_to_as1({}))
 
   def test_get_comment_rest(self):
-    self.expect_rest(REST_COMMENT % ('foo', 'bar', 'issues', 123), COMMENT_REST)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(COMMENT_REST)
     self.assert_equals(COMMENT_OBJ, self.gh.get_comment('foo:bar:123'))
+    self.assert_get(REST_COMMENT % ('foo', 'bar', 'issues', 123))
 
   def test_get_comment_graphql(self):
-    self.expect_graphql(json={'query': GRAPHQL_COMMENT % {'id': 'abc'}},
-                        response={'node': COMMENT_GRAPHQL})
-    self.mox.ReplayAll()
+    self.mock_post.return_value = graphql_response({'node': COMMENT_GRAPHQL})
 
     obj = copy.deepcopy(COMMENT_OBJ)
     obj['id'] = 'tag:github.com:foo:bar:MDEwOlNQ=='
     self.assert_equals(obj, self.gh.get_comment('foo:bar:abc'))
+    self.assert_graphql( GRAPHQL_COMMENT % {'id': 'abc'})
 
   def test_get_activities_bad_comment_id(self):
     for bad in 'no_colons', 'one:colon', 'fo:ur:col:ons':
@@ -678,15 +689,10 @@ class GitHubTest(testutil.TestCase):
                        self.gh.reaction_to_as1(REACTION_REST, ISSUE_OBJ))
 
   def test_create_comment(self):
-    self.expect_requests_post(
-      REST_COMMENTS % ('foo', 'bar', 123), headers=EXPECTED_HEADERS,
-      json={
-        'body': 'i have something to say here',
-      }, response={
+    self.mock_post.return_value = requests_response({
         'id': 456,
         'html_url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
       })
-    self.mox.ReplayAll()
 
     result = self.gh.create(COMMENT_OBJ)
     self.assert_equals({
@@ -694,25 +700,28 @@ class GitHubTest(testutil.TestCase):
       'id': 456,
       'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
     }, result.content, result)
+    self.assert_post(REST_COMMENTS % ('foo', 'bar', 123),
+                     json={'body': 'i have something to say here'})
 
   def test_preview_comment(self):
-    self.expect_graphql_issue()
-    rendered = self.expect_markdown_render('i have something to say here')
-    self.mox.ReplayAll()
+    self.mock_post.side_effect = [
+      ISSUE_GRAPHQL_RESPONSE,
+      requests_response('<p>rendered!</p>'),
+    ]
 
     preview = self.gh.preview_create(COMMENT_OBJ)
-    self.assertEqual(rendered, preview.content, preview)
+    self.assertEqual('<p>rendered!</p>', preview.content, preview)
     self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123, <em>an issue title</em></a>:', preview.description, preview)
+    self.assert_post(REST_MARKDOWN, json={
+      'text': 'i have something to say here',
+      'mode': 'gfm',
+      'context': 'foo/bar',
+    })
 
   @skip('only needed for GraphQL, and we currently use REST to create comments')
   def test_create_comment_escape_quotes(self):
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_ADD_COMMENT % {
-        'subject_id': ISSUE_GRAPHQL['id'],
-        'body': r"""one ' two \" three""",
-      },
-    }, response={'addComment': {'commentEdge': {'node': {'foo': 'bar'}}}})
-    self.mox.ReplayAll()
+    self.mock_post.return_value = graphql_response(
+      {'addComment': {'commentEdge': {'node': {'foo': 'bar'}}}})
 
     obj = copy.deepcopy(COMMENT_OBJ)
     obj['content'] = """one ' two " three"""
@@ -723,20 +732,13 @@ class GitHubTest(testutil.TestCase):
     """eg the w3c/AB repo is private and returns repository: None
     https://console.cloud.google.com/errors/CP2z6O3Hub755wE
     """
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_ISSUE_OR_PR % {
-        'owner': 'foo',
-        'repo': 'bar',
-        'number': 123,
-      },
-    }, response={
-      'repository': None,
-    })
-    rendered = self.expect_markdown_render('i have something to say here')
-    self.mox.ReplayAll()
+    self.mock_post.side_effect = [
+      graphql_response({'repository': None}),
+      requests_response('<p>rendered!</p>'),
+    ]
 
     preview = self.gh.preview_create(COMMENT_OBJ)
-    self.assertEqual(rendered, preview.content, preview)
+    self.assertEqual('<p>rendered!</p>', preview.content, preview)
     self.assertIn('<span class="verb">comment</span> on <a href="https://github.com/foo/bar/pull/123">foo/bar#123</a>:', preview.description, preview)
 
   def test_create_issue_repo_url(self):
@@ -745,23 +747,29 @@ class GitHubTest(testutil.TestCase):
   def test_create_issue_issues_url(self):
     self._test_create_issue('https://github.com/foo/bar/issues')
 
-  def _test_create_issue(self, in_reply_to):
-    self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
-        'title': 'an issue title',
-        'body': ISSUE_OBJ['content'].strip(),
-        'labels': [],
-      }, response={
+  def _create_issue(self, expected_body, obj):
+    """Sets up label + create-issue POST mocks, runs create, checks the request."""
+    self.mock_post.side_effect = [
+      get_labels_graphql_response([]),
+      requests_response({
         'id': '789999',
         'number': '123',
         'url': 'not this one',
         'html_url': 'https://github.com/foo/bar/issues/123',
-      }, headers=EXPECTED_HEADERS)
-    self.mox.ReplayAll()
+      }),
+    ]
+    result = self.gh.create(obj)
+    self.assert_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
+        'title': 'an issue title',
+        'body': expected_body,
+        'labels': [],
+      })
+    return result
 
+  def _test_create_issue(self, in_reply_to):
     obj = copy.deepcopy(ISSUE_OBJ)
     obj['inReplyTo'][0]['url'] = in_reply_to
-    result = self.gh.create(obj)
+    result = self._create_issue(ISSUE_OBJ['content'].strip(), obj)
 
     self.assertIsNone(result.error_plain, result)
     self.assert_equals({
@@ -771,17 +779,7 @@ class GitHubTest(testutil.TestCase):
     }, result.content)
 
   def test_create_with_image_and_link(self):
-    self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
-        'title': 'an issue title',
-        'body': '[bar](http://foo/) ![](https://baz/)',
-        'labels': [],
-      }, response={
-        'html_url': 'https://github.com/foo/bar/issues/123',
-      }, headers=EXPECTED_HEADERS)
-    self.mox.ReplayAll()
-
-    result = self.gh.create({
+    result = self._create_issue('[bar](http://foo/) ![](https://baz/)', {
       'displayName': 'an issue title',
       'content': """
 <a href="http://foo/">bar</a>
@@ -790,46 +788,23 @@ class GitHubTest(testutil.TestCase):
       'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
     })
     self.assertIsNone(result.error_plain, result)
-    self.assert_equals({
-      'url': 'https://github.com/foo/bar/issues/123',
-    }, result.content)
 
   def test_create_with_relative_image_and_link(self):
-    self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
-        'title': 'an issue title',
-        'body': '[foo](http://site/post/foo) ![](http://site/bar/baz)',
-        'labels': [],
-      }, response={
-        'html_url': 'https://github.com/foo/bar/issues/123',
-      }, headers=EXPECTED_HEADERS)
-    self.mox.ReplayAll()
-
-    result = self.gh.create({
-      'url': 'http://site/post/xyz',
-      'displayName': 'an issue title',
-      'content': """
+    result = self._create_issue(
+      '[foo](http://site/post/foo) ![](http://site/bar/baz)', {
+        'url': 'http://site/post/xyz',
+        'displayName': 'an issue title',
+        'content': """
 <a href="foo">foo</a>
 <img src="/bar/baz" />
 """,
-      'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
-    })
+        'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
+      })
     self.assertIsNone(result.error_plain, result)
 
   def test_create_escape_html(self):
     content = 'x &lt;data foo&gt; &amp; y'
-
-    self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
-        'title': 'an issue title',
-        'body': content,
-        'labels': [],
-      }, response={
-        'html_url': 'https://github.com/foo/bar/issues/123',
-      }, headers=EXPECTED_HEADERS)
-    self.mox.ReplayAll()
-
-    result = self.gh.create({
+    result = self._create_issue(content, {
       'displayName': 'an issue title',
       'content': content,
       'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
@@ -839,17 +814,7 @@ class GitHubTest(testutil.TestCase):
   def test_create_doesnt_escape_html_inside_code_tag(self):
     """https://github.com/indieweb/fragmention/issues/3"""
     content = 'abc <code>&lt;div style="height: 10000px"&gt;&lt;/div&gt;</code> xyz'
-    self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
-        'title': 'an issue title',
-        'body': content,
-        'labels': [],
-      }, response={
-        'html_url': 'https://github.com/foo/bar/issues/123',
-      }, headers=EXPECTED_HEADERS)
-    self.mox.ReplayAll()
-
-    result = self.gh.create({
+    result = self._create_issue(content, {
       'displayName': 'an issue title',
       'content': content,
       'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
@@ -858,17 +823,7 @@ class GitHubTest(testutil.TestCase):
 
   def test_create_blockquote(self):
     content = 'x <blockquote>y</blockquote>'
-    self.expect_graphql_get_labels([])
-    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
-        'title': 'an issue title',
-        'body': content,
-        'labels': [],
-      }, response={
-        'html_url': 'https://github.com/foo/bar/issues/123',
-      }, headers=EXPECTED_HEADERS)
-    self.mox.ReplayAll()
-
-    result = self.gh.create({
+    result = self._create_issue(content, {
       'displayName': 'an issue title',
       'content': content,
       'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
@@ -876,57 +831,48 @@ class GitHubTest(testutil.TestCase):
     self.assertIsNone(result.error_plain, result)
 
   def test_preview_issue(self):
-    for _ in range(2):
-      self.expect_graphql_get_labels(['new silo'])
-      rendered = self.expect_markdown_render(ISSUE_OBJ['content'].strip())
-    self.mox.ReplayAll()
+    self.mock_post.side_effect = [
+      get_labels_graphql_response(['new silo']),
+      requests_response('<p>rendered!</p>'),
+      get_labels_graphql_response(['new silo']),
+      requests_response('<p>rendered!</p>'),
+    ]
 
     obj = copy.deepcopy(ISSUE_OBJ)
     for url in 'https://github.com/foo/bar', 'https://github.com/foo/bar/issues':
       obj['inReplyTo'][0]['url'] = url
       preview = self.gh.preview_create(obj)
       self.assertIsNone(preview.error_plain, preview)
-      self.assertEqual('<b>an issue title</b><hr>' + rendered, preview.content)
+      self.assertEqual('<b>an issue title</b><hr><p>rendered!</p>',
+                       preview.content)
       self.assertIn(
         f'<span class="verb">create a new issue</span> on <a href="{url}">foo/bar</a> and attempt to add label <span class="verb">new silo</span>:',
         preview.description, preview)
 
   def test_preview_blockquote(self):
     content = 'x <blockquote>y</blockquote>'
-    self.expect_graphql_get_labels(['new silo'])
-    rendered = self.expect_markdown_render(content.strip())
-    self.mox.ReplayAll()
+    self.mock_post.side_effect = [
+      get_labels_graphql_response(['new silo']),
+      requests_response('<p>rendered!</p>'),
+    ]
 
-    obj = copy.deepcopy(ISSUE_OBJ)
     preview = self.gh.preview_create({
       'title': 'an issue title',
       'content': content,
       'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
     })
     self.assertIsNone(preview.error_plain, preview)
-    self.assertEqual('<b>an issue title</b><hr>' + rendered, preview.content)
+    self.assertEqual('<b>an issue title</b><hr><p>rendered!</p>',
+                     preview.content)
 
   def test_create_issue_private_repo(self):
     """eg the w3c/AB repo is private and returns repository: None
     https://console.cloud.google.com/errors/CMbUj5KyrvH69gE
     """
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_REPO_LABELS % {
-        'owner': 'foo',
-        'repo': 'bar',
-      },
-    }, response={
-      'repository': None,
-    })
-
-    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
-        'title': 'an issue title',
-        'body': 'xyz',
-        'labels': [],
-      }, response={
-        'html_url': 'https://github.com/foo/bar/issues/123',
-      }, headers=EXPECTED_HEADERS)
-    self.mox.ReplayAll()
+    self.mock_post.side_effect = [
+      graphql_response({'repository': None}),
+      requests_response({'html_url': 'https://github.com/foo/bar/issues/123'}),
+    ]
 
     result = self.gh.create({
       'displayName': 'an issue title',
@@ -934,25 +880,33 @@ class GitHubTest(testutil.TestCase):
       'inReplyTo': [{'url': 'https://github.com/foo/bar/issues'}],
     })
     self.assertIsNone(result.error_plain, result)
+    self.assert_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
+        'title': 'an issue title',
+        'body': 'xyz',
+        'labels': [],
+      })
 
   def test_create_issue_tags_to_labels(self):
-    self.expect_graphql_get_labels(['label 3', 'label_1'])
-    resp = {'html_url': 'http://done'}
-    self.expect_requests_post(github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
-        'title': 'an issue title',
-        'body': ISSUE_OBJ['content'].strip(),
-        'labels': ['label 3', 'label_1'],
-      }, response=resp, headers=EXPECTED_HEADERS)
-    self.mox.ReplayAll()
+    self.mock_post.side_effect = [
+      get_labels_graphql_response(['label 3', 'label_1']),
+      requests_response({'html_url': 'http://done'}),
+    ]
 
     result = self.gh.create(ISSUE_OBJ_WITH_LABELS)
     self.assertIsNone(result.error_plain, result)
     self.assert_equals({'url': 'http://done'}, result.content)
+    self.assert_post(
+                     github.REST_CREATE_ISSUE % ('foo', 'bar'), json={
+        'title': 'an issue title',
+        'body': ISSUE_OBJ['content'].strip(),
+        'labels': ['label 3', 'label_1'],
+      })
 
   def test_preview_issue_tags_to_labels(self):
-    self.expect_graphql_get_labels(['label_1', 'label 3'])
-    rendered = self.expect_markdown_render(ISSUE_OBJ_WITH_LABELS['content'].strip())
-    self.mox.ReplayAll()
+    self.mock_post.side_effect = [
+      get_labels_graphql_response(['label_1', 'label 3']),
+      requests_response('<p>rendered!</p>'),
+    ]
 
     preview = self.gh.preview_create(ISSUE_OBJ_WITH_LABELS)
     self.assertIsNone(preview.error_plain, preview)
@@ -964,17 +918,7 @@ class GitHubTest(testutil.TestCase):
   def test_create_comment_org_access_forbidden(self):
     msg = 'Although you appear to have the correct authorization credentials,\nthe `whatwg` organization has enabled OAuth App access restrictions, meaning that data\naccess to third-parties is limited. For more information on these restrictions, including\nhow to whitelist this app, visit\nhttps://help.github.com/articles/restricting-access-to-your-organization-s-data/\n'
 
-    self.expect_requests_post(
-      GRAPHQL_BASE,
-      headers={'Authorization': 'bearer a-towkin'},
-      json={
-        'query': github.GRAPHQL_ADD_COMMENT % {
-          'subject_id': ISSUE_GRAPHQL['id'],
-          'body': COMMENT_OBJ['content'],
-        },
-      },
-      # status_code=403,
-      response={
+    self.mock_post.return_value = requests_response({
         'errors': [
           {
             'path': ['addComment'],
@@ -987,7 +931,6 @@ class GitHubTest(testutil.TestCase):
           'addComment': None,
         },
       })
-    self.mox.ReplayAll()
 
     result = self.gh.create(COMMENT_OBJ)
     self.assertTrue(result.abort)
@@ -1021,28 +964,12 @@ class GitHubTest(testutil.TestCase):
     self._test_create_star('favorite')
 
   def _test_create_star(self, verb):
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_REPO % {
-        'owner': 'foo',
-        'repo': 'bar',
-      },
-    }, response={
-      'repository': {
-        'id': 'ABC123',
-      },
-    })
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_ADD_STAR % {
-        'starrable_id': 'ABC123',
-      },
-    }, response={
-      'addStar': {
-        'starrable': {
-          'url': 'https://github.com/foo/bar',
-        },
-      },
-    })
-    self.mox.ReplayAll()
+    self.mock_post.side_effect = [
+      graphql_response({'repository': {'id': 'ABC123'}}),
+      graphql_response({
+        'addStar': {'starrable': {'url': 'https://github.com/foo/bar'}},
+      }),
+    ]
 
     obj = copy.deepcopy(LIKE_OBJ)
     obj['verb'] = verb
@@ -1050,6 +977,8 @@ class GitHubTest(testutil.TestCase):
     self.assert_equals({
       'url': 'https://github.com/foo/bar/stargazers',
     }, result.content, result)
+    self.assert_graphql(github.GRAPHQL_REPO % {'owner': 'foo', 'repo': 'bar'})
+    self.assert_graphql(github.GRAPHQL_ADD_STAR % {'starrable_id': 'ABC123'})
 
   def test_preview_star_with_like_verb(self):
     self._test_preview_star('like')
@@ -1064,16 +993,11 @@ class GitHubTest(testutil.TestCase):
     self.assertEqual('<span class="verb">star</span> <a href="https://github.com/foo/bar">foo/bar</a>.', preview.description, preview)
 
   def test_create_reaction_issue(self):
-    self.expect_requests_post(
-      REST_REACTIONS % ('foo', 'bar', 123),
-      headers=EXPECTED_HEADERS,
-      json={'content': '+1'},
-      response={
+    self.mock_post.return_value = requests_response({
         'id': 456,
         'content': '+1',
         'user': {'login': 'snarfed'},
       })
-    self.mox.ReplayAll()
 
     result = self.gh.create(REACTION_OBJ_INPUT)
     self.assert_equals({
@@ -1081,26 +1005,21 @@ class GitHubTest(testutil.TestCase):
       'url': 'https://github.com/foo/bar/pull/123#+1-by-snarfed',
       'type': 'react',
     }, result.content, result)
+    self.assert_post(REST_REACTIONS % ('foo', 'bar', 123),
+                     json={'content': '+1'})
 
   def test_preview_reaction_issue(self):
-    self.expect_graphql_issue()
-    self.mox.ReplayAll()
+    self.mock_post.return_value = ISSUE_GRAPHQL_RESPONSE
 
     preview = self.gh.preview_create(REACTION_OBJ_INPUT)
     self.assertEqual(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123">foo/bar#123, <em>an issue title</em></a>.', preview.description)
 
   def test_create_reaction_issue_comment(self):
-    self.expect_requests_post(
-      REST_COMMENT_REACTIONS % ('foo', 'bar', 'issues', 456),
-      headers=EXPECTED_HEADERS,
-      json={
-        'content': '+1',
-      }, response={
+    self.mock_post.return_value = requests_response({
         'id': 'DEF456',
         'content': '+1',
         'user': {'login': 'snarfed'},
       })
-    self.mox.ReplayAll()
 
     result = self.gh.create(COMMENT_REACTION_OBJ_INPUT)
     self.assert_equals({
@@ -1108,26 +1027,26 @@ class GitHubTest(testutil.TestCase):
       'url': 'https://github.com/foo/bar/pull/123#issuecomment-456',
       'type': 'react',
     }, result.content, result)
+    self.assert_post(REST_COMMENT_REACTIONS % ('foo', 'bar', 'issues', 456),
+                     json={'content': '+1'})
 
   def test_preview_reaction_issue_comment(self):
-    self.expect_rest(REST_COMMENT % ('foo', 'bar', 'issues', 456), COMMENT_REST)
-    self.mox.ReplayAll()
+    self.mock_get.return_value = requests_response(COMMENT_REST)
 
     preview = self.gh.preview_create(COMMENT_REACTION_OBJ_INPUT)
     self.assertEqual(u'<span class="verb">react 👍</span> to <a href="https://github.com/foo/bar/pull/123#issuecomment-456">a comment on foo/bar#123, <em>i have something to say here</em></a>.', preview.description, preview)
 
   def test_create_add_label(self):
-    self.expect_graphql_get_labels(['one', 'two'])
-    resp = {
-      'id': 'DEF456',
-      'node_id': 'MDU6TGFiZWwyMDgwNDU5NDY=',
-      'name': 'an issue',
-      # ¯\_(ツ)_/¯ https://developer.github.com/v3/issues/labels/#add-labels-to-an-issue
-      'default': True,
-    }
-    self.expect_requests_post(REST_ISSUE_LABELS % ('foo', 'bar', 456),
-                              headers=EXPECTED_HEADERS, json=['one'], response=resp)
-    self.mox.ReplayAll()
+    self.mock_post.side_effect = [
+      get_labels_graphql_response(['one', 'two']),
+      requests_response({
+        'id': 'DEF456',
+        'node_id': 'MDU6TGFiZWwyMDgwNDU5NDY=',
+        'name': 'an issue',
+        # ¯\_(ツ)_/¯ https://developer.github.com/v3/issues/labels/#add-labels-to-an-issue
+        'default': True,
+      }),
+    ]
 
     result = self.gh.create(TAG_ACTIVITY)
     self.assert_equals({
@@ -1135,10 +1054,10 @@ class GitHubTest(testutil.TestCase):
       'type': 'tag',
       'tags': ['one'],
     }, result.content, result)
+    self.assert_post(REST_ISSUE_LABELS % ('foo', 'bar', 456), json=['one'])
 
   def test_preview_add_label(self):
-    self.expect_graphql_get_labels(['one', 'two'])
-    self.mox.ReplayAll()
+    self.mock_post.return_value = get_labels_graphql_response(['one', 'two'])
 
     preview = self.gh.preview_create(TAG_ACTIVITY)
     self.assertIsNone(preview.error_plain, preview)
@@ -1147,11 +1066,10 @@ class GitHubTest(testutil.TestCase):
       preview.description, preview)
 
   def test_preview_sanitizes_comment_body_html(self):
-    self.expect_rest(REST_COMMENT % ('foo', 'bar', 'issues', 456), {
+    self.mock_get.return_value = requests_response({
       **COMMENT_REST,
       'body': 'hello <script>alert("xss")</script> world',
     })
-    self.mox.ReplayAll()
 
     preview = self.gh.preview_create(COMMENT_REACTION_OBJ_INPUT)
     self.assertIn('hello world', preview.description)
@@ -1159,22 +1077,17 @@ class GitHubTest(testutil.TestCase):
     self.assertNotIn('alert', preview.description)
 
   def test_preview_sanitizes_issue_title_html(self):
-    self.expect_graphql(json={
-      'query': github.GRAPHQL_ISSUE_OR_PR % {
-        'owner': 'foo',
-        'repo': 'bar',
-        'number': 123,
-      },
-    }, response={
-      'repository': {
-        'issueOrPullRequest': {
-          **ISSUE_GRAPHQL,
-          'title': 'title <em>with</em> <script>alert("xss")</script> html',
+    self.mock_post.side_effect = [
+      graphql_response({
+        'repository': {
+          'issueOrPullRequest': {
+            **ISSUE_GRAPHQL,
+            'title': 'title <em>with</em> <script>alert("xss")</script> html',
+          },
         },
-      },
-    })
-    rendered = self.expect_markdown_render('i have something to say here')
-    self.mox.ReplayAll()
+      }),
+      requests_response('<p>rendered!</p>'),
+    ]
 
     preview = self.gh.preview_create(COMMENT_OBJ)
     self.assertIn('title with html', preview.description)
@@ -1182,8 +1095,8 @@ class GitHubTest(testutil.TestCase):
     self.assertNotIn('alert', preview.description)
 
   def test_preview_sanitizes_label_html(self):
-    self.expect_graphql_get_labels(['<em>safe</em><script>xss</script>', 'other'])
-    self.mox.ReplayAll()
+    self.mock_post.return_value = get_labels_graphql_response(
+      ['<em>safe</em><script>xss</script>', 'other'])
 
     preview = self.gh.preview_create({
       **TAG_ACTIVITY,
@@ -1202,8 +1115,7 @@ class GitHubTest(testutil.TestCase):
     self.assertEqual('No tags found in tag post!', result.error_plain)
 
   def test_create_add_label_no_matching(self):
-    self.expect_graphql_get_labels(['one', 'two'])
-    self.mox.ReplayAll()
+    self.mock_post.return_value = get_labels_graphql_response(['one', 'two'])
 
     activity = copy.deepcopy(TAG_ACTIVITY)
     activity['object'] = [{'displayName': 'three'}]
@@ -1219,22 +1131,28 @@ class GitHubTest(testutil.TestCase):
       }))
 
   def test_create_convert_profile_url_to_mention(self):
-    self.expect_graphql_issue()
-    rendered = self.expect_markdown_render('x @foo y')
-    self.mox.ReplayAll()
+    self.mock_post.side_effect = [
+      ISSUE_GRAPHQL_RESPONSE,
+      requests_response('<p>rendered!</p>'),
+    ]
 
     comment = copy.deepcopy(COMMENT_OBJ)
     comment['content'] = 'x https://github.com/foo y'
     self.gh.preview_create(comment)
+    self.assert_post(REST_MARKDOWN, json={'text': 'x @foo y', 'mode': 'gfm',
+                                         'context': 'foo/bar'})
 
   def test_create_profile_url_in_html_link(self):
-    self.expect_graphql_issue()
-    rendered = self.expect_markdown_render('[text](https://github.com/foo)')
-    self.mox.ReplayAll()
+    self.mock_post.side_effect = [
+      ISSUE_GRAPHQL_RESPONSE,
+      requests_response('<p>rendered!</p>'),
+    ]
 
     comment = copy.deepcopy(COMMENT_OBJ)
     comment['content'] = '<a href="https://github.com/foo">text</a>'
     self.gh.preview_create(comment)
+    self.assert_post(REST_MARKDOWN, json={'text': '[text](https://github.com/foo)',
+                                         'mode': 'gfm', 'context': 'foo/bar'})
 
   def test_create_convert_profile_url_to_mention_unchanged(self):
     comment = copy.deepcopy(COMMENT_OBJ)
@@ -1247,13 +1165,12 @@ class GitHubTest(testutil.TestCase):
         'https://github.com/not@user+name',
     ):
       with self.subTest(input):
-        self.tearDown()
-        self.mox.UnsetStubs()
-        self.mox.ResetAll()
-        self.setUp()
-        self.expect_graphql_issue()
-        rendered = self.expect_markdown_render(input)
-
-        self.mox.ReplayAll()
+        self.mock_post.reset_mock()
+        self.mock_post.side_effect = [
+          ISSUE_GRAPHQL_RESPONSE,
+          requests_response('<p>rendered!</p>'),
+        ]
         comment['content'] = input
         self.gh.preview_create(comment)
+        self.assert_post(REST_MARKDOWN, json={'text': input, 'mode': 'gfm',
+                                              'context': 'foo/bar'})

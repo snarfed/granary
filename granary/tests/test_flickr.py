@@ -1,11 +1,12 @@
 """Unit tests for flickr.py"""
 import copy
-from mox3 import mox
 import socket
-import urllib.parse
+from unittest.mock import patch
+import urllib.error, urllib.parse
 
 from oauth_dropins import flickr_auth
 from webutil import testutil, util
+from webutil.testutil import requests_response, UrlopenResult
 from webutil.util import json_dumps, json_loads
 import requests
 
@@ -556,20 +557,26 @@ TAG_REPLY_ACTIVITY = {
   },
 }
 
-# uploads send oauth params along with the post data; it's useful to
-# be able to check that they exist, but ignore their values.
-IGNORED_OAUTH_PARAMS = [
-  ('oauth_nonce', mox.IgnoreArg()),
-  ('oauth_timestamp', mox.IgnoreArg()),
-  ('oauth_version', mox.IgnoreArg()),
-  ('oauth_signature_method', mox.IgnoreArg()),
-  ('oauth_consumer_key', mox.IgnoreArg()),
-  ('oauth_token', mox.IgnoreArg()),
-  ('oauth_signature', mox.IgnoreArg()),
+def api_result(body):
+  """A fake urlopen result wrapping a Flickr API JSON (or download) body."""
+  return UrlopenResult(200, body)
+
+# urls and NSIDs for the three people tagged in OBJECT, looked up by several
+# tests via flickr.urls.lookupUser
+LOOKUP_USERS = [
+  ('https://www.flickr.com/photos/vanderven/', '123@1'),
+  ('https://flickr.com/people/oskarsson/', '456@4'),
+  ('https://flickr.com/photos/382@123/', '382@123'),
 ]
 
+def lookup_users_results():
+  # fresh UrlopenResults each call; their StringIO bodies are consumed on read,
+  # so they can't be shared across tests.
+  return [api_result(json_dumps({'user': {'id': user_id}}))
+          for _, user_id in LOOKUP_USERS]
 
-class FlickrTest(testutil.TestCase):
+
+class FlickrTest(testutil.BaseTestCase):
 
   def setUp(self):
     super(FlickrTest, self).setUp()
@@ -577,98 +584,104 @@ class FlickrTest(testutil.TestCase):
     flickr_auth.FLICKR_APP_SECRET = 'fake'
     self.flickr = flickr.Flickr('key', 'secret')
 
-  def expect_call_api_method(self, method, params, result):
-    full_params = {
+    # Flickr API calls and image/video downloads both go through urlopen;
+    # uploads use session.post. (session.get is only used to fetch profile
+    # HTML in two tests, so those patch it inline.)
+    self.mock_urlopen = self.start_patch(util.urllib.request, 'urlopen')
+    self.mock_post = self.start_patch(util.session, 'post')
+
+  def start_patch(self, obj, attr):
+    # TODO: replace with self.enterContext(patch.object(...)) once our Python
+    # floor is >= 3.11.
+    patcher = patch.object(obj, attr)
+    mock = patcher.start()
+    self.addCleanup(patcher.stop)
+    return mock
+
+  def api_url(self, method, params):
+    params = {
       'nojsoncallback': 1,
       'format': 'json',
       'method': method,
-    }
-    full_params.update(params)
-    return self.expect_urlopen('https://api.flickr.com/services/rest?'
-                               + urllib.parse.urlencode(full_params), result)
+    } | params
+    return 'https://api.flickr.com/services/rest?' + urllib.parse.urlencode(params)
+
+  def assert_api_calls(self, *expected):
+    """Asserts the sequence of urlopen calls. Each arg is (method, params) for
+    a Flickr API call, or a plain URL string for a download."""
+    actual = [c.args[0].get_full_url() if hasattr(c.args[0], 'get_full_url')
+              else c.args[0]
+              for c in self.mock_urlopen.call_args_list]
+    expected_urls = [self.api_url(*e) if isinstance(e, tuple) else e
+                     for e in expected]
+    self.assertEqual(expected_urls, actual)
 
   def test_get_actor(self):
-    self.expect_call_api_method('flickr.people.getInfo', {
-      'user_id': '39216764@N00'
-    }, json_dumps(PERSON_INFO))
+    self.mock_urlopen.return_value = api_result(json_dumps(PERSON_INFO))
+    with patch.object(util.session, 'get', return_value=requests_response(
+        PROFILE_HTML, url='https://www.flickr.com/people/kindofblue115/')) as mock_get:
+      self.assert_equals(ACTOR, self.flickr.get_actor('39216764@N00'))
 
-    self.expect_requests_get(
-      'https://www.flickr.com/people/kindofblue115/',
-      PROFILE_HTML)
-
-    self.mox.ReplayAll()
-    self.assert_equals(ACTOR, self.flickr.get_actor('39216764@N00'))
+    self.assert_api_calls(('flickr.people.getInfo', {'user_id': '39216764@N00'}))
+    self.assertEqual('https://www.flickr.com/people/kindofblue115/',
+                     mock_get.call_args.args[0])
 
   def test_get_actor_default(self):
     # extra call to find the user id
-    self.expect_call_api_method(
-      'flickr.people.getLimits', {}, json_dumps({'person': {
+    self.mock_urlopen.side_effect = [
+      api_result(json_dumps({'person': {
         'nsid': '39216764@N00',
         'photos': {'maxdisplaypx': '1024', 'maxupload': '209715200'},
         'videos': {'maxduration': '180', 'maxupload': '1073741824'}
-      }, 'stat': 'ok'}))
+      }, 'stat': 'ok'})),
+      api_result(json_dumps(PERSON_INFO)),
+    ]
+    with patch.object(util.session, 'get', return_value=requests_response(
+        PROFILE_HTML, url='https://www.flickr.com/people/kindofblue115/')):
+      self.assert_equals(ACTOR, self.flickr.get_actor())
 
-    self.expect_call_api_method(
-      'flickr.people.getInfo', {'user_id': '39216764@N00'},
-      json_dumps(PERSON_INFO))
-
-    self.expect_requests_get(
-      'https://www.flickr.com/people/kindofblue115/',
-      PROFILE_HTML)
-
-    self.mox.ReplayAll()
-    self.assert_equals(ACTOR, self.flickr.get_actor())
+    self.assert_api_calls(
+      ('flickr.people.getLimits', {}),
+      ('flickr.people.getInfo', {'user_id': '39216764@N00'}))
 
   def test_get_activities_defaults(self):
-    self.expect_call_api_method(
-      'flickr.photos.getContactsPhotos', {
+    self.mock_urlopen.return_value = api_result(json_dumps(CONTACTS_PHOTOS))
+    self.assert_equals(CONTACTS_PHOTOS_ACTIVITIES, self.flickr.get_activities(count=12))
+    self.assert_api_calls(('flickr.photos.getContactsPhotos', {
         'extras': flickr.Flickr.API_EXTRAS,
         'per_page': 12,
-      }, json_dumps(CONTACTS_PHOTOS))
-
-    self.mox.ReplayAll()
-    self.assert_equals(CONTACTS_PHOTOS_ACTIVITIES, self.flickr.get_activities(count=12))
+      }))
 
   def test_get_activities_specific(self):
-    self.expect_call_api_method(
-      'flickr.photos.getInfo', {
-        'photo_id': '5227922370',
-      }, json_dumps(PHOTO_INFO))
+    self.mock_urlopen.return_value = api_result(json_dumps(PHOTO_INFO))
 
-    self.mox.ReplayAll()
-    self.assert_equals(
-      [ACTIVITY],
-      self.flickr.get_activities(activity_id='5227922370'))
+    resp = self.flickr.get_activities(activity_id='5227922370')
+    self.assert_equals([ACTIVITY], resp)
+    self.assert_api_calls(('flickr.photos.getInfo', {'photo_id': '5227922370'}))
 
   def test_get_activities_with_comments(self):
-    self.expect_call_api_method(
-      'flickr.photos.getInfo', {
-        'photo_id': '5227922370',
-      }, json_dumps(PHOTO_INFO))
+    self.mock_urlopen.side_effect = [
+      api_result(json_dumps(PHOTO_INFO)),
+      api_result(json_dumps(PHOTO_COMMENTS)),
+    ]
 
-    self.expect_call_api_method('flickr.photos.comments.getList', {
-        'photo_id': '5227922370',
-    }, json_dumps(PHOTO_COMMENTS))
-
-    self.mox.ReplayAll()
-    self.assert_equals(
-      [ACTIVITY_WITH_COMMENTS], self.flickr.get_activities(
-        activity_id='5227922370', fetch_replies=True))
+    resp = self.flickr.get_activities(activity_id='5227922370', fetch_replies=True)
+    self.assert_equals([ACTIVITY_WITH_COMMENTS], resp)
+    self.assert_api_calls(
+      ('flickr.photos.getInfo', {'photo_id': '5227922370'}),
+      ('flickr.photos.comments.getList', {'photo_id': '5227922370'}))
 
   def test_get_activities_with_faves(self):
-    self.expect_call_api_method(
-      'flickr.photos.getInfo', {
-        'photo_id': '5227922370',
-      }, json_dumps(PHOTO_INFO))
+    self.mock_urlopen.side_effect = [
+      api_result(json_dumps(PHOTO_INFO)),
+      api_result(json_dumps(PHOTO_FAVORITES)),
+    ]
 
-    self.expect_call_api_method('flickr.photos.getFavorites', {
-        'photo_id': '5227922370',
-    }, json_dumps(PHOTO_FAVORITES))
-
-    self.mox.ReplayAll()
-    self.assert_equals(
-      [ACTIVITY_WITH_FAVES], self.flickr.get_activities(
-        activity_id='5227922370', fetch_likes=True))
+    resp = self.flickr.get_activities(activity_id='5227922370', fetch_likes=True)
+    self.assert_equals([ACTIVITY_WITH_FAVES], resp)
+    self.assert_api_calls(
+      ('flickr.photos.getInfo', {'photo_id': '5227922370'}),
+      ('flickr.photos.getFavorites', {'photo_id': '5227922370'}))
 
   def test_favorite_without_display_name(self):
     """Make sure faves fall back to the username if the user did not
@@ -677,18 +690,11 @@ class FlickrTest(testutil.TestCase):
     faves = copy.deepcopy(PHOTO_FAVORITES)
     del faves['photo']['person'][0]['realname']
 
-    self.expect_call_api_method(
-      'flickr.photos.getInfo', {
-        'photo_id': '5227922370',
-      }, json_dumps(PHOTO_INFO))
-
-    self.expect_call_api_method('flickr.photos.getFavorites', {
-        'photo_id': '5227922370',
-    }, json_dumps(faves))
-
-    self.mox.ReplayAll()
-    resp = self.flickr.get_activities(
-      activity_id='5227922370', fetch_likes=True)
+    self.mock_urlopen.side_effect = [
+      api_result(json_dumps(PHOTO_INFO)),
+      api_result(json_dumps(faves)),
+    ]
+    resp = self.flickr.get_activities(activity_id='5227922370', fetch_likes=True)
 
     like = next(tag for tag in resp[0]['object']['tags']
                 if tag.get('verb') == 'like')
@@ -701,18 +707,11 @@ class FlickrTest(testutil.TestCase):
     comments = copy.deepcopy(PHOTO_COMMENTS)
     del comments['comments']['comment'][0]['realname']
 
-    self.expect_call_api_method(
-      'flickr.photos.getInfo', {
-        'photo_id': '5227922370',
-      }, json_dumps(PHOTO_INFO))
-
-    self.expect_call_api_method('flickr.photos.comments.getList', {
-        'photo_id': '5227922370',
-    }, json_dumps(comments))
-
-    self.mox.ReplayAll()
-    resp = self.flickr.get_activities(
-      activity_id='5227922370', fetch_replies=True)
+    self.mock_urlopen.side_effect = [
+      api_result(json_dumps(PHOTO_INFO)),
+      api_result(json_dumps(comments)),
+    ]
+    resp = self.flickr.get_activities(activity_id='5227922370', fetch_replies=True)
 
     comment = resp[0]['object']['replies']['items'][0]
     self.assert_equals('if winter ends', comment['author']['displayName'])
@@ -721,37 +720,23 @@ class FlickrTest(testutil.TestCase):
     """get_comment should fetch the list of comments for a photo, and then
     iteratively look for the comment by id.
     """
-    self.expect_call_api_method(
-      'flickr.photos.comments.getList', {
-        'photo_id': '5227922370',
-      }, json_dumps(PHOTO_COMMENTS))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = api_result(json_dumps(PHOTO_COMMENTS))
     self.assert_equals(COMMENT_OBJS[0], self.flickr.get_comment(
       '4942564', '5227922370'))
+    self.assert_api_calls(('flickr.photos.comments.getList',
+                           {'photo_id': '5227922370'}))
 
   def test_get_comment_with_activity(self):
     # skips API call
-    got = self.flickr.get_comment('4942564', activity=ACTIVITY_WITH_COMMENTS)
-    self.assert_equals(COMMENT_OBJS[0], got)
+    resp = self.flickr.get_comment('4942564', activity=ACTIVITY_WITH_COMMENTS)
+    self.assert_equals(COMMENT_OBJS[0], resp)
 
   def test_search_raises_not_implemented(self):
     with self.assertRaises(NotImplementedError):
       self.flickr.get_activities(group_id=source.SEARCH, search_query='foo')
 
-  def _expect_lookup_users(self):
-    """Several tests use this to lookup Flickr NSIDs for the three people
-    tagged in OBJECT.
-    """
-    for url, user_id in [('https://www.flickr.com/photos/vanderven/', '123@1'),
-                         ('https://flickr.com/people/oskarsson/', '456@4'),
-                         ('https://flickr.com/photos/382@123/', '382@123')]:
-      self.expect_call_api_method(
-        'flickr.urls.lookupUser', {'url': url},
-        json_dumps({'user': {'id': user_id}}))
-
   def test_preview_create_photo(self):
-    self._expect_lookup_users()
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = lookup_users_results()
     preview = self.flickr.preview_create(
       OBJECT, include_link=source.INCLUDE_LINK)
     self.assertEqual('post', preview.description)
@@ -778,92 +763,89 @@ class FlickrTest(testutil.TestCase):
     self.assertIn('#indieweb #homebrew website club', preview.content)
     self.assertIn('57.7020124, 11.6135007', preview.content)
 
+  def assert_upload(self, expected_data, file_content):
+    """Asserts the upload session.post: URL, data tuples, oauth params, file."""
+    call = self.mock_post.call_args
+    self.assertEqual('https://up.flickr.com/services/upload', call.args[0])
+    data = call.kwargs['data']
+    for item in expected_data:
+      self.assertIn(item, data)
+    data_keys = [k for k, _ in data]
+
+    # uploads sign the request, so the post data includes these oauth params
+    # along with the photo metadata. check that they exist, but ignore values.
+    for key in ('oauth_nonce', 'oauth_timestamp', 'oauth_version',
+                'oauth_signature_method', 'oauth_consumer_key', 'oauth_token',
+                'oauth_signature'):
+      self.assertIn(key, data_keys)
+
+    self.assertEqual(file_content, call.kwargs['files']['photo'].read())
+
   def test_create_photo_success(self):
     """Check that successfully uploading an image returns the expected
     response.
     """
-    data = [
-      ('title', 'Photo #164'),
-      ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb'
-       '\n\n(Originally published at: https://jeena.net/photos/164)'),
-      ('tags', 'indieweb,"homebrew website club"'),
-    ] + IGNORED_OAUTH_PARAMS
-
-    self._expect_lookup_users()
-
-    # fetch the image
-    self.expect_urlopen('https://jeena.net/photos/IMG_20150729_181700.jpg',
-                        'picture response')
-
-    # upload to Flickr
-    self.expect_requests_post(
-      'https://up.flickr.com/services/upload',
-      data=data, files={'photo': 'picture response'},
-      response="""\
+    self.mock_urlopen.side_effect = lookup_users_results() + [
+      api_result('picture response'),  # fetch the image
+      # lookup user id, then path alias
+      api_result(json_dumps({'person': {'nsid': '39216764@N00'}})),
+      api_result(json_dumps({'person': {'nsid': '39216764@N00',
+                                             'path_alias': 'kindofblue115'}})),
+      # add person tags (×3) then location
+      api_result('{"stat": "ok"}'),
+      api_result('{"stat": "ok"}'),
+      api_result('{"stat": "ok"}'),
+      api_result('{"stat": "ok"}'),
+    ]
+    self.mock_post.return_value = requests_response("""\
 <?xml version="1.0" encoding="utf-8" ?>
 <rsp stat="ok">
   <photoid>9876</photoid>
 </rsp>
 """)
 
-    # lookup user id
-    self.expect_call_api_method(
-      'flickr.people.getLimits', {},
-      json_dumps({'person': {'nsid': '39216764@N00'}}))
-
-    # lookup path alias
-    self.expect_call_api_method(
-      'flickr.people.getInfo', {'user_id': '39216764@N00'},
-      json_dumps({'person': {'nsid': '39216764@N00',
-                             'path_alias': 'kindofblue115'}}))
-
-    # add person tags
-    for user_id in ['123@1', '382@123', '456@4']:
-      self.expect_call_api_method(
-        'flickr.photos.people.add', {'photo_id': '9876', 'user_id': user_id},
-        '{"stat": "ok"}')
-
-    # add location
-    self.expect_call_api_method(
-      'flickr.photos.geo.setLocation', {
-        'photo_id': '9876', 'lat': 57.7020124, 'lon': 11.6135007
-      }, '{"stat": "ok"}')
-
-    self.mox.ReplayAll()
     self.assertEqual({
       'id': '9876',
       'url': 'https://www.flickr.com/photos/kindofblue115/9876/',
       'type': 'post',
     }, self.flickr.create(OBJECT, include_link=source.INCLUDE_LINK).content)
 
+    self.assert_upload([
+      ('title', 'Photo #164'),
+      ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb'
+       '\n\n(Originally published at: https://jeena.net/photos/164)'),
+      ('tags', 'indieweb,"homebrew website club"'),
+    ], 'picture response')
+    self.assert_api_calls(
+      *[('flickr.urls.lookupUser', {'url': url}) for url, _ in LOOKUP_USERS],
+      'https://jeena.net/photos/IMG_20150729_181700.jpg',
+      ('flickr.people.getLimits', {}),
+      ('flickr.people.getInfo', {'user_id': '39216764@N00'}),
+      ('flickr.photos.people.add', {'photo_id': '9876', 'user_id': '123@1'}),
+      ('flickr.photos.people.add', {'photo_id': '9876', 'user_id': '382@123'}),
+      ('flickr.photos.people.add', {'photo_id': '9876', 'user_id': '456@4'}),
+      ('flickr.photos.geo.setLocation',
+       {'photo_id': '9876', 'lat': 57.7020124, 'lon': 11.6135007}))
+
   def test_create_photo_failure(self):
     """If uploading returns a failure, interpret it correctly.
     """
-    data = [
-      ('title', 'Photo #164'),
-      ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb'),
-      ('tags', 'indieweb,"homebrew website club"'),
-    ] + IGNORED_OAUTH_PARAMS
-
-    self._expect_lookup_users()
-
-    # fetch the image
-    self.expect_urlopen('https://jeena.net/photos/IMG_20150729_181700.jpg',
-                        'picture response')
-
-    # upload to Flickr
-    self.expect_requests_post(
-      'https://up.flickr.com/services/upload',
-      data=data, files={'photo': 'picture response'},
-      response="""\
+    self.mock_urlopen.side_effect = lookup_users_results() + [
+      api_result('picture response'),  # fetch the image
+    ]
+    self.mock_post.return_value = requests_response("""\
 <?xml version="1.0" encoding="utf-8" ?>
 <rsp stat="fail">
   <err code="98" msg="Login Failed" />
 </rsp>
 """)
-    self.mox.ReplayAll()
 
     self.assertRaises(urllib.error.HTTPError, self.flickr.create, OBJECT)
+    self.assert_upload([
+      ('title', 'Photo #164'),
+      ('description', 'First Homebrew Website Club in Gothenburg #IndieWeb'),
+      ('tags', 'indieweb,"homebrew website club"'),
+    ], 'picture response')
 
   def test_create_video_success(self):
     self.flickr._user_id = '39216764@N00'
@@ -888,20 +870,13 @@ class FlickrTest(testutil.TestCase):
       preview.content)
 
     # create
-    self.expect_urlopen('https://jeena.net/videos/xyz.mp4', 'video response')
-    self.expect_requests_post(
-      'https://up.flickr.com/services/upload',
-      data=[
-        ('description', 'check\nout'),
-      ] + IGNORED_OAUTH_PARAMS,
-      files={'photo': 'video response'},
-      response="""\
+    self.mock_urlopen.return_value = api_result('video response')
+    self.mock_post.return_value = requests_response("""\
 <?xml version="1.0" encoding="utf-8" ?>
 <rsp stat="ok">
   <photoid>9876</photoid>
 </rsp>
 """)
-    self.mox.ReplayAll()
 
     self.assert_equals({
       'id': '9876',
@@ -910,6 +885,9 @@ class FlickrTest(testutil.TestCase):
       'granary_message':
         "Note that videos take time to process before they're visible.",
     }, self.flickr.create(obj).content)
+    self.assertEqual('https://jeena.net/videos/xyz.mp4',
+                     self.mock_urlopen.call_args.args[0].get_full_url())
+    self.assert_upload([('description', 'check\nout')], 'video response')
 
   def test_create_strips_video_tag_and_name_matches_content(self):
     preview = self.flickr.preview_create({
@@ -922,14 +900,10 @@ class FlickrTest(testutil.TestCase):
     self.assertNotIn('should hide', preview)
 
   def test_create_video_too_big(self):
-    self.expect_urlopen('http://foo/xyz.mp4', 'video response')
-    self.expect_requests_post(
-      'https://up.flickr.com/services/upload',
-      data=[('description', 'foo')] + IGNORED_OAUTH_PARAMS,
-      files={'photo': 'video response'}
-    ).AndRaise(requests.exceptions.ConnectionError(socket.timeout(
-      'Request exceeds 10 MiB limit for URL: https://up.flickr.com/services/upload')))
-    self.mox.ReplayAll()
+    self.mock_urlopen.return_value = api_result('video response')
+    self.mock_post.side_effect = requests.exceptions.ConnectionError(
+      socket.timeout('Request exceeds 10 MiB limit for URL: '
+                     'https://up.flickr.com/services/upload'))
 
     err = 'Sorry, photos and videos must be under 10MB.'
     self.assertEqual(
@@ -940,6 +914,8 @@ class FlickrTest(testutil.TestCase):
         'url': 'http://foo/xyz',
         'content': 'foo',
       }))
+    # the upload was attempted (with oauth params) before it failed
+    self.assert_upload([('description', 'foo')], 'video response')
 
   def test_preview_create_comment(self):
     preview = self.flickr.preview_create(
@@ -954,11 +930,7 @@ class FlickrTest(testutil.TestCase):
       preview.content)
 
   def test_create_comment(self):
-    self.expect_call_api_method('flickr.photos.comments.addComment', {
-      'photo_id': '21904325000',
-      'comment_text': 'punkins!\n\n'
-      '(Originally published at: https://kylewm.com/2015/11/punkins)',
-    }, json_dumps({
+    self.mock_urlopen.return_value = api_result(json_dumps({
       'comment': {
         'id': '4942564-21904325000-72157661220102352',
         'author': '39216764@N00',
@@ -973,8 +945,6 @@ class FlickrTest(testutil.TestCase):
       'stat': 'ok'
     }))
 
-    self.mox.ReplayAll()
-
     reply_content = self.flickr.create(
       REPLY_OBJ, include_link=source.INCLUDE_LINK).content
     self.assertEqual(
@@ -984,19 +954,20 @@ class FlickrTest(testutil.TestCase):
       'https://www.flickr.com/photos/marietta_wood_works/21904325000/'
       '#comment72157661220102352',
       reply_content.get('url'))
+    self.assert_api_calls(('flickr.photos.comments.addComment', {
+      'photo_id': '21904325000',
+      'comment_text': 'punkins!\n\n'
+      '(Originally published at: https://kylewm.com/2015/11/punkins)',
+    }))
 
   # https://github.com/snarfed/bridgy/issues/692
   def test_create_comment_encodes_unicode(self):
-    self.expect_call_api_method('flickr.photos.comments.addComment', {
-      'photo_id': '28733650665',
-      'comment_text': 'these ‘are smart’ quotes'.encode('utf-8'),
-    }, json_dumps({
+    self.mock_urlopen.return_value = api_result(json_dumps({
       'comment': {
         'id': '123456',
         'permalink': 'https://www.flickr.com/comment/123456',
       },
     }))
-    self.mox.ReplayAll()
 
     reply_content = self.flickr.create({
       'objectType': 'comment',
@@ -1007,6 +978,10 @@ class FlickrTest(testutil.TestCase):
     }).content
     self.assertEqual('123456', reply_content['id'])
     self.assertEqual('https://www.flickr.com/comment/123456', reply_content['url'])
+    self.assert_api_calls(('flickr.photos.comments.addComment', {
+      'photo_id': '28733650665',
+      'comment_text': 'these ‘are smart’ quotes'.encode('utf-8'),
+    }))
 
   def test_create_favorite_with_like_verb(self):
     self._test_create_favorite('like')
@@ -1017,13 +992,10 @@ class FlickrTest(testutil.TestCase):
   def _test_create_favorite(self, verb):
     """Favoriting a photo generates a URL using a fake fragment id
     """
-    self.expect_call_api_method(
-      'flickr.favorites.add', {'photo_id': '21904325000'},
-      json_dumps({'stat': 'ok'}))
-    self.expect_call_api_method(
-      'flickr.people.getLimits', {},
-      json_dumps({'person': {'nsid': '39216764@N00'}}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      api_result(json_dumps({'stat': 'ok'})),
+      api_result(json_dumps({'person': {'nsid': '39216764@N00'}})),
+    ]
 
     obj = copy.deepcopy(LIKE_OBJ)
     obj['verb'] = verb
@@ -1031,6 +1003,9 @@ class FlickrTest(testutil.TestCase):
       'type': 'like',
       'url': 'https://www.flickr.com/photos/marietta_wood_works/21904325000/in/contacts/#favorited-by-39216764@N00',
     }, self.flickr.create(obj).content)
+    self.assert_api_calls(
+      ('flickr.favorites.add', {'photo_id': '21904325000'}),
+      ('flickr.people.getLimits', {}))
 
   def test_photo_to_activity_uses_path_alias_if_username_has_spaces(self):
     photo = PHOTO_INFO['photo']
@@ -1054,18 +1029,19 @@ class FlickrTest(testutil.TestCase):
     preview = self.flickr.preview_create(TAG_REPLY_ACTIVITY)
     self.assertIn('add the tags <em>bar</em>, <em>foo</em>', preview.description)
 
-    self.expect_call_api_method(
-      'flickr.photos.addTags', {'photo_id': '21904325000', 'tags': 'bar foo'}, '')
-    self.expect_call_api_method(
-      'flickr.people.getLimits', {},
-      json_dumps({'person': {'nsid': '39216764@N00'}}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      api_result(''),
+      api_result(json_dumps({'person': {'nsid': '39216764@N00'}})),
+    ]
 
     self.assertEqual({
       'type': 'tag',
       'url': 'https://www.flickr.com/photos/marietta_wood_works/21904325000/in/contacts/#tagged-by-39216764@N00',
       'tags': ['bar', 'foo'],
     }, self.flickr.create(TAG_REPLY_ACTIVITY).content)
+    self.assert_api_calls(
+      ('flickr.photos.addTags', {'photo_id': '21904325000', 'tags': 'bar foo'}),
+      ('flickr.people.getLimits', {}))
 
   def test_preview_tag_reply_sanitizes_html(self):
     preview = self.flickr.preview_create({
@@ -1081,23 +1057,23 @@ class FlickrTest(testutil.TestCase):
     self.assertNotIn('alert', preview.description)
 
   def test_delete(self):
-    self.expect_call_api_method('flickr.photos.delete', {'photo_id': '789'}, '')
-    self.expect_call_api_method(
-      'flickr.people.getLimits', {},
-      json_dumps({'person': {'nsid': '39216764@N00'}}))
-    self.mox.ReplayAll()
+    self.mock_urlopen.side_effect = [
+      api_result(''),
+      api_result(json_dumps({'person': {'nsid': '39216764@N00'}})),
+    ]
 
     resp = self.flickr.delete('789')
     self.assertEqual({
       'type': 'delete',
       'url': 'https://www.flickr.com/photos/39216764@N00/789/',
     }, resp.content)
+    self.assert_api_calls(
+      ('flickr.photos.delete', {'photo_id': '789'}),
+      ('flickr.people.getLimits', {}))
 
   def test_preview_delete(self):
-    self.expect_call_api_method(
-      'flickr.people.getLimits', {},
+    self.mock_urlopen.return_value = api_result(
       json_dumps({'person': {'nsid': '39216764@N00'}}))
-    self.mox.ReplayAll()
 
     preview = self.flickr.preview_delete('789')
     self.assertEqual(

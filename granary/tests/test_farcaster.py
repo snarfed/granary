@@ -80,6 +80,7 @@ user_data_body {{
 class FarcasterTest(testutil.TestCase):
 
   def setUp(self):
+    super().setUp()
     Farcaster.get_fid.cache_clear()
 
   def test_cast(self):
