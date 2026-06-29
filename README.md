@@ -326,6 +326,7 @@ _Non-breaking changes:_
   * Optimize `is_content_html` to avoid full HTML parsing in most cases, eg when `content` has no `<` or `&` characters.
   * `targets`: don't add trailing slashes to output targets.
 * `as2`
+  * `address`: fix handling of actor ids with a path prefix, eg Mastodon's new `https://a.b/ap/users/123` style.
   * `from_as1`:
     * Preserve the input object's `@context` field, and extend it, instead of overwriting it.
   * `to_as1`:

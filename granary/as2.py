@@ -159,7 +159,7 @@ SERVER_ACTOR_PREFIXES = (
 )
 
 # a basic, incomplete pattern for fediverse URLs and AP ids
-URL_RE = re.compile(r'https?://(?P<server>.+)/(users/|profile/|@)(?P<username>[^/?]+)')
+URL_RE = re.compile(r'https?://(?P<server>[^/]+)(/[^/]+)*?/(users/|profile/|@)(?P<username>[^/?]+)')
 
 
 def get_urls(obj, key='url'):

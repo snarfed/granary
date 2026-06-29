@@ -583,6 +583,15 @@ class ActivityStreams2Test(testutil.TestCase):
       with self.subTest(actor=actor):
         self.assertEqual('@me@a.b', as2.address(actor))
 
+    # path prefix before the /users/ marker, eg Mastodon 4.5+ (?) actor ids
+    # like https://mastodon.example/ap/users/123456789
+    for actor in [
+        'https://a.b/ap/users/123',
+        {'id': 'https://a.b/ap/users/123'},
+    ]:
+      with self.subTest(actor=actor):
+        self.assertEqual('@123@a.b', as2.address(actor))
+
     for bad in None, {}, '', {'a': 'b'}, {'preferredUsername': 'me'}:
       with self.subTest(actor=bad):
         self.assertIsNone(as2.address(bad))
