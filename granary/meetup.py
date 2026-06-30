@@ -56,7 +56,8 @@ class Meetup(source.Source):
     logger.debug(f'Creating RSVP={response} for {urlname} {event_id}')
     return meetup.urlopen_bearer_token(url, self.access_token, data=params)
 
-  def _create(self, obj, preview=False, include_link=source.OMIT_LINK, ignore_formatting=False):
+  def _create(self, obj, preview=False, include_link=source.OMIT_LINK,
+              ignore_formatting=False):
     if preview not in (False, True):
       return self.return_error('Invalid Preview parameter, must be True or False')
     verb = as1.object_type(obj)
@@ -97,7 +98,7 @@ class Meetup(source.Source):
 
     post_url = obj.get('url')
     if not post_url:
-      return self.return_error('Missing the post\'s url')
+      return self.return_error("Missing the post's url")
 
     create_resp = {
       'url': f'{event_url}#rsvp-by-{urllib.parse.quote_plus(post_url)}',

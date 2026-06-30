@@ -224,8 +224,14 @@ class MeetupTest(testutil.TestCase):
         self.assertIn('From Meetup: 498 error: foo biff', result.error_plain)
         self.assertIn('From Meetup: 498 error: foo biff', result.error_html)
 
+    @testutil.head_returns_200
     def test_create_rsvp_with_invalid_url(self):
-        for url in ['https://meetup.com/PHPMiNDS-in-Nottingham/', 'https://meetup.com/PHPMiNDS-in-Nottingham/events', 'https://meetup.com/PHPMiNDS-in-Nottingham/events/', 'https://meetup.com//events/264008439']:
+        for url in [
+            'https://meetup.com/PHPMiNDS-in-Nottingham/',
+            'https://meetup.com/PHPMiNDS-in-Nottingham/events',
+            'https://meetup.com/PHPMiNDS-in-Nottingham/events/',
+            'https://meetup.com//events/264008439',
+        ]:
             rsvp = copy.deepcopy(RSVP_ACTIVITY)
             rsvp['object'][0]['url'] = url
             result = self.meetup.create(rsvp)
