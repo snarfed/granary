@@ -5,9 +5,10 @@ https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md
 https://snapchain.farcaster.xyz/
 
 TODO:
-* rel-alternate links via "Social Attestations." so complicated :(
+
+* rel-alternate links via "Social Attestations." so complicated.
   https://github.com/farcasterxyz/protocol/discussions/199
-* mapping FIDs <=> DNS domains. unclear whether/how much this is adopted
+* mapping FIDs <=> DNS domains. unclear whether/how much this is adopted.
   https://github.com/farcasterxyz/protocol/discussions/106
 * user location, from https://github.com/farcasterxyz/protocol/discussions/196
   (it's a geo:... URL string, https://tools.ietf.org/html/rfc5870, in

@@ -711,7 +711,7 @@ def quoted_posts(obj):
 def mentions(obj):
   """Returns an object or activity's mention tags.
 
-  Their ``url`` fields are extracted and returned, not ``id`, but in the common case
+  Their ``url`` fields are extracted and returned, not ``id``, but in the common case
   the values are interpreted as ids.
 
   Arg:

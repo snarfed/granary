@@ -223,61 +223,60 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
     git pull
     ```
 1. Run the unit tests.
-   ```sh
-   source local/bin/activate.csh
-   CLOUDSDK_CORE_PROJECT=granary-demo gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
-   sleep 5
-   python -m unittest discover
-   kill %1
-   ```
+    ```sh
+    source .venv/bin/activate.csh
+    gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
+    sleep 5
+    python -m unittest discover
+    kill %1
+    ```
 1. Bump the version number in `pyproject.toml` and `docs/conf.py`. `git grep` the old version number to make sure it only appears in the changelog. Change the current changelog entry in `README.md` for this new version from _unreleased_ to the current date.
-1. Bump the version specifiers in `pyproject.toml` for `oauth-dropins`, `pywebutil`, `lexrpc`, and any other relevant dependencies to their most recent versions.
 1. Build the docs. If you added any new modules, add them to the appropriate file(s) in `docs/source/`. Then run `./docs/build.sh`. Check that the generated HTML looks fine by opening `docs/_build/html/index.html` and looking around.
-1. `git commit -am 'release vX.Y'`
+1.  ```sh
+    setenv ver X.Y
+    git commit -am "release v$ver"
+    ```
 1. Upload to [test.pypi.org](https://test.pypi.org/) for testing.
-   ```sh
-   uv build
-   setenv ver X.Y
-   twine upload -r pypitest dist/granary-$ver.tar.gz
-   ```
+    ```sh
+    uv build
+    twine upload -r pypitest dist/granary-$ver.tar.gz dist/granary-$ver-py3-none-any.whl
+    ```
 1. Install from test.pypi.org.
-   ```sh
-   cd /tmp
-   python -m venv local
-   source local/bin/activate.csh
-   pip uninstall granary # make sure we force Pip to use the uploaded version
-   pip install --upgrade pip
-   pip install mf2py==1.1.2
-   pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
+    ```sh
+    cd /tmp
+    rm -rf .venv
+    python -m venv .venv
+    source .venv/bin/activate.csh
+    pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
    ```
 1. Smoke test that the code trivially loads and runs.
-   ```sh
-   python
-   # run test code below
-   ```
+    ```sh
+    python
+    # run test code below
+    ```
    Test code to paste into the interpreter:
-   ```py
-   import json
-   from granary import github
-   github.__file__  # check that it's in the virtualenv
-
-   g = github.GitHub('XXX')  # insert a GitHub personal OAuth access token
-   a = g.get_activities()
-   print(json.dumps(a, indent=2))
-
-   from granary import atom
-   print(atom.activities_to_atom(a, {}))
-   ```
+    ```py
+    import json
+    from granary import github
+    github.__file__  # check that it's in the virtualenv
+    
+    g = github.GitHub('XXX')  # insert a GitHub personal OAuth access token
+    a = g.get_activities()
+    print(json.dumps(a, indent=2))
+    
+    from granary import atom
+    print(atom.activities_to_atom(a, {}))
+    ```
 1. Tag the release in git. In the tag message editor, delete the generated comments at bottom, leave the first line blank (to omit the release "title" in github), put `### Notable changes` on the second line, then copy and paste this version's changelog contents below it.
-   ```sh
-   git tag -a v$ver --cleanup=verbatim
-   git push && git push --tags
-   ```
+    ```sh
+    git tag -a v$ver --cleanup=verbatim
+    git push && git push --tags
+    ```
 1. [Click here to draft a new release on GitHub.](https://github.com/snarfed/granary/releases/new) Enter `vX.Y` in the _Tag version_ box. Leave _Release title_ empty. Copy `### Notable changes` and the changelog contents into the description text box.
 1. Upload to [pypi.org](https://pypi.org/)!
-   ```sh
-   twine upload dist/granary-$ver.tar.gz
-   ```
+    ```sh
+    twine upload dist/granary-$ver.tar.gz dist/granary-$ver-py3-none-any.whl
+    ```
 1. [Build the docs on Read the Docs](https://readthedocs.org/projects/granary/builds/): first choose _latest_ in the drop-down, then click _Build Version_.
 1. On the [Versions page](https://readthedocs.org/projects/granary/versions/), check that the new version is active, If it's not, activate it in the _Activate a Version_ section.
 
@@ -303,7 +302,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 11.0 - unreleased
+### 11.0 - 2026-07-02
 
 _Breaking changes:_
 

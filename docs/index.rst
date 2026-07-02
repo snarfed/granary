@@ -20,6 +20,7 @@ wide variety of social data sources and formats:
   Protocol <https://atproto.com/>`__
 - `Nostr <https://nostr.com/>`__, with many
   `NIPs <https://nostr.com/the-protocol/nips>`__
+- `Farcaster <https://farcaster.xyz/>`__
 
 `Free <https://en.wikipedia.org/wiki/Threshing>`__ yourself from silo
 API `chaff <https://en.wikipedia.org/wiki/Chaff>`__ and expose the sweet
@@ -194,13 +195,6 @@ ActivityStreams 1 JSON.
 The ``microformats2.*_to_html()`` functions are also useful for
 rendering ActivityStreams 1 objects as nicely formatted HTML.
 
-Troubleshooting/FAQ
--------------------
-
-Check out the `oauth-dropins Troubleshooting/FAQ
-section <https://github.com/snarfed/oauth-dropins#troubleshootingfaq>`__.
-It’s pretty comprehensive and applies to this project too.
-
 Future work
 -----------
 
@@ -232,11 +226,14 @@ root directory:
 .. code:: shell
 
    gcloud config set project granary-demo
-   python3 -m venv local
-   source local/bin/activate
+   python3 -m venv ~/.venv/granary
+   source ~/.venv/granary/bin/activate
    pip install -r requirements.txt
    # needed to serve static files locally
-   ln -s local/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
+   ln -s ~/.venv/granary/lib/python3*/site-packages/oauth_dropins/static oauth_dropins_static
+
+You can also use ``uv`` instead of ``pip``, but if you do, pass it
+``--no-sources``.
 
 Now, run the tests to check that everything is set up ok:
 
@@ -267,7 +264,7 @@ To deploy to production:
 
 .. code:: shell
 
-   gcloud -q beta app deploy --no-cache granary-demo *.yaml
+   gcloud -q app deploy --no-cache --project=granary-demo *.yaml
 
 The docs are built with `Sphinx <http://sphinx-doc.org/>`__, including
 `apidoc <http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html>`__,
@@ -322,52 +319,32 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     ``sh  git checkout main  git pull``
 
 2.  Run the unit tests.
+    ``sh  source .venv/bin/activate.csh gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null & sleep 5 python -m unittest discover kill %1``
 
-    .. code:: sh
-
-       source local/bin/activate.csh
-       CLOUDSDK_CORE_PROJECT=granary-demo gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &
-       sleep 5
-       python -m unittest discover
-       kill %1
-
-3.  Bump the version number in ``setup.py`` and ``docs/conf.py``.
+3.  Bump the version number in ``pyproject.toml`` and ``docs/conf.py``.
     ``git grep`` the old version number to make sure it only appears in
     the changelog. Change the current changelog entry in ``README.md``
     for this new version from *unreleased* to the current date.
 
-4.  Bump the version specifiers in ``setup.py`` for ``oauth-dropins``,
-    ``lexrpc``, and any other relevant dependencies to their most recent
-    versions.
-
-5.  Build the docs. If you added any new modules, add them to the
+4.  Build the docs. If you added any new modules, add them to the
     appropriate file(s) in ``docs/source/``. Then run
     ``./docs/build.sh``. Check that the generated HTML looks fine by
     opening ``docs/_build/html/index.html`` and looking around.
 
-6.  ``git commit -am 'release vX.Y'``
-
-7.  Upload to `test.pypi.org <https://test.pypi.org/>`__ for testing.
+5.  
 
     .. code:: sh
 
-       python setup.py clean build sdist
        setenv ver X.Y
-       twine upload -r pypitest dist/granary-$ver.tar.gz
+       git commit -am "release v$ver"
 
-8.  Install from test.pypi.org.
+6.  Upload to `test.pypi.org <https://test.pypi.org/>`__ for testing.
+    ``sh  uv build  twine upload -r pypitest dist/granary-$ver.tar.gz dist/granary-$ver-py3-none-any.whl``
 
-    .. code:: sh
+7.  Install from test.pypi.org.
+    ``sh  cd /tmp  python -m venv .venv  source .venv/bin/activate.csh pip uninstall granary # make sure we force Pip to use the uploaded version pip install mf2py==1.1.2 pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver``
 
-       cd /tmp
-       python -m venv local
-       source local/bin/activate.csh
-       pip uninstall granary # make sure we force Pip to use the uploaded version
-       pip install --upgrade pip
-       pip install mf2py==1.1.2
-       pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
-
-9.  Smoke test that the code trivially loads and runs.
+8.  Smoke test that the code trivially loads and runs.
 
     .. code:: sh
 
@@ -389,7 +366,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
        from granary import atom
        print(atom.activities_to_atom(a, {}))
 
-10. Tag the release in git. In the tag message editor, delete the
+9.  Tag the release in git. In the tag message editor, delete the
     generated comments at bottom, leave the first line blank (to omit
     the release “title” in github), put ``### Notable changes`` on the
     second line, then copy and paste this version’s changelog contents
@@ -400,23 +377,23 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
        git tag -a v$ver --cleanup=verbatim
        git push && git push --tags
 
-11. `Click here to draft a new release on
+10. `Click here to draft a new release on
     GitHub. <https://github.com/snarfed/granary/releases/new>`__ Enter
     ``vX.Y`` in the *Tag version* box. Leave *Release title* empty. Copy
     ``### Notable changes`` and the changelog contents into the
     description text box.
 
-12. Upload to `pypi.org <https://pypi.org/>`__!
+11. Upload to `pypi.org <https://pypi.org/>`__!
 
     .. code:: sh
 
-       twine upload dist/granary-$ver.tar.gz
+       twine upload dist/granary-$ver.tar.gz dist/granary-$ver-py3-none-any.whl
 
-13. `Build the docs on Read the
+12. `Build the docs on Read the
     Docs <https://readthedocs.org/projects/granary/builds/>`__: first
     choose *latest* in the drop-down, then click *Build Version*.
 
-14. On the `Versions
+13. On the `Versions
     page <https://readthedocs.org/projects/granary/versions/>`__, check
     that the new version is active, If it’s not, activate it in the
     *Activate a Version* section.
@@ -480,21 +457,83 @@ Facebook and Twitter’s raw HTML.
 Changelog
 ---------
 
-10.1 - unreleased
+11.0 - 2026-07-02
 ~~~~~~~~~~~~~~~~~
 
-- ``atom``:
-
-  - ``from_as1``: include entry tags as ``<category>`` elements.
+*Breaking changes:*
 
 - ``as2``
+
+  - Rename ``link_tags`` to ``render_content``, and expand it to also
+    HTML-escape plain text ``content``, convert newlines to ``<br>``,
+    and convert leading spaces to ``&nbsp;``. It now renders even when
+    there are no indexed tags. The inline ``RE: ...`` link for a quoted
+    post is now rendered here too.
+    (`bridgy-fed#990 <https://github.com/snarfed/bridgy-fed/issues/990>`__
+  - ``from_as1``: Stop rendering inline ``RE: ...`` link for quoted
+    posts.
+
+- ``nostr``:
+
+  - ``verify`` now raises ``ValueError`` on failure instead of returning
+    ``False``.
+  - Rename ``sign`` to ``hash_and_sign``.
+
+- ``reddit``:
+
+  - Remove deprecated ``Reddit.praw_to_actor``, ``user_to_actor``,
+    ``praw_to_object``, and ``praw_to_activity`` method aliases.
+
+*Non-breaking changes:*
+
+- Packaging: migrate from ``setup.py`` to ``pyproject.toml``.
+- Start on `Farcaster <https://farcaster.xyz/>`__ support!
+  (`snarfed/bridgy-fed#447 <https://github.com/snarfed/bridgy-fed/issues/447>`__).
+- Speed up ``to_as1`` conversions: parse HTML content lazily in
+  ``Source.postprocess_object`` (only when ``first_link_to_attachment``
+  is set), drop a redundant ``trim_nulls`` pass in ``as2`` and ``nostr``
+  ``to_as1``, and copy the input via JSON round trip instead of
+  ``copy.deepcopy`` in ``as2.to_as1``
+  (`snarfed/bridgy-fed#2488 <https://github.com/snarfed/bridgy-fed/issues/2488>`__).
+- ``as1``:
+
+  - Bug fix for converting HTML content to plain text when it includes
+    square brackets (``[`` and ``]``)
+    (`snarfed/bridgy-fed#1605 <https://github.com/snarfed/bridgy-fed/issues/1605>`__).
+  - Optimize ``is_content_html`` to avoid full HTML parsing in most
+    cases, eg when ``content`` has no ``<`` or ``&`` characters.
+  - ``targets``: don’t add trailing slashes to output targets.
+
+- ``as2``
+
+  - ``address``: fix handling of actor ids with a path prefix, eg
+    Mastodon’s new ``https://a.b/ap/users/123`` style.
+  - ``from_as1``:
+
+    - Preserve the input object’s ``@context`` field, and extend it,
+      instead of overwriting it.
 
   - ``to_as1``:
 
     - Handle multiply-valued ``content``.
+    - Handle ``null`` elements in ``attachment``.
+    - For ``Undo`` ``Follow`` activities, populate the inner
+      ``Follow``\ ’s id (if any) in a new ``followId`` field on the
+      resulting ``stop-following`` activity
+      (`snarfed/bridgy-fed#1631 <https://github.com/snarfed/bridgy-fed/issues/1631>`__).
+
+- ``atom``:
+
+  - ``from_as1``:
+
+    - Include entry tags as ``<category>`` elements.
+    - If an object or activity doesn’t have ``url``, fall back to ``id``
+      for populating ``link rel="self"``.
 
 - ``bluesky``:
 
+  - Convert ``application`` and ``service`` actors to/from the Bluesky
+    ``bot`` self-label.
   - ``from_as1``:
 
     - Support `Payment Pointers <https://paymentpointers.org/>`__ in
@@ -502,11 +541,65 @@ Changelog
       ``$``, eg ``$wallet.com/user``, it’s converted to ``https://``, eg
       ``https://wallet.com/user``.
     - De-dupe ``tags`` in output ``site.standard.document`` records.
+    - Limit DM (``chat.bsky.convo.defs#messageInput``) output to record
+      embeds only, not other types.
+    - Convert raw domains in ``mention`` tags to home page URLs in
+      ``app.bsky.richtext.facet#link.uri``.
+    - Posts with more than 4 images now use ``app.bsky.embed.gallery``
+      instead of ``app.bsky.embed.images``.
+
+  - ``to_as1``:
+
+    - Add support for ``site.standard.document`` records, converting
+      them to AS1 ``article`` objects.
+    - Add support for ``site.standard.publication`` records, converting
+      them to AS1 ``person`` objects.
+    - Populate ``width`` and ``height`` on AS1 image objects from
+      ``aspectRatio`` in ``app.bsky.embed.images`` and
+      ``app.bsky.embed.images#view`` embeds.
+    - Support ``app.bsky.embed.gallery`` and
+      ``app.bsky.embed.gallery#view`` embeds.
+    - Join multiple content warnings with ``;`` instead of ``<br>``
+      because `Mastodon doesn’t support HTML in
+      ``summary <https://github.com/mastodon/mastodon/issues/34079#issuecomment-2703397374>`__.
 
   - New ``Bluesky.from_auth(auth_entity, client_metadata=None)``
     classmethod: creates a ``Bluesky`` instance from an
     ``oauth_dropins.bluesky.BlueskyAuth`` entity, handling both legacy
     app password sessions and OAuth DPoP tokens.
+
+- ``microformats2``:
+
+  - ``from_as1``: convert ``stream.duration`` (int seconds) to ISO 8601
+    duration string for the ``duration`` mf2 property; also accept ISO
+    8601 strings passed through from AS1.
+  - ``to_as1``: fix ``quotation-of`` h-cite attachments to have
+    ``objectType`` ``note``, enabling correct quote post conversion to
+    ActivityPub
+    (`snarfed/bridgy-fed#1146 <https://github.com/snarfed/bridgy-fed/issues/1146>`__).
+
+- ``nostr``:
+
+  - ``from_as1``: fix crash when converting an ``article`` object with
+    no ``id``.
+  - ``to_as1``:
+
+    - Support
+      `NIP-71 <https://github.com/nostr-protocol/nips/blob/master/71.md>`__
+      video events (kinds 21, 22, 34235, 34236), converting them to
+      notes with video attachments. Also extracts ``imeta`` ``image``
+      (thumbnail) and ``duration``, the top-level ``published_at`` tag,
+      and the top-level ``alt`` tag (as a fallback ``displayName`` on
+      the first video/audio attachment).
+    - Stop converting Nostr ``summary`` to AS1 ``summary``.
+
+  - ``Nostr`` constructor: raise ``ValueError`` on invalid relay URL.
+  - ``Nostr.query``: skip NIP-42 AUTH challenge gracefully when no
+    ``privkey`` is set.
+
+Migrate tests from ``mox3`` to ``unittest.mock``.
+
+.. _section-1:
 
 10.0 - 2026-02-08
 ~~~~~~~~~~~~~~~~~
@@ -642,7 +735,7 @@ Changelog
   - ``to_as1``: bug fix for multiple categories.
   - Add ``CONTENT_TYPE_RDF``.
 
-.. _section-1:
+.. _section-2:
 
 9.0 - 2025-09-13
 ~~~~~~~~~~~~~~~~
@@ -787,7 +880,7 @@ Changelog
   - ``to_as1``: handle UNIX timestamp ``dcterms:modified`` values
     without overflowing.
 
-.. _section-2:
+.. _section-3:
 
 8.1 - 2025-03-13
 ~~~~~~~~~~~~~~~~
@@ -853,7 +946,7 @@ Changelog
   - Add new ``get_follows`` and ``get_followers`` methods, implement in
     Mastodon and Bluesky.
 
-.. _section-3:
+.. _section-4:
 
 8.0 - 2025-01-01
 ~~~~~~~~~~~~~~~~
@@ -996,7 +1089,7 @@ removed until at least v9.0, if not later.
     boolean kwarg to fetch and generate a preview ``attachment`` for the
     first link in the HTML ``content``, if any.
 
-.. _section-4:
+.. _section-5:
 
 7.0 - 2024-06-24
 ~~~~~~~~~~~~~~~~
@@ -1117,7 +1210,7 @@ removed until at least v9.0, if not later.
   - ``Source.postprocess``: when extracting @-mentions, defer to
     existing tag if it has the same ``displayName`` and has ``url``.
 
-.. _section-5:
+.. _section-6:
 
 6.2 - 2024-03-15
 ~~~~~~~~~~~~~~~~
@@ -1275,7 +1368,7 @@ removed until at least v9.0, if not later.
   - ``postprocess_activity/object``: add ``mentions`` kwarg to convert
     @-mentions in HTML links to ``mention`` tags.
 
-.. _section-6:
+.. _section-7:
 
 6.1 - 2023-09-16
 ~~~~~~~~~~~~~~~~
@@ -1413,7 +1506,7 @@ at least in the REST API.
 
   - ``from_activities``: handle bare string id ``author``.
 
-.. _section-7:
+.. _section-8:
 
 6.0 - 2023-03-22
 ~~~~~~~~~~~~~~~~
@@ -1525,7 +1618,7 @@ at least in the REST API.
 
   - ``from_activities``: fix item ordering to match input activities.
 
-.. _section-8:
+.. _section-9:
 
 5.0 - 2022-12-03
 ~~~~~~~~~~~~~~~~
@@ -1659,7 +1752,7 @@ at least in the REST API.
 - ``Source.original_post_discovery``: add new ``max_redirect_fetches``
   keyword arg.
 
-.. _section-9:
+.. _section-10:
 
 4.0 - 2022-03-23
 ~~~~~~~~~~~~~~~~
@@ -1705,7 +1798,7 @@ at least in the REST API.
 
   - Handle malformed ``items.author`` element.
 
-.. _section-10:
+.. _section-11:
 
 3.2 - 2021-09-15
 ~~~~~~~~~~~~~~~~
@@ -1762,7 +1855,7 @@ at least in the REST API.
 - REST API: ported web framework from webapp2 to Flask. No user-visible
   behavior change expected.
 
-.. _section-11:
+.. _section-12:
 
 3.1 - 2021-04-03
 ~~~~~~~~~~~~~~~~
@@ -1867,7 +1960,7 @@ at least in the REST API.
   - ``from_as1()``: convert ``username`` to ``preferredUsername``.
   - ``from_as1()``: bug fix, make ``context`` kwarg actually work.
 
-.. _section-12:
+.. _section-13:
 
 3.0 - 2020-04-08
 ~~~~~~~~~~~~~~~~
@@ -1945,7 +2038,7 @@ Non-breaking changes:
   caching now.
 - Added Meetup.com support for publishing RSVPs.
 
-.. _section-13:
+.. _section-14:
 
 2.2 - 2019-11-02
 ~~~~~~~~~~~~~~~~
@@ -1994,7 +2087,7 @@ Non-breaking changes:
     enclosure per item, so we now only include the first, and log a
     warning if the activity has more.)
 
-.. _section-14:
+.. _section-15:
 
 2.1 - 2019-09-04
 ~~~~~~~~~~~~~~~~
@@ -2044,7 +2137,7 @@ Non-breaking changes:
 
   - Default title to ellipsized content.
 
-.. _section-15:
+.. _section-16:
 
 2.0 - 2019-03-01
 ~~~~~~~~~~~~~~~~
@@ -2053,7 +2146,7 @@ Non-breaking changes:
 March <https://developers.google.com/+/api-shutdown>`__. Notably, this
 removes the ``googleplus`` module.
 
-.. _section-16:
+.. _section-17:
 
 1.15 - 2019-02-28
 ~~~~~~~~~~~~~~~~~
@@ -2104,7 +2197,7 @@ removes the ``googleplus`` module.
 - ``/url``: Return HTTP 400 when fetching the user’s URL results in an
   infinite redirect.
 
-.. _section-17:
+.. _section-18:
 
 1.14 - 2018-11-12
 ~~~~~~~~~~~~~~~~~
@@ -2131,7 +2224,7 @@ Encode ``&``\ s in author URL and email address too. (Thanks
 `sebsued <https://twitter.com/sebsued>`__!) \* AS2: \* Add ``Follow``
 support.
 
-.. _section-18:
+.. _section-19:
 
 1.13 - 2018-08-08
 ~~~~~~~~~~~~~~~~~
@@ -2191,7 +2284,7 @@ support.
   - Support ``alt`` attribute in ``<img>`` tags
     (`snarfed/bridgy#756 <https://github.com/snarfed/bridgy/issues/756>`__).
 
-.. _section-19:
+.. _section-20:
 
 1.12 - 2018-03-24
 ~~~~~~~~~~~~~~~~~
@@ -2226,7 +2319,7 @@ impact of the Python 3 migration. It *should* be a noop for existing
 Python 2 users, and we’ve tested thoroughly, but I’m sure there are
 still bugs. Please file issues if you notice anything broken!
 
-.. _section-20:
+.. _section-21:
 
 1.11 - 2018-03-09
 ~~~~~~~~~~~~~~~~~
@@ -2298,7 +2391,7 @@ still bugs. Please file issues if you notice anything broken!
   - Omit title from items if it’s the same as the content. (Often caused
     by microformats2’s implied ``p-name`` logic.)
 
-.. _section-21:
+.. _section-22:
 
 1.10 - 2017-12-10
 ~~~~~~~~~~~~~~~~~
@@ -2339,7 +2432,7 @@ still bugs. Please file issues if you notice anything broken!
   - Fix bug that omitted title in some cases
     (`#122 <https://github.com/snarfed/granary/issues/122>`__).
 
-.. _section-22:
+.. _section-23:
 
 1.9 - 2017-10-24
 ~~~~~~~~~~~~~~~~
@@ -2366,7 +2459,7 @@ still bugs. Please file issues if you notice anything broken!
     ``json``, ``json-mf2``, and ``xml`` are still accepted, but
     deprecated.
 
-.. _section-23:
+.. _section-24:
 
 1.8 - 2017-08-29
 ~~~~~~~~~~~~~~~~
@@ -2443,7 +2536,7 @@ still bugs. Please file issues if you notice anything broken!
   `bug <https://github.com/kylewm/brevity/issues/5>`__
   `fixes <https://github.com/kylewm/brevity/issues/6>`__.
 
-.. _section-24:
+.. _section-25:
 
 1.7 - 2017-02-27
 ~~~~~~~~~~~~~~~~
@@ -2490,7 +2583,7 @@ still bugs. Please file issues if you notice anything broken!
   “narrow” builds of Python 2 with ``--enable-unicode=ucs2``, which is
   the default on Mac OS X, Windows, and older \*nix.
 
-.. _section-25:
+.. _section-26:
 
 1.6 - 2016-11-26
 ~~~~~~~~~~~~~~~~
@@ -2524,7 +2617,7 @@ still bugs. Please file issues if you notice anything broken!
 - Error handling: return HTTP 502 for non-JSON API responses, 504 for
   connection failures.
 
-.. _section-26:
+.. _section-27:
 
 1.5 - 2016-08-25
 ~~~~~~~~~~~~~~~~
@@ -2561,14 +2654,14 @@ still bugs. Please file issues if you notice anything broken!
   - Switch creating comments and reactions from GraphQL to REST API
     (`bridgy#824 <https://github.com/snarfed/bridgy/issues/824>`__.
 
-.. _section-27:
+.. _section-28:
 
 1.4.1 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
 
 - Bump oauth-dropins requirement to 1.4.
 
-.. _section-28:
+.. _section-29:
 
 1.4.0 - 2016-06-27
 ~~~~~~~~~~~~~~~~~~
@@ -2602,7 +2695,7 @@ still bugs. Please file issues if you notice anything broken!
 - Upgrade to requests 2.10.0 and requests-toolbelt 0.60, which support
   App Engine.
 
-.. _section-29:
+.. _section-30:
 
 1.3.1 - 2016-04-07
 ~~~~~~~~~~~~~~~~~~
@@ -2610,7 +2703,7 @@ still bugs. Please file issues if you notice anything broken!
 - Update `oauth-dropins <https://github.com/snarfed/oauth-dropins>`__
   dependency to >=1.3.
 
-.. _section-30:
+.. _section-31:
 
 1.3.0 - 2016-04-06
 ~~~~~~~~~~~~~~~~~~
@@ -2653,7 +2746,7 @@ still bugs. Please file issues if you notice anything broken!
 - Misc bug fixes.
 - Set up Coveralls.
 
-.. _section-31:
+.. _section-32:
 
 1.2.0 - 2016-01-11
 ~~~~~~~~~~~~~~~~~~
@@ -2709,7 +2802,7 @@ still bugs. Please file issues if you notice anything broken!
 - Misc bug fixes.
 - Set up CircleCI.
 
-.. _section-32:
+.. _section-33:
 
 1.1.0 - 2015-09-06
 ~~~~~~~~~~~~~~~~~~
@@ -2732,7 +2825,7 @@ still bugs. Please file issues if you notice anything broken!
 - Improve original post discovery algorithm.
 - New logo.
 
-.. _section-33:
+.. _section-34:
 
 1.0.1 - 2015-07-11
 ~~~~~~~~~~~~~~~~~~
@@ -2740,7 +2833,7 @@ still bugs. Please file issues if you notice anything broken!
 - Bug fix for atom template rendering.
 - Facebook, Instagram: support access_token parameter.
 
-.. _section-34:
+.. _section-35:
 
 1.0 - 2015-07-10
 ~~~~~~~~~~~~~~~~

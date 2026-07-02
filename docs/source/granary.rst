@@ -26,7 +26,7 @@ facebook
 .. automodule:: granary.facebook
 
 farcaster
---------
+---------
 .. automodule:: granary.farcaster
 
 flickr
