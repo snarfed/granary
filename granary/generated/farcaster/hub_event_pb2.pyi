@@ -5,13 +5,12 @@ from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from collections.abc import Iterable as _Iterable, Mapping as _Mapping
-from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class HubEventType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
+    __slots__ = []
     HUB_EVENT_TYPE_NONE: _ClassVar[HubEventType]
     HUB_EVENT_TYPE_MERGE_MESSAGE: _ClassVar[HubEventType]
     HUB_EVENT_TYPE_PRUNE_MESSAGE: _ClassVar[HubEventType]
@@ -30,7 +29,7 @@ HUB_EVENT_TYPE_MERGE_FAILURE: HubEventType
 HUB_EVENT_TYPE_BLOCK_CONFIRMED: HubEventType
 
 class MergeMessageBody(_message.Message):
-    __slots__ = ("message", "deleted_messages")
+    __slots__ = ["message", "deleted_messages"]
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     DELETED_MESSAGES_FIELD_NUMBER: _ClassVar[int]
     message: _message_pb2.Message
@@ -38,7 +37,7 @@ class MergeMessageBody(_message.Message):
     def __init__(self, message: _Optional[_Union[_message_pb2.Message, _Mapping]] = ..., deleted_messages: _Optional[_Iterable[_Union[_message_pb2.Message, _Mapping]]] = ...) -> None: ...
 
 class MergeFailureBody(_message.Message):
-    __slots__ = ("message", "code", "reason")
+    __slots__ = ["message", "code", "reason"]
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     CODE_FIELD_NUMBER: _ClassVar[int]
     REASON_FIELD_NUMBER: _ClassVar[int]
@@ -48,21 +47,21 @@ class MergeFailureBody(_message.Message):
     def __init__(self, message: _Optional[_Union[_message_pb2.Message, _Mapping]] = ..., code: _Optional[str] = ..., reason: _Optional[str] = ...) -> None: ...
 
 class PruneMessageBody(_message.Message):
-    __slots__ = ("message",)
+    __slots__ = ["message"]
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     message: _message_pb2.Message
     def __init__(self, message: _Optional[_Union[_message_pb2.Message, _Mapping]] = ...) -> None: ...
 
 class RevokeMessageBody(_message.Message):
-    __slots__ = ("message",)
+    __slots__ = ["message"]
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     message: _message_pb2.Message
     def __init__(self, message: _Optional[_Union[_message_pb2.Message, _Mapping]] = ...) -> None: ...
 
 class BlockConfirmedBody(_message.Message):
-    __slots__ = ("block_number", "shard_index", "timestamp", "block_hash", "total_events", "event_counts_by_type", "max_block_event_seqnum")
+    __slots__ = ["block_number", "shard_index", "timestamp", "block_hash", "total_events", "event_counts_by_type", "max_block_event_seqnum"]
     class EventCountsByTypeEntry(_message.Message):
-        __slots__ = ("key", "value")
+        __slots__ = ["key", "value"]
         KEY_FIELD_NUMBER: _ClassVar[int]
         VALUE_FIELD_NUMBER: _ClassVar[int]
         key: int
@@ -85,13 +84,13 @@ class BlockConfirmedBody(_message.Message):
     def __init__(self, block_number: _Optional[int] = ..., shard_index: _Optional[int] = ..., timestamp: _Optional[int] = ..., block_hash: _Optional[bytes] = ..., total_events: _Optional[int] = ..., event_counts_by_type: _Optional[_Mapping[int, int]] = ..., max_block_event_seqnum: _Optional[int] = ...) -> None: ...
 
 class MergeOnChainEventBody(_message.Message):
-    __slots__ = ("on_chain_event",)
+    __slots__ = ["on_chain_event"]
     ON_CHAIN_EVENT_FIELD_NUMBER: _ClassVar[int]
     on_chain_event: _onchain_event_pb2.OnChainEvent
     def __init__(self, on_chain_event: _Optional[_Union[_onchain_event_pb2.OnChainEvent, _Mapping]] = ...) -> None: ...
 
 class MergeUserNameProofBody(_message.Message):
-    __slots__ = ("username_proof", "deleted_username_proof", "username_proof_message", "deleted_username_proof_message")
+    __slots__ = ["username_proof", "deleted_username_proof", "username_proof_message", "deleted_username_proof_message"]
     USERNAME_PROOF_FIELD_NUMBER: _ClassVar[int]
     DELETED_USERNAME_PROOF_FIELD_NUMBER: _ClassVar[int]
     USERNAME_PROOF_MESSAGE_FIELD_NUMBER: _ClassVar[int]
@@ -103,7 +102,7 @@ class MergeUserNameProofBody(_message.Message):
     def __init__(self, username_proof: _Optional[_Union[_username_proof_pb2.UserNameProof, _Mapping]] = ..., deleted_username_proof: _Optional[_Union[_username_proof_pb2.UserNameProof, _Mapping]] = ..., username_proof_message: _Optional[_Union[_message_pb2.Message, _Mapping]] = ..., deleted_username_proof_message: _Optional[_Union[_message_pb2.Message, _Mapping]] = ...) -> None: ...
 
 class HubEvent(_message.Message):
-    __slots__ = ("type", "id", "merge_message_body", "prune_message_body", "revoke_message_body", "merge_username_proof_body", "merge_on_chain_event_body", "merge_failure", "block_confirmed_body", "block_number", "shard_index", "timestamp")
+    __slots__ = ["type", "id", "merge_message_body", "prune_message_body", "revoke_message_body", "merge_username_proof_body", "merge_on_chain_event_body", "merge_failure", "block_confirmed_body", "block_number", "shard_index", "timestamp"]
     TYPE_FIELD_NUMBER: _ClassVar[int]
     ID_FIELD_NUMBER: _ClassVar[int]
     MERGE_MESSAGE_BODY_FIELD_NUMBER: _ClassVar[int]

@@ -3,24 +3,23 @@ from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from collections.abc import Iterable as _Iterable, Mapping as _Mapping
-from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class HashScheme(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
+    __slots__ = []
     HASH_SCHEME_NONE: _ClassVar[HashScheme]
     HASH_SCHEME_BLAKE3: _ClassVar[HashScheme]
 
 class SignatureScheme(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
+    __slots__ = []
     SIGNATURE_SCHEME_NONE: _ClassVar[SignatureScheme]
     SIGNATURE_SCHEME_ED25519: _ClassVar[SignatureScheme]
     SIGNATURE_SCHEME_EIP712: _ClassVar[SignatureScheme]
 
 class MessageType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
+    __slots__ = []
     MESSAGE_TYPE_NONE: _ClassVar[MessageType]
     MESSAGE_TYPE_CAST_ADD: _ClassVar[MessageType]
     MESSAGE_TYPE_CAST_REMOVE: _ClassVar[MessageType]
@@ -35,16 +34,18 @@ class MessageType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     MESSAGE_TYPE_FRAME_ACTION: _ClassVar[MessageType]
     MESSAGE_TYPE_LINK_COMPACT_STATE: _ClassVar[MessageType]
     MESSAGE_TYPE_LEND_STORAGE: _ClassVar[MessageType]
+    MESSAGE_TYPE_KEY_ADD: _ClassVar[MessageType]
+    MESSAGE_TYPE_KEY_REMOVE: _ClassVar[MessageType]
 
 class FarcasterNetwork(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
+    __slots__ = []
     FARCASTER_NETWORK_NONE: _ClassVar[FarcasterNetwork]
     FARCASTER_NETWORK_MAINNET: _ClassVar[FarcasterNetwork]
     FARCASTER_NETWORK_TESTNET: _ClassVar[FarcasterNetwork]
     FARCASTER_NETWORK_DEVNET: _ClassVar[FarcasterNetwork]
 
 class UserDataType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
+    __slots__ = []
     USER_DATA_TYPE_NONE: _ClassVar[UserDataType]
     USER_DATA_TYPE_PFP: _ClassVar[UserDataType]
     USER_DATA_TYPE_DISPLAY: _ClassVar[UserDataType]
@@ -58,26 +59,27 @@ class UserDataType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     USER_DATA_PRIMARY_ADDRESS_ETHEREUM: _ClassVar[UserDataType]
     USER_DATA_PRIMARY_ADDRESS_SOLANA: _ClassVar[UserDataType]
     USER_DATA_TYPE_PROFILE_TOKEN: _ClassVar[UserDataType]
+    USER_DATA_TYPE_LIVE_AT: _ClassVar[UserDataType]
 
 class CastType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
+    __slots__ = []
     CAST: _ClassVar[CastType]
     LONG_CAST: _ClassVar[CastType]
     TEN_K_CAST: _ClassVar[CastType]
 
 class ReactionType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
+    __slots__ = []
     REACTION_TYPE_NONE: _ClassVar[ReactionType]
     REACTION_TYPE_LIKE: _ClassVar[ReactionType]
     REACTION_TYPE_RECAST: _ClassVar[ReactionType]
 
 class Protocol(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
+    __slots__ = []
     PROTOCOL_ETHEREUM: _ClassVar[Protocol]
     PROTOCOL_SOLANA: _ClassVar[Protocol]
 
 class StorageUnitType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
+    __slots__ = []
     UNIT_TYPE_LEGACY: _ClassVar[StorageUnitType]
     UNIT_TYPE_2024: _ClassVar[StorageUnitType]
     UNIT_TYPE_2025: _ClassVar[StorageUnitType]
@@ -100,6 +102,8 @@ MESSAGE_TYPE_USERNAME_PROOF: MessageType
 MESSAGE_TYPE_FRAME_ACTION: MessageType
 MESSAGE_TYPE_LINK_COMPACT_STATE: MessageType
 MESSAGE_TYPE_LEND_STORAGE: MessageType
+MESSAGE_TYPE_KEY_ADD: MessageType
+MESSAGE_TYPE_KEY_REMOVE: MessageType
 FARCASTER_NETWORK_NONE: FarcasterNetwork
 FARCASTER_NETWORK_MAINNET: FarcasterNetwork
 FARCASTER_NETWORK_TESTNET: FarcasterNetwork
@@ -117,6 +121,7 @@ USER_DATA_TYPE_BANNER: UserDataType
 USER_DATA_PRIMARY_ADDRESS_ETHEREUM: UserDataType
 USER_DATA_PRIMARY_ADDRESS_SOLANA: UserDataType
 USER_DATA_TYPE_PROFILE_TOKEN: UserDataType
+USER_DATA_TYPE_LIVE_AT: UserDataType
 CAST: CastType
 LONG_CAST: CastType
 TEN_K_CAST: CastType
@@ -130,7 +135,7 @@ UNIT_TYPE_2024: StorageUnitType
 UNIT_TYPE_2025: StorageUnitType
 
 class Message(_message.Message):
-    __slots__ = ("data", "hash", "hash_scheme", "signature", "signature_scheme", "signer", "data_bytes")
+    __slots__ = ["data", "hash", "hash_scheme", "signature", "signature_scheme", "signer", "data_bytes"]
     DATA_FIELD_NUMBER: _ClassVar[int]
     HASH_FIELD_NUMBER: _ClassVar[int]
     HASH_SCHEME_FIELD_NUMBER: _ClassVar[int]
@@ -148,7 +153,7 @@ class Message(_message.Message):
     def __init__(self, data: _Optional[_Union[MessageData, _Mapping]] = ..., hash: _Optional[bytes] = ..., hash_scheme: _Optional[_Union[HashScheme, str]] = ..., signature: _Optional[bytes] = ..., signature_scheme: _Optional[_Union[SignatureScheme, str]] = ..., signer: _Optional[bytes] = ..., data_bytes: _Optional[bytes] = ...) -> None: ...
 
 class MessageData(_message.Message):
-    __slots__ = ("type", "fid", "timestamp", "network", "cast_add_body", "cast_remove_body", "reaction_body", "verification_add_address_body", "verification_remove_body", "user_data_body", "link_body", "username_proof_body", "frame_action_body", "link_compact_state_body", "lend_storage_body")
+    __slots__ = ["type", "fid", "timestamp", "network", "cast_add_body", "cast_remove_body", "reaction_body", "verification_add_address_body", "verification_remove_body", "user_data_body", "link_body", "username_proof_body", "frame_action_body", "link_compact_state_body", "lend_storage_body", "key_add_body", "key_remove_body"]
     TYPE_FIELD_NUMBER: _ClassVar[int]
     FID_FIELD_NUMBER: _ClassVar[int]
     TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
@@ -164,6 +169,8 @@ class MessageData(_message.Message):
     FRAME_ACTION_BODY_FIELD_NUMBER: _ClassVar[int]
     LINK_COMPACT_STATE_BODY_FIELD_NUMBER: _ClassVar[int]
     LEND_STORAGE_BODY_FIELD_NUMBER: _ClassVar[int]
+    KEY_ADD_BODY_FIELD_NUMBER: _ClassVar[int]
+    KEY_REMOVE_BODY_FIELD_NUMBER: _ClassVar[int]
     type: MessageType
     fid: int
     timestamp: int
@@ -179,10 +186,12 @@ class MessageData(_message.Message):
     frame_action_body: FrameActionBody
     link_compact_state_body: LinkCompactStateBody
     lend_storage_body: LendStorageBody
-    def __init__(self, type: _Optional[_Union[MessageType, str]] = ..., fid: _Optional[int] = ..., timestamp: _Optional[int] = ..., network: _Optional[_Union[FarcasterNetwork, str]] = ..., cast_add_body: _Optional[_Union[CastAddBody, _Mapping]] = ..., cast_remove_body: _Optional[_Union[CastRemoveBody, _Mapping]] = ..., reaction_body: _Optional[_Union[ReactionBody, _Mapping]] = ..., verification_add_address_body: _Optional[_Union[VerificationAddAddressBody, _Mapping]] = ..., verification_remove_body: _Optional[_Union[VerificationRemoveBody, _Mapping]] = ..., user_data_body: _Optional[_Union[UserDataBody, _Mapping]] = ..., link_body: _Optional[_Union[LinkBody, _Mapping]] = ..., username_proof_body: _Optional[_Union[_username_proof_pb2.UserNameProof, _Mapping]] = ..., frame_action_body: _Optional[_Union[FrameActionBody, _Mapping]] = ..., link_compact_state_body: _Optional[_Union[LinkCompactStateBody, _Mapping]] = ..., lend_storage_body: _Optional[_Union[LendStorageBody, _Mapping]] = ...) -> None: ...
+    key_add_body: KeyAddBody
+    key_remove_body: KeyRemoveBody
+    def __init__(self, type: _Optional[_Union[MessageType, str]] = ..., fid: _Optional[int] = ..., timestamp: _Optional[int] = ..., network: _Optional[_Union[FarcasterNetwork, str]] = ..., cast_add_body: _Optional[_Union[CastAddBody, _Mapping]] = ..., cast_remove_body: _Optional[_Union[CastRemoveBody, _Mapping]] = ..., reaction_body: _Optional[_Union[ReactionBody, _Mapping]] = ..., verification_add_address_body: _Optional[_Union[VerificationAddAddressBody, _Mapping]] = ..., verification_remove_body: _Optional[_Union[VerificationRemoveBody, _Mapping]] = ..., user_data_body: _Optional[_Union[UserDataBody, _Mapping]] = ..., link_body: _Optional[_Union[LinkBody, _Mapping]] = ..., username_proof_body: _Optional[_Union[_username_proof_pb2.UserNameProof, _Mapping]] = ..., frame_action_body: _Optional[_Union[FrameActionBody, _Mapping]] = ..., link_compact_state_body: _Optional[_Union[LinkCompactStateBody, _Mapping]] = ..., lend_storage_body: _Optional[_Union[LendStorageBody, _Mapping]] = ..., key_add_body: _Optional[_Union[KeyAddBody, _Mapping]] = ..., key_remove_body: _Optional[_Union[KeyRemoveBody, _Mapping]] = ...) -> None: ...
 
 class UserDataBody(_message.Message):
-    __slots__ = ("type", "value")
+    __slots__ = ["type", "value"]
     TYPE_FIELD_NUMBER: _ClassVar[int]
     VALUE_FIELD_NUMBER: _ClassVar[int]
     type: UserDataType
@@ -190,7 +199,7 @@ class UserDataBody(_message.Message):
     def __init__(self, type: _Optional[_Union[UserDataType, str]] = ..., value: _Optional[str] = ...) -> None: ...
 
 class Embed(_message.Message):
-    __slots__ = ("url", "cast_id")
+    __slots__ = ["url", "cast_id"]
     URL_FIELD_NUMBER: _ClassVar[int]
     CAST_ID_FIELD_NUMBER: _ClassVar[int]
     url: str
@@ -198,7 +207,7 @@ class Embed(_message.Message):
     def __init__(self, url: _Optional[str] = ..., cast_id: _Optional[_Union[CastId, _Mapping]] = ...) -> None: ...
 
 class CastAddBody(_message.Message):
-    __slots__ = ("embeds_deprecated", "mentions", "parent_cast_id", "parent_url", "text", "mentions_positions", "embeds", "type")
+    __slots__ = ["embeds_deprecated", "mentions", "parent_cast_id", "parent_url", "text", "mentions_positions", "embeds", "type"]
     EMBEDS_DEPRECATED_FIELD_NUMBER: _ClassVar[int]
     MENTIONS_FIELD_NUMBER: _ClassVar[int]
     PARENT_CAST_ID_FIELD_NUMBER: _ClassVar[int]
@@ -218,13 +227,13 @@ class CastAddBody(_message.Message):
     def __init__(self, embeds_deprecated: _Optional[_Iterable[str]] = ..., mentions: _Optional[_Iterable[int]] = ..., parent_cast_id: _Optional[_Union[CastId, _Mapping]] = ..., parent_url: _Optional[str] = ..., text: _Optional[str] = ..., mentions_positions: _Optional[_Iterable[int]] = ..., embeds: _Optional[_Iterable[_Union[Embed, _Mapping]]] = ..., type: _Optional[_Union[CastType, str]] = ...) -> None: ...
 
 class CastRemoveBody(_message.Message):
-    __slots__ = ("target_hash",)
+    __slots__ = ["target_hash"]
     TARGET_HASH_FIELD_NUMBER: _ClassVar[int]
     target_hash: bytes
     def __init__(self, target_hash: _Optional[bytes] = ...) -> None: ...
 
 class CastId(_message.Message):
-    __slots__ = ("fid", "hash")
+    __slots__ = ["fid", "hash"]
     FID_FIELD_NUMBER: _ClassVar[int]
     HASH_FIELD_NUMBER: _ClassVar[int]
     fid: int
@@ -232,7 +241,7 @@ class CastId(_message.Message):
     def __init__(self, fid: _Optional[int] = ..., hash: _Optional[bytes] = ...) -> None: ...
 
 class ReactionBody(_message.Message):
-    __slots__ = ("type", "target_cast_id", "target_url")
+    __slots__ = ["type", "target_cast_id", "target_url"]
     TYPE_FIELD_NUMBER: _ClassVar[int]
     TARGET_CAST_ID_FIELD_NUMBER: _ClassVar[int]
     TARGET_URL_FIELD_NUMBER: _ClassVar[int]
@@ -242,7 +251,7 @@ class ReactionBody(_message.Message):
     def __init__(self, type: _Optional[_Union[ReactionType, str]] = ..., target_cast_id: _Optional[_Union[CastId, _Mapping]] = ..., target_url: _Optional[str] = ...) -> None: ...
 
 class VerificationAddAddressBody(_message.Message):
-    __slots__ = ("address", "claim_signature", "block_hash", "verification_type", "chain_id", "protocol")
+    __slots__ = ["address", "claim_signature", "block_hash", "verification_type", "chain_id", "protocol"]
     ADDRESS_FIELD_NUMBER: _ClassVar[int]
     CLAIM_SIGNATURE_FIELD_NUMBER: _ClassVar[int]
     BLOCK_HASH_FIELD_NUMBER: _ClassVar[int]
@@ -258,7 +267,7 @@ class VerificationAddAddressBody(_message.Message):
     def __init__(self, address: _Optional[bytes] = ..., claim_signature: _Optional[bytes] = ..., block_hash: _Optional[bytes] = ..., verification_type: _Optional[int] = ..., chain_id: _Optional[int] = ..., protocol: _Optional[_Union[Protocol, str]] = ...) -> None: ...
 
 class VerificationRemoveBody(_message.Message):
-    __slots__ = ("address", "protocol")
+    __slots__ = ["address", "protocol"]
     ADDRESS_FIELD_NUMBER: _ClassVar[int]
     PROTOCOL_FIELD_NUMBER: _ClassVar[int]
     address: bytes
@@ -266,7 +275,7 @@ class VerificationRemoveBody(_message.Message):
     def __init__(self, address: _Optional[bytes] = ..., protocol: _Optional[_Union[Protocol, str]] = ...) -> None: ...
 
 class LinkBody(_message.Message):
-    __slots__ = ("type", "displayTimestamp", "target_fid")
+    __slots__ = ["type", "displayTimestamp", "target_fid"]
     TYPE_FIELD_NUMBER: _ClassVar[int]
     DISPLAYTIMESTAMP_FIELD_NUMBER: _ClassVar[int]
     TARGET_FID_FIELD_NUMBER: _ClassVar[int]
@@ -276,7 +285,7 @@ class LinkBody(_message.Message):
     def __init__(self, type: _Optional[str] = ..., displayTimestamp: _Optional[int] = ..., target_fid: _Optional[int] = ...) -> None: ...
 
 class LinkCompactStateBody(_message.Message):
-    __slots__ = ("type", "target_fids")
+    __slots__ = ["type", "target_fids"]
     TYPE_FIELD_NUMBER: _ClassVar[int]
     TARGET_FIDS_FIELD_NUMBER: _ClassVar[int]
     type: str
@@ -284,7 +293,7 @@ class LinkCompactStateBody(_message.Message):
     def __init__(self, type: _Optional[str] = ..., target_fids: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class FrameActionBody(_message.Message):
-    __slots__ = ("url", "button_index", "cast_id", "input_text", "state", "transaction_id", "address")
+    __slots__ = ["url", "button_index", "cast_id", "input_text", "state", "transaction_id", "address"]
     URL_FIELD_NUMBER: _ClassVar[int]
     BUTTON_INDEX_FIELD_NUMBER: _ClassVar[int]
     CAST_ID_FIELD_NUMBER: _ClassVar[int]
@@ -302,7 +311,7 @@ class FrameActionBody(_message.Message):
     def __init__(self, url: _Optional[bytes] = ..., button_index: _Optional[int] = ..., cast_id: _Optional[_Union[CastId, _Mapping]] = ..., input_text: _Optional[bytes] = ..., state: _Optional[bytes] = ..., transaction_id: _Optional[bytes] = ..., address: _Optional[bytes] = ...) -> None: ...
 
 class LendStorageBody(_message.Message):
-    __slots__ = ("to_fid", "num_units", "unit_type")
+    __slots__ = ["to_fid", "num_units", "unit_type"]
     TO_FID_FIELD_NUMBER: _ClassVar[int]
     NUM_UNITS_FIELD_NUMBER: _ClassVar[int]
     UNIT_TYPE_FIELD_NUMBER: _ClassVar[int]
@@ -310,3 +319,41 @@ class LendStorageBody(_message.Message):
     num_units: int
     unit_type: StorageUnitType
     def __init__(self, to_fid: _Optional[int] = ..., num_units: _Optional[int] = ..., unit_type: _Optional[_Union[StorageUnitType, str]] = ...) -> None: ...
+
+class KeyAddBody(_message.Message):
+    __slots__ = ["key", "key_type", "custody_signature", "deadline", "nonce", "metadata", "metadata_type", "registration_tx_hash", "scopes", "ttl"]
+    KEY_FIELD_NUMBER: _ClassVar[int]
+    KEY_TYPE_FIELD_NUMBER: _ClassVar[int]
+    CUSTODY_SIGNATURE_FIELD_NUMBER: _ClassVar[int]
+    DEADLINE_FIELD_NUMBER: _ClassVar[int]
+    NONCE_FIELD_NUMBER: _ClassVar[int]
+    METADATA_FIELD_NUMBER: _ClassVar[int]
+    METADATA_TYPE_FIELD_NUMBER: _ClassVar[int]
+    REGISTRATION_TX_HASH_FIELD_NUMBER: _ClassVar[int]
+    SCOPES_FIELD_NUMBER: _ClassVar[int]
+    TTL_FIELD_NUMBER: _ClassVar[int]
+    key: bytes
+    key_type: int
+    custody_signature: bytes
+    deadline: int
+    nonce: int
+    metadata: bytes
+    metadata_type: int
+    registration_tx_hash: bytes
+    scopes: _containers.RepeatedScalarFieldContainer[int]
+    ttl: int
+    def __init__(self, key: _Optional[bytes] = ..., key_type: _Optional[int] = ..., custody_signature: _Optional[bytes] = ..., deadline: _Optional[int] = ..., nonce: _Optional[int] = ..., metadata: _Optional[bytes] = ..., metadata_type: _Optional[int] = ..., registration_tx_hash: _Optional[bytes] = ..., scopes: _Optional[_Iterable[int]] = ..., ttl: _Optional[int] = ...) -> None: ...
+
+class KeyRemoveBody(_message.Message):
+    __slots__ = ["key", "signature", "signature_type", "deadline", "nonce"]
+    KEY_FIELD_NUMBER: _ClassVar[int]
+    SIGNATURE_FIELD_NUMBER: _ClassVar[int]
+    SIGNATURE_TYPE_FIELD_NUMBER: _ClassVar[int]
+    DEADLINE_FIELD_NUMBER: _ClassVar[int]
+    NONCE_FIELD_NUMBER: _ClassVar[int]
+    key: bytes
+    signature: bytes
+    signature_type: int
+    deadline: int
+    nonce: int
+    def __init__(self, key: _Optional[bytes] = ..., signature: _Optional[bytes] = ..., signature_type: _Optional[int] = ..., deadline: _Optional[int] = ..., nonce: _Optional[int] = ...) -> None: ...

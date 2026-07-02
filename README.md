@@ -196,14 +196,20 @@ Some formats (currently just Farcaster) use [protocol buffers](https://protobuf.
 The Farcaster protobufs are from `[farcasterxyz/snapchain:src/proto](https://github.com/farcasterxyz/snapchain/tree/main/src/proto)`. Here are the commands we currently use to copy and compile them:
 
 ```sh
-cd ~/src/granary
-source local/bin/activate.csh
-python -m pip install grpcio-tools
+cd ~/src/granary/granary/proto/farcaster
+cp -f ~/src/snapchain/proto/definitions/{rpc,blocks,hub_event,message,onchain_event,request_response,username_proof}.proto .
 
-cd granary/proto/farcaster
-cp ~/src/snapchain/src/proto/{rpc,blocks,hub_event,message,onchain_event,request_response,username_proof}.proto .
+# use a separate venv since we need to generate code with Python and grpc* at the
+# lowest versions we support in pyproject.toml, eg 3.9 and 1.56.0, for compatibility
+cd /tmp/
+uv venv
+source .venv/bin/activate.csh
+uv pip install --no-sources --resolution=lowest-direct ~/src/granary'[app,tests]'
+uv pip install grpcio-tools
 
 cd ../../generated/farcaster
+source /tmp/.venv/bin/activate.csh
+uv pip install 'setuptools<=81.0.0'
 python -m grpc_tools.protoc -I ../../proto/farcaster --python_out=. --pyi_out=. --grpc_python_out=. ../../proto/farcaster/*.proto
 
 # post-process the generated code to make the imports package-relative

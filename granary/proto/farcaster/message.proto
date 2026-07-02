@@ -43,6 +43,8 @@ message MessageData {
     LinkCompactStateBody link_compact_state_body = 17;
 
     LendStorageBody lend_storage_body = 18;
+    KeyAddBody key_add_body = 19;
+    KeyRemoveBody key_remove_body = 20;
   } // Properties specific to the MessageType
 }
 
@@ -78,6 +80,8 @@ enum MessageType {
   MESSAGE_TYPE_FRAME_ACTION = 13; // A Farcaster Frame action
   MESSAGE_TYPE_LINK_COMPACT_STATE = 14; // Link Compaction State Message
   MESSAGE_TYPE_LEND_STORAGE = 15;
+  MESSAGE_TYPE_KEY_ADD = 16; // Register an Ed25519 key via custody-authenticated message
+  MESSAGE_TYPE_KEY_REMOVE = 17; // Revoke an Ed25519 key via custody signature or self-revocation
 }
 
 /** Farcaster network the message is intended for */
@@ -109,6 +113,7 @@ enum UserDataType {
   USER_DATA_PRIMARY_ADDRESS_ETHEREUM = 11; // Primary address for the user on Ethereum
   USER_DATA_PRIMARY_ADDRESS_SOLANA = 12; // Primary address for the user on Solana
   USER_DATA_TYPE_PROFILE_TOKEN = 13; // Profile token in CAIP-19 format
+  USER_DATA_TYPE_LIVE_AT = 14; // URL of the user's live activity
 }
 
 message Embed {
@@ -225,4 +230,27 @@ message LendStorageBody {
   uint64 to_fid = 1;
   uint64 num_units = 2;
   StorageUnitType unit_type = 3;
+}
+
+/** Registers an Ed25519 key for an FID via custody-authenticated message */
+message KeyAddBody {
+  bytes key = 1; // Ed25519 public key (32 bytes)
+  uint32 key_type = 2; // 1 = Ed25519
+  bytes custody_signature = 3; // EIP-712 signature from custody address
+  uint32 deadline = 4; // Farcaster epoch timestamp after which the custody signature is invalid
+  uint32 nonce = 5; // Monotonically increasing per-FID user nonce
+  bytes metadata = 6; // ABI-encoded SignedKeyRequestMetadata
+  uint32 metadata_type = 7; // Must be 1 (SignedKeyRequest)
+  bytes registration_tx_hash = 8; // Optional: tx hash of the FID registration transaction
+  repeated int32 scopes = 9; // Allowed MessageType values; required and non-empty
+  uint32 ttl = 10; // Seconds; must be > 0. Sliding expiry window; max enforced at validation.
+}
+
+/** Revokes an Ed25519 key via custody signature or self-revocation */
+message KeyRemoveBody {
+  bytes key = 1; // Ed25519 public key to remove
+  bytes signature = 2; // EIP-712 (custody) or Ed25519 (self-revocation) signature
+  uint32 signature_type = 3; // 1 = custody (EIP-712), 2 = self (Ed25519)
+  uint32 deadline = 4; // Farcaster epoch timestamp after which the signature is invalid
+  uint32 nonce = 5; // Monotonically increasing nonce (user nonce for custody, app nonce for self)
 }

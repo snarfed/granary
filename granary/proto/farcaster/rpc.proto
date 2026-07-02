@@ -22,6 +22,11 @@ service HubService {
   rpc GetInfo(GetInfoRequest) returns (GetInfoResponse);
   rpc GetFids(FidsRequest) returns (FidsResponse);
   rpc GetConnectedPeers(GetConnectedPeersRequest) returns (GetConnectedPeersResponse);
+  // Mesh health & topology: this node's local view of the gossip mesh. Admin-gated.
+  rpc GetMeshView(GetMeshViewRequest) returns (MeshView);
+  // Network-wide topology: centralized crawl of connected validators over the
+  // gossip port, aggregating each validator's local mesh view. Admin-gated.
+  rpc GetMeshTopology(GetMeshViewRequest) returns (MeshTopology);
 
   // Events
   rpc Subscribe(SubscribeRequest) returns (stream HubEvent);
@@ -54,8 +59,17 @@ service HubService {
   rpc GetVerificationsByFid(FidRequest) returns (MessagesResponse);
 
   // OnChain Events
+  // DEPRECATED in favor of GetSigner (unified). Returns on-chain signer events
+  // only — gasless / off-chain keys are not surfaced through this RPC.
   rpc GetOnChainSigner(SignerRequest) returns (OnChainEvent);
+  // DEPRECATED in favor of GetSignersByFid (unified). Returns on-chain signer
+  // events only — gasless / off-chain keys are not surfaced through this RPC.
   rpc GetOnChainSignersByFid(FidRequest) returns (OnChainEventResponse);
+
+  // Unified signer surface — returns both on-chain and off-chain (gasless) keys.
+  rpc GetSigner(SignerRequest) returns (SignerResponse);
+  rpc GetSignersByFid(SignersByFidRequest) returns (SignersByFidResponse);
+
   rpc GetOnChainEvents(OnChainEventRequest) returns (OnChainEventResponse);
   rpc GetIdRegistryOnChainEvent(FidRequest) returns (OnChainEvent);
   rpc GetIdRegistryOnChainEventByAddress(IdRegistryEventByAddressRequest) returns (OnChainEvent);

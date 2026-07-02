@@ -6,7 +6,7 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class UserNameType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
-    __slots__ = ()
+    __slots__ = []
     USERNAME_TYPE_NONE: _ClassVar[UserNameType]
     USERNAME_TYPE_FNAME: _ClassVar[UserNameType]
     USERNAME_TYPE_ENS_L1: _ClassVar[UserNameType]
@@ -17,7 +17,7 @@ USERNAME_TYPE_ENS_L1: UserNameType
 USERNAME_TYPE_BASENAME: UserNameType
 
 class UserNameProof(_message.Message):
-    __slots__ = ("timestamp", "name", "owner", "signature", "fid", "type")
+    __slots__ = ["timestamp", "name", "owner", "signature", "fid", "type"]
     TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     OWNER_FIELD_NUMBER: _ClassVar[int]

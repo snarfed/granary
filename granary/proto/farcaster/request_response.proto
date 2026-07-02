@@ -8,7 +8,8 @@ import "onchain_event.proto";
 
 
 message BlocksRequest {
-  uint32 shard_id = 1;
+  reserved 1;
+  reserved "shard_id";
   uint64 start_block_number = 2;
   optional uint64 stop_block_number = 3;
 }
@@ -217,6 +218,85 @@ message SignerRequest {
   bytes signer = 2;
 }
 
+// Source of a signer record returned by GetSigner / GetSignersByFid.
+enum SignerSource {
+  SIGNER_SOURCE_NONE = 0;
+  SIGNER_SOURCE_ONCHAIN = 1;
+  SIGNER_SOURCE_OFFCHAIN = 2; // gasless / KEY_ADD
+}
+
+// Unified per-key record. Optional fields are populated only when carried by
+// the underlying source (on-chain signer event vs. gasless KEY_ADD record).
+message Signer {
+  SignerSource source = 1;
+  bytes key = 2;          // 32-byte Ed25519 public key
+  uint32 key_type = 3;    // 1 = Ed25519
+  uint64 fid = 4;
+
+  // Common metadata. All timestamps are Unix epoch seconds regardless of
+  // source; off-chain values that natively live in Farcaster time
+  // (MessageData.timestamp, gasless last-used tracking) are converted at the
+  // RPC boundary so clients can compare/compute across sources without an
+  // epoch table.
+  optional uint64 added_at = 5;       // Unix epoch seconds
+  optional uint64 last_used_at = 6;   // Unix epoch seconds; off-chain only
+  optional uint32 ttl = 7;            // duration in seconds; off-chain only
+  optional uint64 expires_at = 8;     // Unix epoch seconds; computed as last_used_at + ttl when ttl > 0
+
+  // Off-chain–only fields
+  repeated int32 scopes = 9;          // mirrors KeyAddBody.scopes (raw MessageType ints)
+  optional uint64 request_fid = 10;   // verified requestFid from SignedKeyRequestMetadata
+  optional uint32 nonce = 11;         // user nonce on the originating KEY_ADD
+
+  // On-chain–only payload — original event for callers that need raw fields
+  // (block_hash, transaction_hash, log_index, metadata bytes, etc.).
+  optional OnChainEvent onchain_event = 12;
+}
+
+message SignerResponse {
+  Signer signer = 1;
+}
+
+// Request for GetSignersByFid. Mirrors `FidRequest` but adds an optional list
+// of `requester_fids` so callers can fetch the current app-nonce for one or
+// more requesters alongside the signer list. Used in lieu of `FidRequest` so
+// the shared message stays lean.
+message SignersByFidRequest {
+  uint64 fid = 1;
+  optional uint32 page_size = 2;
+  optional bytes page_token = 3;
+  optional bool reverse = 4;
+  // FIDs (verified `requestFid` from SignedKeyRequestMetadata) whose current
+  // app-nonce should be included in the response. The response's
+  // `requester_fid_nonces` list carries one entry per FID supplied here, in
+  // the same order. Empty list ⇒ no app nonces in the response.
+  repeated uint64 requester_fids = 5;
+}
+
+message SignersByFidResponse {
+  repeated Signer signers = 1;
+  optional bytes next_page_token = 2;
+  // Total count of currently-active gasless (off-chain) keys for this FID.
+  // Populated from the O(1) per-FID counter maintained alongside the gasless
+  // key store, so it stays cheap regardless of the page size.
+  uint32 gasless_signer_count = 3;
+  // Per-FID cap on active gasless keys (NEYN-10579). Lets clients show
+  // "X/Y delegations" without hardcoding the limit on their side.
+  uint32 gasless_signer_limit = 4;
+  // Current value of the user-nonce counter for this FID, i.e. the highest
+  // nonce ever accepted on KEY_ADD or custody-signed KEY_REMOVE for the user.
+  // The next valid user-nonce is strictly greater than this value. Returns
+  // 0 when no gasless activity has occurred for this FID yet, matching the
+  // merge-time validation rule that treats a missing counter as 0.
+  uint32 current_user_nonce = 5;
+  // Current app-nonce counter, keyed by requester FID. Contains one entry
+  // per FID supplied in `request.requester_fids`; missing counters are
+  // surfaced as 0 so clients can read the map directly without falling back
+  // to defaults. The next valid self-revocation nonce for a given requester
+  // is strictly greater than the value here.
+  map<uint64, uint32> requester_fid_nonces = 6;
+}
+
 message LinkRequest {
   uint64 fid = 1;
   string link_type = 2;
@@ -319,5 +399,102 @@ message GetConnectedPeersRequest {
 
 message GetConnectedPeersResponse {
   repeated ContactInfoBody contacts = 1;
+  // Unified, source-tagged view of connected peers. Includes peers we have no
+  // collected ContactInfoBody for (e.g. validators) as CONTACT_SOURCE_DERIVED
+  // entries built from the live connection — kept distinct from collected data.
+  repeated ConnectedPeer peers = 2;
+}
+
+// Where a peer's address/contact data came from. Keeps internally-derived
+// (observed) data from being conflated with peer-attested gossip data.
+enum ContactSource {
+  CONTACT_SOURCE_UNKNOWN = 0;
+  CONTACT_SOURCE_COLLECTED = 1; // real ContactInfoBody received over the contact-info topic
+  CONTACT_SOURCE_DERIVED = 2;   // internal: PeerId + observed connection address only
+}
+
+message ConnectedPeer {
+  ContactSource source = 1;
+  ContactInfoBody contact_info = 2; // set only when source == COLLECTED
+  bytes peer_id = 3;                // always present (esp. for DERIVED)
+  string observed_address = 4;      // set for DERIVED: the live-connection address
+}
+
+enum MeshNodeType {
+  MESH_NODE_TYPE_UNKNOWN = 0;
+  MESH_NODE_TYPE_VALIDATOR = 1;
+  MESH_NODE_TYPE_NON_VALIDATOR = 2;
+}
+
+message GetMeshViewRequest {
+  bool validators_only = 1; // default true (applied by the handler)
+  // Reserved for the recursive crawl; ignored by the local view, kept so the
+  // wire format doesn't break when a propagating crawl is added later.
+  uint32 ttl = 2;
+  repeated bytes visited_peer_ids = 3;
+}
+
+message GossipRate {
+  string topic = 1;
+  double msgs_per_sec = 2;
+  double bytes_per_sec = 3;
+  uint64 total_msgs = 4;
+  uint64 total_bytes = 5;
+}
+
+message TopicMembership {
+  string topic = 1;
+  bool subscribed = 2;
+  bool in_mesh = 3; // peer is in OUR gossipsub mesh for this topic
+}
+
+message MeshSelf {
+  bytes peer_id = 1;
+  bytes consensus_public_key = 2; // node identity key (always present)
+  bool is_validator = 3;          // key is in the validator set at current height
+  string gossip_address = 4;
+  string rpc_address = 5;
+  string snapchain_version = 6;
+  FarcasterNetwork network = 7;
+  repeated string subscribed_topics = 8;
+  uint32 consensus_mesh_size = 9;
+  uint64 current_height = 10;
+}
+
+message MeshPeer {
+  bytes peer_id = 1;
+  MeshNodeType node_type = 2;
+  optional bytes consensus_public_key = 3; // set iff PeerId matched a validator-set entry
+  bool connected = 4;
+  bool direct_peer = 5;
+  ContactSource contact_source = 6;        // COLLECTED vs DERIVED — never conflate the two
+  ContactInfoBody contact_info = 7;        // set only when contact_source == COLLECTED
+  string observed_address = 8;             // internal: live-connection addr; not a self-announced IP
+  repeated TopicMembership topics = 9;
+  repeated GossipRate gossip_rates = 10;
+}
+
+message MeshView {
+  // The responding node. Named `local` (not `self`) to avoid the Rust keyword.
+  MeshSelf local = 1;
+  repeated MeshPeer peers = 2;
+  uint64 generated_at = 3; // unix millis
+}
+
+// A validator that the crawl could not query directly. The crawl is
+// connected-only: validators the serving node has no live connection to,
+// or that did not respond in time, are surfaced here rather than dropped.
+message UnreachableNode {
+  bytes peer_id = 1;
+  bytes consensus_public_key = 2; // set when the missing node is a known validator
+  string reason = 3;              // "not_connected" | "timeout" | "error: …"
+}
+
+// Network-wide topology assembled by the centralized crawl over the gossip
+// port. `nodes` is one MeshView per responding validator (including self).
+message MeshTopology {
+  repeated MeshView nodes = 1;
+  repeated UnreachableNode unreachable = 2;
+  uint64 generated_at = 3; // unix millis
 }
 
