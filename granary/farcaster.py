@@ -79,6 +79,10 @@ USER_DATA_TYPE_TO_AS1 = {
 DEFAULT_SNAPCHAIN_HOST = 'crackle.farcaster.xyz'
 DEFAULT_SNAPCHAIN_PORT = 3383
 
+# Farcaster message timestamps are seconds since this custom epoch, not the
+# Unix epoch: https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps
+FARCASTER_EPOCH = int(datetime(2021, 1, 1, tzinfo=timezone.utc).timestamp())
+
 # farcaster:// URIs: https://github.com/farcasterxyz/protocol/discussions/123
 # we support:
 # * farcaster://[fid]
@@ -105,6 +109,36 @@ CACHE_SIZE = 5000
 CACHE_TTL = timedelta(hours=6)
 
 logger = logging.getLogger(__name__)
+
+
+def to_timestamp(dt):
+  """Converts a datetime to a Farcaster timestamp.
+
+  (Farcaster timestamps use a custom epoch: 2021-01-01, not 1970-01-01.
+  https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps )
+
+  Args:
+    dt (datetime, timezone-aware)
+
+  Returns:
+    int
+  """
+  return int(dt.timestamp()) - FARCASTER_EPOCH
+
+
+def from_timestamp(timestamp):
+  """Converts a Farcaster timestamp to a datetime.
+
+  (Farcaster timestamps use a custom epoch: 2021-01-01, not 1970-01-01.
+  https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps )
+
+  Args:
+    timestamp (int)
+
+  Returns:
+    datetime: UTC
+  """
+  return datetime.fromtimestamp(timestamp + FARCASTER_EPOCH, tz=timezone.utc)
 
 
 def uri(fid_or_username, hash=None):
@@ -368,7 +402,7 @@ def to_as1(msg):
   msg_type = data.type
   published = None
   if data.timestamp:
-    published = datetime.fromtimestamp(data.timestamp, tz=timezone.utc).isoformat()
+    published = from_timestamp(data.timestamp).isoformat()
 
   # post
   if msg_type == MESSAGE_TYPE_CAST_ADD:
@@ -490,7 +524,7 @@ def to_as1(msg):
 
     obj['published'] = published
     if timestamp := data.link_body.displayTimestamp:
-      obj['published'] = datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat()
+      obj['published'] = from_timestamp(timestamp).isoformat()
 
   return util.trim_nulls(obj)
 
@@ -531,7 +565,7 @@ def from_as1(obj):
 
   published = (util.parse_iso8601(obj['published']) if obj.get('published')
                else util.now(tz=timezone.utc))
-  data.timestamp = int(published.timestamp())
+  data.timestamp = to_timestamp(published)
 
   as1.convert_html_content_to_text(obj)
   as1.expand_tags(obj)
@@ -649,7 +683,7 @@ def _from_as1_actor(obj):
 
   published = (util.parse_iso8601(obj['published']) if obj.get('published')
                else util.now(tz=timezone.utc))
-  timestamp = int(published.timestamp())
+  timestamp = to_timestamp(published)
 
   def add(user_data_type, value):
     msg = Message()

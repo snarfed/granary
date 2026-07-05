@@ -14,6 +14,7 @@ from ..farcaster import (
   BLAKE3_HASH_LENGTH_BYTES,
   Farcaster,
   farcaster_uri_to_web_url,
+  FARCASTER_EPOCH,
   from_as1,
   hash_and_sign,
   hash_for,
@@ -49,7 +50,7 @@ def message(data_text, fid=123):
   msg = text_format.Parse(f"""
 data {{
   fid: {fid}
-  timestamp: {testutil.NOW_SECONDS}
+  timestamp: {testutil.NOW_SECONDS - FARCASTER_EPOCH}
   network: FARCASTER_NETWORK_MAINNET
 }}
 """, message_pb2.Message())
@@ -67,7 +68,7 @@ def user_data_message(fid, user_data_type, value):
              .replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t'))
   return message(f"""
 fid: {fid}
-timestamp: {testutil.NOW_SECONDS}
+timestamp: {testutil.NOW_SECONDS - FARCASTER_EPOCH}
 network: FARCASTER_NETWORK_MAINNET
 type: MESSAGE_TYPE_USER_DATA_ADD
 user_data_body {{
@@ -365,7 +366,7 @@ reaction_body {
     obj = {
       'objectType': 'activity',
       'verb': 'like',
-      'id': 'farcaster://123/0x69291c4fa8c659e62b28724378a67ea02d83b6ee',
+      'id': 'farcaster://123/0xd0187582322f920c21528c4c146b32b2fb187ad3',
       'actor': 'farcaster://123',
       'object': 'https://example.com/post',
       'published': '2022-01-02T03:04:05+00:00',
@@ -449,7 +450,7 @@ type: MESSAGE_TYPE_LINK_ADD
 link_body {
   type: "follow"
   target_fid: 456
-  displayTimestamp: 1641092645
+  displayTimestamp: 31633445
 }
 """)
     obj = {
@@ -468,7 +469,7 @@ type: MESSAGE_TYPE_LINK_REMOVE
 link_body {
   type: "follow"
   target_fid: 456
-  displayTimestamp: 1641092645
+  displayTimestamp: 31633445
 }
 """)
     obj = {
@@ -492,7 +493,7 @@ type: MESSAGE_TYPE_LINK_ADD
 link_body {
   type: "block"
   target_fid: 456
-  displayTimestamp: 1641092645
+  displayTimestamp: 31633445
 }
 """)
     obj = {
@@ -511,7 +512,7 @@ type: MESSAGE_TYPE_LINK_REMOVE
 link_body {
   type: "block"
   target_fid: 456
-  displayTimestamp: 1641092645
+  displayTimestamp: 31633445
 }
 """)
     obj = {
@@ -630,15 +631,15 @@ cast_remove_body {
     self.assertEqual(r"""data {
   type: MESSAGE_TYPE_CAST_ADD
   fid: 123
-  timestamp: 1641092645
+  timestamp: 31633445
   network: FARCASTER_NETWORK_MAINNET
   cast_add_body {
     text: "Hello Farcaster!"
   }
 }
-hash: "W\214W\311.\223\216^Q\322\377\013\227\221\344\301 W7\303"
+hash: "Z\315\177\3015)\017?g\375\336\233\363\253\375\365\21325\013"
 hash_scheme: HASH_SCHEME_BLAKE3
-data_bytes: "\010\001\020{\030\245\254\304\216\006 \001*\022\"\020Hello Farcaster!"
+data_bytes: "\010\001\020{\030\245\340\212\017 \001*\022\"\020Hello Farcaster!"
 """, str(msg))
 
   def test_from_as1_html_link_mention_hashtag(self):
@@ -690,7 +691,7 @@ cast_add_body {
   def test_to_as1_deserializes_data_bytes(self):
     data = text_format.Parse("""
 fid: 123
-timestamp: 1641092645
+timestamp: 31633445
 network: FARCASTER_NETWORK_MAINNET
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body { text: "From data_bytes!" }
@@ -715,7 +716,7 @@ cast_add_body { text: "From data_bytes!" }
     # data_bytes content should win over msg.data
     data = text_format.Parse("""
 fid: 123
-timestamp: 1641092645
+timestamp: 31633445
 network: FARCASTER_NETWORK_MAINNET
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body { text: "From data_bytes!" }

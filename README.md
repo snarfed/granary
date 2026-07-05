@@ -308,6 +308,11 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
+### 11.1 - unreleased
+
+* `farcaster`:
+  * `from_as1`/`to_as1`: update timestamps to use [Farcaster's custom epoch](https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps), 2026-01-01.
+
 ### 11.0 - 2026-07-02
 
 _Breaking changes:_
