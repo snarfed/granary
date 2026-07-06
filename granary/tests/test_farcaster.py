@@ -611,6 +611,17 @@ cast_remove_body {
       'url': 'https://alice.com/',
     }))
 
+  def test_from_as1_actor_username_override(self):
+    self.assertEqual([
+      user_data_message(456, 'USER_DATA_TYPE_DISPLAY', 'Alice'),
+      user_data_message(456, 'USER_DATA_TYPE_USERNAME', 'eve'),
+    ], from_as1({
+      'objectType': 'person',
+      'id': 'farcaster://456',
+      'displayName': 'Alice',
+      'username': 'alice',
+    }, username='eve'))
+
   def test_from_as1_actor_minimal(self):
     self.assertEqual([
       user_data_message(123, 'USER_DATA_TYPE_DISPLAY', 'Bob'),
@@ -639,7 +650,7 @@ cast_remove_body {
 }
 hash: "Z\315\177\3015)\017?g\375\336\233\363\253\375\365\21325\013"
 hash_scheme: HASH_SCHEME_BLAKE3
-data_bytes: "\010\001\020{\030\245\340\212\017 \001*\022\"\020Hello Farcaster!"
+data_bytes: "\010\001\020{\030\245\340\212\017 \001*\022"\020Hello Farcaster!"
 """, str(msg))
 
   def test_from_as1_html_link_mention_hashtag(self):

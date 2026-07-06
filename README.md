@@ -312,6 +312,7 @@ Changelog
 
 * `farcaster`:
   * `from_as1`/`to_as1`: update timestamps to use [Farcaster's custom epoch](https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps), 2026-01-01.
+  * `from_as1`: add `username` kwarg to override the username in the input AS1 actor.
 
 ### 11.0 - 2026-07-02
 

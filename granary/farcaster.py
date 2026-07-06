@@ -529,11 +529,12 @@ def to_as1(msg):
   return util.trim_nulls(obj)
 
 
-def from_as1(obj):
+def from_as1(obj, username=None):
   """Converts an ActivityStreams 1 activity or object to a Farcaster Message.
 
   Args:
     obj (dict): AS1 activity or object
+    username (str): if provided, overrides the username from ``obj``
 
   Returns:
     message_pb2.Message or list of message_pb2.Message: Farcaster Message
@@ -546,7 +547,7 @@ def from_as1(obj):
 
   # actor/profile: return one USER_DATA Message per field
   if type in as1.ACTOR_TYPES:
-    return _from_as1_actor(obj)
+    return _from_as1_actor(obj, username=username)
 
   msg = Message()
   data = msg.data
@@ -665,11 +666,12 @@ def from_as1(obj):
   return msg
 
 
-def _from_as1_actor(obj):
+def _from_as1_actor(obj, username=None):
   """Converts an ActivityStreams 1 actor to Farcaster USER_DATA Messages.
 
   Args:
     obj (dict): AS1 actor
+    username (str): if provided, overrides the username from ``obj``
 
   Returns:
     list of message_pb2.Message:
@@ -700,7 +702,7 @@ def _from_as1_actor(obj):
   msgs = []
   if val := obj.get('displayName'):
     add(USER_DATA_TYPE_DISPLAY, val)
-  if val := obj.get('username'):
+  if val := username or obj.get('username'):
     add(USER_DATA_TYPE_USERNAME, val)
   if val := obj.get('summary'):
     add(USER_DATA_TYPE_BIO, val)
