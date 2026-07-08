@@ -632,26 +632,17 @@ cast_remove_body {
     }))
 
   def test_from_as1_data_bytes(self):
-    msg = from_as1({
-      'objectType': 'note',
-      'author': 'farcaster://123',
-      'content': 'Hello Farcaster!',
-      'content_is_html': False,
-      'published': '2022-01-02T03:04:05+00:00',
-    })
-    self.assertEqual(r"""data {
-  type: MESSAGE_TYPE_CAST_ADD
-  fid: 123
-  timestamp: 31633445
-  network: FARCASTER_NETWORK_MAINNET
-  cast_add_body {
-    text: "Hello Farcaster!"
-  }
-}
-hash: "Z\315\177\3015)\017?g\375\336\233\363\253\375\365\21325\013"
-hash_scheme: HASH_SCHEME_BLAKE3
-data_bytes: "\010\001\020{\030\245\340\212\017 \001*\022"\020Hello Farcaster!"
-""", str(msg))
+    self.assertEqual(message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body {
+  text: "Hello Farcaster!"
+}"""), from_as1({
+  'objectType': 'note',
+  'author': 'farcaster://123',
+  'content': 'Hello Farcaster!',
+  'content_is_html': False,
+  'published': '2022-01-02T03:04:05+00:00',
+}))
 
   def test_from_as1_html_link_mention_hashtag(self):
     self.assertEqual(message("""
