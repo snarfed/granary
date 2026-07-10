@@ -729,12 +729,15 @@ class Farcaster(source.Source):
   BASE_URL = 'https://farcaster.xyz/'
   NAME = 'Farcaster'
 
-  def __init__(self, host=DEFAULT_SNAPCHAIN_HOST, port=DEFAULT_SNAPCHAIN_PORT):
+  def __init__(self, host=DEFAULT_SNAPCHAIN_HOST, port=DEFAULT_SNAPCHAIN_PORT,
+               log_requests_responses=False):
     """Constructor.
 
     Args:
       host (str): snapchain node host, eg ``snapchain.farcaster.xyz``
       port (int): snapchain node port, default 3383
+      log_requests_responses (boolean): whether to log request and response
+        bodies at DEBUG level
     """
     assert host
     assert port
@@ -742,9 +745,12 @@ class Farcaster(source.Source):
     addr = f'{host}:{port}'
     logger.info(f'Connecting to Farcaster Snapchain node {addr}')
 
-    channel = grpc.intercept_channel(
-      grpc.secure_channel(addr, grpc.ssl_channel_credentials()),
-      util.GrpcLoggingInterceptor(logger=logger, level=logging.DEBUG))
+    channel = grpc.secure_channel(addr, grpc.ssl_channel_credentials())
+
+    if log_requests_responses:
+      interceptor = util.GrpcLoggingInterceptor(logger=logger, level=logging.DEBUG)
+      channel = grpc.intercept_channel(channel, interceptor)
+
     self.hub = rpc_pb2_grpc.HubServiceStub(channel)
 
   @classmethod
