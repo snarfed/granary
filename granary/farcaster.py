@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 from itertools import zip_longest
 import logging
 import mimetypes
+from os.path import splitext
 import re
 import threading
 from urllib.parse import urlparse
@@ -82,6 +83,15 @@ DEFAULT_SNAPCHAIN_PORT = 3383
 # Farcaster message timestamps are seconds since this custom epoch, not the
 # Unix epoch: https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps
 FARCASTER_EPOCH = int(datetime(2021, 1, 1, tzinfo=timezone.utc).timestamp())
+
+# mimetypes doesn't know these video streaming manifest extensions
+VIDEO_EXTENSIONS_EXTRA = {'.m3u8', '.mpd'}
+
+# CDN hostnames that Farcaster clients use for image embeds without file
+# extensions, eg Cloudflare Images
+IMAGE_CDN_HOSTNAMES = {
+  'imagedelivery.net',
+}
 
 # farcaster:// URIs: https://github.com/farcasterxyz/protocol/discussions/123
 # we support:
@@ -436,10 +446,16 @@ def to_as1(msg):
 
     for embed in cast.embeds:
       if embed.HasField('url'):
+        # technically we should HEAD the URL and look at its Content-Type
         mimetype, _ = mimetypes.guess_type(embed.url)
-        if mimetype and mimetype.startswith('image/'):
+        parsed = urlparse(embed.url)
+        is_image = ((mimetype and mimetype.startswith('image/'))
+                    or parsed.hostname in IMAGE_CDN_HOSTNAMES)
+        is_video = ((mimetype and mimetype.startswith('video/'))
+                    or splitext(parsed.path)[1] in VIDEO_EXTENSIONS_EXTRA)
+        if is_image:
           obj['image'].append(embed.url)
-        elif mimetype and mimetype.startswith('video/'):
+        elif is_video:
           obj['attachments'].append({
             'objectType': 'video',
             'stream': {'url': embed.url},
@@ -556,7 +572,7 @@ def from_as1(obj, username=None):
   inner_id = inner_obj.get('id')
   inner_id_match = FARCASTER_URI_RE.fullmatch(inner_id or '')
   inner_type = as1.object_type(inner_obj)
-  author = as1.get_owner(obj)
+  author = as1.get_owner(obj) or ''
 
   if ((match := FARCASTER_URI_RE.fullmatch(author))
       and match['fid'] and not match['hash']):

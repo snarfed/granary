@@ -314,6 +314,7 @@ Changelog
   * `from_as1`/`to_as1`: update timestamps to use [Farcaster's custom epoch](https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps), 2026-01-01.
   * `from_as1`:
     * Add `username` kwarg to override the username in the input AS1 actor.
+  * `to_as1`: more heuristics for detecting image and video embeds, eg Cloudflare Images CDN URLs and HLS/DASH streaming manifests (`.m3u8`, `.mpd`).
   * `Farcaster` constructor: add `log_requests_responses` kwarg.
 
 

@@ -195,6 +195,47 @@ cast_add_body {
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
 
+  def test_cast_with_image_embed_no_extension(self):
+    msg = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body {
+  embeds {
+    url: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/abc123/original"
+  }
+}
+""")
+    obj = {
+      'objectType': 'note',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'author': 'farcaster://123',
+      'image': ['https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/abc123/original'],
+    }
+    self.assert_equals(obj, to_as1(msg),ignore=['author', 'published', 'url',
+                                                'content', 'content_is_html'])
+    self.assertEqual(msg, from_as1(obj))
+
+  def test_cast_with_video_embed_hls(self):
+    msg = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body {
+  embeds {
+    url: "https://stream.warpcast.com/v1/video/abc123/master.m3u8"
+  }
+}
+""")
+    obj = {
+      'objectType': 'note',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'author': 'farcaster://123',
+      'attachments': [{
+        'objectType': 'video',
+        'stream': {'url': 'https://stream.warpcast.com/v1/video/abc123/master.m3u8'},
+      }],
+    }
+    self.assert_equals(obj, to_as1(msg),ignore=['author', 'published', 'url',
+                                                'content', 'content_is_html'])
+    self.assertEqual(msg, from_as1(obj))
+
   def test_cast_with_link_embed(self):
     msg = message("""
 type: MESSAGE_TYPE_CAST_ADD
