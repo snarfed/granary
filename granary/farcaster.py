@@ -473,10 +473,7 @@ def to_as1(msg):
         })
 
     if cast.HasField('parent_cast_id'):
-      obj['inReplyTo'] = {
-        'id': uri(cast.parent_cast_id.fid, cast.parent_cast_id.hash),
-        'author': uri(cast.parent_cast_id.fid),
-      }
+      obj['inReplyTo'] = uri(cast.parent_cast_id.fid, cast.parent_cast_id.hash)
     elif cast.HasField('parent_url'):
       obj['inReplyTo'] = cast.parent_url
 

@@ -333,10 +333,7 @@ cast_add_body {
       'content': 'Replying',
       'content_is_html': False,
       'published': '2022-01-02T03:04:05+00:00',
-      'inReplyTo': {
-        'id': 'farcaster://456/0xabcd789012',
-        'author': 'farcaster://456',
-      },
+      'inReplyTo': 'farcaster://456/0xabcd789012',
     }
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
