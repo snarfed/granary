@@ -775,6 +775,10 @@ class Source(object, metaclass=SourceMeta):
 
     Subclasses may override this.
 
+    TODO: unify with :meth:`Bluesky.base_object`, probably with a new
+    ``normalize_url`` or similar function that determines if a URL is on this source.
+    maybe with :class:`util.UrlCanonicalizer`?
+
     Args:
       obj (dict): ActivityStreams object
 
@@ -782,6 +786,9 @@ class Source(object, metaclass=SourceMeta):
       dict: minimal ActivityStreams object. Usually has at least ``id``; may
       also have ``url``, ``author``, etc.
     """
+    if as1.object_type(obj) in as1.CRUD_VERBS:
+      obj = as1.get_object(obj)
+
     # look at in-reply-tos first, then objects (for likes and reposts).
     # technically, the ActivityStreams 'object' field is always supposed to be
     # singular, but microformats2.json_to_object() sometimes returns activities
@@ -805,6 +812,9 @@ class Source(object, metaclass=SourceMeta):
 
   @classmethod
   def _postprocess_base_object(cls, obj):
+    # TODO: abstract better, maybe with a new normalize_url or similar function
+    # that determines if a URL is on this source? see eg Bluesky.base_object
+
     obj = copy.deepcopy(obj)
     id = obj.get('id')
     url = obj.get('url')

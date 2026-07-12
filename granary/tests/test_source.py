@@ -159,6 +159,16 @@ class SourceTest(testutil.TestCase):
       },
     }))
 
+  def test_base_object_crud(self):
+    self.assert_equals({
+      'id': 'orig',
+      'url': 'http://fake.com/orig',
+    }, self.source.base_object({
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {'inReplyTo': {'url': 'http://fake.com/orig'}},
+    }))
+
   def test_content_for_create(self):
     def cfc(base, extra, **kwargs):
       obj = base.copy()
