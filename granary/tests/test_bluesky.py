@@ -2848,6 +2848,17 @@ class BlueskyTest(testutil.TestCase):
         'inReplyTo': ['https://social.atiusamy.com/notes/9vder4g1u2g408ov'],
       })
 
+  def test_from_as1_reply_composite_inReplyTo(self):
+    reply = copy.deepcopy(REPLY_AS['object'])
+    reply['inReplyTo'] = {  # this is farcaster.to_as1's inReplyTo shape
+      'id': 'at://did:al:ice/app.bsky.feed.post/parent-tid',
+      'author': 'farcaster://456',
+    }
+    self.assertEqual({
+      **reply['inReplyTo'],
+      'url': 'https://bsky.app/profile/did:al:ice/post/parent-tid',
+    }, self.bs.base_object(reply))
+
   @patch.object(util.session, 'get')
   def test_from_as1_like_client(self, mock_get):
     mock_get.return_value = requests_response({
@@ -4935,7 +4946,7 @@ class BlueskyTest(testutil.TestCase):
       'inReplyTo': 'https://snarfed.org/post',
     })
     self.assertTrue(resp.abort)
-    self.assertEqual("inReplyTo https://snarfed.org/post doesn't look like Bluesky/ATProto", resp.error_plain)
+    self.assertEqual("inReplyTo ['https://snarfed.org/post'] doesn't look like Bluesky/ATProto", resp.error_plain)
 
   def test_preview_reply(self):
     for in_reply_to in ['at://did:al:ice/app.bsky.feed.post/parent-tid',
@@ -5241,6 +5252,7 @@ class BlueskyTest(testutil.TestCase):
     activity = {
       'objectType': 'activity',
       'verb': 'post',
+      # TODO: this is weird. why isn't this in the object? bug in microformats.py?
       'content': 'foo ☕ bar',
       'object': {
         'objectType': 'bookmark',

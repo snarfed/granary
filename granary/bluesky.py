@@ -416,50 +416,6 @@ def from_as1_datetime(val):
   return dt.isoformat(sep='T', timespec='milliseconds') + 'Z'
 
 
-def base_object(obj):
-  """Returns the "base" Bluesky object that an object operates on.
-
-  If the object is a reply, repost, or like of a Bluesky post, this returns
-  that post object. The id in the returned object is the AT protocol URI,
-  while the URL is the bsky.app web URL.
-
-  If the object is a follow or block, this returns the followed or blocked id, eg a
-  DID.
-
-  Args:
-    obj (dict): ActivityStreams object
-
-  Returns:
-    dict: minimal ActivityStreams object. Usually has at least ``id``; may
-    also have ``url``, ``author``, etc.
-  """
-  for field in ('inReplyTo', 'object', 'target'):
-    if bases := util.get_list(obj, field):
-      for base in bases:
-        url = util.get_url(base)
-        if not url:
-          return {}
-        elif url.startswith('https://bsky.app/'):
-          return {
-            'id': web_url_to_at_uri(url),
-            'url': url,
-          }
-        elif url.startswith('at://'):
-          return {
-            'id': url,
-            'url': at_uri_to_web_url(url),
-          }
-        elif url.startswith('did:'):
-          return {
-            'id': url,
-            'url': Bluesky.user_url(url),
-          }
-      else:  # closes for loop
-        raise ValueError(f"{field} {url} doesn't look like Bluesky/ATProto")
-
-  return {}
-
-
 def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
              original_fields_prefix=None, as_embed=False, raise_=False,
              dynamic_sensitive_labels=False, multiple=False, domain=None):
@@ -1127,7 +1083,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     # in reply to
     reply = None
-    in_reply_to = base_object(obj)
+    in_reply_to = Bluesky.base_object(obj)
     if in_reply_to and not is_dm:
       parent_ref = from_as1_to_strong_ref(in_reply_to, client=client,
                                           value=True, raise_=raise_)
@@ -2708,8 +2664,47 @@ class Bluesky(Source):
     url = at_uri_to_web_url(at_uri)
     return creation_result(description=f'<span class="verb">delete</span> <a href="{url}">this</a>.')
 
-  def base_object(self, obj):
-    return base_object(obj)
+  @classmethod
+  def base_object(cls, obj):
+    """Wraps :meth:`Source.base_object` and infers ``id`` and/or ``url``.
+
+    TODO: unify with :meth:`Source.base_object`, probably with a ``new
+    normalize_url`` or similar function that determines if a URL is on this source.
+    maybe with :class:`util.UrlCanonicalizer`?
+    """
+    for field in ('inReplyTo', 'object', 'target'):
+      if not (bases := as1.get_objects(obj, field)):
+        continue
+
+      non_bluesky = []
+      for base in bases:
+        if base.get('objectType') == 'bookmark':
+          # awkward. TODO: clean up. see test_create_bookmark in test_bluesky.py
+          return {}
+
+        if not (ids := util.get_list(base, 'id') + util.get_list(base, 'url')):
+          continue
+
+        base = copy.deepcopy(base)
+        for id in ids:
+          if id.startswith('https://bsky.app/'):
+            base.setdefault('id', web_url_to_at_uri(id))
+            base.setdefault('url', id)
+            return base
+          elif id.startswith('at://'):
+            base.setdefault('id', id)
+            base.setdefault('url', at_uri_to_web_url(id))
+            return base
+          elif id.startswith('did:'):
+            base.setdefault('id', id)
+            base.setdefault('url', Bluesky.user_url(id))
+            return base
+
+        non_bluesky.extend(ids)
+
+      raise ValueError(f"{field} {non_bluesky} doesn't look like Bluesky/ATProto")
+
+    return {}
 
   def upload_media(self, media):
     """
