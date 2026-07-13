@@ -647,6 +647,8 @@ cast_remove_body {
         {'objectType': 'featured', 'url': 'https://example.com/ban.jpg'},
       ],
       'url': 'https://alice.com/',
+      # should be ignored
+      'published': '2018-05-06T07:08:09+00:00',
     }))
 
   def test_from_as1_actor_username_override(self):

@@ -696,15 +696,11 @@ def _from_as1_actor(obj, username=None):
       and match['fid'] and not match['hash']):
     fid = int(match['fid'])
 
-  published = (util.parse_iso8601(obj['published']) if obj.get('published')
-               else util.now(tz=timezone.utc))
-  timestamp = to_timestamp(published)
-
   def add(user_data_type, value):
     msg = Message()
     msg.data.type = MESSAGE_TYPE_USER_DATA_ADD
     msg.data.network = FARCASTER_NETWORK_MAINNET
-    msg.data.timestamp = timestamp
+    msg.data.timestamp = to_timestamp(util.now(tz=timezone.utc))
     if fid:
       msg.data.fid = fid
     msg.data.user_data_body.type = user_data_type
