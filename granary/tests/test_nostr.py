@@ -1108,6 +1108,21 @@ class NostrTest(testutil.TestCase):
       'object': 'nostr:abc123',
     }))
 
+  def test_from_as1_repost_stub_object(self):
+    self.assert_equals({
+      'kind': KIND_REPOST,
+      'content': '',
+      'tags': [['e', 'abc123', '', '']],
+      'created_at': NOW_TS,
+    }, from_as1({
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': {
+        'id': 'nostr:abc123',
+        'author': PUBKEY_URI,
+      },
+    }))
+
   def test_to_from_as1_like(self):
     like = {
       'objectType': 'activity',

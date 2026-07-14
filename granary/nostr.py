@@ -600,7 +600,7 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None, multiple=False)
       # "The repost event MUST include an e tag with the id of the note that is being reposted. That tag MUST include a relay URL as its third entry to indicate where it can be fetched."
       e_tag = ['e', inner_hex_id, remote_relay, '']
       event['tags'].append(e_tag)
-      if set(inner_obj.keys()) > {'id'}:
+      if as1.object_type(inner_obj):
         orig_event = from_as1(inner_obj)
         event['content'] = json_dumps(orig_event, sort_keys=True, ensure_ascii=False)
         orig_author_pubkey = orig_event.get('pubkey')
