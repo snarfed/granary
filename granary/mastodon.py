@@ -56,6 +56,9 @@ MEDIA_TYPES = {
   'gifv': 'video',
   'unknown': None,
 }
+# maps AS1 objectType to Mastodon media attachment type
+AS1_TO_MEDIA_TYPES = {as1: masto for masto, as1 in MEDIA_TYPES.items()}
+
 # Not documented, but here's the Mastodon commit that added this limit:
 # https://github.com/tootsuite/mastodon/commit/5f511324b6#diff-11783d64d04391768226f7d45a610898R40
 MAX_MEDIA = 4
@@ -65,6 +68,113 @@ MAX_MEDIA = 4
 USERNAME_RE = re.compile(r'[a-z0-9_]+([a-z0-9_\.-]+[a-z0-9_]+)?', re.IGNORECASE)
 MENTION_RE  = re.compile(r'(?<![\/\w])@((' + USERNAME_RE.pattern +
                          r')(?:@[a-z0-9\.\-]+[a-z0-9]+)?)', re.IGNORECASE)
+
+
+def from_as1(obj):
+  """Converts an AS1 actor, note, or article to a Mastodon API Account or Status.
+
+  Mastodon API docs:
+  * ``Account``: https://docs.joinmastodon.org/entities/Account/
+  * ``Status``:https://docs.joinmastodon.org/entities/Status/
+
+  Args:
+    obj (dict): AS1 object or activity
+
+  Returns:
+    dict: ``Account`` or ``Status``
+
+  Raises:
+    ValueError: if ``objectType`` is missing or unsupported
+  """
+  type = as1.object_type(obj)
+
+  if type in as1.ACTOR_TYPES:
+    # TODO: acct
+    id = obj.get('id') or ''
+    avatar = util.get_url(obj, 'image')
+
+    header = ''
+    for img in as1.get_objects(obj, 'image'):
+      if img.get('objectType') == 'featured' and (url := img.get('url')):
+        header = url
+        break
+
+    return {
+      'id': id,
+      'uri': id,
+      'username': obj.get('username') or as1.actor_name(obj),
+      'display_name': obj.get('displayName') or username,
+      'locked': False,
+      'bot': type == 'application',
+      'created_at': obj.get('published'),
+      'note': obj.get('summary') or obj.get('description') or '',
+      'url': as1.get_url(obj),
+      'avatar': avatar,
+      'avatar_static': avatar,
+      'header': header,
+      'header_static': header,
+      'followers_count': as1.get_object(obj, 'followers').get('totalItems') or 0,
+      'following_count': as1.get_object(obj, 'following').get('totalItems') or 0,
+      'statuses_count': 0,
+    }
+
+  elif type in as1.POST_TYPES:
+    id = obj.get('id') or ''
+    author = as1.get_object(obj, 'author')
+
+    mentions = []
+    tags = []
+    for tag in as1.get_objects(obj, 'tags'):
+      tag_type = tag.get('objectType')
+      if tag_type in as1.ACTOR_TYPES or tag_type == 'mention':
+        mentions.append({
+          'id': tag.get('id'),
+          'username': tag.get('displayName'),
+          'acct': tag.get('displayName'),
+          'url': tag.get('url'),
+        })
+      elif tag.get('objectType') == 'hashtag':
+        tags.append({
+          'name': (tag.get('displayName') or '').lstrip('#'),
+          'url': tag.get('url'),
+        })
+
+    media_attachments = []
+    for att in as1.get_objects(obj, 'attachments'):
+      if media_type := REVERSE_MEDIA_TYPES.get(att.get('objectType')):
+        stream = util.get_url(att, 'stream')
+        image = util.get_url(att, 'image')
+        media_attachments.append({
+          'id': att.get('id'),
+          'type': media_type,
+          'url': stream or image,
+          'preview_url': image or stream,
+          'description': att.get('displayName'),
+        })
+
+    # TODO: uri
+    return {
+      'id': id,
+      'uri': id,
+      'url': as1.get_url(obj),
+      'created_at': obj.get('published'),
+      'account': from_as1(as1.get_object(obj, 'author')),
+      'content': obj.get('content') or '',
+      'visibility': 'public',
+      'sensitive': False,
+      'spoiler_text': '',
+      'in_reply_to_id': as1.get_id(obj, 'inReplyTo'),
+      'in_reply_to_account_id': as1.get_owner(as1.get_object(obj, 'inReplyTo')),
+      'media_attachments': media_attachments,
+      'mentions': mentions,
+      'tags': tags,
+      'emojis': [],
+      'reblogs_count': 0,
+      'favourites_count': 0,
+      'replies_count': 0,
+    }
+
+  raise ValueError(f'Unsupported objectType/verb: {type}')
 
 
 class Mastodon(source.Source):

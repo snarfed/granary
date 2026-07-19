@@ -697,6 +697,77 @@ class MastodonTest(testutil.TestCase):
   def test_reply_status_to_as1_activity(self):
     self.assert_equals(REPLY_ACTIVITY, self.mastodon.status_to_as1_activity(REPLY_STATUS))
 
+  def test_from_as1_actor(self):
+    self.assert_equals({
+      'id': tag_uri('snarfed'),
+      'uri': tag_uri('snarfed'),
+      'username': 'snarfed',
+      'display_name': 'Ryan Barrett',
+      'locked': False,
+      'bot': False,
+      'created_at': '2017-04-19T20:38:19.704Z',
+      'note': 'my note',
+      'url': 'http://foo.com/@snarfed',
+      'avatar': 'http://foo.com/snarfed.png',
+      'avatar_static': 'http://foo.com/snarfed.png',
+      'header': '',
+      'header_static': '',
+      'followers_count': 456,
+      'following_count': 123,
+      'statuses_count': 0,
+    }, mastodon.from_as1(ACTOR))
+
+  def test_from_as1_featured_header(self):
+    got = mastodon.from_as1({
+      **ACTOR,
+      'image': [
+        'http://not/header',
+        {
+          'objectType': 'image',
+          'url': 'http://also/not/header',
+        }, {
+          'objectType': 'featured',
+          'url': 'http://header',
+        },
+      ],
+    })
+    self.assert_equals('http://header', got['header'])
+    self.assert_equals('http://header', got['header_static'])
+
+  def test_from_as1_note(self):
+    self.assert_equals({
+      'id': 'http://foo.com/users/snarfed/statuses/123',
+      'uri': 'http://foo.com/users/snarfed/statuses/123',
+      'url': 'http://foo.com/@snarfed/123',
+      'created_at': '2019-07-29T18:35:53.446Z',
+      'account': mastodon.from_as1(ACTOR),
+      'content': '<p>foo ☕ <a href="...">bar</a></p>',
+      'visibility': 'public',
+      'sensitive': False,
+      'spoiler_text': '',
+      'in_reply_to_id': None,
+      'in_reply_to_account_id': None,
+      'media_attachments': [],
+      'mentions': [{
+        'id': 'https://other/users/alice',
+        'username': 'alice',
+        'acct': 'alice',
+        'url': 'https://other/@alice',
+      }],
+      'tags': [{
+        'name': 'indieweb',
+        'url': 'http://foo.com/tags/indieweb',
+      }],
+      'emojis': [],
+      'reblogs_count': 0,
+      'favourites_count': 0,
+      'replies_count': 0,
+    }, mastodon.from_as1(OBJECT))
+
+  def test_from_as1_unsupported_type(self):
+    with self.assertRaises(ValueError):
+      mastodon.from_as1({'objectType': 'unknown'})
+
   def test_reblog_status_to_as1_activity(self):
     self.assert_equals(SHARE_ACTIVITY, self.mastodon.status_to_as1_activity(REBLOG_STATUS))
 
