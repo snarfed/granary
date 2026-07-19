@@ -86,6 +86,9 @@ def from_as1(obj):
   Raises:
     ValueError: if ``objectType`` is missing or unsupported
   """
+  if not obj:
+    return obj
+
   type = as1.object_type(obj)
 
   if type in as1.ACTOR_TYPES:
@@ -102,10 +105,10 @@ def from_as1(obj):
     return {
       'id': id,
       'uri': id,
-      'username': obj.get('username') or as1.actor_name(obj),
-      'display_name': obj.get('displayName') or username,
+      'username': obj.get('username'),
+      'display_name': obj.get('displayName') or obj.get('username'),
       'locked': False,
-      'bot': type == 'application',
+      'bot': type in as1.BOT_TYPES,
       'created_at': obj.get('published'),
       'note': obj.get('summary') or obj.get('description') or '',
       'url': as1.get_url(obj),

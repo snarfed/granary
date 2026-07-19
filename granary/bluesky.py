@@ -614,7 +614,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     ret = trim_nulls(ret, ignore=('did', 'handle'))
 
     # add bot label for automated account objectTypes
-    if type in ('application', 'service'):
+    if type in as1.BOT_TYPES:
       bsky_type = ret.get('$type')
       if bsky_type == 'app.bsky.actor.profile':
         ret['labels'] = {

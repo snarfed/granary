@@ -64,6 +64,10 @@ ACTOR_TYPES = frozenset((
   'person',
   'service',
 ))
+BOT_TYPES = frozenset((
+  'application',
+  'service',
+))
 
 # this isn't well defined 🤷
 POST_TYPES = frozenset((
