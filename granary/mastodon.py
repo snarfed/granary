@@ -16,8 +16,7 @@ from requests import HTTPError, JSONDecodeError, RequestException
 from webutil import util
 from webutil.util import json_dumps, json_loads
 
-from . import as1
-from . import source
+from . import as1, as2, source
 
 logger = logging.getLogger(__name__)
 
@@ -92,8 +91,9 @@ def from_as1(obj):
   type = as1.object_type(obj)
 
   if type in as1.ACTOR_TYPES:
-    # TODO: acct
     id = obj.get('id') or ''
+    if acct := as2.address(obj):
+      acct = acct.removeprefix('@')
     avatar = util.get_url(obj, 'image')
 
     header = ''
@@ -106,10 +106,11 @@ def from_as1(obj):
       'id': id,
       'uri': id,
       'username': obj.get('username') or '',
+      'acct': acct,
       'display_name': obj.get('displayName') or obj.get('username') or '',
       'locked': False,
       'bot': type in as1.BOT_TYPES,
-      'created_at': obj.get('published') or '',
+      'created_at': obj.get('published'),
       'note': obj.get('summary') or obj.get('description') or '',
       'url': as1.get_url(obj),
       'avatar': avatar,
@@ -124,14 +125,15 @@ def from_as1(obj):
   elif type in as1.POST_TYPES or type == 'share':
     id = obj.get('id') or ''
     actor = as1.get_object(obj, 'author') or as1.get_object(obj, 'actor')
-    # util.d(actor)
+    if actor:
+      actor.setdefault('objectType', 'person')
 
     status = {
       'id': id,
       'uri': id,
       'url': as1.get_url(obj),
-      'account': from_as1(actor) if actor.get('objectType') else {},
-      'created_at': obj.get('published') or '',
+      'account': from_as1(actor),
+      'created_at': obj.get('published'),
       'content': '',
       # TODO
       'visibility': 'public',
