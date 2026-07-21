@@ -121,33 +121,59 @@ def from_as1(obj):
       'statuses_count': 0,
     }
 
-  elif type in as1.POST_TYPES:
+  elif type in as1.POST_TYPES or type == 'share':
     id = obj.get('id') or ''
-    author = as1.get_object(obj, 'author')
+    actor = as1.get_object(obj, 'author') or as1.get_object(obj, 'actor')
 
-    mentions = []
-    tags = []
+    status = {
+      'id': id,
+      'uri': id,
+      'url': as1.get_url(obj),
+      'account': from_as1(actor) if actor.get('objectType') else None,
+      'created_at': obj.get('published'),
+      'content': '',
+      # TODO
+      'visibility': 'public',
+      'sensitive': False,
+      'spoiler_text': '',
+      'in_reply_to_id': None,
+      'in_reply_to_account_id': None,
+      'media_attachments': [],
+      'mentions': [],
+      'tags': [],
+      'emojis': [],
+      'reblogs_count': 0,
+      'favourites_count': 0,
+      'replies_count': 0,
+      'reblog': None,
+    }
+
+    if type == 'share':
+      return {
+        **status,
+        'reblog': from_as1(as1.get_object(obj, 'object')),
+      }
+
     for tag in as1.get_objects(obj, 'tags'):
       tag_type = tag.get('objectType')
       if tag_type in as1.ACTOR_TYPES or tag_type == 'mention':
-        mentions.append({
+        status['mentions'].append({
           'id': tag.get('id'),
           'username': tag.get('displayName'),
           'acct': tag.get('displayName'),
           'url': tag.get('url'),
         })
       elif tag.get('objectType') == 'hashtag':
-        tags.append({
+        status['tags'].append({
           'name': (tag.get('displayName') or '').lstrip('#'),
           'url': tag.get('url'),
         })
 
-    media_attachments = []
     for att in as1.get_objects(obj, 'attachments'):
       if media_type := AS1_TO_MEDIA_TYPES.get(att.get('objectType')):
         stream = util.get_url(att, 'stream')
         image = util.get_url(att, 'image')
-        media_attachments.append({
+        status['media_attachments'].append({
           'id': att.get('id'),
           'type': media_type,
           'url': stream or image,
@@ -155,27 +181,12 @@ def from_as1(obj):
           'description': att.get('displayName'),
         })
 
-    # TODO: uri
-    author = as1.get_object(obj, 'author')
     return {
-      'id': id,
-      'uri': id,
-      'url': as1.get_url(obj),
-      'created_at': obj.get('published'),
-      'account': from_as1(author) if author.get('objectType') else None,
+      **status,
       'content': obj.get('content') or '',
-      'visibility': 'public',
-      'sensitive': False,
-      'spoiler_text': '',
+      'spoiler_text': obj.get('summary'),
       'in_reply_to_id': as1.get_id(obj, 'inReplyTo'),
       'in_reply_to_account_id': as1.get_owner(as1.get_object(obj, 'inReplyTo')),
-      'media_attachments': media_attachments,
-      'mentions': mentions,
-      'tags': tags,
-      'emojis': [],
-      'reblogs_count': 0,
-      'favourites_count': 0,
-      'replies_count': 0,
     }
 
   raise ValueError(f'Unsupported objectType/verb: {type}')

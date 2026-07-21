@@ -744,7 +744,7 @@ class MastodonTest(testutil.TestCase):
       'content': '<p>foo ☕ <a href="...">bar</a></p>',
       'visibility': 'public',
       'sensitive': False,
-      'spoiler_text': '',
+      'spoiler_text': None,
       'in_reply_to_id': None,
       'in_reply_to_account_id': None,
       'media_attachments': [],
@@ -774,7 +774,7 @@ class MastodonTest(testutil.TestCase):
       'content': '<p>foo ☕ <a href="...">bar</a></p>',
       'visibility': 'public',
       'sensitive': False,
-      'spoiler_text': '',
+      'spoiler_text': None,
       'in_reply_to_id': None,
       'in_reply_to_account_id': None,
       'media_attachments': [{
@@ -805,6 +805,29 @@ class MastodonTest(testutil.TestCase):
       'favourites_count': 0,
       'replies_count': 0,
     }, mastodon.from_as1(MEDIA_OBJECT))
+
+  def test_from_as1_share(self):
+    self.assert_equals({
+      'id': REBLOG_STATUS['uri'],
+      'uri': REBLOG_STATUS['uri'],
+      'url': REBLOG_STATUS['url'],
+      'created_at': None,
+      'account': mastodon.from_as1(ACTOR_REMOTE),
+      'content': '',
+      'visibility': 'public',
+      'sensitive': False,
+      'spoiler_text': '',
+      'in_reply_to_id': None,
+      'in_reply_to_account_id': None,
+      'media_attachments': [],
+      'mentions': [],
+      'tags': [],
+      'emojis': [],
+      'reblogs_count': 0,
+      'favourites_count': 0,
+      'replies_count': 0,
+      'reblog': mastodon.from_as1(OBJECT),
+    }, mastodon.from_as1(SHARE_ACTIVITY))
 
   def test_from_as1_unsupported_type(self):
     with self.assertRaises(ValueError):
