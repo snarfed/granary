@@ -87,7 +87,7 @@ def from_as1(obj):
     ValueError: if ``objectType`` is missing or unsupported
   """
   if not obj:
-    return obj
+    return {}
 
   type = as1.object_type(obj)
 
@@ -105,11 +105,11 @@ def from_as1(obj):
     return {
       'id': id,
       'uri': id,
-      'username': obj.get('username'),
-      'display_name': obj.get('displayName') or obj.get('username'),
+      'username': obj.get('username') or '',
+      'display_name': obj.get('displayName') or obj.get('username') or '',
       'locked': False,
       'bot': type in as1.BOT_TYPES,
-      'created_at': obj.get('published'),
+      'created_at': obj.get('published') or '',
       'note': obj.get('summary') or obj.get('description') or '',
       'url': as1.get_url(obj),
       'avatar': avatar,
@@ -124,13 +124,14 @@ def from_as1(obj):
   elif type in as1.POST_TYPES or type == 'share':
     id = obj.get('id') or ''
     actor = as1.get_object(obj, 'author') or as1.get_object(obj, 'actor')
+    # util.d(actor)
 
     status = {
       'id': id,
       'uri': id,
       'url': as1.get_url(obj),
-      'account': from_as1(actor) if actor.get('objectType') else None,
-      'created_at': obj.get('published'),
+      'account': from_as1(actor) if actor.get('objectType') else {},
+      'created_at': obj.get('published') or '',
       'content': '',
       # TODO
       'visibility': 'public',
@@ -149,9 +150,11 @@ def from_as1(obj):
     }
 
     if type == 'share':
+      orig = as1.get_object(obj, 'object')
+      orig.setdefault('objectType', 'note')
       return {
         **status,
-        'reblog': from_as1(as1.get_object(obj, 'object')),
+        'reblog': from_as1(orig),
       }
 
     for tag in as1.get_objects(obj, 'tags'):
@@ -174,17 +177,17 @@ def from_as1(obj):
         stream = util.get_url(att, 'stream')
         image = util.get_url(att, 'image')
         status['media_attachments'].append({
-          'id': att.get('id'),
-          'type': media_type,
-          'url': stream or image,
-          'preview_url': image or stream,
-          'description': att.get('displayName'),
+          'id': att.get('id') or '',
+          'type': media_type or '',
+          'url': stream or image or '',
+          'preview_url': image or stream or '',
+          'description': att.get('displayName') or '',
         })
 
     return {
       **status,
       'content': obj.get('content') or '',
-      'spoiler_text': obj.get('summary'),
+      'spoiler_text': obj.get('summary') or '',
       'in_reply_to_id': as1.get_id(obj, 'inReplyTo'),
       'in_reply_to_account_id': as1.get_owner(as1.get_object(obj, 'inReplyTo')),
     }
