@@ -329,7 +329,14 @@ POST_VIEW_BSKY_IMAGES['embed'] = {
 
 GALLERY_URLS = [f'http://pic/{i}' for i in range(1, 6)]
 POST_AS_GALLERY = copy.deepcopy(POST_AS)
-POST_AS_GALLERY['object']['image'] = [{'url': url} for url in GALLERY_URLS]
+POST_AS_GALLERY['object'].update({
+  'image': [{
+    'url': url,
+    # DEFAULT_ASPECT_RATIO
+    'width': 1,
+    'height': 1,
+  } for url in GALLERY_URLS],
+})
 
 EMBED_GALLERY_RECORD = {
   '$type': 'app.bsky.embed.gallery',
@@ -337,6 +344,7 @@ EMBED_GALLERY_RECORD = {
     '$type': 'app.bsky.embed.gallery#image',
     'alt': '',
     'image': NEW_BLOB,
+    'aspectRatio': bluesky.DEFAULT_ASPECT_RATIO,
   } for _ in GALLERY_URLS],
 }
 EMBED_GALLERY_VIEW = {
@@ -345,6 +353,7 @@ EMBED_GALLERY_VIEW = {
     '$type': 'app.bsky.embed.gallery#viewImage',
     'fullsize': url,
     'thumbnail': url,
+    'aspectRatio': bluesky.DEFAULT_ASPECT_RATIO,
   } for url in GALLERY_URLS],
 }
 POST_BSKY_GALLERY = {
@@ -1960,6 +1969,15 @@ class BlueskyTest(testutil.TestCase):
       out_type='app.bsky.feed.defs#postView',
       blobs={url: NEW_BLOB for url in GALLERY_URLS},
     ))
+
+  def test_from_as1_post_with_gallery_blobs_aspects(self):
+    expected = copy.deepcopy(POST_BSKY_GALLERY)
+    for item in expected['embed']['items']:
+      item['aspectRatio'] = {'width': 123, 'height': 456}
+    blobs = {url: NEW_BLOB for url in GALLERY_URLS}
+    aspects = {url: (123, 456) for url in GALLERY_URLS}
+    self.assert_equals(expected, self.from_as1(POST_AS_GALLERY, blobs=blobs,
+                                               aspects=aspects))
 
   def test_from_as1_post_with_audio(self):
     expected = copy.deepcopy(POST_BSKY_AUDIO)
@@ -3661,7 +3679,12 @@ class BlueskyTest(testutil.TestCase):
       'id': None,
       'url': None,
       'author': 'did:plc:foo',
-      'image': [NEW_BLOB_URL] * len(GALLERY_URLS),
+      'image': [{
+        'url': NEW_BLOB_URL,
+        # DEFAULT_ASPECT_RATIO
+        'width': 1,
+        'height': 1,
+      }] * len(GALLERY_URLS),
     }), to_as1(POST_BSKY_GALLERY, repo_did='did:plc:foo'))
 
   def test_to_as1_post_view_with_gallery(self):

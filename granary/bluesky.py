@@ -50,6 +50,8 @@ HANDLE_RE = re.compile(
 DID_WEB_PATTERN = re.compile('did:web:' + HANDLE_RE.pattern)
 
 MAX_MEDIA_SIZE_BYTES = 5_000_000
+# app.bsky.embed.gallery requires aspectRatio, unlike app.bsky.embed.images
+DEFAULT_ASPECT_RATIO = {'width': 1, 'height': 1}
 
 MAX_FOLLOWS = 10000
 
@@ -714,13 +716,16 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       for img in images:
         url = img.get('url') or img.get('id')
         alt = img.get('displayName') or ''
-        images_embed_items.append({
+        view_item = {
           '$type': ('app.bsky.embed.gallery#viewImage' if use_gallery
                     else 'app.bsky.embed.images#viewImage'),
           ('thumbnail' if use_gallery else 'thumb'): url,
           'fullsize': url,
           'alt': alt,
-        })
+        }
+        if use_gallery:
+          view_item['aspectRatio'] = DEFAULT_ASPECT_RATIO
+        images_embed_items.append(view_item)
 
         if blob := blobs.get(url):
           if not images_record_embed:
@@ -746,6 +751,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
               'width': aspect[0],
               'height': aspect[1]
             }
+          elif use_gallery:
+            image_record['aspectRatio'] = DEFAULT_ASPECT_RATIO
           images_record_items.append(image_record)
 
     # first video => embed
