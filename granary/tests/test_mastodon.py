@@ -764,6 +764,48 @@ class MastodonTest(testutil.TestCase):
       'replies_count': 0,
     }, mastodon.from_as1(OBJECT))
 
+  def test_from_as1_attachments_tags_mentions(self):
+    self.assert_equals({
+      'id': 'http://foo.com/users/snarfed/statuses/123',
+      'uri': 'http://foo.com/users/snarfed/statuses/123',
+      'url': 'http://foo.com/@snarfed/123',
+      'created_at': '2019-07-29T18:35:53.446Z',
+      'account': mastodon.from_as1(ACTOR),
+      'content': '<p>foo ☕ <a href="...">bar</a></p>',
+      'visibility': 'public',
+      'sensitive': False,
+      'spoiler_text': '',
+      'in_reply_to_id': None,
+      'in_reply_to_account_id': None,
+      'media_attachments': [{
+        'id': None,
+        'type': 'image',
+        'url': 'http://foo.com/image.jpg',
+        'preview_url': 'http://foo.com/image.jpg',
+        'description': 'a fun image',
+      }, {
+        'id': None,
+        'type': 'gifv',
+        'url': 'http://foo.com/video.mp4',
+        'preview_url': 'http://foo.com/poster.png',
+        'description': 'a fun video',
+      }],
+      'mentions': [{
+        'id': 'https://other/users/alice',
+        'username': 'alice',
+        'acct': 'alice',
+        'url': 'https://other/@alice',
+      }],
+      'tags': [{
+        'name': 'indieweb',
+        'url': 'http://foo.com/tags/indieweb',
+      }],
+      'emojis': [],
+      'reblogs_count': 0,
+      'favourites_count': 0,
+      'replies_count': 0,
+    }, mastodon.from_as1(MEDIA_OBJECT))
+
   def test_from_as1_unsupported_type(self):
     with self.assertRaises(ValueError):
       mastodon.from_as1({'objectType': 'unknown'})

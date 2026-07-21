@@ -144,7 +144,7 @@ def from_as1(obj):
 
     media_attachments = []
     for att in as1.get_objects(obj, 'attachments'):
-      if media_type := REVERSE_MEDIA_TYPES.get(att.get('objectType')):
+      if media_type := AS1_TO_MEDIA_TYPES.get(att.get('objectType')):
         stream = util.get_url(att, 'stream')
         image = util.get_url(att, 'image')
         media_attachments.append({
@@ -156,12 +156,13 @@ def from_as1(obj):
         })
 
     # TODO: uri
+    author = as1.get_object(obj, 'author')
     return {
       'id': id,
       'uri': id,
       'url': as1.get_url(obj),
       'created_at': obj.get('published'),
-      'account': from_as1(as1.get_object(obj, 'author')),
+      'account': from_as1(author) if author.get('objectType') else None,
       'content': obj.get('content') or '',
       'visibility': 'public',
       'sensitive': False,
