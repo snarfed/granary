@@ -766,7 +766,7 @@ class MastodonTest(testutil.TestCase):
     }, mastodon.from_as1(OBJECT))
 
   def test_from_as1_attachments_tags_mentions(self):
-    self.assert_equals({
+    expected = {
       'id': 'http://foo.com/users/snarfed/statuses/123',
       'uri': 'http://foo.com/users/snarfed/statuses/123',
       'url': 'http://foo.com/@snarfed/123',
@@ -805,7 +805,18 @@ class MastodonTest(testutil.TestCase):
       'reblogs_count': 0,
       'favourites_count': 0,
       'replies_count': 0,
-    }, mastodon.from_as1(MEDIA_OBJECT))
+    }
+    self.assert_equals(expected, mastodon.from_as1(MEDIA_OBJECT))
+
+    # variant: image field is string URL
+    obj = copy.deepcopy(MEDIA_OBJECT)
+    obj['attachments'][0]['image'] = 'http://foo.com/image.jpg'
+    self.assert_equals(expected, mastodon.from_as1(obj))
+
+    # variant: no image field; URL is in url field
+    del obj['attachments'][0]['image']
+    obj['attachments'][0]['url'] = 'http://foo.com/image.jpg'
+    self.assert_equals(expected, mastodon.from_as1(obj))
 
   def test_from_as1_share(self):
     self.assert_equals({

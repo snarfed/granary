@@ -178,6 +178,9 @@ def from_as1(obj):
       if media_type := AS1_TO_MEDIA_TYPES.get(att.get('objectType')):
         stream = util.get_url(att, 'stream')
         image = util.get_url(att, 'image')
+        if not image and media_type == 'image':
+          image = att.get('url')
+
         status['media_attachments'].append({
           'id': att.get('id') or '',
           'type': media_type or '',
