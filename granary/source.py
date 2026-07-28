@@ -760,7 +760,7 @@ class Source(object, metaclass=SourceMeta):
     name = util.parse_html(actor.get('displayName', '')).get_text(' ', strip=True)
     return f"""
 <a class="h-card" href="{actor.get('url')}">
- <img class="profile u-photo" src="{actor.get('image', {}).get('url')}" width="32px" /> {name}</a>"""
+ <img class="profile u-photo" src="{as1.get_url(as1.get_object(actor, 'image'))}" width="32px" /> {name}</a>"""
 
   def tag_uri(self, name):
     """Returns a tag URI string for this source and the given string name."""
