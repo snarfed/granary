@@ -169,7 +169,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None,
     for img in as1.get_objects(obj, 'image'):
       if url := img.get('url'):
         mime = img.get('mimeType') or mimetypes.guess_type(url, strict=False)[0] or ''
-        length = obj.get('length', 0)
+        length = img.get('size', 0)
         item.enclosure(url, type=mime, length=length)
 
   if feed_has_stream_enclosure:

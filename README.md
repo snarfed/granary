@@ -327,6 +327,8 @@ Changelog
   * `from_as1`:
     * Handle converting repost/share when inner object has more fields than just `id`.
   * `Nostr.create`: fix bug where the final signed event's `id` and `sig` didn't match its final `content`.
+* `rss`:
+  * `from_as1`: don't read image enclosure length from object's `length` field.
 
 
 ### 11.0 - 2026-07-02
