@@ -492,6 +492,7 @@ def to_as1(msg):
     reaction = data.reaction_body
     verb = 'like' if reaction.type == REACTION_TYPE_LIKE else 'share'
 
+    target_obj = None
     if reaction.HasField('target_cast_id'):
       target_obj = {
         'id': uri(reaction.target_cast_id.fid, reaction.target_cast_id.hash),

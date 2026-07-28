@@ -412,6 +412,15 @@ reaction_body {
     self.assertEqual(msg, from_as1(obj))
     self.assertEqual(obj, to_as1(msg))
 
+  def test_like_no_target(self):
+    # just check that it doesn't crash
+    to_as1(message("""
+type: MESSAGE_TYPE_REACTION_ADD
+reaction_body {
+  type: REACTION_TYPE_LIKE
+}
+"""))
+
   def test_recast(self):
     msg = message("""
 type: MESSAGE_TYPE_REACTION_ADD

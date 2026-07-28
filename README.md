@@ -325,7 +325,8 @@ Changelog
   * `from_as1`:
     * Add `username` kwarg to override the username in the input AS1 actor.
     * For actors, set `USER_DATA_ADD` message timestamps to now, not `published`, since these represent the current profile state, not when the actor was originally created.
-  * `to_as1`: more heuristics for detecting image and video embeds, eg Cloudflare Images CDN URLs and HLS/DASH streaming manifests (`.m3u8`, `.mpd`).
+  * `to_as1`:
+    * More heuristics for detecting image and video embeds, eg Cloudflare Images CDN URLs and HLS/DASH streaming manifests (`.m3u8`, `.mpd`).
   * `Farcaster` constructor: add `log_requests_responses` kwarg.
 * `mastodon`:
   * Add `from_as1`, which converts an AS1 actor or post to a Mastodon API `Account` or `Status`.
