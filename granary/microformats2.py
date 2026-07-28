@@ -823,7 +823,7 @@ def json_to_html(obj, parent_props=None):
   if 'h-card' in types:
     return hcard_to_html(obj, parent_props)
 
-  props = copy.copy(obj.get('properties', {}))
+  props = copy.deepcopy(obj.get('properties', {}))
 
   links = []
   for prop in 'in-reply-to', 'tag-of':
