@@ -554,6 +554,8 @@ def from_as1(obj, username=None):
     message_pb2.Message or list of message_pb2.Message: Farcaster Message
       protobuf, or list of Messages if ``obj`` is an actor
   """
+  obj = copy.deepcopy(obj)
+
   type = as1.object_type(obj)
   if type in ('post', 'update'):
     type = as1.object_type(as1.get_object(obj))
