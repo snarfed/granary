@@ -38,6 +38,7 @@ from ..nostr import (
   uri_for,
   URI_RE,
   uri_to_id,
+  verify,
 )
 
 NOW_TS = int(testutil.NOW.timestamp())
@@ -1491,6 +1492,20 @@ class ClientTest(testutil.TestCase):
     result = self.nostr.create(NOTE_AS1)
     self.assert_equals(expected, result.content)
     self.assert_equals([['EVENT', expected]], FakeConnection.sent)
+
+  def test_create_note_include_link_id_and_sig_match_final_content(self):
+    FakeConnection.to_receive = [
+      ['OK', 'ignored', True],
+    ]
+
+    result = self.nostr.create(NOTE_AS1, include_link=nostr.INCLUDE_LINK)
+    sent = FakeConnection.sent[0][1]
+
+    self.assertEqual("""\
+Something to say
+https://njump.me/note1fftu0gwauwl7zvrkmdy9cncfw4h9g3rlvwyaha5xf4qnn0zq5g2qrlw3zf""",
+        sent['content'])
+    verify(sent)
 
   def test_create_note_default_pubkey(self):
     FakeConnection.to_receive = [

@@ -1137,15 +1137,15 @@ class Nostr(Source):
     base_url = base_obj.get('url')
     prefer_content = type == 'note' or (base_url and is_reply)
 
-    event = from_as1(obj, privkey=self.privkey)
-    content = self._content_for_create(
+    event = from_as1(obj)
+    event['content'] = self._content_for_create(
       obj, ignore_formatting=ignore_formatting, prefer_name=not prefer_content) or ''
     if include_link == INCLUDE_LINK and url:
-      content += '\n' + url
+      event['content'] += '\n' + url
 
     event.setdefault('pubkey', self.hex_pubkey)
-    event['id'] = id_for(event)
-    event['content'] = content
+    event.pop('id', None)
+    id_and_sign(event, self.privkey)
 
     missing = (set(('content', 'created_at', 'kind', 'id', 'pubkey', 'tags'))
                - event.keys())
