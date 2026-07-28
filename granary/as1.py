@@ -402,25 +402,39 @@ def get_rsvps_from_event(event):
     return []
   domain, event_id = parsed
   url = event.get('url')
-  author = event.get('author')
+
+  author = get_object(event, 'author')
+  if list(author.keys()) == ['id']:
+    author = author['id']
 
   rsvps = []
   for verb, field in RSVP_VERB_TO_COLLECTION.items():
-    for actor in event.get(field, []):
-      rsvp = {'objectType': 'activity',
-              'verb': verb,
-              'object' if verb == 'invite' else 'actor': actor,
-              'url': url,
-              }
+    for actor in get_objects(event, field):
+      rsvp = {
+        'objectType': 'activity',
+        'verb': verb,
+        'url': url,
+      }
 
-      if event_id and 'id' in actor:
-        _, actor_id = util.parse_tag_uri(actor['id'])
-        rsvp['id'] = util.tag_uri(domain, f'{event_id}_rsvp_{actor_id}')
-        if url:
-          rsvp['url'] = '#'.join((url, actor_id))
+      actor_id = actor.get('id')
+      if actor_id:
+        if parsed := util.parse_tag_uri(actor_id):
+          _, actor_id = parsed
+        if event_id:
+          rsvp['id'] = util.tag_uri(domain, f'{event_id}_rsvp_{actor_id}')
+          if url:
+            rsvp['url'] = '#'.join((url, actor_id))
 
-      if verb == 'invite' and author:
-        rsvp['actor'] = author
+      if list(actor.keys()) == ['id']:
+        actor = actor['id']
+
+      if verb == 'invite':
+        rsvp.update({
+          'actor': author,
+          'object': actor,
+        })
+      else:
+        rsvp['actor'] = actor
 
       rsvps.append(rsvp)
 

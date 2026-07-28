@@ -453,6 +453,18 @@ class As1Test(testutil.TestCase):
     for id in None, 'not_a_tag_uri':
       event['id'] = id
       self.assert_equals([], as1.get_rsvps_from_event(event))
+
+  def test_get_rsvps_from_event_actor_is_string_id(self):
+    event = copy.deepcopy(EVENT)
+    event['attending'] = ['https://example.com/id/42']
+    self.assert_equals([{
+      'objectType': 'activity',
+      'id': 'tag:fake.com:246_rsvp_https://example.com/id/42',
+      'verb': 'rsvp-yes',
+      'actor': 'https://example.com/id/42',
+      'url': 'https://facebook.com/246#https://example.com/id/42',
+    }], as1.get_rsvps_from_event(event))
+
   def check_original_post_discovery(self, obj, originals, mentions=None,
                                     **kwargs):
     got = as1.original_post_discovery({'object': obj}, **kwargs)

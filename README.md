@@ -310,6 +310,8 @@ Changelog
 
 ### 11.1 - unreleased
 
+* `as1`:
+  * `get_rsvps_from_event`: handle when actor is compacted string id.
 * `bluesky`:
   * `from_as1`:
     * Fix bug where converting a post with more than four images to `app.bsky.embed.gallery` failed validation due to missing `aspectRatio` field.
