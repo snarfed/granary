@@ -248,8 +248,8 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
   # prefer duration and size from object's stream, then first video, then first
   # audio
   stream = {}
-  for candidate in [obj] + attachments['video'] + attachments['audio']:
-    for stream in get_list(candidate, 'stream'):
+  candidates = [obj] + attachments['video'] + attachments['audio']
+  for stream in itertools.chain(*[get_list(c, 'stream') for c in candidates]):
       if stream:
         break
 

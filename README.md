@@ -323,6 +323,8 @@ Changelog
   * `Farcaster` constructor: add `log_requests_responses` kwarg.
 * `mastodon`:
   * Add `from_as1`, which converts an AS1 actor or post to a Mastodon API `Account` or `Status`.
+* `microformats2`:
+  * `from_as1`: bug fix for precedence of attachments' `stream`s.
 * `nostr`:
   * `from_as1`:
     * Handle converting repost/share when inner object has more fields than just `id`.

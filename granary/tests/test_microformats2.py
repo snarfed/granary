@@ -775,6 +775,24 @@ foo bar
       'stream': [{'url': 'http://vid/eo', 'duration': 90}],
     }))
 
+  def test_from_as1_prefers_own_stream_over_attachment_stream(self):
+    self.assert_equals({
+      'type': ['h-entry'],
+      'properties': {
+        'video': ['http://obj/stream'],
+        'audio': ['http://audio/stream'],
+        'duration': ['P0DT90S'],
+        'size': ['100'],
+      },
+    }, microformats2.from_as1({
+      'objectType': 'note',
+      'stream': [{'url': 'http://obj/stream', 'duration': 90, 'size': 100}],
+      'attachments': [{
+        'objectType': 'audio',
+        'stream': [{'url': 'http://audio/stream', 'duration': 5, 'size': 5}],
+      }],
+    }))
+
   def test_get_string_urls(self):
     for expected, objs in (
         ([], []),
