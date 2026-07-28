@@ -763,12 +763,12 @@ def to_as1(obj, use_type=True, get_fn=None):
       except (TypeError, ValueError):
         pass
 
-    obj.setdefault('stream', {
-      # file size in bytes. nonstandard, not in AS1 proper
-      'size': obj.pop('size', None),
-      'duration': duration or None,
-    })
-    obj['stream'].setdefault('url', obj.pop('url', None))
+    stream = obj.setdefault('stream', {})
+    # file size in bytes. nonstandard, not in AS1 proper
+    stream.setdefault('size', obj.pop('size', None))
+    stream.setdefault('duration', duration)
+    if 'url' not in stream:
+      stream['url'] = obj.pop('url', None)
 
   # preview field: if summary is unset and preview is a Note with content, use it
   # https://www.w3.org/TR/activitystreams-vocabulary/#dfn-preview

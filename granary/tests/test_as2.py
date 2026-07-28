@@ -839,6 +839,34 @@ class ActivityStreams2Test(testutil.TestCase):
       'duration': 3305,
      }))
 
+  def test_to_as1_video_tag_based_stream_keeps_duration_size_and_url(self):
+    self.assert_equals({
+      'objectType': 'video',
+      'id': 'https://peertube/videos/watch/abc',
+      'url': 'https://peertube/streaming-playlist/abc.m3u8',
+      'mimeType': 'video/mp4',
+      'stream': {
+        'url': 'https://peertube/download/abc.mp4',
+        'size': 123456,
+        'duration': 42,
+      },
+    }, as2.to_as1({
+      'type': 'Video',
+      'id': 'https://peertube/videos/watch/abc',
+      'duration': 'P0DT42S',
+      'size': 123456,
+      'url': [{
+        'type': 'Link',
+        'mediaType': 'application/x-mpegURL',
+        'href': 'https://peertube/streaming-playlist/abc.m3u8',
+        'tag': [{
+          'type': 'Link',
+          'mediaType': 'video/mp4',
+          'href': 'https://peertube/download/abc.mp4',
+        }],
+      }],
+    }))
+
   def test_to_as1_featured_collection_pinned_posts(self):
     # https://github.com/snarfed/bridgy-fed/issues/1374
     # https://docs.joinmastodon.org/spec/activitypub/#featured

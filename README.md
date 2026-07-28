@@ -312,6 +312,8 @@ Changelog
 
 * `as1`:
   * `get_rsvps_from_event`: handle when actor is compacted string id.
+* `as2`:
+  * `to_as1`: fix bug where `Audio`/`Video` objects with a tag-based media link lost their top-level `duration`, `size`, and `url` fields.
 * `atom`:
   * `to_as1`: read `<link rel=self>`'s `href`, not text value.
 * `bluesky`:
