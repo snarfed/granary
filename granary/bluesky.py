@@ -1065,7 +1065,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     # populate embeds
     media_embed = video_embed or images_embed or external_embed
-    if record_embed and ():
+    if record_embed and media_embed:
       embed = {
         '$type': 'app.bsky.embed.recordWithMedia#view',
         'record': record_embed,

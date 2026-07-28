@@ -311,7 +311,9 @@ Changelog
 ### 11.1 - unreleased
 
 * `bluesky`:
-  * `from_as1`: fix bug where converting a post with more than four images to `app.bsky.embed.gallery` failed validation due to missing `aspectRatio` field.
+  * `from_as1`:
+    * Fix bug where converting a post with more than four images to `app.bsky.embed.gallery` failed validation due to missing `aspectRatio` field.
+    * Fix bug with quote posts with attached media and `postView`/`feedViewPost` output.
 * `farcaster`:
   * `from_as1`/`to_as1`: update timestamps to use [Farcaster's custom epoch](https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps), 2026-01-01.
   * `from_as1`:

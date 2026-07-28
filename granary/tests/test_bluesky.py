@@ -3109,6 +3109,49 @@ class BlueskyTest(testutil.TestCase):
       'com.atproto.repo.getRecord?repo=did%3Ax%3Ay&collection=app.bsky.feed.post&rkey=ab')
 
   @patch.object(util.session, 'get', return_value=requests_response({
+    'uri': 'at://did:al:ice/app.bsky.feed.post/tid',
+    'cid': 'sydddddd',
+    'value': {},
+  }))
+  def test_from_as1_quote_post_with_image_out_type_postView(self, mock_get):
+    got = self.from_as1({
+      'objectType': 'note',
+      'id': 'https://orig/post',
+      'content': 'late morning',
+      'attachments': [{
+        'objectType': 'note',
+        'url': 'https://bsky.app/profile/did:x:y/post/ab',
+      }],
+      'image': [{
+        'objectType': 'image',
+        'url': NEW_BLOB_URL,
+      }],
+    }, client=self.bs._client, blobs={NEW_BLOB_URL: NEW_BLOB},
+       out_type='app.bsky.feed.defs#postView')
+
+    self.assertEqual({
+      '$type': 'app.bsky.embed.recordWithMedia#view',
+      'record': {
+        '$type': 'app.bsky.embed.record#view',
+        'record': {
+          '$type': 'app.bsky.embed.record#viewRecord',
+          'likeCount': None,
+          'replyCount': None,
+          'repostCount': None,
+          'value': None,
+        },
+      },
+      'media': {
+        '$type': 'app.bsky.embed.images#view',
+        'images': [{
+          '$type': 'app.bsky.embed.images#viewImage',
+          'thumb': NEW_BLOB_URL,
+          'fullsize': NEW_BLOB_URL,
+        }],
+      },
+    }, got['embed'])
+
+  @patch.object(util.session, 'get', return_value=requests_response({
     'uri': 'at://did:x:y/app.bsky.feed.post/ab',
     'cid': 'sydddddd',
     'value': {},
