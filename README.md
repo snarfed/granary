@@ -312,6 +312,8 @@ Changelog
 
 * `as1`:
   * `get_rsvps_from_event`: handle when actor is compacted string id.
+* `atom`:
+  * `to_as1`: read `<link rel=self>`'s `href`, not text value.
 * `bluesky`:
   * `from_as1`:
     * Fix bug where converting a post with more than four images to `app.bsky.embed.gallery` failed validation due to missing `aspectRatio` field.

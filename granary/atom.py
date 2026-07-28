@@ -261,7 +261,7 @@ def _to_as1(entry, feed_author=None):
     'objectType': 'activity',
     'verb': _as1_value(entry, 'verb') or 'post',
     'id': _text(entry, 'id') or (obj['id'] if obj_elem is None else None),
-    'url': _text(entry, 'link') or (obj['url'] if obj_elem is None else None),
+    'url': _self_link_href(entry) or (obj['url'] if obj_elem is None else None),
     'object': obj,
     'actor': _to_as1_actor(entry, feed_author=feed_author),
     'inReplyTo': obj.get('inReplyTo'),
@@ -269,6 +269,14 @@ def _to_as1(entry, feed_author=None):
 
   as1.add_tags_for_html_content_links(obj)
   return Source.postprocess_activity(a)
+
+
+def _self_link_href(elem):
+  """Returns the ``href`` of an element's own self/alternate ``<link>``, if any."""
+  self_links = [link for link in elem.iterfind('atom:link', NAMESPACES)
+                if link.get('rel') in ('self', 'alternate', None)
+                and link.get('type', '').split(';')[0] in ('text/html', '')]
+  return self_links[0].get('href') if self_links else None
 
 
 def _to_as1_object(elem, feed_author=None):
@@ -281,12 +289,7 @@ def _to_as1_object(elem, feed_author=None):
   Returns:
     dict: ActivityStreams object
   """
-  self_links = [link for link in elem.iterfind('atom:link', NAMESPACES)
-                if link.get('rel') in ('self', 'alternate', None)
-                and link.get('type', '').split(';')[0] in ('text/html', '')]
-  uri = (_text(elem, 'uri')
-         or (self_links[0].get('href') if self_links else None)
-         or _text(elem))
+  uri = _text(elem, 'uri') or _self_link_href(elem) or _text(elem)
 
   title = _text(elem, 'title')
   return {
