@@ -842,8 +842,8 @@ class MastodonTest(testutil.TestCase):
     }, mastodon.from_as1(SHARE_ACTIVITY))
 
   def test_from_as1_unsupported_type(self):
-    with self.assertRaises(ValueError):
-      mastodon.from_as1({'objectType': 'unknown'})
+    self.assertEqual({}, mastodon.from_as1({'objectType': 'unknown'}))
+    self.assertEqual({}, mastodon.from_as1({'objectType': 'page'}))
 
   def test_reblog_status_to_as1_activity(self):
     self.assert_equals(SHARE_ACTIVITY, self.mastodon.status_to_as1_activity(REBLOG_STATUS))

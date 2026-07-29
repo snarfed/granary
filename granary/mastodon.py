@@ -80,10 +80,8 @@ def from_as1(obj):
     obj (dict): AS1 object or activity
 
   Returns:
-    dict: ``Account`` or ``Status``
-
-  Raises:
-    ValueError: if ``objectType`` is missing or unsupported
+    dict: ``Account`` or ``Status``, or empty if ``objectType`` is missing or
+    unsupported
   """
   if not obj:
     return {}
@@ -197,7 +195,7 @@ def from_as1(obj):
       'in_reply_to_account_id': as1.get_owner(as1.get_object(obj, 'inReplyTo')),
     }
 
-  raise ValueError(f'Unsupported objectType/verb: {type}')
+  return {}
 
 
 class Mastodon(source.Source):
