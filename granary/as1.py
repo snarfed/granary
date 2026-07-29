@@ -652,7 +652,7 @@ def prefix_urls(activity, field, prefix):
 def object_urls(obj):
   """Returns an object's unique URLs, preserving order."""
   if isinstance(obj, str):
-    return obj
+    return [obj]
 
   def value(obj):
     got = obj.get('value') if isinstance(obj, dict) else obj

@@ -693,6 +693,7 @@ class As1Test(testutil.TestCase):
         ([], {}),
         ([], {'displayName': 'foo'}),
         ([], {'url': None, 'urls': []}),
+        (['http://foo'], 'http://foo'),
         (['http://foo'], {'url': 'http://foo'}),
         (['http://foo'], {'urls': [{'value': 'http://foo'}]}),
         (['http://foo', 'https://bar', 'http://baz'], {
