@@ -84,7 +84,7 @@ def from_as1(obj):
     unsupported
   """
   if not obj:
-    return {}
+    return None
 
   type = as1.object_type(obj)
 
