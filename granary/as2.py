@@ -828,21 +828,21 @@ def address(actor):
   if not actor:
     return None
 
+  urls = as1.object_urls(actor)
+  username = None
   if isinstance(actor, dict):
-    host = (urlparse(actor.get('id')).netloc
-            or urlparse(util.get_url(actor)).netloc)
+    if id := actor.get('id'):
+      urls.insert(0, id)
     username = actor.get('preferredUsername')
-    if username and host:
-      return f'@{username}@{host}'
 
-  urls = ([actor.get('id'), util.get_url(actor)] if isinstance(actor, dict)
-          else [actor])
+  if username:
+    for url in urls:
+      if host := urlparse(url).netloc:
+        return f'@{username}@{host}'
 
   for url in urls:
-    if url:
-      match = URL_RE.match(url)
-      if match:
-        return match.expand(r'@\g<username>@\g<server>')
+    if match := URL_RE.match(url):
+      return match.expand(r'@\g<username>@\g<server>')
 
 
 def render_content(obj):

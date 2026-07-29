@@ -575,6 +575,8 @@ class ActivityStreams2Test(testutil.TestCase):
         {'id': 'http://a.b/@me'},
         {'id': 'http://a.b/users/me'},
         {'id': 'http://a.b/profile/me'},
+        {'id': 'https://a.b/c',
+         'url': {'displayName': 'x', 'value': 'https://a.b/@me'}},
         {'preferredUsername': 'me', 'id': 'https://a.b/c'},
         {'preferredUsername': 'me', 'url': 'https://a.b/c'},
         {'preferredUsername': 'me', 'id': 'https://a.b/c', 'url': 'https://d.e/f'},
