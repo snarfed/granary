@@ -103,7 +103,7 @@ cast_add_body {
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
 
-  def test_cast_with_hash(self):
+  def test_to_as1_cast_with_hash(self):
     msg = message("""
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body {
@@ -124,7 +124,7 @@ cast_add_body {
     msg = message("""
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body {
-  text: "Hey @alice!"
+  text: "Hey !"
   mentions: 456
   mentions_positions: 4
 }
@@ -134,17 +134,50 @@ cast_add_body {
       'id': f'farcaster://123/0x{msg.hash.hex()}',
       'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
       'author': 'farcaster://123',
-      'content': 'Hey @alice!',
+      'content': 'Hey @456!',
       'content_is_html': False,
       'published': '2022-01-02T03:04:05+00:00',
       'tags': [{
         'objectType': 'mention',
         'url': 'farcaster://456',
         'startIndex': 4,
+        'length': 4,
       }],
     }
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
+
+  def test_to_as1_cast_with_multiple_mentions_non_ascii_text(self):
+    msg = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body {
+  text: "\\303\\251 ,  !"
+  mentions: 456
+  mentions: 789
+  mentions_positions: 3
+  mentions_positions: 5
+}
+""")
+    self.assertEqual({
+      'objectType': 'note',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
+      'author': 'farcaster://123',
+      'content': 'é @456, @789 !',
+      'content_is_html': False,
+      'published': '2022-01-02T03:04:05+00:00',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'farcaster://456',
+        'startIndex': 2,
+        'length': 4,
+      }, {
+        'objectType': 'mention',
+        'url': 'farcaster://789',
+        'startIndex': 8,
+        'length': 4,
+      }],
+    }, to_as1(msg))
 
   def test_cast_with_image_embed(self):
     msg = message("""
@@ -292,7 +325,7 @@ cast_add_body {
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
 
-  def test_cast_post_activity(self):
+  def test_from_as1_cast_post_activity(self):
     msg = message("""
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body {
@@ -412,7 +445,7 @@ reaction_body {
     self.assertEqual(msg, from_as1(obj))
     self.assertEqual(obj, to_as1(msg))
 
-  def test_like_no_target(self):
+  def test_to_as1_like_no_target(self):
     # just check that it doesn't crash
     to_as1(message("""
 type: MESSAGE_TYPE_REACTION_ADD
@@ -476,7 +509,7 @@ reaction_body {
     self.assertEqual(obj, to_as1(msg))
     self.assertEqual(msg, from_as1(obj))
 
-  def test_article(self):
+  def test_from_as1_article(self):
     msg = message("""
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body {
@@ -697,7 +730,7 @@ cast_add_body {
     self.assertEqual(message("""
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body {
-  text: "foo bar @alice #news"
+  text: "foo bar  #news"
   mentions: 456
   mentions_positions: 8
 }
@@ -720,7 +753,7 @@ cast_add_body {
     self.assertEqual(message("""
 type: MESSAGE_TYPE_CAST_ADD
 cast_add_body {
-  text: "foo @alice #news https://example.com"
+  text: "foo  #news https://example.com"
   mentions: 456
   mentions_positions: 4
 }
@@ -976,6 +1009,39 @@ class FarcasterClientTest(testutil.TestCase):
     mock_stub.return_value.GetUserDataByFid.assert_called_once_with(
       FidRequest(fid=456))
 
+  def test_to_as1_cast_with_mentions_client(self, mock_stub):
+    mock_stub.return_value.GetUserDataByFid.return_value = \
+      MessagesResponse(messages=[
+        user_data_message(456, 'USER_DATA_TYPE_USERNAME', 'alice'),
+      ])
+
+    msg = message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body {
+  text: "Hey !"
+  mentions: 456
+  mentions_positions: 4
+}
+""")
+    self.assertEqual({
+      'objectType': 'note',
+      'id': f'farcaster://123/0x{msg.hash.hex()}',
+      'url': f'https://farcaster.xyz/~/conversations/0x{msg.hash.hex()}',
+      'author': 'farcaster://123',
+      'content': 'Hey @alice!',
+      'content_is_html': False,
+      'published': '2022-01-02T03:04:05+00:00',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'farcaster://456',
+        'startIndex': 4,
+        'length': 6,
+      }],
+    }, to_as1(msg, client=Farcaster()))
+
+    mock_stub.return_value.GetUserDataByFid.assert_called_once_with(
+      FidRequest(fid=456))
+
   def test_get_fid(self, mock_stub):
     mock_stub.return_value.GetUsernameProof.return_value = \
       UserNameProof(fid=456, name=b'alice')
@@ -1082,7 +1148,7 @@ reaction_body {
   def test_get_activities_response_fetch_mentions(self, mock_stub):
     mention = message("""
 type: MESSAGE_TYPE_CAST_ADD
-cast_add_body { text: "Hey @alice!"  mentions: 123  mentions_positions: 4 }
+cast_add_body { text: "Hey !"  mentions: 123  mentions_positions: 4 }
 """)
     mock_stub.return_value.GetCastsByFid.return_value = \
       MessagesResponse()
@@ -1093,6 +1159,6 @@ cast_add_body { text: "Hey @alice!"  mentions: 123  mentions_positions: 4 }
     resp = fc.get_activities_response(user_id='123', fetch_mentions=True)
 
     self.assertEqual(1, len(resp['items']))
-    self.assertEqual('Hey @alice!', resp['items'][0]['object']['content'])
+    self.assertEqual('Hey @123!', resp['items'][0]['object']['content'])
     mock_stub.return_value.GetCastsByMention.assert_called_once_with(
       FidRequest(fid=123, reverse=True))

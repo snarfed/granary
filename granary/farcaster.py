@@ -356,7 +356,7 @@ def hash_and_sign(msg, privkey):
   return msg
 
 
-def to_as1(msg):
+def to_as1(msg, client=None):
   """Converts a Farcaster protobuf to an ActivityStreams 1 object or actor.
 
   Ids are farcaster:// URIs: https://github.com/farcasterxyz/protocol/discussions/123
@@ -364,6 +364,8 @@ def to_as1(msg):
   Args:
     msg (message_pb2.Message or MessagesResponse):
       Farcaster Message protobuf or MessagesResponse (user data messages)
+    client (Farcaster): optional; if provided, this will be used to fetch
+      mentioned users' usernames. Otherwise, mentions use their numeric FIDs.
 
   Returns:
     dict: AS1 activity, object, or actor
@@ -437,12 +439,30 @@ def to_as1(msg):
       })
 
     if cast.mentions:
+      # mentions aren't in cast text. add them as plain text @-mentions
+      #
+      # the mentions_positions field uses bytes, not graphemes:
+      # https://github.com/farcasterxyz/protocol/blob/main/docs/SPECIFICATION.md#24-casts
+      text = cast.text.encode()
+      content = ''
+      last = 0
       for mention_fid, pos in zip_longest(cast.mentions, cast.mentions_positions):
+        if not mention_fid:
+          continue
+        if pos is None:
+          pos = len(text)
+        mention = f'@{client.get_actor(mention_fid).get('username') if client else mention_fid}'
+        content += text[last:pos].decode()
         obj['tags'].append({
           'objectType': 'mention',
           'url': uri(mention_fid),
-          'startIndex': pos,
+          'startIndex': len(content),
+          'length': len(mention),
         })
+        content += mention
+        last = pos
+
+      obj['content'] = content + text[last:].decode()
 
     for embed in cast.embeds:
       if embed.HasField('url'):
@@ -593,18 +613,28 @@ def from_as1(obj, username=None):
     cast = data.cast_add_body
 
     content = obj.get('content', '')
-    cast.text = content
 
     # mentions
     mentions = []
-    mention_positions = []
     for tag in as1.get_objects(obj, 'tags'):
       if tag.get('objectType') == 'mention':
         match = FARCASTER_URI_RE.fullmatch(tag.get('url', ''))
         if match and match['fid'] and not match['hash']:
-          cast.mentions.append(int(match['fid']))
-          if 'startIndex' in tag:
-            cast.mentions_positions.append(tag['startIndex'])
+          mentions.append((tag.get('startIndex'), tag.get('length'),
+                           int(match['fid'])))
+
+    # add mentions to mentions[_positions], remove them from text
+    text = ''
+    last = 0
+    for start, length, fid in sorted(
+        mentions, key=lambda m: len(content) if m[0] is None else m[0]):
+      cast.mentions.append(fid)
+      if start is not None:
+        text += content[last:start]
+        cast.mentions_positions.append(len(text.encode()))
+        last = start + (length or 0)
+
+    cast.text = text + content[last:]
 
     # images
     for img in as1.get_objects(obj, 'image'):
