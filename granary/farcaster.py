@@ -451,7 +451,7 @@ def to_as1(msg, client=None):
           continue
         if pos is None:
           pos = len(text)
-        mention = f'@{client.get_actor(mention_fid).get('username') if client else mention_fid}'
+        mention = f'@{client.get_actor(mention_fid).get("username") if client else mention_fid}'
         content += text[last:pos].decode()
         obj['tags'].append({
           'objectType': 'mention',
