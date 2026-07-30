@@ -763,7 +763,24 @@ class MastodonTest(testutil.TestCase):
       'reblogs_count': 0,
       'favourites_count': 0,
       'replies_count': 0,
+      'pinned': False,
     }, mastodon.from_as1(OBJECT))
+
+  def test_from_as1_pinned_post(self):
+    obj = {
+      **OBJECT,
+      'author': {
+        **ACTOR,
+        'featured': {
+          'totalItems': 1,
+          'items': [OBJECT['id']],
+        },
+      },
+    }
+    self.assertTrue(mastodon.from_as1(obj)['pinned'])
+
+    obj['author']['featured']['items'] = ['http://not/pinned']
+    self.assertFalse(mastodon.from_as1(obj)['pinned'])
 
   def test_from_as1_attachments_tags_mentions(self):
     expected = {
@@ -805,6 +822,7 @@ class MastodonTest(testutil.TestCase):
       'reblogs_count': 0,
       'favourites_count': 0,
       'replies_count': 0,
+      'pinned': False,
     }
     self.assert_equals(expected, mastodon.from_as1(MEDIA_OBJECT))
 
@@ -838,6 +856,7 @@ class MastodonTest(testutil.TestCase):
       'reblogs_count': 0,
       'favourites_count': 0,
       'replies_count': 0,
+      'pinned': False,
       'reblog': mastodon.from_as1(OBJECT),
     }, mastodon.from_as1(SHARE_ACTIVITY))
 

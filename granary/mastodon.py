@@ -123,6 +123,7 @@ def from_as1(obj):
   elif type in as1.POST_TYPES or type == 'share':
     id = obj.get('id') or ''
     actor = as1.get_object(obj, 'author') or as1.get_object(obj, 'actor')
+    hydrated_actor = set(actor.keys()) >= set(['id'])
     if actor:
       actor.setdefault('objectType', 'person')
 
@@ -148,6 +149,9 @@ def from_as1(obj):
       'replies_count': 0,
       'reblog': None,
     }
+
+    if hydrated_actor:
+      status['pinned'] = id in as1.get_ids(as1.get_object(actor, 'featured'), 'items')
 
     if type == 'share':
       orig = as1.get_object(obj, 'object')
