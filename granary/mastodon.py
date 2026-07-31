@@ -10,7 +10,7 @@ https://docs-develop.pleroma.social/backend/API/differences_in_mastoapi_response
 import itertools
 import logging
 import re
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 from requests import HTTPError, JSONDecodeError, RequestException
 from webutil import util
@@ -101,7 +101,7 @@ def from_as1(obj):
         break
 
     return {
-      'id': id,
+      'id': quote(id),
       'uri': id,
       'username': obj.get('username') or '',
       'acct': acct,
@@ -128,7 +128,7 @@ def from_as1(obj):
       actor.setdefault('objectType', 'person')
 
     status = {
-      'id': id,
+      'id': quote(id),
       'uri': id,
       'url': as1.get_url(obj),
       'account': from_as1(actor),
@@ -165,7 +165,7 @@ def from_as1(obj):
       tag_type = tag.get('objectType')
       if tag_type in as1.ACTOR_TYPES or tag_type == 'mention':
         status['mentions'].append({
-          'id': tag.get('id'),
+          'id': quote(tag['id']) if tag.get('id') else None,
           'username': tag.get('displayName'),
           'acct': tag.get('displayName'),
           'url': tag.get('url'),
@@ -191,12 +191,15 @@ def from_as1(obj):
           'description': att.get('displayName') or '',
         })
 
+    in_reply_to_id = as1.get_id(obj, 'inReplyTo')
+    in_reply_to_account_id = as1.get_owner(as1.get_object(obj, 'inReplyTo'))
     return {
       **status,
       'content': obj.get('content') or '',
       'spoiler_text': obj.get('summary') or '',
-      'in_reply_to_id': as1.get_id(obj, 'inReplyTo'),
-      'in_reply_to_account_id': as1.get_owner(as1.get_object(obj, 'inReplyTo')),
+      'in_reply_to_id': quote(in_reply_to_id) if in_reply_to_id else None,
+      'in_reply_to_account_id':
+        quote(in_reply_to_account_id) if in_reply_to_account_id else None,
     }
 
   return {}

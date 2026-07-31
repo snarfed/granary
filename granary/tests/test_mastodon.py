@@ -1,6 +1,7 @@
 """Unit tests for mastodon.py."""
 import copy
 from unittest.mock import patch
+from urllib.parse import quote
 
 from webutil import testutil, util
 from webutil.testutil import requests_response
@@ -699,7 +700,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_from_as1_actor(self):
     self.assert_equals({
-      'id': tag_uri('snarfed'),
+      'id': 'tag%3Afoo.com%3Asnarfed',
       'uri': tag_uri('snarfed'),
       'username': 'snarfed',
       'acct': 'snarfed@foo.com',
@@ -737,7 +738,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_from_as1_note(self):
     self.assert_equals({
-      'id': 'http://foo.com/users/snarfed/statuses/123',
+      'id': 'http%3A//foo.com/users/snarfed/statuses/123',
       'uri': 'http://foo.com/users/snarfed/statuses/123',
       'url': 'http://foo.com/@snarfed/123',
       'created_at': '2019-07-29T18:35:53.446Z',
@@ -750,7 +751,7 @@ class MastodonTest(testutil.TestCase):
       'in_reply_to_account_id': None,
       'media_attachments': [],
       'mentions': [{
-        'id': 'https://other/users/alice',
+        'id': 'https%3A//other/users/alice',
         'username': 'alice',
         'acct': 'alice',
         'url': 'https://other/@alice',
@@ -784,7 +785,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_from_as1_attachments_tags_mentions(self):
     expected = {
-      'id': 'http://foo.com/users/snarfed/statuses/123',
+      'id': 'http%3A//foo.com/users/snarfed/statuses/123',
       'uri': 'http://foo.com/users/snarfed/statuses/123',
       'url': 'http://foo.com/@snarfed/123',
       'created_at': '2019-07-29T18:35:53.446Z',
@@ -809,7 +810,7 @@ class MastodonTest(testutil.TestCase):
         'description': 'a fun video',
       }],
       'mentions': [{
-        'id': 'https://other/users/alice',
+        'id': 'https%3A//other/users/alice',
         'username': 'alice',
         'acct': 'alice',
         'url': 'https://other/@alice',
@@ -838,7 +839,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_from_as1_share(self):
     self.assert_equals({
-      'id': REBLOG_STATUS['uri'],
+      'id': quote(REBLOG_STATUS['uri']),
       'uri': REBLOG_STATUS['uri'],
       'url': REBLOG_STATUS['url'],
       'created_at': None,
