@@ -10,7 +10,7 @@ https://docs-develop.pleroma.social/backend/API/differences_in_mastoapi_response
 import itertools
 import logging
 import re
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, unquote, urljoin
 
 from requests import HTTPError, JSONDecodeError, RequestException
 from webutil import util
@@ -69,6 +69,38 @@ MENTION_RE  = re.compile(r'(?<![\/\w])@((' + USERNAME_RE.pattern +
                          r')(?:@[a-z0-9\.\-]+[a-z0-9]+)?)', re.IGNORECASE)
 
 
+def encode_id(id):
+  """Encodes an AS1 id for use as a Mastodon API ``Account``/``Status`` id.
+
+  Mastodon's own ids are numeric, but ours are AS1 ids, ie URIs, so they need
+  encoding to be usable in URL paths.
+
+  This is percent-encoding with ``~`` as the escape character instead of ``%``,
+  eg ``https://snarfed.org/a_b`` becomes ``https~3A~2F~2Fsnarfed.org~2Fa_b``.
+
+  We don't use plain URL-encoding because clients routinely round trip ids
+  through their own URLs, which decodes them an unpredictable number of times.
+  eg Phanpy puts the id in a ``/s/:id`` route, then hands React Router's decoded
+  value back to the API, while eg ``toot`` passes ids through untouched. Encoded
+  ids here contain no ``%`` or ``/``, so URL-decoding one is a noop, and any
+  number of decoding passes leaves it unchanged.
+
+  ``~`` is unreserved in :rfc:`3986#section-2.3`, so nothing along the way
+  escapes it either. Literal ``~`` in the input is encoded as ``~7E``.
+  """
+  # quote leaves ~ alone since it's unreserved, so escape it first, while % is
+  # still unambiguously an escape marker
+  return quote(id, safe='').replace('~', '%7E').replace('%', '~')
+
+
+def decode_id(id):
+  """Decodes an id encoded by :func:`encode_id`.
+
+  Also tolerates ids that a client has URL-encoded on top of our encoding.
+  """
+  return unquote(unquote(id).replace('~', '%'))
+
+
 def from_as1(obj):
   """Converts an AS1 actor, note, or article to a Mastodon API Account or Status.
 
@@ -101,7 +133,7 @@ def from_as1(obj):
         break
 
     return {
-      'id': quote(id, safe=''),
+      'id': encode_id(id),
       'uri': id,
       'username': obj.get('username') or '',
       'acct': acct,
@@ -128,7 +160,7 @@ def from_as1(obj):
       actor.setdefault('objectType', 'person')
 
     status = {
-      'id': quote(id, safe=''),
+      'id': encode_id(id),
       'uri': id,
       'url': as1.get_url(obj),
       'account': from_as1(actor),
@@ -165,7 +197,7 @@ def from_as1(obj):
       tag_type = tag.get('objectType')
       if tag_type in as1.ACTOR_TYPES or tag_type == 'mention':
         status['mentions'].append({
-          'id': quote(tag['id'], safe='') if tag.get('id') else None,
+          'id': encode_id(tag['id']) if tag.get('id') else None,
           'username': tag.get('displayName'),
           'acct': tag.get('displayName'),
           'url': tag.get('url'),
@@ -197,9 +229,9 @@ def from_as1(obj):
       **status,
       'content': obj.get('content') or '',
       'spoiler_text': obj.get('summary') or '',
-      'in_reply_to_id': quote(in_reply_to_id, safe='') if in_reply_to_id else None,
+      'in_reply_to_id': encode_id(in_reply_to_id) if in_reply_to_id else None,
       'in_reply_to_account_id':
-        quote(in_reply_to_account_id, safe='') if in_reply_to_account_id else None,
+        encode_id(in_reply_to_account_id) if in_reply_to_account_id else None,
     }
 
   return {}

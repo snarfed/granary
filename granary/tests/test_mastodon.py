@@ -1,7 +1,7 @@
 """Unit tests for mastodon.py."""
 import copy
 from unittest.mock import patch
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 from webutil import testutil, util
 from webutil.testutil import requests_response
@@ -700,7 +700,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_from_as1_actor(self):
     self.assert_equals({
-      'id': 'tag%3Afoo.com%3Asnarfed',
+      'id': 'tag~3Afoo.com~3Asnarfed',
       'uri': tag_uri('snarfed'),
       'username': 'snarfed',
       'acct': 'snarfed@foo.com',
@@ -738,7 +738,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_from_as1_note(self):
     self.assert_equals({
-      'id': 'http%3A%2F%2Ffoo.com%2Fusers%2Fsnarfed%2Fstatuses%2F123',
+      'id': 'http~3A~2F~2Ffoo.com~2Fusers~2Fsnarfed~2Fstatuses~2F123',
       'uri': 'http://foo.com/users/snarfed/statuses/123',
       'url': 'http://foo.com/@snarfed/123',
       'created_at': '2019-07-29T18:35:53.446Z',
@@ -751,7 +751,7 @@ class MastodonTest(testutil.TestCase):
       'in_reply_to_account_id': None,
       'media_attachments': [],
       'mentions': [{
-        'id': 'https%3A%2F%2Fother%2Fusers%2Falice',
+        'id': 'https~3A~2F~2Fother~2Fusers~2Falice',
         'username': 'alice',
         'acct': 'alice',
         'url': 'https://other/@alice',
@@ -785,7 +785,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_from_as1_attachments_tags_mentions(self):
     expected = {
-      'id': 'http%3A%2F%2Ffoo.com%2Fusers%2Fsnarfed%2Fstatuses%2F123',
+      'id': 'http~3A~2F~2Ffoo.com~2Fusers~2Fsnarfed~2Fstatuses~2F123',
       'uri': 'http://foo.com/users/snarfed/statuses/123',
       'url': 'http://foo.com/@snarfed/123',
       'created_at': '2019-07-29T18:35:53.446Z',
@@ -810,7 +810,7 @@ class MastodonTest(testutil.TestCase):
         'description': 'a fun video',
       }],
       'mentions': [{
-        'id': 'https%3A%2F%2Fother%2Fusers%2Falice',
+        'id': 'https~3A~2F~2Fother~2Fusers~2Falice',
         'username': 'alice',
         'acct': 'alice',
         'url': 'https://other/@alice',
@@ -839,7 +839,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_from_as1_share(self):
     self.assert_equals({
-      'id': 'http%3A%2F%2Fother.net%2Fusers%2Fbob%2Fstatuses%2F789',
+      'id': 'http~3A~2F~2Fother.net~2Fusers~2Fbob~2Fstatuses~2F789',
       'uri': REBLOG_STATUS['uri'],
       'url': REBLOG_STATUS['url'],
       'created_at': None,
@@ -864,6 +864,29 @@ class MastodonTest(testutil.TestCase):
   def test_from_as1_unsupported_type(self):
     self.assertEqual({}, mastodon.from_as1({'objectType': 'unknown'}))
     self.assertEqual({}, mastodon.from_as1({'objectType': 'page'}))
+
+  def test_encode_decode_id(self):
+    for id, encoded in (
+        ('', ''),
+        ('123', '123'),
+        ('user.com', 'user.com'),
+        ('fake:alice', 'fake~3Aalice'),
+        ('https://snarfed.org/a_b', 'https~3A~2F~2Fsnarfed.org~2Fa_b'),
+        ('at://did:plc:foo/app.bsky.feed.post/3k',
+         'at~3A~2F~2Fdid~3Aplc~3Afoo~2Fapp.bsky.feed.post~2F3k'),
+        # literal ~ and % in the id, and non-ASCII
+        ('https://snarfed.org/~ryan', 'https~3A~2F~2Fsnarfed.org~2F~7Eryan'),
+        ('https://snarfed.org/a%2Fb', 'https~3A~2F~2Fsnarfed.org~2Fa~252Fb'),
+        ('https://mas.to/users/føo', 'https~3A~2F~2Fmas.to~2Fusers~2Ff~C3~B8o'),
+    ):
+      with self.subTest(id=id):
+        self.assertEqual(encoded, mastodon.encode_id(id))
+        self.assertEqual(id, mastodon.decode_id(encoded))
+        # encoded ids have no % or /, so clients that URL-decode or re-encode
+        # them - eg by round tripping them through their own URLs - still
+        # decode back to the original id
+        self.assertEqual(id, mastodon.decode_id(unquote(encoded)))
+        self.assertEqual(id, mastodon.decode_id(quote(encoded, safe='')))
 
   def test_reblog_status_to_as1_activity(self):
     self.assert_equals(SHARE_ACTIVITY, self.mastodon.status_to_as1_activity(REBLOG_STATUS))
