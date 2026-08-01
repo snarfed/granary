@@ -738,7 +738,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_from_as1_note(self):
     self.assert_equals({
-      'id': 'http%3A//foo.com/users/snarfed/statuses/123',
+      'id': 'http%3A%2F%2Ffoo.com%2Fusers%2Fsnarfed%2Fstatuses%2F123',
       'uri': 'http://foo.com/users/snarfed/statuses/123',
       'url': 'http://foo.com/@snarfed/123',
       'created_at': '2019-07-29T18:35:53.446Z',
@@ -751,7 +751,7 @@ class MastodonTest(testutil.TestCase):
       'in_reply_to_account_id': None,
       'media_attachments': [],
       'mentions': [{
-        'id': 'https%3A//other/users/alice',
+        'id': 'https%3A%2F%2Fother%2Fusers%2Falice',
         'username': 'alice',
         'acct': 'alice',
         'url': 'https://other/@alice',
@@ -785,7 +785,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_from_as1_attachments_tags_mentions(self):
     expected = {
-      'id': 'http%3A//foo.com/users/snarfed/statuses/123',
+      'id': 'http%3A%2F%2Ffoo.com%2Fusers%2Fsnarfed%2Fstatuses%2F123',
       'uri': 'http://foo.com/users/snarfed/statuses/123',
       'url': 'http://foo.com/@snarfed/123',
       'created_at': '2019-07-29T18:35:53.446Z',
@@ -810,7 +810,7 @@ class MastodonTest(testutil.TestCase):
         'description': 'a fun video',
       }],
       'mentions': [{
-        'id': 'https%3A//other/users/alice',
+        'id': 'https%3A%2F%2Fother%2Fusers%2Falice',
         'username': 'alice',
         'acct': 'alice',
         'url': 'https://other/@alice',
@@ -839,7 +839,7 @@ class MastodonTest(testutil.TestCase):
 
   def test_from_as1_share(self):
     self.assert_equals({
-      'id': quote(REBLOG_STATUS['uri']),
+      'id': 'http%3A%2F%2Fother.net%2Fusers%2Fbob%2Fstatuses%2F789',
       'uri': REBLOG_STATUS['uri'],
       'url': REBLOG_STATUS['url'],
       'created_at': None,

@@ -101,7 +101,7 @@ def from_as1(obj):
         break
 
     return {
-      'id': quote(id),
+      'id': quote(id, safe=''),
       'uri': id,
       'username': obj.get('username') or '',
       'acct': acct,
@@ -128,7 +128,7 @@ def from_as1(obj):
       actor.setdefault('objectType', 'person')
 
     status = {
-      'id': quote(id),
+      'id': quote(id, safe=''),
       'uri': id,
       'url': as1.get_url(obj),
       'account': from_as1(actor),
@@ -165,7 +165,7 @@ def from_as1(obj):
       tag_type = tag.get('objectType')
       if tag_type in as1.ACTOR_TYPES or tag_type == 'mention':
         status['mentions'].append({
-          'id': quote(tag['id']) if tag.get('id') else None,
+          'id': quote(tag['id'], safe='') if tag.get('id') else None,
           'username': tag.get('displayName'),
           'acct': tag.get('displayName'),
           'url': tag.get('url'),
@@ -197,9 +197,9 @@ def from_as1(obj):
       **status,
       'content': obj.get('content') or '',
       'spoiler_text': obj.get('summary') or '',
-      'in_reply_to_id': quote(in_reply_to_id) if in_reply_to_id else None,
+      'in_reply_to_id': quote(in_reply_to_id, safe='') if in_reply_to_id else None,
       'in_reply_to_account_id':
-        quote(in_reply_to_account_id) if in_reply_to_account_id else None,
+        quote(in_reply_to_account_id, safe='') if in_reply_to_account_id else None,
     }
 
   return {}
