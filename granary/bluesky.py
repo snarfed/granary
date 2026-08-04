@@ -2569,6 +2569,28 @@ class Bluesky(Source):
           'url': base_url + '/followers'
         })
 
+    elif type == 'activity' and verb == 'block':
+      if not base_id:
+        return creation_result(
+          abort=True,
+          error_plain=f"Could not find a user to block.",
+          error_html=f"Could not find a user to <a href=\"http://indiewebcamp.com/block\">block</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/block\">u-block-of link</a>.")
+
+      if preview:
+        preview_description += f"<span class=\"verb\">block</span> <a href=\"{base_url}\">this user</a>."
+        return creation_result(description=preview_description)
+      else:
+        block = from_as1(obj, client=self)
+        result = self.client.com.atproto.repo.createRecord({
+          'repo': self.did,
+          'collection': block['$type'],
+          'record': block,
+        })
+        return creation_result({
+          'id': result['uri'],
+          'url': base_url,
+        })
+
     elif (type in as1.POST_TYPES or is_reply or
           (type == 'activity' and verb == 'post')):  # probably a bookmark
       # TODO: add bookmarked URL and facet

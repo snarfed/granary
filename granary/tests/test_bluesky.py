@@ -5183,6 +5183,90 @@ class BlueskyTest(testutil.TestCase):
     self.assertIn('Could not find a user to follow', result.error_plain)
     self.assertIn('Could not find a user to <a href="http://indiewebcamp.com/follow">follow</a>', result.error_html)
 
+  def test_preview_block_did(self):
+    preview = self.bs.preview_create({
+      'objectType': 'activity',
+      'verb': 'block',
+      'object': 'did:web:bob.com',
+    })
+    self.assertIn('<span class="verb">block</span> <a href="https://bsky.app/profile/did:web:bob.com">this user</a>.', preview.description)
+
+  def test_preview_block_missing_object(self):
+    preview = self.bs.preview_create({
+      'objectType': 'activity',
+      'verb': 'block',
+      'object': {},
+    })
+    self.assertTrue(preview.abort)
+    self.assertIn('Could not find a user to block', preview.error_plain)
+    self.assertIn('Could not find a user to <a href="http://indiewebcamp.com/block">block</a>', preview.error_html)
+
+  @patch.object(util.session, 'post')
+  def test_create_block_did(self, mock_post):
+    at_uri = 'at://did:plc:me/app.bsky.graph.block/123'
+    mock_post.return_value = requests_response({
+      'uri': at_uri,
+      'cid': 'sydddddd',
+    })
+
+    result = self.bs.create({
+      'objectType': 'activity',
+      'verb': 'block',
+      'object': 'did:web:bob.com',
+    })
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/did:web:bob.com',
+    }, result.content)
+
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.graph.block',
+      'record': {
+        '$type': 'app.bsky.graph.block',
+        'subject': 'did:web:bob.com',
+        'createdAt': '2022-01-02T03:04:05.000Z',
+      },
+    })
+
+  @patch.object(util.session, 'post')
+  def test_create_block_list(self, mock_post):
+    at_uri = 'at://did:plc:me/app.bsky.graph.listblock/123'
+    mock_post.return_value = requests_response({
+      'uri': at_uri,
+      'cid': 'sydddddd',
+    })
+
+    result = self.bs.create({
+      'objectType': 'activity',
+      'verb': 'block',
+      'object': 'at://did:web:bob.com/app.bsky.graph.list/456',
+    })
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/did:web:bob.com/lists/456',
+    }, result.content)
+
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.graph.listblock',
+      'record': {
+        '$type': 'app.bsky.graph.listblock',
+        'subject': 'at://did:web:bob.com/app.bsky.graph.list/456',
+        'createdAt': '2022-01-02T03:04:05.000Z',
+      },
+    })
+
+  def test_create_block_missing_object(self):
+    result = self.bs.create({
+      'objectType': 'activity',
+      'verb': 'block',
+      'object': {},
+    })
+    self.assertTrue(result.abort)
+    self.assertIn('Could not find a user to block', result.error_plain)
+    self.assertIn('Could not find a user to <a href="http://indiewebcamp.com/block">block</a>', result.error_html)
+
   def test_preview_with_media(self):
     preview = self.bs.preview_create(POST_AS_IMAGES['object'])
     self.assertEqual('<span class="verb">post</span>:', preview.description)
