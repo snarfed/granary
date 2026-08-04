@@ -53,6 +53,10 @@ meetup
 ------
 .. automodule:: granary.meetup
 
+micropub
+--------
+.. automodule:: granary.micropub
+
 microformats2
 -------------
 .. automodule:: granary.microformats2

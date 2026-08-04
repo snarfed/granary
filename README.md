@@ -310,6 +310,9 @@ Changelog
 
 ### 11.1 - unreleased
 
+
+Add new `micropub.Micropub` source class that implements the [Micropub](https://micropub.spec.indieweb.org/) API.
+
 * `as1`:
   * `get_rsvps_from_event`: handle when actor is compacted string id.
 * `as2`:
