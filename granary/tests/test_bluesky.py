@@ -4970,6 +4970,68 @@ class BlueskyTest(testutil.TestCase):
     })
 
   @patch.object(util.session, 'post')
+  def test_update_post(self, mock_post):
+    at_uri = 'at://did:dy:d/app.bsky.feed.post/abc123'
+    mock_post.return_value = requests_response({
+      'uri': at_uri,
+      'cid': 'sydddddd',
+    })
+
+    post_as = {
+      **POST_AS['object'],
+      'id': at_uri,
+      'content': 'my updated post',
+    }
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.update(post_as).content)
+
+    post_bsky = {
+      **POST_BSKY,
+      'text': 'my updated post',
+    }
+    del post_bsky['fooOriginalText']
+    del post_bsky['fooOriginalUrl']
+    self.assert_call(mock_post, 'com.atproto.repo.putRecord', json={
+      'repo': 'did:dy:d',
+      'collection': 'app.bsky.feed.post',
+      'rkey': 'abc123',
+      'record': post_bsky,
+    })
+
+  def test_preview_update_post(self):
+    post_as = {
+      **POST_AS['object'],
+      'id': 'at://did:dy:d/app.bsky.feed.post/abc123',
+      'content': 'my updated post',
+    }
+    got = self.bs.preview_update(post_as)
+    self.assertEqual('<span class="verb">update</span>:', got.description)
+    self.assertEqual('my updated post', got.content)
+
+  def test_update_missing_id_error(self):
+    post_as = {
+      **POST_AS['object'],
+      'id': 'not-an-at-uri',
+      'content': 'my updated post',
+    }
+    got = self.bs.update(post_as)
+    self.assertTrue(got.abort)
+    self.assertIn('not-an-at-uri', got.error_plain)
+
+  def test_update_missing_incomplete_at_uri_error(self):
+    post_as = {
+      **POST_AS['object'],
+      'id': 'at://did:plc:alice',
+      'content': 'my updated post',
+    }
+    got = self.bs.update(post_as)
+    self.assertTrue(got.abort)
+    self.assertEqual('Expected full at:// URI in id, got at://did:plc:alice',
+                     got.error_plain)
+
+  @patch.object(util.session, 'post')
   @patch.object(util.session, 'get')
   def test_create_reply(self, mock_get, mock_post):
     post_at_uri = 'at://did:al:ice/app.bsky.feed.post/parent-tid'
@@ -5082,6 +5144,43 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'post')
   @patch.object(util.session, 'get')
+  def test_update_like(self, mock_get, mock_post):
+    like = {
+      **LIKE_AS,
+      'id': 'at://did:dy:d/app.bsky.feed.like/123'
+    }
+    mock_get.return_value = requests_response({
+      'uri': like['object'],
+      'cid': 'sydddddd',
+      'value': {},
+    })
+    mock_post.return_value = requests_response({
+      'uri': like['id'],
+      'cid': 'sydddddd',
+    })
+
+    got = self.bs.update(like)
+    self.assert_equals({
+      'id': like['id'],
+      'url': 'https://bsky.app/profile/did:al:ice/post/tid/liked-by',
+    }, got.content)
+
+    self.assert_call(mock_post, 'com.atproto.repo.putRecord', json={
+      'repo': 'did:dy:d',
+      'collection': 'app.bsky.feed.like',
+      'rkey': '123',
+      'record': LIKE_BSKY,
+    })
+
+  def test_preview_update_like(self):
+    preview = self.bs.preview_update({
+      **LIKE_AS,
+      'id': 'at://did:dy:d/app.bsky.feed.like/123'
+    })
+    self.assertIn('<span class="verb">update</span> <a href="https://bsky.app/profile/did:al:ice/post/tid">this post</a>.', preview.description)
+
+  @patch.object(util.session, 'post')
+  @patch.object(util.session, 'get')
   def test_create_repost(self, mock_get, mock_post):
     mock_get.return_value = requests_response({
       'uri': REPOST_AS['object']['id'],
@@ -5110,6 +5209,43 @@ class BlueskyTest(testutil.TestCase):
   def test_preview_repost(self):
     preview = self.bs.preview_create(REPOST_AS)
     self.assertIn('<span class="verb">repost</span> <a href="https://bsky.app/profile/alice.com/post/tid">this post</a>.', preview.description)
+
+  @patch.object(util.session, 'post')
+  @patch.object(util.session, 'get')
+  def test_update_repost(self, mock_get, mock_post):
+    mock_get.return_value = requests_response({
+      'uri': REPOST_AS['object']['id'],
+      'cid': 'repost+syd',
+      'value': {},
+    })
+    at_uri = 'at://did:dy:d/app.bsky.feed.repost/123'
+    mock_post.return_value = requests_response({
+      'uri': at_uri,
+      'cid': 'sydddddd',
+    })
+
+    repost_as = {**REPOST_AS, 'id': at_uri}
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/did:al:ice/post/tid/reposted-by',
+    }, self.bs.update(repost_as).content)
+
+    repost_bsky = copy.deepcopy(REPOST_BSKY)
+    repost_bsky['subject']['cid'] = 'repost+syd'
+    self.assert_call(mock_post, 'com.atproto.repo.putRecord', json={
+      'repo': 'did:dy:d',
+      'collection': 'app.bsky.feed.repost',
+      'rkey': '123',
+      'record': repost_bsky,
+    })
+
+  def test_preview_update_repost(self):
+    repost_as = {
+      **REPOST_AS,
+      'id': 'at://did:dy:d/app.bsky.feed.repost/123',
+    }
+    preview = self.bs.preview_update(repost_as)
+    self.assertIn('<span class="verb">update</span> <a href="https://bsky.app/profile/alice.com/post/tid">this post</a>.', preview.description)
 
   def test_preview_follow_profile_url(self):
     preview = self.bs.preview_create({
@@ -5182,6 +5318,45 @@ class BlueskyTest(testutil.TestCase):
     self.assertTrue(result.abort)
     self.assertIn('Could not find a user to follow', result.error_plain)
     self.assertIn('Could not find a user to <a href="http://indiewebcamp.com/follow">follow</a>', result.error_html)
+
+  @patch.object(util.session, 'post')
+  def test_update_follow(self, mock_post):
+    at_uri = 'at://did:dy:d/app.bsky.graph.follow/123'
+    mock_post.return_value = requests_response({
+      'uri': at_uri,
+      'cid': 'sydddddd',
+    })
+
+    result = self.bs.update({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'id': at_uri,
+      'object': 'did:web:bob.com',
+    })
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/did:web:bob.com/followers',
+    }, result.content)
+
+    self.assert_call(mock_post, 'com.atproto.repo.putRecord', json={
+      'repo': 'did:dy:d',
+      'collection': 'app.bsky.graph.follow',
+      'rkey': '123',
+      'record': {
+        '$type': 'app.bsky.graph.follow',
+        'subject': 'did:web:bob.com',
+        'createdAt': '2022-01-02T03:04:05.000Z',
+      },
+    })
+
+  def test_preview_update_follow(self):
+    preview = self.bs.preview_update({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'id': 'at://did:dy:d/app.bsky.graph.follow/123',
+      'object': 'did:web:bob.com',
+    })
+    self.assertIn('<span class="verb">update</span> <a href="https://bsky.app/profile/did:web:bob.com">this user</a>.', preview.description)
 
   def test_preview_block_did(self):
     preview = self.bs.preview_create({
@@ -5256,6 +5431,45 @@ class BlueskyTest(testutil.TestCase):
         'createdAt': '2022-01-02T03:04:05.000Z',
       },
     })
+
+  @patch.object(util.session, 'post')
+  def test_update_block(self, mock_post):
+    at_uri = 'at://did:dy:d/app.bsky.graph.block/123'
+    mock_post.return_value = requests_response({
+      'uri': at_uri,
+      'cid': 'sydddddd',
+    })
+
+    result = self.bs.update({
+      'objectType': 'activity',
+      'verb': 'block',
+      'id': at_uri,
+      'object': 'did:web:bob.com',
+    })
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/did:web:bob.com',
+    }, result.content)
+
+    self.assert_call(mock_post, 'com.atproto.repo.putRecord', json={
+      'repo': 'did:dy:d',
+      'collection': 'app.bsky.graph.block',
+      'rkey': '123',
+      'record': {
+        '$type': 'app.bsky.graph.block',
+        'subject': 'did:web:bob.com',
+        'createdAt': '2022-01-02T03:04:05.000Z',
+      },
+    })
+
+  def test_preview_update_block(self):
+    preview = self.bs.preview_update({
+      'objectType': 'activity',
+      'verb': 'block',
+      'id': 'at://did:dy:d/app.bsky.graph.block/123',
+      'object': 'did:web:bob.com',
+    })
+    self.assertIn('<span class="verb">update</span> <a href="https://bsky.app/profile/did:web:bob.com">this user</a>.', preview.description)
 
   def test_create_block_missing_object(self):
     result = self.bs.create({

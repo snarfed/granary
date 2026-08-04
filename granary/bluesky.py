@@ -2429,7 +2429,7 @@ class Bluesky(Source):
     """Creates a post, reply, repost, or like.
 
     Args:
-      obj: ActivityStreams object
+      obj (dict): ActivityStreams object
       include_link (str)
       ignore_formatting (bool)
 
@@ -2455,7 +2455,62 @@ class Bluesky(Source):
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def _create(self, obj, preview=None, include_link=OMIT_LINK,
+  def update(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
+    """Updates an existing post, reply, like, repost, follow, or block.
+
+    ``obj['id']`` must be the at:// URI of the existing record to update.
+
+    Args:
+      obj (dict): ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
+
+    Returns:
+      CreationResult: whose content will be a dict with ``id`` and ``url``
+      keys (all optional) for the updated object (or None)
+    """
+    return self._create(obj, preview=False, update=True, include_link=include_link,
+                        ignore_formatting=ignore_formatting)
+
+  def preview_update(self, obj, include_link=OMIT_LINK,
+                     ignore_formatting=False):
+    """Preview updating an existing post, reply, like, repost, follow, or block.
+
+    Args:
+      obj: ActivityStreams object
+      include_link (str)
+      ignore_formatting (bool)
+
+    Returns:
+      CreationResult: content will be a str HTML snippet or None
+    """
+    return self._create(obj, preview=True, update=True, include_link=include_link,
+                        ignore_formatting=ignore_formatting)
+
+  def _write_record(self, record, rkey=None):
+    """Creates a new repo record, or updates an existing one in place.
+
+    Args:
+      record (dict): ATProto record to write
+      rkey (str): optional, the rkey of an existing record to update in place.
+        If not provided, a new record is created instead.
+
+    Returns:
+      dict: ``com.atproto.repo.createRecord`` or ``putRecord`` output, with
+      ``uri`` and ``cid`` keys
+    """
+    input = {
+      'repo': self.did,
+      'collection': record['$type'],
+      'record': record,
+    }
+
+    if rkey:
+      return self.client.com.atproto.repo.putRecord({**input, 'rkey': rkey})
+    else:
+      return self.client.com.atproto.repo.createRecord(input)
+
+  def _create(self, obj, preview=None, update=False, include_link=OMIT_LINK,
               ignore_formatting=False):
     assert preview in (False, True)
     assert self.did
@@ -2473,6 +2528,17 @@ class Bluesky(Source):
     base_url = base_obj.get('url')
 
     is_reply = type == 'comment' or obj.get('inReplyTo')
+
+    rkey = None
+    if update and (id := obj.get('id')):
+      if not ((uri_match := AT_URI_RE.fullmatch(id))
+              and (rkey := uri_match['rkey'])):
+        msg = f'Expected full at:// URI in id, got {id}'
+        return creation_result(abort=True, error_plain=msg)
+      elif uri_match['repo'] != self.did:
+        msg = f"Logged in user {self.did} can't update {uri_match['repo']}",
+        return creation_result(abort=True, error_plain=msg)
+
     atts = obj.get('attachments', [])
     images = util.dedupe_urls(util.get_list(obj, 'image') +
                               [a for a in atts if a.get('objectType') == 'image'])
@@ -2511,15 +2577,12 @@ class Bluesky(Source):
           error_html=f"Could not find a {post_label} to <a href=\"http://indiewebcamp.com/like\">{self.TYPE_LABELS['like']}</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/like\">u-like-of link</a>.")
 
       if preview:
-        preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['like']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
+        verb_label = 'update' if update else self.TYPE_LABELS['like']
+        preview_description += f"<span class=\"verb\">{verb_label}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
         return creation_result(description=preview_description)
       else:
         like_atp = from_as1(obj, client=self)
-        result = self.client.com.atproto.repo.createRecord({
-          'repo': self.did,
-          'collection': like_atp['$type'],
-          'record': like_atp,
-        })
+        result = self._write_record(like_atp, rkey=rkey)
         return creation_result({
           'id': result['uri'],
           'url': at_uri_to_web_url(like_atp['subject']['uri']) + '/liked-by'
@@ -2533,15 +2596,12 @@ class Bluesky(Source):
           error_html=f"Could not find a {post_label} to <a href=\"http://indiewebcamp.com/repost\">{self.TYPE_LABELS['repost']}</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/repost\">repost-of</a> link.")
 
       if preview:
-          preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['repost']}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
+          verb_label = 'update' if update else self.TYPE_LABELS['repost']
+          preview_description += f"<span class=\"verb\">{verb_label}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
           return creation_result(description=preview_description)
       else:
         repost_atp = from_as1(obj, client=self)
-        result = self.client.com.atproto.repo.createRecord({
-          'repo': self.did,
-          'collection': repost_atp['$type'],
-          'record': repost_atp,
-        })
+        result = self._write_record(repost_atp, rkey=rkey)
         return creation_result({
           'id': result['uri'],
           'url': at_uri_to_web_url(repost_atp['subject']['uri']) + '/reposted-by'
@@ -2555,15 +2615,12 @@ class Bluesky(Source):
           error_html=f"Could not find a user to <a href=\"http://indiewebcamp.com/follow\">follow</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/follow\">u-follow-of link</a>.")
 
       if preview:
-        preview_description += f"<span class=\"verb\">follow</span> <a href=\"{base_url}\">this user</a>."
+        verb_label = 'update' if update else 'follow'
+        preview_description += f"<span class=\"verb\">{verb_label}</span> <a href=\"{base_url}\">this user</a>."
         return creation_result(description=preview_description)
       else:
         follow_atp = from_as1(obj, client=self)
-        result = self.client.com.atproto.repo.createRecord({
-          'repo': self.did,
-          'collection': follow_atp['$type'],
-          'record': follow_atp,
-        })
+        result = self._write_record(follow_atp, rkey=rkey)
         return creation_result({
           'id': result['uri'],
           'url': base_url + '/followers'
@@ -2577,15 +2634,12 @@ class Bluesky(Source):
           error_html=f"Could not find a user to <a href=\"http://indiewebcamp.com/block\">block</a>. Check that your post has the right <a href=\"http://indiewebcamp.com/block\">u-block-of link</a>.")
 
       if preview:
-        preview_description += f"<span class=\"verb\">block</span> <a href=\"{base_url}\">this user</a>."
+        verb_label = 'update' if update else 'block'
+        preview_description += f"<span class=\"verb\">{verb_label}</span> <a href=\"{base_url}\">this user</a>."
         return creation_result(description=preview_description)
       else:
         block = from_as1(obj, client=self)
-        result = self.client.com.atproto.repo.createRecord({
-          'repo': self.did,
-          'collection': block['$type'],
-          'record': block,
-        })
+        result = self._write_record(block, rkey=rkey)
         return creation_result({
           'id': result['uri'],
           'url': base_url,
@@ -2599,7 +2653,9 @@ class Bluesky(Source):
       # TODO linkify mentions and hashtags
       preview_content = util.linkify(content, pretty=True, skip_bare_cc_tlds=True)
       data = {'status': content}
-      if is_reply and base_url:
+      if update:
+        preview_description += '<span class="verb">update</span>:'
+      elif is_reply and base_url:
         preview_description += f"<span class=\"verb\">{self.TYPE_LABELS['comment']}</span> to <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>:"
         data['in_reply_to_id'] = base_id
       else:
@@ -2643,11 +2699,7 @@ class Bluesky(Source):
               },
             })
 
-        result = self.client.com.atproto.repo.createRecord({
-          'repo': self.did,
-          'collection': post_atp['$type'],
-          'record': post_atp,
-        })
+        result = self._write_record(post_atp, rkey=rkey)
         return creation_result({
           'id': result['uri'],
           'url': at_uri_to_web_url(result['uri'], handle=self.handle),

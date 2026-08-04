@@ -358,7 +358,7 @@ class Source(object, metaclass=SourceMeta):
     raise NotImplementedError()
 
   def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
-    """Creates a new object: a post, comment, like, share, or RSVP.
+    """Creates a new object: a post, comment, like, share, RSVP, block, etc.
 
     Subclasses should override this. Different sites will support different
     functionality; check each subclass for details. The actor will usually be
@@ -398,6 +398,45 @@ class Source(object, metaclass=SourceMeta):
         (if it has one) in the content.
       ignore_formatting (bool): whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
+
+    Returns:
+      CreationResult: The result. `content` will be a dict or ``None``.
+    """
+    raise NotImplementedError()
+
+  def update(self, obj):
+    """Updates an existing object: a post, comment, like, share, block, etc.
+
+    Subclasses should override this.
+
+    The actor should usually be the authenticated user.
+
+    Args:
+      obj (dict): ActivityStreams object with the new field values. ``id``
+        (or ``url``, depending on the site) must be the silo id of the
+        existing object to update.
+
+    Returns:
+      CreationResult: The result. ``content`` will be a dict or None. If the
+      updated object has an id or permalink, they'll be provided in the
+      values for ``id`` and ``url``.
+    """
+    raise NotImplementedError()
+
+  def preview_update(self, obj):
+    """Previews updating an existing object: a post, comment, like, share, or RSVP.
+
+    Returns HTML that previews what :meth:`update` with the same object will
+    do.
+
+    Subclasses should override this. Different sites will support different
+    functionality; check each subclass for details. The actor will usually be
+    the authenticated user.
+
+    Args:
+      obj (dict): ActivityStreams object with the new field values. ``id``
+        (or ``url``, depending on the site) must be the silo id of the
+        existing object to update.
 
     Returns:
       CreationResult: The result. `content` will be a dict or ``None``.

@@ -325,6 +325,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
     * Fix bug with quote posts with attached media and `postView`/`feedViewPost` output.
   * `Bluesky`:
     * `create`/`preview_create`: add support for blocks.
+    * Add `update`/`preview_update`.
 * `farcaster`:
   * `from_as1`/`to_as1`: update timestamps to use [Farcaster's custom epoch](https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps), 2026-01-01.
   * `from_as1`:
@@ -346,6 +347,8 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * `Nostr.create`: fix bug where the final signed event's `id` and `sig` didn't match its final `content`.
 * `rss`:
   * `from_as1`: don't read image enclosure length from object's `length` field.
+* `source`:
+  * `Source`: add `update`/`preview_update` methods, for updating existing objects.
 
 
 ### 11.0 - 2026-07-02
