@@ -2580,13 +2580,8 @@ class Bluesky(Source):
         verb_label = 'update' if update else self.TYPE_LABELS['like']
         preview_description += f"<span class=\"verb\">{verb_label}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
         return creation_result(description=preview_description)
-      else:
-        like_atp = from_as1(obj, client=self)
-        result = self._write_record(like_atp, rkey=rkey)
-        return creation_result({
-          'id': result['uri'],
-          'url': at_uri_to_web_url(like_atp['subject']['uri']) + '/liked-by'
-        })
+
+      result_url = at_uri_to_web_url(base_id) + '/liked-by'
 
     elif type == 'activity' and verb == 'share':
       if not base_url:
@@ -2599,13 +2594,8 @@ class Bluesky(Source):
           verb_label = 'update' if update else self.TYPE_LABELS['repost']
           preview_description += f"<span class=\"verb\">{verb_label}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
           return creation_result(description=preview_description)
-      else:
-        repost_atp = from_as1(obj, client=self)
-        result = self._write_record(repost_atp, rkey=rkey)
-        return creation_result({
-          'id': result['uri'],
-          'url': at_uri_to_web_url(repost_atp['subject']['uri']) + '/reposted-by'
-        })
+
+      result_url = at_uri_to_web_url(base_id) + '/reposted-by'
 
     elif type == 'activity' and verb == 'follow':
       if not base_id:
@@ -2618,13 +2608,8 @@ class Bluesky(Source):
         verb_label = 'update' if update else 'follow'
         preview_description += f"<span class=\"verb\">{verb_label}</span> <a href=\"{base_url}\">this user</a>."
         return creation_result(description=preview_description)
-      else:
-        follow_atp = from_as1(obj, client=self)
-        result = self._write_record(follow_atp, rkey=rkey)
-        return creation_result({
-          'id': result['uri'],
-          'url': base_url + '/followers'
-        })
+
+      result_url = base_url + '/followers'
 
     elif type == 'activity' and verb == 'block':
       if not base_id:
@@ -2637,13 +2622,8 @@ class Bluesky(Source):
         verb_label = 'update' if update else 'block'
         preview_description += f"<span class=\"verb\">{verb_label}</span> <a href=\"{base_url}\">this user</a>."
         return creation_result(description=preview_description)
-      else:
-        block = from_as1(obj, client=self)
-        result = self._write_record(block, rkey=rkey)
-        return creation_result({
-          'id': result['uri'],
-          'url': base_url,
-        })
+
+      result_url = base_url
 
     elif (type in as1.POST_TYPES or is_reply or
           (type == 'activity' and verb == 'post')):  # probably a bookmark
@@ -2705,10 +2685,17 @@ class Bluesky(Source):
           'url': at_uri_to_web_url(result['uri'], handle=self.handle),
         })
 
-    return creation_result(
-      abort=False,
-      error_plain=f'Cannot publish type={type}, verb={verb} to Bluesky',
-      error_html=f'Cannot publish type={type}, verb={verb} to Bluesky')
+    else:
+      return creation_result(
+        abort=False,
+        error_plain=f'Cannot publish type={type}, verb={verb} to Bluesky',
+        error_html=f'Cannot publish type={type}, verb={verb} to Bluesky')
+
+    result = self._write_record(from_as1(obj, client=self), rkey=rkey)
+    return creation_result({
+      'id': result['uri'],
+      'url': result_url,
+    })
 
   def delete(self, at_uri):
     """Deletes a record.
