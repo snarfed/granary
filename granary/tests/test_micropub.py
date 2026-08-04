@@ -31,38 +31,38 @@ class MicropubTest(testutil.TestCase):
       self.assert_equals(val, call_kwargs[key])
 
   @patch.object(util, 'requests_get')
-  def test_from_auth_entity_header(self, mock_get):
+  def test_from_auth_header(self, mock_get):
     mock_get.return_value = requests_response(
       '', url='http://me/', headers={'Link': f'<{ENDPOINT}>; rel="micropub"'})
     with ndb_client.context():
       auth_entity = indieauth.IndieAuth(id='http://me/', user_json='{}',
                                         access_token_str=TOKEN)
 
-    mp = Micropub.from_auth_entity(auth_entity)
+    mp = Micropub.from_auth(auth_entity)
     self.assertEqual(ENDPOINT, mp.endpoint)
     self.assertEqual(TOKEN, mp.access_token)
 
   @patch.object(util, 'requests_get')
-  def test_from_auth_entity_html(self, mock_get):
+  def test_from_auth_html(self, mock_get):
     mock_get.return_value = requests_response(
       f'<link rel="micropub" href="{ENDPOINT}">', url='http://me/')
     with ndb_client.context():
       auth_entity = indieauth.IndieAuth(id='http://me/', user_json='{}',
                                         access_token_str=TOKEN)
 
-    mp = Micropub.from_auth_entity(auth_entity)
+    mp = Micropub.from_auth(auth_entity)
     self.assertEqual(ENDPOINT, mp.endpoint)
     self.assertEqual(TOKEN, mp.access_token)
 
   @patch.object(util, 'requests_get')
-  def test_from_auth_entity_no_endpoint(self, mock_get):
+  def test_from_auth_no_endpoint(self, mock_get):
     mock_get.return_value = requests_response('', url='http://me/')
     with ndb_client.context():
       auth_entity = indieauth.IndieAuth(id='http://me/', user_json='{}',
                                         access_token_str=TOKEN)
 
     with self.assertRaises(AssertionError):
-      Micropub.from_auth_entity(auth_entity)
+      Micropub.from_auth(auth_entity)
 
   def test_create_note(self):
     self.mock_post.return_value = requests_response(

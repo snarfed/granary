@@ -38,7 +38,7 @@ class Micropub(Source):
     self.requests_kwargs = requests_kwargs
 
   @classmethod
-  def from_auth_entity(cls, auth_entity, **kwargs):
+  def from_auth(cls, auth_entity, **kwargs):
     """Creates a :class:`Micropub` from an IndieAuth auth entity.
 
     Discovers the Micropub endpoint by fetching the entity's ``me`` URL.
