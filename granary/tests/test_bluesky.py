@@ -11,7 +11,7 @@ from urllib.parse import urljoin
 
 from lexrpc.base import AT_URI_RE
 from multiformats import CID
-from oauth_dropins.bluesky import BlueskyAuth
+from oauth_dropins.bluesky import BlueskyAuth, DpopToken
 import requests
 from requests.auth import HTTPBasicAuth
 from requests_oauth2client import (
@@ -4550,6 +4550,36 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual('did:plc:alice', bs.did)
     self.assertIsInstance(bs._client.requests_kwargs['auth'], OAuth2AccessTokenAuth)
     self.assertIsNotNone(bs._client.session_callback)
+
+  @patch('oauth_dropins.bluesky.oauth_client_for_pds',
+         return_value=OAuth2Client(token_endpoint='https://un/used',
+                                   client_id='unused', client_secret='unused'))
+  def test_from_auth_oauth_per_client_token(self, mock_ocp):
+    with ndb_client.context():
+      auth = BlueskyAuth(id='did:plc:alice', pds_url='http://pds.com',
+                         user_json=json_dumps({'handle': 'alice.bsky.social'}))
+      ours = DPoPToken(access_token='ours', _dpop_key=DPoPKey.generate())
+      auth.set_dpop_token('https://ou/rs', ours)
+      theirs = DPoPToken(access_token='theirs', _dpop_key=DPoPKey.generate())
+      auth.set_dpop_token('https://the/irs', theirs)
+
+    metadata = {'client_id': 'https://ou/rs'}
+    bs = Bluesky.from_auth(auth, metadata)
+
+    mock_ocp.assert_called_once_with(metadata, 'http://pds.com')
+    self.assertEqual('ours', bs._client.requests_kwargs['auth'].token.access_token)
+
+  @patch('oauth_dropins.bluesky.oauth_client_for_pds')
+  def test_from_auth_oauth_no_token_for_client(self, mock_ocp):
+    with ndb_client.context():
+      auth = BlueskyAuth(id='did:plc:alice', pds_url='http://pds.com',
+                         user_json=json_dumps({'handle': 'alice.bsky.social'}))
+      theirs = DPoPToken(access_token='theirs', _dpop_key=DPoPKey.generate())
+      auth.set_dpop_token('https://the/irs', theirs)
+
+    bs = Bluesky.from_auth(auth, {'client_id': 'https://ou/rs'})
+    mock_ocp.assert_not_called()
+    self.assertIsNone(bs._client.requests_kwargs['auth'])
 
   @patch.object(util.session, 'get', return_value=requests_response({
     'did': 'did:plc:a',
