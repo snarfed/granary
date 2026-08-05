@@ -23,7 +23,7 @@ from multiformats import CID
 from oauth_dropins import bluesky as oauth_bluesky
 from pymediainfo import MediaInfo
 import requests
-from requests_oauth2client import OAuth2AccessTokenAuth
+from requests_oauth2client import OAuth2AccessTokenAuth, TokenSerializer
 from webutil import util
 from webutil.util import trim_nulls
 
@@ -2029,8 +2029,8 @@ class Bluesky(Source):
     Args:
       auth_entity (oauth_dropins.bluesky.BlueskyAuth)
       client_metadata (dict): Bluesky OAuth client metadata. Required for OAuth
-        users, ie those with a DPoP token for this client. See
-        :func:`oauth_dropins.bluesky.bluesky_auth_kwargs`.
+        users (those with :attr:`~oauth_dropins.bluesky.BlueskyAuth.dpop_token`
+        set). See :func:`oauth_dropins.bluesky.bluesky_auth_kwargs`.
       kwargs: passed to :class:`Bluesky`
 
     Returns:
@@ -2038,24 +2038,22 @@ class Bluesky(Source):
     """
     pds_url = auth_entity.pds_url or oauth_bluesky.pds_for_did(auth_entity.key.id())
 
-    client_id = None
-    if (client_metadata and (client_id := client_metadata['client_id'])
-        and (dpop_token := auth_entity.get_dpop_token(client_id))):
-      oauth_client = oauth_bluesky.oauth_client_for_pds(client_metadata, pds_url)
-      kwargs.setdefault('auth', OAuth2AccessTokenAuth(client=oauth_client,
-                                                      token=dpop_token))
+    if auth_entity.dpop_token:
+        oauth_client = oauth_bluesky.oauth_client_for_pds(client_metadata, pds_url)
+        token = TokenSerializer().loads(auth_entity.dpop_token)
+        kwargs.setdefault('auth', OAuth2AccessTokenAuth(client=oauth_client,
+                                                        token=token))
     else:
         kwargs.setdefault('app_password', auth_entity.password)
         if auth_entity.session:
           kwargs.setdefault('access_token', auth_entity.session.get('accessJwt'))
           kwargs.setdefault('refresh_token', auth_entity.session.get('refreshJwt'))
 
-    callback = oauth_bluesky.make_session_callback(auth_entity, client_id=client_id)
     return cls(
       handle=auth_entity.user_display_name(),
       did=auth_entity.key.id(),
       pds_url=pds_url,
-      session_callback=callback,
+      session_callback=oauth_bluesky.make_session_callback(auth_entity),
       **kwargs,
     )
 

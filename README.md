@@ -326,7 +326,6 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * `Bluesky`:
     * `create`/`preview_create`: add support for blocks.
     * Add `update`/`preview_update`.
-    * `from_auth`: use the per-client DPoP token from `BlueskyAuth.get_dpop_token`.
 * `farcaster`:
   * `from_as1`/`to_as1`: update timestamps to use [Farcaster's custom epoch](https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps), 2026-01-01.
   * `from_as1`:
