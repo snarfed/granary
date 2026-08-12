@@ -565,7 +565,10 @@ def to_as1(obj, use_type=True, get_fn=None):
     name = att.get('name')
     value = att.get('value')
     if (att.get('type') == 'PropertyValue' and name and name != 'Link'
-        and value and isinstance(value, str)):
+        and value and isinstance(value, str)
+        # bail out before parsing HTML if there's obviously no link. parsing is
+        # expensive, and these fields are often plain text
+        and '<a' in value.lower()):
       a = util.parse_html(value).find('a')
       if a and a.get('href'):
         names[a['href']] = name

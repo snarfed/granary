@@ -395,6 +395,21 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_person_plain_text_propertyvalue_attachment(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': '@giflian@techhub.social',
+      'url': 'https://techhub.social/@giflian',
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': 'https://techhub.social/@giflian',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Pronouns',
+        'value': 'they/them',
+      }],
+    }))
+
   def test_to_as1_actor_null_attachment(self):
     self.assertEqual({
       'objectType': 'person',
