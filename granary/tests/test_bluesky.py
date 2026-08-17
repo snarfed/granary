@@ -2406,6 +2406,28 @@ class BlueskyTest(testutil.TestCase):
       }],
     }, out_type='site.standard.document'))
 
+  def test_from_as1_article_to_document_truncates_long_tags(self):
+    self.assert_equals({
+      '$type': 'site.standard.document',
+      'site': 'http://example.com',
+      'path': '/post',
+      'title': 'Test Article',
+      'tags': ['x' * 127 + '…', 'short'],
+      'publishedAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'article',
+      'url': 'http://example.com/post',
+      'displayName': 'Test Article',
+      'published': '2022-01-02T03:04:05',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'x' * 200,
+      }, {
+        'objectType': 'hashtag',
+        'displayName': 'short',
+      }],
+    }, out_type='site.standard.document'))
+
   def test_from_as1_embed(self):
     self.assert_equals(POST_BSKY_EMBED, self.from_as1(POST_AS_EMBED))
 
