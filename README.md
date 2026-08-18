@@ -320,6 +320,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
 * `atom`:
   * `to_as1`: read `<link rel=self>`'s `href`, not text value.
 * `bluesky`:
+  * `url_to_did_web`: don't log a spurious "contained a port" warning for URLs with upper case hostnames.
   * `from_as1`:
     * Fix bug where converting a post with more than four images to `app.bsky.embed.gallery` failed validation due to missing `aspectRatio` field.
     * Fix bug with quote posts with attached media and `postView`/`feedViewPost` output.

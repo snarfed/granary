@@ -701,6 +701,10 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual('did:web:foo.com', url_to_did_web('https://foo.com:3000'))
     self.assertEqual('did:web:foo.bar.com', url_to_did_web('https://foo.bar.com/baz/baj'))
 
+  def test_url_to_did_web_uppercase_host(self):
+    with self.assertNoLogs(bluesky.logger, level='WARNING'):
+      self.assertEqual('did:web:foo.com', url_to_did_web('https://FOO.com'))
+
   def test_did_web_to_url(self):
     for bad in None, '', 'foo' 'https://bar.com', 'did:web:foo.com:path':
       with self.assertRaises(ValueError):
