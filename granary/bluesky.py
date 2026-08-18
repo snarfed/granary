@@ -188,6 +188,7 @@ def url_to_did_web(url):
   * ``https://foo.com`` => ``did:web:foo.com``
   * ``https://foo.com:3000`` => ``did:web:foo.com``
   * ``https://foo.bar.com/baz/baj`` => ``did:web:foo.bar.com``
+  * ``https://foo.com.`` => ``did:web:foo.com``
 
   Args:
     url (str)
@@ -203,7 +204,8 @@ def url_to_did_web(url):
   if parsed.path and parsed.path != "/":
     logger.warning(f"URL {url} contained a path,  which will not be included in the DID.")
 
-  return f'did:web:{parsed.hostname}'
+  # strip trailing dot from fully qualified domain names, it's not allowed in DIDs
+  return f'did:web:{parsed.hostname.removesuffix(".")}'
 
 
 def did_web_to_url(did):
