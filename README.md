@@ -342,6 +342,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
 * `microformats2`:
   * `from_as1`: bug fix for precedence of attachments' `stream`s.
 * `nostr`:
+  * `bech32_decode`: return the input unchanged, as documented, instead of raising `AssertionError` or `ValueError`, when the input has a valid checksum but malformed TLV contents.
   * `from_as1`:
     * Handle converting repost/share when inner object has more fields than just `id`.
   * `Nostr.create`: fix bug where the final signed event's `id` and `sig` didn't match its final `content`.

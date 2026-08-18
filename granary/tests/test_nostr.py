@@ -8,6 +8,7 @@ from threading import Semaphore
 from unittest.mock import patch
 from urllib.parse import urlparse
 
+import bech32
 import requests
 from secp256k1 import PrivateKey, PublicKey
 from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
@@ -207,6 +208,15 @@ class NostrTest(testutil.TestCase):
     self.assertEqual('0' * 65, bech32_encode('note', '0' * 65))
     self.assertEqual('not-valid-hex-string-but-is-64-chars!!!!!!!!!!!!!!!!!!!!!!!',
                      bech32_encode('note', 'not-valid-hex-string-but-is-64-chars!!!!!!!!!!!!!!!!!!!!!!!'))
+
+  def test_bech32_decode_invalid_tlv(self):
+    """Well-formed bech32 with malformed TLV contents should return as is."""
+    for payload in (b'\x04\x02ab',  # unknown TLV type
+                    b'\x00\x05abcde',  # type 0 with wrong length
+                    b'\x01',  # truncated, no length byte
+                    ):
+      encoded = bech32.bech32_encode('nprofile', bech32.convertbits(payload, 8, 5))
+      self.assertEqual(encoded, bech32_decode(encoded))
 
   def test_id_and_asign(self):
     event = copy.deepcopy(NOTE_NOSTR)

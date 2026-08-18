@@ -253,10 +253,16 @@ def bech32_decode(val):
   if prefix in BECH32_TLV_PREFIXES:
     # TLV! find the type 0 value, it's (usually) the id
     while data:
+      if len(data) < 2:
+        return val
+
       type, length = data[:2]
-      assert type in (0, 1, 2, 3), type
+      if type not in (0, 1, 2, 3) or len(data) < length + 2:
+        return val
+
       if type == 0:
-        assert length == 32, length
+        if length != 32:
+          return val
         data = data[2:34]
         break
 
