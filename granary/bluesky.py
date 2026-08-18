@@ -408,7 +408,8 @@ def from_as1_datetime(val):
 
   if val:
     try:
-      dt = util.parse_iso8601(val.strip())
+      if stripped := val.strip():
+        dt = util.parse_iso8601(stripped)
     except (AttributeError, TypeError, ValueError):
       logging.debug(f"Couldn't parse {val} as ISO 8601; defaulting to current time")
 

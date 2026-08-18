@@ -321,6 +321,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
 * `atom`:
   * `to_as1`: read `<link rel=self>`'s `href`, not text value.
 * `bluesky`:
+  * `from_as1`: handle blank `published`/`updated` values, eg whitespace.
   * `url_to_did_web`:
     * Strip trailing dots from fully qualified hostnames. They previously produced `did:web:`s that `did_web_to_url` rejected as invalid.
     * Don't log a spurious "contained a port" warning for URLs with upper case hostnames.

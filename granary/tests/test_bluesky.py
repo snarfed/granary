@@ -2961,14 +2961,15 @@ class BlueskyTest(testutil.TestCase):
     }))
 
   def test_from_as1_bad_published(self):
-    self.assert_equals({
-      '$type': 'app.bsky.feed.post',
-      'text': '',
-      'createdAt': '2022-01-02T03:04:05.000Z',
-    }, self.from_as1({
-      'objectType': 'note',
-      'published': 'foo bar',
-    }))
+    for published in 'foo bar', ' ', '\n', '\x1f':
+      self.assert_equals({
+        '$type': 'app.bsky.feed.post',
+        'text': '',
+        'createdAt': '2022-01-02T03:04:05.000Z',
+      }, self.from_as1({
+        'objectType': 'note',
+        'published': published,
+      }), msg=published)
 
   def test_from_as1_block(self):
     self.assert_equals({
