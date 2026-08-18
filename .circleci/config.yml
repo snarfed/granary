@@ -60,8 +60,7 @@ jobs:
           no_output_timeout: 30m
           command: |
             python -m coverage run --source=. --omit=appengine_config.py,cron.py,granary/generated/\*,granary/tests/\*,oauth-dropins/\*,test_\*,\*_live_test.py -m unittest discover -v
-            # disabled for now, fails much of the time due to IG blocking us
-            # PYTHONPATH= python3 ./instagram_live_test.py --debug
+            python -m unittest granary/tests/hypothesis/*.py
             python -m coverage html -d /tmp/coverage_html
             if [ "$COVERALLS_REPO_TOKEN" != "" ]; then python3 -m coveralls || true; fi
 

@@ -74,6 +74,7 @@ app = [
     'werkzeug>=3.0.0',
 ]
 tests = [
+    'hypothesis>=6.0',
     'mf2py>=2.0',
 ]
 docs = [
