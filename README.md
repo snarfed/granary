@@ -350,6 +350,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * `bech32_decode`: return the input unchanged, as documented, instead of raising `AssertionError` or `ValueError`, when the input has a valid checksum but malformed TLV contents.
   * `from_as1`:
     * Handle converting repost/share when inner object has more fields than just `id`.
+    * Support repost of object without author.
   * `Nostr.create`: fix bug where the final signed event's `id` and `sig` didn't match its final `content`.
 * `rss`:
   * `from_as1`: don't read image enclosure length from object's `length` field.

@@ -609,9 +609,9 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None, multiple=False)
       if as1.object_type(inner_obj):
         orig_event = from_as1(inner_obj)
         event['content'] = json_dumps(orig_event, sort_keys=True, ensure_ascii=False)
-        orig_author_pubkey = orig_event.get('pubkey')
-        event['tags'].append(['p', orig_author_pubkey])
-        e_tag.append(orig_author_pubkey)
+        if orig_author_pubkey := orig_event.get('pubkey'):
+          event['tags'].append(['p', orig_author_pubkey])
+          e_tag.append(orig_author_pubkey)
 
   elif type in ('like', 'dislike', 'react'):
     event.update({

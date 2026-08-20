@@ -1134,6 +1134,28 @@ class NostrTest(testutil.TestCase):
       },
     }))
 
+  def test_from_as1_repost_non_nostr_object(self):
+    """Reposted object has no author, so we have no pubkey for it."""
+    self.assert_equals({
+      'kind': KIND_REPOST,
+      'content': json_dumps({
+        'kind': KIND_NOTE,
+        'content': 'The orig post',
+        'created_at': NOW_TS,
+        'tags': [],
+      }, sort_keys=True),
+      'tags': [['e', 'at://did:plc:foo/app.bsky.feed.post/123', '', '']],
+      'created_at': NOW_TS,
+    }, from_as1({
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': {
+        'objectType': 'note',
+        'id': 'at://did:plc:foo/app.bsky.feed.post/123',
+        'content': 'The orig post',
+      },
+    }))
+
   def test_to_from_as1_like(self):
     like = {
       'objectType': 'activity',
