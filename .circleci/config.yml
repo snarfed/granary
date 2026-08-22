@@ -97,8 +97,8 @@ workflows:
     jobs:
       # two coupled combos run in parallel; both must pass
       - build:
-          name: python-3.12-pinned
-          python: '3.12'
+          name: python-3.14-pinned
+          python: '3.14'
           deps: pinned
       - build:
           name: python-3.9-lowest-direct
