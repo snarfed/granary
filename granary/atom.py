@@ -304,6 +304,11 @@ def _to_as1_object(elem, feed_author=None):
       'id': r.attrib.get('ref') or _text(r),
       'url': r.attrib.get('href') or _text(r),
     } for r in elem.findall('thr:in-reply-to', NAMESPACES)],
+    'tags': [{
+      'objectType': 'hashtag',
+      'displayName': cat.get('label') or cat.get('term'),
+    } for cat in elem.findall('atom:category', NAMESPACES)
+      if cat.get('label') or cat.get('term')],
     'location': {
       'displayName': _text(elem, 'georss:featureName'),
     }

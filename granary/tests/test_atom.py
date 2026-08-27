@@ -101,6 +101,12 @@ INSTAGRAM_ACTIVITY = {
     'published': '2012-09-22T05:25:42+00:00',
     'updated': '2012-09-22T05:25:42+00:00',
     'tags': [{
+      'objectType': 'hashtag',
+      'displayName': 'abc',
+    }, {
+      'objectType': 'hashtag',
+      'displayName': 'xyz',
+    }, {
       'objectType': 'mention',
       'url': 'https://www.instagram.com/foo/',
       'displayName': '@foo',
@@ -156,6 +162,28 @@ class AtomTest(testutil.TestCase):
 
   def test_to_as1_entry(self):
     self.assert_equals([INSTAGRAM_ACTIVITY], atom.to_as1(INSTAGRAM_ENTRY))
+
+  def test_to_as1_categories(self):
+    self.assert_equals([{
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'tags': [{
+          'objectType': 'hashtag',
+          'displayName': 'foo',
+        }, {
+          'objectType': 'hashtag',
+          'displayName': 'Bar Baz',
+        }],
+      },
+    }], atom.to_as1("""<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns="http://www.w3.org/2005/Atom">
+  <category term="foo" />
+  <category term="bar" scheme="http://tags/" label="Bar Baz" />
+  <category />
+</entry>
+"""))
 
   def test_to_as1_like(self):
     for atom_obj, as_obj in (
