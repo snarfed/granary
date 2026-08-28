@@ -861,6 +861,24 @@ class MastodonTest(testutil.TestCase):
       'reblog': mastodon.from_as1(OBJECT),
     }, mastodon.from_as1(SHARE_ACTIVITY))
 
+  def test_from_as1_quote_post(self):
+    got = mastodon.from_as1({
+      **OBJECT,
+      'attachments': [{
+        'objectType': 'note',
+        'id': 'http://the/quoted/id',
+        'url': 'http://the/quoted/url',
+      }],
+    })
+    self.assert_equals({
+      'state': 'accepted',
+      'quoted_status_id': 'http~3A~2F~2Fthe~2Fquoted~2Fid',
+    }, got['quote'])
+    self.assertEqual([], got['media_attachments'])
+
+  def test_from_as1_no_quote_post(self):
+    self.assertIsNone(mastodon.from_as1(OBJECT)['quote'])
+
   def test_from_as1_unsupported_type(self):
     self.assertEqual({}, mastodon.from_as1({'objectType': 'unknown'}))
     self.assertEqual({}, mastodon.from_as1({'objectType': 'page'}))

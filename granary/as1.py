@@ -712,6 +712,7 @@ def quoted_posts(obj):
   """Returns the ids that an object or activity is quoting.
 
   In AS1, we define quoted posts as attachments with ``objectType: note``.
+  Returns their ``id``, or ``url`` if they have no ``id``.
 
   Arg:
     obj (dict): AS1 object or activity
@@ -722,8 +723,8 @@ def quoted_posts(obj):
   if obj.get('verb') in CRUD_VERBS:
     obj = get_object(obj)
 
-  return [a['id'] for a in get_objects(obj, 'attachments')
-          if a.get('id') and a.get('objectType') == 'note']
+  return [id for a in get_objects(obj, 'attachments')
+          if a.get('objectType') == 'note' and (id := a.get('id') or get_url(a))]
 
 
 def mentions(obj):

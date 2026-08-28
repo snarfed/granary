@@ -40,6 +40,12 @@ CONTEXT = [
   'https://purl.archive.org/miscellany',
 ]
 MISSKEY_QUOTE_CONTEXT = {'_misskey_quote': 'https://misskey-hub.net/ns#_misskey_quote'}
+# quoted post id fields, in order of preference
+# https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md
+# http://fedibird.com/ns#quoteUri
+# https://misskey-hub.net/ns#_misskey_quote
+# https://socialhub.activitypub.rocks/t/repost-share-with-quote-a-k-a-attach-someone-elses-post-to-your-own-post/659/19
+QUOTE_FIELDS = ('quote', 'quoteUri', '_misskey_quote', 'quoteUrl')
 PROPERTY_VALUE_CONTEXT = {
   'PropertyValue': 'http://schema.org#PropertyValue',
   'value': 'http://schema.org#value',
@@ -699,13 +705,12 @@ def to_as1(obj, use_type=True, get_fn=None):
       }))
 
   # check quote post fields on the top level object
-  # https://misskey-hub.net/ns#_misskey_quote
-  # https://socialhub.activitypub.rocks/t/repost-share-with-quote-a-k-a-attach-someone-elses-post-to-your-own-post/659/19
-  for quote_field in '_misskey_quote', 'quoteUrl':
+  for quote_field in QUOTE_FIELDS:
     if quote_url := obj.pop(quote_field, None):
       if quote_url not in quote_urls:
         attachments.append({
           'objectType': 'note',
+          'id': quote_url,
           'url': quote_url,
         })
         quote_urls.append(quote_url)

@@ -899,6 +899,17 @@ class As1Test(testutil.TestCase):
              'id': 'x',
            }]},
          },
+        # no id, fall back to url
+        {'attachments': [{
+          'objectType': 'note',
+          'url': 'x',
+        }]},
+        # id takes precedence over url
+        {'attachments': [{
+          'objectType': 'note',
+          'id': 'x',
+          'url': 'y',
+        }]},
     ):
       self.assertEqual(['x'], as1.quoted_posts(obj))
 

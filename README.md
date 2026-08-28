@@ -316,8 +316,12 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
 
 * `as1`:
   * `get_rsvps_from_event`: handle when actor is compacted string id.
+  * `quoted_posts`: fall back to quoted posts' `url` when they have no `id`.
 * `as2`:
-  * `to_as1`: fix bug where `Audio`/`Video` objects with a tag-based media link lost their top-level `duration`, `size`, and `url` fields.
+  * `to_as1`:
+    * Fix bug where `Audio`/`Video` objects with a tag-based media link lost their top-level `duration`, `size`, and `url` fields.
+    * Handle [FEP-044f's `quote`](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md) and [Fedibird's `quoteUri`](http://fedibird.com/ns#quoteUri) quoted post fields, along with the existing `_misskey_quote` and `quoteUrl`.
+    * Set quoted posts' `id`, not just `url`, so that `as1.quoted_posts` finds them.
 * `atom`:
   * `to_as1`: read `<link rel=self>`'s `href`, not text value.
   * `to_as1`: convert [`<category>`](https://datatracker.ietf.org/doc/html/rfc4287#section-4.2.2) elements to hashtag tags, using `label` if it's provided, otherwise `term`.

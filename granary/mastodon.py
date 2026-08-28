@@ -132,6 +132,7 @@ def from_as1(obj):
         header = url
         break
 
+    # https://docs.joinmastodon.org/entities/Account/
     return {
       'id': encode_id(id),
       'uri': id,
@@ -159,6 +160,7 @@ def from_as1(obj):
     if actor:
       actor.setdefault('objectType', 'person')
 
+    # https://docs.joinmastodon.org/entities/Status/
     status = {
       'id': encode_id(id),
       'uri': id,
@@ -180,6 +182,7 @@ def from_as1(obj):
       'favourites_count': 0,
       'replies_count': 0,
       'reblog': None,
+      'quote': None,
     }
 
     if hydrated_actor:
@@ -222,6 +225,18 @@ def from_as1(obj):
           'preview_url': image or stream or '',
           'description': att.get('displayName') or '',
         })
+
+    if quoted := as1.quoted_posts(obj):
+      # shallow quote
+      # https://docs.joinmastodon.org/entities/ShallowQuote/
+      #
+      # callers with access to the quoted post can replace this
+      # with a full Quote
+      # https://docs.joinmastodon.org/entities/Quote/
+      status['quote'] = {
+        'state': 'accepted',
+        'quoted_status_id': encode_id(quoted[0]),
+      }
 
     in_reply_to_id = as1.get_id(obj, 'inReplyTo')
     in_reply_to_account_id = as1.get_owner(as1.get_object(obj, 'inReplyTo'))
