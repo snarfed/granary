@@ -238,11 +238,14 @@ def from_as1(obj):
         'quoted_status_id': encode_id(quoted[0]),
       }
 
+    as2_obj = as2.from_as1(obj)
+    as2.render_content(as2_obj)
+
     in_reply_to_id = as1.get_id(obj, 'inReplyTo')
     in_reply_to_account_id = as1.get_owner(as1.get_object(obj, 'inReplyTo'))
     return {
       **status,
-      'content': obj.get('content') or '',
+      'content': as2_obj.get('content') or '',
       'spoiler_text': obj.get('summary') or '',
       'in_reply_to_id': encode_id(in_reply_to_id) if in_reply_to_id else None,
       'in_reply_to_account_id':

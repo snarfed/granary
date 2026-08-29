@@ -837,6 +837,28 @@ class MastodonTest(testutil.TestCase):
     obj['attachments'][0]['url'] = 'http://foo.com/image.jpg'
     self.assert_equals(expected, mastodon.from_as1(obj))
 
+  def test_from_as1_content_facets_to_html(self):
+    got = mastodon.from_as1({
+      'objectType': 'note',
+      'id': 'http://foo.com/123',
+      'content': 'check out #indieweb\nand foo.com/bar',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'indieweb',
+        'url': 'http://foo.com/tags/indieweb',
+        'startIndex': 10,
+        'length': 9,
+      }, {
+        'objectType': 'article',
+        'url': 'http://foo.com/bar',
+        'startIndex': 24,
+        'length': 11,
+      }],
+    })
+    self.assertEqual(
+      'check out <a class="hashtag" rel="tag" href="http://foo.com/tags/indieweb">#indieweb</a><br />and <a href="http://foo.com/bar">foo.com/bar</a>',
+      got['content'])
+
   def test_from_as1_share(self):
     self.assert_equals({
       'id': 'http~3A~2F~2Fother.net~2Fusers~2Fbob~2Fstatuses~2F789',
