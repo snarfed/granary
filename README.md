@@ -333,6 +333,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * `from_as1`:
     * Fix bug where converting a post with more than four images to `app.bsky.embed.gallery` failed validation due to missing `aspectRatio` field.
     * Fix bug with quote posts with attached media and `postView`/`feedViewPost` output.
+  * `to_as1`: for videos, add `image`, falling back to the [Bluesky video CDN](https://video.bsky.app/)'s thumbnail URL.
   * `Bluesky`:
     * `create`/`preview_create`: add support for blocks.
     * Add `update`/`preview_update`.

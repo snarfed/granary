@@ -82,6 +82,7 @@ NEW_BLOB = {  # new blob format: https://atproto.com/specs/data-model#blob-type
   'size': 154296,
 }
 NEW_BLOB_URL = 'https://bsky.social/xrpc/com.atproto.sync.getBlob?did=did:plc:foo&cid=bafkreicqpqncshdd27sgztqgzocd3zhhqnnsv6slvzhs5uz6f57cq6lmtq'
+VIDEO_THUMBNAIL_URL = 'https://video.bsky.app/watch/did%3Aplc%3Afoo/bafkreicqpqncshdd27sgztqgzocd3zhhqnnsv6slvzhs5uz6f57cq6lmtq/thumbnail.jpg'
 OLD_BLOB = {  # old blob format: https://atproto.com/specs/data-model#blob-type
   'cid': 'bafyjrot',
   'mimeType': 'image/jpeg',
@@ -364,6 +365,7 @@ POST_BSKY_GALLERY = {
 POST_AS_VIDEO = copy.deepcopy(POST_AS)
 POST_AS_VIDEO['object']['attachments'] = [{
   'objectType': 'video',
+  'image': VIDEO_THUMBNAIL_URL,
   'displayName': 'my alt text',
   'stream': {
     'url': NEW_BLOB_URL,
@@ -3816,6 +3818,15 @@ class BlueskyTest(testutil.TestCase):
     expected = copy.deepcopy(POST_AS_VIDEO['object'])
     del expected['attachments'][0]['stream']['mimeType']
     self.assert_equals(expected, to_as1(POST_VIEW_BSKY_VIDEO, repo_did='did:plc:foo'))
+
+  def test_to_as1_post_view_with_video_thumbnail(self):
+    view = copy.deepcopy(POST_VIEW_BSKY_VIDEO)
+    view['embed']['thumbnail'] = 'http://my/thumb.jpg'
+
+    expected = copy.deepcopy(POST_AS_VIDEO['object'])
+    expected['attachments'][0]['image'] = 'http://my/thumb.jpg'
+    del expected['attachments'][0]['stream']['mimeType']
+    self.assert_equals(expected, to_as1(view, repo_did='did:plc:foo'))
 
   def test_to_as1_feedViewPost(self):
     expected = copy.deepcopy(POST_AUTHOR_AS['object'])
