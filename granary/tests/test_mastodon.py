@@ -797,13 +797,13 @@ class MastodonTest(testutil.TestCase):
       'in_reply_to_id': None,
       'in_reply_to_account_id': None,
       'media_attachments': [{
-        'id': '',
+        'id': 'http://foo.com/image.jpg',
         'type': 'image',
         'url': 'http://foo.com/image.jpg',
         'preview_url': 'http://foo.com/image.jpg',
         'description': 'a fun image',
       }, {
-        'id': '',
+        'id': 'http://foo.com/video.mp4',
         'type': 'gifv',
         'url': 'http://foo.com/video.mp4',
         'preview_url': 'http://foo.com/poster.png',
@@ -858,6 +858,51 @@ class MastodonTest(testutil.TestCase):
     self.assertEqual(
       'check out <a class="hashtag" rel="tag" href="http://foo.com/tags/indieweb">#indieweb</a><br />and <a href="http://foo.com/bar">foo.com/bar</a>',
       got['content'])
+
+  def test_from_as1_image_field_without_attachment(self):
+    obj = copy.deepcopy(OBJECT)
+    obj['image'] = [
+      'http://foo.com/image.jpg',
+      {'url': 'http://foo.com/other.png', 'displayName': 'another image'},
+    ]
+
+    self.assert_equals([{
+      'id': 'http://foo.com/image.jpg',
+      'type': 'image',
+      'url': 'http://foo.com/image.jpg',
+      'preview_url': 'http://foo.com/image.jpg',
+      'description': '',
+    }, {
+      'id': 'http://foo.com/other.png',
+      'type': 'image',
+      'url': 'http://foo.com/other.png',
+      'preview_url': 'http://foo.com/other.png',
+      'description': 'another image',
+    }], mastodon.from_as1(obj)['media_attachments'])
+
+  def test_from_as1_media_attachment_dimensions(self):
+    obj = copy.deepcopy(OBJECT)
+    obj['image'] = {
+      'url': 'http://foo.com/image.jpg',
+      'width': 3000,
+      'height': 4000,
+    }
+
+    self.assert_equals([{
+      'id': 'http://foo.com/image.jpg',
+      'type': 'image',
+      'url': 'http://foo.com/image.jpg',
+      'preview_url': 'http://foo.com/image.jpg',
+      'description': '',
+      'meta': {
+        'original': {
+          'width': 3000,
+          'height': 4000,
+          'size': '3000x4000',
+          'aspect': 0.75,
+        },
+      },
+    }], mastodon.from_as1(obj)['media_attachments'])
 
   def test_from_as1_share(self):
     self.assert_equals({

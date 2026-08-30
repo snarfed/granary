@@ -211,20 +211,45 @@ def from_as1(obj):
           'url': tag.get('url'),
         })
 
-    for att in as1.get_objects(obj, 'attachments'):
-      if media_type := AS1_TO_MEDIA_TYPES.get(att.get('objectType')):
-        stream = util.get_url(att, 'stream')
-        image = util.get_url(att, 'image')
-        if not image and media_type == 'image':
-          image = att.get('url')
+    # images and videos
+    # https://docs.joinmastodon.org/entities/MediaAttachment/
+    images = as1.get_objects(obj, 'image', copy=True)
+    for img in images:
+      img['objectType'] = 'image'
 
-        status['media_attachments'].append({
-          'id': att.get('id') or '',
-          'type': media_type or '',
-          'url': stream or image or '',
-          'preview_url': image or stream or '',
-          'description': att.get('displayName') or '',
-        })
+    for att in images + as1.get_objects(obj, 'attachments'):
+      media_type = AS1_TO_MEDIA_TYPES.get(att.get('objectType'))
+      if not media_type:
+        continue
+
+      stream = util.get_url(att, 'stream')
+      image = util.get_url(att, 'image')
+      if not image and media_type == 'image':
+        image = att.get('url') or att.get('id')
+
+      url = stream or image or ''
+      if url in [existing['url'] for existing in status['media_attachments']]:
+        continue
+
+      attachment = {
+        'id': url,
+        'url': url,
+        'type': media_type,
+        'preview_url': image or stream or '',
+        'description': att.get('displayName') or '',
+      }
+
+      if (width := att.get('width')) and (height := att.get('height')):
+        attachment['meta'] = {
+          'original': {
+            'width': width,
+            'height': height,
+            'size': f'{width}x{height}',
+            'aspect': width / height,
+          },
+        }
+
+      status['media_attachments'].append(attachment)
 
     if quoted := as1.quoted_posts(obj):
       # shallow quote
@@ -564,7 +589,8 @@ class Mastodon(source.Source):
     reblog = status.get('reblog')
     base_status = reblog or status
 
-    # media! into attachments.
+    # media! into attachments
+    # https://docs.joinmastodon.org/entities/MediaAttachment/
     for media in status.get('media_attachments', []):
       type = media.get('type')
       desc = media.get('description')
