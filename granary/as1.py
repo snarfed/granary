@@ -4,7 +4,7 @@
 * http://activitystrea.ms/specs/json/1.0/
 """
 import collections
-import copy
+import copy as copy_
 import logging
 from operator import itemgetter
 import re
@@ -102,7 +102,7 @@ def object_type(obj):
   return type if type and type != 'activity' else obj.get('verb')
 
 
-def get_object(obj, field='object'):
+def get_object(obj, field='object', copy=False):
   """Extracts and returns a field value as an object.
 
   If the field value is a string, returns an object with it as the id, eg
@@ -111,17 +111,21 @@ def get_object(obj, field='object'):
   Args:
     obj (dict): decoded JSON ActivityStreams object
     field (str)
+    copy (bool): if True, return a copy of the object
 
   Returns:
     dict:
   """
   if not obj:
     return {}
+
   val = util.get_first(obj, field, {}) or {}
+  if copy:
+    val = copy_.deepcopy(val)
   return {'id': val} if isinstance(val, str) else val
 
 
-def get_objects(obj, field='object'):
+def get_objects(obj, field='object', copy=False):
   """Extracts and returns a field's values as objects.
 
   If a field value is a string, generates an object with it as the id, eg
@@ -130,14 +134,20 @@ def get_objects(obj, field='object'):
   Args:
     obj (dict): decoded JSON ActivityStreams object
     field (str)
+    copy (bool): if True, return copies of the objects
 
   Returns:
     sequence of dict:
   """
   if not obj:
     return []
-  return [{'id': val} if isinstance(val, str) else val
-          for val in util.get_list(obj, field)]
+
+  objs = []
+  for val in util.get_list(obj, field):
+    val = val if isinstance(val, dict) else {'id': val}
+    objs.append(copy_.deepcopy(val) if copy else val)
+
+  return objs
 
 
 def get_owner(obj):
@@ -462,8 +472,8 @@ def activity_changed(before, after, inReplyTo=True, log=False):
     a_val = a.get(field)
 
     if ignore and isinstance(b_val, dict) and isinstance(a_val, dict):
-      b_val = copy.copy(b_val)
-      a_val = copy.copy(a_val)
+      b_val = copy_.copy(b_val)
+      a_val = copy_.copy(a_val)
       for field in ignore:
         b_val.pop(field, None)
         a_val.pop(field, None)

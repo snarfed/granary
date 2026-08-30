@@ -755,6 +755,11 @@ class As1Test(testutil.TestCase):
       with self.subTest(obj=obj):
         self.assertEqual(expected, as1.get_object(obj, 'f'))
 
+    x = {'object': {'id': 1}}
+    got = as1.get_object(x, copy=True)
+    self.assertEqual({'id': 1}, got)
+    assert got is not x['object']
+
   def test_get_objects(self):
     for expected, obj in (
         ([], None),
@@ -771,6 +776,11 @@ class As1Test(testutil.TestCase):
     ):
       with self.subTest(obj=obj):
         self.assertEqual(expected, as1.get_objects(obj, 'f'))
+
+    x = {'object': [{'id': 1}, 2]}
+    got = as1.get_objects(x, copy=True)
+    self.assertEqual([{'id': 1}, {'id': 2}], got)
+    assert got[0] is not x['object'][0]
 
   def test_get_owner(self):
     with self.assertRaises(ValueError):
