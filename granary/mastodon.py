@@ -235,7 +235,7 @@ def from_as1(obj):
         'id': url,
         'url': url,
         'type': media_type,
-        'preview_url': image or stream or '',
+        'preview_url': image or '',
         'description': att.get('displayName') or '',
       }
 

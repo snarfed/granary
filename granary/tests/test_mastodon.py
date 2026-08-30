@@ -880,6 +880,21 @@ class MastodonTest(testutil.TestCase):
       'description': 'another image',
     }], mastodon.from_as1(obj)['media_attachments'])
 
+  def test_from_as1_video_attachment_without_poster(self):
+    obj = copy.deepcopy(OBJECT)
+    obj['attachments'] = [{
+      'objectType': 'video',
+      'stream': {'url': 'http://foo.com/video.mp4'},
+    }]
+
+    self.assert_equals([{
+      'id': 'http://foo.com/video.mp4',
+      'type': 'gifv',
+      'url': 'http://foo.com/video.mp4',
+      'preview_url': '',
+      'description': '',
+    }], mastodon.from_as1(obj)['media_attachments'])
+
   def test_from_as1_media_attachment_dimensions(self):
     obj = copy.deepcopy(OBJECT)
     obj['image'] = {
