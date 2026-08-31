@@ -199,10 +199,11 @@ def from_as1(obj):
     for tag in as1.get_objects(obj, 'tags'):
       tag_type = tag.get('objectType')
       if tag_type in as1.ACTOR_TYPES or tag_type == 'mention':
+        acct = (tag.get('displayName') or '').removeprefix('@')
         status['mentions'].append({
           'id': encode_id(tag['id']) if tag.get('id') else None,
-          'username': tag.get('displayName'),
-          'acct': tag.get('displayName'),
+          'username': acct.split('@')[0],
+          'acct': acct,
           'url': tag.get('url'),
         })
       elif tag.get('objectType') == 'hashtag':

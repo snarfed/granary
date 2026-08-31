@@ -895,6 +895,21 @@ class MastodonTest(testutil.TestCase):
       'description': '',
     }], mastodon.from_as1(obj)['media_attachments'])
 
+  def test_from_as1_mention_handle_with_at_prefix(self):
+    obj = copy.deepcopy(OBJECT)
+    obj['tags'] = [{
+      'objectType': 'mention',
+      'displayName': '@alice@other',
+      'url': 'https://other/@alice',
+    }]
+
+    self.assert_equals([{
+      'id': None,
+      'username': 'alice',
+      'acct': 'alice@other',
+      'url': 'https://other/@alice',
+    }], mastodon.from_as1(obj)['mentions'])
+
   def test_from_as1_media_attachment_dimensions(self):
     obj = copy.deepcopy(OBJECT)
     obj['image'] = {
