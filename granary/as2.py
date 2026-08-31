@@ -174,6 +174,76 @@ def get_urls(obj, key='url'):
                           for link in util.get_list(obj, key))
 
 
+def _fetch(url, get_fn):
+  """Fetches an AS2 object.
+
+  Args:
+    url (str)
+    get_fn (callable, str URL => :class:`requests.Response`)
+
+  Returns:
+    dict: the fetched AS2 object, empty if the fetch failed or wasn't AS2
+  """
+  logger.info(f'fetch {url}')
+  resp = get_fn(url)
+  content_type = resp.headers.get('Content-Type', '').split(';')[0].strip()
+  if resp.ok and content_type in CONTENT_TYPES:
+    return resp.json()
+
+  return {}
+
+
+def get_collection_page(collection, get_fn=None):
+  """Returns the items in the first page of an AS2 collection.
+
+  Handles ``Collection`` and ``OrderedCollection`` and the three ways either can
+  expose its first page's items: inline in ``items`` or ``orderedItems``, or in
+  a ``first`` page that's either inline or a link to fetch.
+
+  Doesn't page. Only ever returns the first page's items; never follows ``next``.
+
+  https://www.w3.org/TR/activitystreams-core/#collections
+
+  Args:
+    collection (dict or str): AS2 collection, or its id, in which case
+      ``get_fn`` is required to fetch it
+    get_fn (callable, str URL => :class:`requests.Response`): optional, used to
+      fetch the collection and/or its first page. If not provided, only inline
+      values are used.
+
+  Returns:
+    list of dict or str: items, either objects or ids, possibly empty
+  """
+  def items(coll):
+    if not coll:
+      return []
+    return util.get_list(coll, 'orderedItems') or util.get_list(coll, 'items')
+
+  if isinstance(collection, str):
+    collection = {'id': collection}
+  elif not isinstance(collection, dict):
+    return []
+
+  if set(collection.keys()) == {'id'}:
+    if not get_fn:
+      return []
+    collection = _fetch(collection['id'], get_fn)
+
+
+  if found := items(collection):
+    return found
+
+  first = collection.get('first')
+  if isinstance(first, dict) and not items(first) and first.get('id'):
+    first = first['id']
+  if isinstance(first, str):
+    if not get_fn:
+      return []
+    first = _fetch(first, get_fn)
+
+  return items(first)
+
+
 def set_content(obj, new_content):
   """Sets ``content`` and also all matching values in ``contentMap``.
 
@@ -718,13 +788,13 @@ def to_as1(obj, use_type=True, get_fn=None):
   # pinned posts
   # https://docs.joinmastodon.org/spec/activitypub/#featured
   if type in ACTOR_TYPES and (feat := as1.get_object(obj, 'featured')):
-    if set(feat.keys()) == {'id'} and get_fn:
-      # fetch collection
-      resp = get_fn(feat['id'])
-      if resp.ok and resp.headers.get('Content-Type') in CONTENT_TYPES:
-        feat = obj['featured'] = resp.json()
-    feat.pop('type', None)
-    feat['items'] = feat.pop('orderedItems', None)
+    # if set(feat.keys()) == {'id'} and (fetched := _fetch(feat['id'], get_fn)):
+    #   feat = obj['featured'] = fetched
+    feat['items'] = get_collection_page(feat, get_fn=get_fn)
+    if feat['items']:
+      obj['featured'] = feat
+    for field in 'first', 'orderedItems', 'type':
+      feat.pop(field, None)
 
   obj.update({
     'displayName': displayName,

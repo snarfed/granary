@@ -14,6 +14,9 @@ from ..as2 import is_public, PUBLICS
 
 class ActivityStreams2Test(testutil.TestCase):
 
+  def as2_response(self, obj):
+    return testutil.requests_response(obj, headers={'Content-Type': as2.CONTENT_TYPE})
+
   def test_from_as1_blank(self):
     self.assertEqual({}, as2.from_as1(None))
     self.assertEqual({}, as2.from_as1({}))
@@ -933,12 +936,127 @@ class ActivityStreams2Test(testutil.TestCase):
     }))
 
   def test_to_as1_featured_collection_fetch(self):
-    mock_get = MagicMock()
-    mock_get.return_value = testutil.requests_response({
+    mock_get = MagicMock(return_value=self.as2_response({
       'type': 'OrderedCollection',
       'totalItems': 1,
       'orderedItems': ['http://foo'],
-    }, headers={'Content-Type': as2.CONTENT_TYPE})
+    }))
+
+    self.assert_equals({
+      'objectType': 'person',
+      'featured': {
+        'id': 'http://actor/featured',
+        'items': ['http://foo'],
+      },
+    }, as2.to_as1({
+      'type': 'Person',
+      'featured': 'http://actor/featured',
+    }, get_fn=mock_get))
+
+    mock_get.assert_called_with('http://actor/featured')
+
+  def test_get_collection_page_empty(self):
+    for coll in None, {}, '', [], {'type': 'OrderedCollection'}:
+      self.assertEqual([], as2.get_collection_page(coll))
+
+  def test_get_collection_page_ordered_items(self):
+    self.assertEqual(['http://foo'], as2.get_collection_page({
+      'type': 'OrderedCollection',
+      'orderedItems': ['http://foo'],
+    }))
+
+  def test_get_collection_page_items(self):
+    self.assertEqual(['http://foo'], as2.get_collection_page({
+      'type': 'Collection',
+      'items': ['http://foo'],
+    }))
+
+  def test_get_collection_page_single_item_not_list(self):
+    self.assertEqual([{'type': 'Note'}], as2.get_collection_page({
+      'type': 'Collection',
+      'items': {'type': 'Note'},
+    }))
+
+  def test_get_collection_page_first_inlined_page(self):
+    for field in 'items', 'orderedItems':
+      self.assertEqual(['http://foo'], as2.get_collection_page({
+        'type': 'OrderedCollection',
+        'first': {
+          'type': 'OrderedCollectionPage',
+          field: ['http://foo'],
+        },
+      }))
+
+  def test_get_collection_page_first_link(self):
+    mock_get = MagicMock(return_value=self.as2_response({
+      'type': 'OrderedCollectionPage',
+      'orderedItems': ['http://foo'],
+    }))
+
+    self.assertEqual(['http://foo'], as2.get_collection_page({
+      'type': 'OrderedCollection',
+      'id': 'http://coll',
+      'first': 'http://coll?page=1',
+    }, get_fn=mock_get))
+    mock_get.assert_called_with('http://coll?page=1')
+
+  def test_get_collection_page_first_inlined_id_only(self):
+    mock_get = MagicMock(return_value=self.as2_response({
+      'type': 'OrderedCollectionPage',
+      'orderedItems': ['http://foo'],
+    }))
+
+    self.assertEqual(['http://foo'], as2.get_collection_page({
+      'type': 'OrderedCollection',
+      'first': {'id': 'http://coll?page=1'},
+    }, get_fn=mock_get))
+    mock_get.assert_called_with('http://coll?page=1')
+
+  def test_get_collection_page_collection_id(self):
+    mock_get = MagicMock(return_value=self.as2_response({
+      'type': 'OrderedCollection',
+      'orderedItems': ['http://foo'],
+    }))
+
+    self.assertEqual(['http://foo'],
+                     as2.get_collection_page('http://coll', get_fn=mock_get))
+    mock_get.assert_called_with('http://coll')
+
+  def test_get_collection_page_first_no_get_fn(self):
+    self.assertEqual([], as2.get_collection_page({
+      'type': 'OrderedCollection',
+      'first': 'http://coll?page=1',
+    }))
+    self.assertEqual([], as2.get_collection_page('http://coll'))
+
+  def test_get_collection_page_inlined_takes_precedence_over_first(self):
+    self.assertEqual(['http://foo'], as2.get_collection_page({
+      'type': 'OrderedCollection',
+      'orderedItems': ['http://foo'],
+      'first': 'http://coll?page=1',
+    }, get_fn=MagicMock()))
+
+  def test_get_collection_page_fetch_fails(self):
+    for resp in (testutil.requests_response(status=404),
+                 testutil.requests_response('<html></html>',
+                                            headers={'Content-Type': 'text/html'})):
+      self.assertEqual([], as2.get_collection_page('http://coll',
+                                         get_fn=MagicMock(return_value=resp)))
+
+  def test_get_collection_page_content_type_with_charset(self):
+    mock_get = MagicMock(return_value=testutil.requests_response({
+      'type': 'OrderedCollection',
+      'orderedItems': ['http://foo'],
+    }, headers={'Content-Type': f'{as2.CONTENT_TYPE}; charset=utf-8'}))
+
+    self.assertEqual(['http://foo'],
+                     as2.get_collection_page('http://coll', get_fn=mock_get))
+
+  def test_to_as1_featured_collection_first_page(self):
+    mock_get = MagicMock(return_value=self.as2_response({
+      'type': 'OrderedCollectionPage',
+      'orderedItems': ['http://foo'],
+    }))
 
     self.assert_equals({
       'objectType': 'person',
@@ -948,10 +1066,30 @@ class ActivityStreams2Test(testutil.TestCase):
       },
     }, as2.to_as1({
       'type': 'Person',
-      'featured': 'http://actor/featured',
+      'featured': {
+        'type': 'OrderedCollection',
+        'totalItems': 1,
+        'first': 'http://actor/featured?page=1',
+      },
     }, get_fn=mock_get))
 
-    mock_get.assert_called_with('http://actor/featured')
+    mock_get.assert_called_with('http://actor/featured?page=1')
+
+  def test_to_as1_featured_collection_unordered_items(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'featured': {
+        'totalItems': 1,
+        'items': ['http://foo'],
+      },
+    }, as2.to_as1({
+      'type': 'Person',
+      'featured': {
+        'type': 'Collection',
+        'totalItems': 1,
+        'items': ['http://foo'],
+      },
+    }))
 
   def test_to_as1_person_monetization(self):
     self.assert_equals({

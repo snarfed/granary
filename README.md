@@ -318,7 +318,9 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * `get_rsvps_from_event`: handle when actor is compacted string id.
   * `quoted_posts`: fall back to quoted posts' `url` when they have no `id`.
 * `as2`:
+  * Add new `get_collection_page` function, which fetches and returns the items in the first page of an AS2 collection.
   * `to_as1`:
+    * Improve `featured` collection (ie pinned post) fetching ([bridgy-fed#2302](https://github.com/snarfed/bridgy-fed/issues/2302)).
     * Fix bug where `Audio`/`Video` objects with a tag-based media link lost their top-level `duration`, `size`, and `url` fields.
     * Handle [FEP-044f's `quote`](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md) and [Fedibird's `quoteUri`](http://fedibird.com/ns#quoteUri) quoted post fields, along with the existing `_misskey_quote` and `quoteUrl`.
     * Set quoted posts' `id`, not just `url`, so that `as1.quoted_posts` finds them.
