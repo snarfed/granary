@@ -945,7 +945,7 @@ class ActivityStreams2Test(testutil.TestCase):
     self.assert_equals({
       'objectType': 'person',
       'featured': {
-        'id': 'http://actor/featured',
+        'totalItems': 1,
         'items': ['http://foo'],
       },
     }, as2.to_as1({
@@ -955,102 +955,180 @@ class ActivityStreams2Test(testutil.TestCase):
 
     mock_get.assert_called_with('http://actor/featured')
 
-  def test_get_collection_page_empty(self):
+  def test_maybe_hydrate_collection_empty(self):
     for coll in None, {}, '', [], {'type': 'OrderedCollection'}:
-      self.assertEqual([], as2.get_collection_page(coll))
+      obj = {'featured': coll}
+      self.assertEqual([], as2.maybe_hydrate_collection(obj, 'featured'))
+      self.assertEqual({'featured': coll}, obj)
 
-  def test_get_collection_page_ordered_items(self):
-    self.assertEqual(['http://foo'], as2.get_collection_page({
-      'type': 'OrderedCollection',
-      'orderedItems': ['http://foo'],
-    }))
+  def test_maybe_hydrate_collection_missing_field(self):
+    obj = {'type': 'Person'}
+    self.assertEqual([], as2.maybe_hydrate_collection(obj, 'featured'))
+    self.assertEqual({'type': 'Person'}, obj)
 
-  def test_get_collection_page_items(self):
-    self.assertEqual(['http://foo'], as2.get_collection_page({
-      'type': 'Collection',
-      'items': ['http://foo'],
-    }))
+  def test_maybe_hydrate_collection_ordered_items(self):
+    coll = {'type': 'OrderedCollection', 'orderedItems': ['http://foo']}
+    obj = {'featured': coll}
+    self.assertEqual(['http://foo'], as2.maybe_hydrate_collection(obj, 'featured'))
+    self.assertEqual({'featured': coll}, obj)
 
-  def test_get_collection_page_single_item_not_list(self):
-    self.assertEqual([{'type': 'Note'}], as2.get_collection_page({
-      'type': 'Collection',
-      'items': {'type': 'Note'},
-    }))
+  def test_maybe_hydrate_collection_items(self):
+    coll = {'type': 'Collection', 'items': ['http://foo']}
+    obj = {'featured': coll}
+    self.assertEqual(['http://foo'], as2.maybe_hydrate_collection(obj, 'featured'))
+    self.assertEqual({'featured': coll}, obj)
 
-  def test_get_collection_page_first_inlined_page(self):
+  def test_maybe_hydrate_collection_single_item_not_list(self):
+    obj = {'featured': {'type': 'Collection', 'items': {'type': 'Note'}}}
+    self.assertEqual([{'type': 'Note'}],
+                     as2.maybe_hydrate_collection(obj, 'featured'))
+
+  def test_maybe_hydrate_collection_first_inlined_page(self):
     for field in 'items', 'orderedItems':
-      self.assertEqual(['http://foo'], as2.get_collection_page({
+      obj = {'featured': {
         'type': 'OrderedCollection',
         'first': {
           'type': 'OrderedCollectionPage',
           field: ['http://foo'],
         },
-      }))
+      }}
+      self.assertEqual(['http://foo'], as2.maybe_hydrate_collection(obj, 'featured'))
+      self.assertEqual(['http://foo'], obj['featured']['orderedItems'])
 
-  def test_get_collection_page_first_link(self):
+  def test_maybe_hydrate_collection_first_link(self):
     mock_get = MagicMock(return_value=self.as2_response({
       'type': 'OrderedCollectionPage',
       'orderedItems': ['http://foo'],
     }))
 
-    self.assertEqual(['http://foo'], as2.get_collection_page({
+    obj = {'featured': {
       'type': 'OrderedCollection',
       'id': 'http://coll',
+      'totalItems': 1,
       'first': 'http://coll?page=1',
-    }, get_fn=mock_get))
+    }}
+    self.assertEqual(['http://foo'],
+                     as2.maybe_hydrate_collection(obj, 'featured', get_fn=mock_get))
+    self.assertEqual({'featured': {
+      'type': 'OrderedCollection',
+      'id': 'http://coll',
+      'totalItems': 1,
+      'first': 'http://coll?page=1',
+      'orderedItems': ['http://foo'],
+    }}, obj)
     mock_get.assert_called_with('http://coll?page=1')
 
-  def test_get_collection_page_first_inlined_id_only(self):
+  def test_maybe_hydrate_collection_first_link_unordered(self):
+    mock_get = MagicMock(return_value=self.as2_response({
+      'type': 'CollectionPage',
+      'items': ['http://foo'],
+    }))
+
+    obj = {'featured': {'type': 'Collection', 'first': 'http://coll?page=1'}}
+    self.assertEqual(['http://foo'],
+                     as2.maybe_hydrate_collection(obj, 'featured', get_fn=mock_get))
+    self.assertEqual(['http://foo'], obj['featured']['items'])
+
+  def test_maybe_hydrate_collection_first_inlined_id_only(self):
     mock_get = MagicMock(return_value=self.as2_response({
       'type': 'OrderedCollectionPage',
       'orderedItems': ['http://foo'],
     }))
 
-    self.assertEqual(['http://foo'], as2.get_collection_page({
+    obj = {'featured': {
       'type': 'OrderedCollection',
       'first': {'id': 'http://coll?page=1'},
-    }, get_fn=mock_get))
+    }}
+    self.assertEqual(['http://foo'],
+                     as2.maybe_hydrate_collection(obj, 'featured', get_fn=mock_get))
+    self.assertEqual(['http://foo'], obj['featured']['orderedItems'])
     mock_get.assert_called_with('http://coll?page=1')
 
-  def test_get_collection_page_collection_id(self):
-    mock_get = MagicMock(return_value=self.as2_response({
+  def test_maybe_hydrate_collection_id(self):
+    coll = {
       'type': 'OrderedCollection',
+      'totalItems': 1,
       'orderedItems': ['http://foo'],
-    }))
+    }
+    mock_get = MagicMock(return_value=self.as2_response(coll))
 
+    obj = {'featured': 'http://coll'}
     self.assertEqual(['http://foo'],
-                     as2.get_collection_page('http://coll', get_fn=mock_get))
+                     as2.maybe_hydrate_collection(obj, 'featured', get_fn=mock_get))
+    self.assertEqual({'featured': coll}, obj)
     mock_get.assert_called_with('http://coll')
 
-  def test_get_collection_page_first_no_get_fn(self):
-    self.assertEqual([], as2.get_collection_page({
+  def test_maybe_hydrate_collection_id_no_items(self):
+    coll = {'type': 'OrderedCollection', 'totalItems': 0}
+    mock_get = MagicMock(return_value=self.as2_response(coll))
+
+    obj = {'featured': 'http://coll'}
+    self.assertEqual([],
+                     as2.maybe_hydrate_collection(obj, 'featured', get_fn=mock_get))
+    self.assertEqual({'featured': coll}, obj)
+
+  def test_maybe_hydrate_collection_id_then_first_link(self):
+    mock_get = MagicMock(side_effect=[
+      self.as2_response({
+        'type': 'OrderedCollection',
+        'totalItems': 1,
+        'first': 'http://coll?page=1',
+      }),
+      self.as2_response({
+        'type': 'OrderedCollectionPage',
+        'orderedItems': ['http://foo'],
+      }),
+    ])
+
+    obj = {'featured': {'id': 'http://coll'}}
+    self.assertEqual(['http://foo'],
+                     as2.maybe_hydrate_collection(obj, 'featured', get_fn=mock_get))
+    self.assertEqual({'featured': {
+      'type': 'OrderedCollection',
+      'totalItems': 1,
+      'first': 'http://coll?page=1',
+      'orderedItems': ['http://foo'],
+    }}, obj)
+
+  def test_maybe_hydrate_collection_no_get_fn(self):
+    obj = {'featured': {'type': 'OrderedCollection', 'first': 'http://coll?page=1'}}
+    self.assertEqual([], as2.maybe_hydrate_collection(obj, 'featured'))
+    self.assertEqual({'featured': {
       'type': 'OrderedCollection',
       'first': 'http://coll?page=1',
-    }))
-    self.assertEqual([], as2.get_collection_page('http://coll'))
+    }}, obj)
 
-  def test_get_collection_page_inlined_takes_precedence_over_first(self):
-    self.assertEqual(['http://foo'], as2.get_collection_page({
+    obj = {'featured': 'http://coll'}
+    self.assertEqual([], as2.maybe_hydrate_collection(obj, 'featured'))
+    self.assertEqual({'featured': 'http://coll'}, obj)
+
+  def test_maybe_hydrate_collection_inlined_takes_precedence_over_first(self):
+    obj = {'featured': {
       'type': 'OrderedCollection',
       'orderedItems': ['http://foo'],
       'first': 'http://coll?page=1',
-    }, get_fn=MagicMock()))
+    }}
+    self.assertEqual(['http://foo'], as2.maybe_hydrate_collection(
+      obj, 'featured', get_fn=MagicMock()))
 
-  def test_get_collection_page_fetch_fails(self):
+  def test_maybe_hydrate_collection_fetch_fails(self):
     for resp in (testutil.requests_response(status=404),
                  testutil.requests_response('<html></html>',
                                             headers={'Content-Type': 'text/html'})):
-      self.assertEqual([], as2.get_collection_page('http://coll',
-                                         get_fn=MagicMock(return_value=resp)))
+      obj = {'featured': 'http://coll'}
+      self.assertEqual([], as2.maybe_hydrate_collection(
+        obj, 'featured', get_fn=MagicMock(return_value=resp)))
+      self.assertEqual({'featured': 'http://coll'}, obj)
 
-  def test_get_collection_page_content_type_with_charset(self):
+  def test_maybe_hydrate_collection_content_type_with_charset(self):
     mock_get = MagicMock(return_value=testutil.requests_response({
       'type': 'OrderedCollection',
       'orderedItems': ['http://foo'],
     }, headers={'Content-Type': f'{as2.CONTENT_TYPE}; charset=utf-8'}))
 
+    obj = {'featured': 'http://coll'}
     self.assertEqual(['http://foo'],
-                     as2.get_collection_page('http://coll', get_fn=mock_get))
+                     as2.maybe_hydrate_collection(obj, 'featured', get_fn=mock_get))
 
   def test_to_as1_featured_collection_first_page(self):
     mock_get = MagicMock(return_value=self.as2_response({

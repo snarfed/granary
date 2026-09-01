@@ -318,7 +318,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * `get_rsvps_from_event`: handle when actor is compacted string id.
   * `quoted_posts`: fall back to quoted posts' `url` when they have no `id`.
 * `as2`:
-  * Add new `get_collection_page` function, which fetches and returns the items in the first page of an AS2 collection.
+  * Add new `maybe_hydrate_collection` function that hydrates a collection field in place inside an object.
   * `to_as1`:
     * Improve `featured` collection (ie pinned post) fetching ([bridgy-fed#2302](https://github.com/snarfed/bridgy-fed/issues/2302)).
     * Fix bug where `Audio`/`Video` objects with a tag-based media link lost their top-level `duration`, `size`, and `url` fields.

@@ -193,20 +193,24 @@ def _fetch(url, get_fn):
   return {}
 
 
-def get_collection_page(collection, get_fn=None):
-  """Returns the items in the first page of an AS2 collection.
+def maybe_hydrate_collection(obj, field, get_fn=None):
+  """Hydrates an AS2 collection field in ``obj``, in place, and returns its items.
 
   Handles ``Collection`` and ``OrderedCollection`` and the three ways either can
   expose its first page's items: inline in ``items`` or ``orderedItems``, or in
-  a ``first`` page that's either inline or a link to fetch.
+  a ``first`` page that's either inline or a link to fetch. Also fetches the
+  collection itself if ``obj``'s field value is just its id.
 
-  Doesn't page. Only ever returns the first page's items; never follows ``next``.
+  If any of that requires fetching, and the fetch succeeds, ``obj[field]`` is
+  replaced with the hydrated collection, ie with its items inline.
+
+  Doesn't page. Only ever uses the first page's items; never follows ``next``.
 
   https://www.w3.org/TR/activitystreams-core/#collections
 
   Args:
-    collection (dict or str): AS2 collection, or its id, in which case
-      ``get_fn`` is required to fetch it
+    obj (dict): AS2 object with a collection in ``field``
+    field (str): the collection field in ``obj``, eg ``featured`` or ``outbox``
     get_fn (callable, str URL => :class:`requests.Response`): optional, used to
       fetch the collection and/or its first page. If not provided, only inline
       values are used.
@@ -219,29 +223,28 @@ def get_collection_page(collection, get_fn=None):
       return []
     return util.get_list(coll, 'orderedItems') or util.get_list(coll, 'items')
 
-  if isinstance(collection, str):
-    collection = {'id': collection}
-  elif not isinstance(collection, dict):
+  if not (coll := as1.get_object(obj, field)):
     return []
 
-  if set(collection.keys()) == {'id'}:
-    if not get_fn:
-      return []
-    collection = _fetch(collection['id'], get_fn)
+  if set(coll.keys()) == {'id'} and get_fn:
+    if fetched := _fetch(coll['id'], get_fn):
+      coll = obj[field] = fetched
 
-
-  if found := items(collection):
+  if found := items(coll):
     return found
 
-  first = collection.get('first')
+  first = coll.get('first')
   if isinstance(first, dict) and not items(first) and first.get('id'):
     first = first['id']
   if isinstance(first, str):
-    if not get_fn:
-      return []
-    first = _fetch(first, get_fn)
+    first = _fetch(first, get_fn) if get_fn else None
 
-  return items(first)
+  if found := items(first):
+    key = ('items' if util.get_first(coll, 'type') in ('Collection', 'CollectionPage')
+           else 'orderedItems')
+    obj[field] = {**coll, key: found}
+
+  return found
 
 
 def set_content(obj, new_content):
@@ -787,14 +790,11 @@ def to_as1(obj, use_type=True, get_fn=None):
 
   # pinned posts
   # https://docs.joinmastodon.org/spec/activitypub/#featured
-  if type in ACTOR_TYPES and (feat := as1.get_object(obj, 'featured')):
-    # if set(feat.keys()) == {'id'} and (fetched := _fetch(feat['id'], get_fn)):
-    #   feat = obj['featured'] = fetched
-    feat['items'] = get_collection_page(feat, get_fn=get_fn)
-    if feat['items']:
-      obj['featured'] = feat
+  if type in ACTOR_TYPES and obj.get('featured'):
+    items = maybe_hydrate_collection(obj, 'featured', get_fn=get_fn)
+    obj['featured']['items'] = items
     for field in 'first', 'orderedItems', 'type':
-      feat.pop(field, None)
+      obj['featured'].pop(field, None)
 
   obj.update({
     'displayName': displayName,
