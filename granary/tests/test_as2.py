@@ -1169,6 +1169,51 @@ class ActivityStreams2Test(testutil.TestCase):
       },
     }))
 
+  def test_to_as1_featured_collection_id_only_no_get_fn(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'featured': 'http://actor/featured',
+    }, as2.to_as1({
+      'type': 'Person',
+      'featured': 'http://actor/featured',
+    }))
+
+  def test_to_as1_featured_collection_id_only_fetch_fails(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'featured': 'http://actor/featured',
+    }, as2.to_as1({
+      'type': 'Person',
+      'featured': 'http://actor/featured',
+    }, get_fn=MagicMock(return_value=testutil.requests_response(status=404))))
+
+  def test_to_as1_featured_collection_id_only_nested_actor(self):
+    # nested objects are converted without get_fn
+    # https://github.com/snarfed/bridgy-fed/issues/2302
+    self.assert_equals({
+      'objectType': 'activity',
+      'verb': 'post',
+      'actor': {
+        'objectType': 'person',
+        'featured': 'http://actor/featured',
+      },
+    }, as2.to_as1({
+      'type': 'Create',
+      'actor': {
+        'type': 'Person',
+        'featured': 'http://actor/featured',
+      },
+    }))
+
+  def test_to_as1_featured_collection_list(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'featured': ['http://actor/featured', 'http://actor/other'],
+    }, as2.to_as1({
+      'type': 'Person',
+      'featured': ['http://actor/featured', 'http://actor/other'],
+    }))
+
   def test_to_as1_person_monetization(self):
     self.assert_equals({
       'objectType' : 'person',

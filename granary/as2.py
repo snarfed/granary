@@ -792,9 +792,12 @@ def to_as1(obj, use_type=True, get_fn=None):
   # https://docs.joinmastodon.org/spec/activitypub/#featured
   if type in ACTOR_TYPES and obj.get('featured'):
     items = maybe_hydrate_collection(obj, 'featured', get_fn=get_fn)
-    obj['featured']['items'] = items
-    for field in 'first', 'orderedItems', 'type':
-      obj['featured'].pop(field, None)
+    # if we couldn't hydrate it, eg it's just an id and we have no get_fn, leave
+    # it as is, like collection_to_as1 does
+    if isinstance(obj['featured'], dict):
+      obj['featured']['items'] = items
+      for field in 'first', 'orderedItems', 'type':
+        obj['featured'].pop(field, None)
 
   obj.update({
     'displayName': displayName,
