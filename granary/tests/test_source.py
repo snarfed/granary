@@ -14,6 +14,7 @@ from ..source import (
   INCLUDE_LINK,
   OMIT_LINK,
   Source,
+  whitespace_to_html,
 )
 from .. import twitter
 
@@ -435,6 +436,23 @@ Watching  \t waves
   def test_html_to_text_empty(self):
     self.assertEqual('', html_to_text(None))
     self.assertEqual('', html_to_text(''))
+
+  def test_whitespace_to_html(self):
+    for expected, val in (
+        ('', ''),
+        ('foo bar', 'foo bar'),
+        ('foo<br />ba &gt; r', 'foo\nba > r'),
+        ('foo<br />bar', 'foo\nbar'),
+        ('foo<br /><br />bar', 'foo\n\nbar'),
+        ('&nbsp;&nbsp;foo<br />&nbsp;bar baz', '  foo\n bar baz'),
+        # only line-leading spaces are converted
+        ('foo  bar ', 'foo  bar '),
+    ):
+      with self.subTest(val=val):
+        self.assertEqual(expected, whitespace_to_html(val))
+
+    self.assertEqual('foo<br />ba > r',
+                     whitespace_to_html('foo\nba > r', escape=False))
 
   def test_embed_actor_sanitizes_html(self):
     result = Source.embed_actor({

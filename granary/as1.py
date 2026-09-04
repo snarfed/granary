@@ -756,26 +756,32 @@ def mentions(obj):
           if t.get('url') and t.get('objectType') == 'mention']
 
 
-def is_content_html(obj):
-  """Returns True if ``obj.content`` is HTML, False otherwise.
+def is_html(obj, field):
+  """Returns True if ``obj.[field]`` is HTML, False otherwise.
 
   Args:
     obj (dict): AS1 object
+    field (str)
   """
-  if (is_html := obj.get('content_is_html')) is not None:
+  if (is_html := obj.get(f'{field}_is_html')) is not None:
     return is_html
 
-  if not (content := obj.get('content')):
+  if not (val := obj.get(field)):
     return False
 
   # first, cheap substring check to avoid the full HTML parse if possible
-  if '<' not in content and '&' not in content:
+  if '<' not in val and '&' not in val:
     return False
 
   # use html.parser to require HTML tags, not add them by default
   # https://www.crummy.com/software/BeautifulSoup/bs4/doc/#differences-between-parsers
-  return (bool(util.parse_html(content, features='html.parser').find())
-          or source.HTML_ENTITY_RE.search(content))
+  return (bool(util.parse_html(val, features='html.parser').find())
+          or source.HTML_ENTITY_RE.search(val))
+
+
+def is_content_html(obj):
+  """Deprecated!"""
+  return is_html(obj, 'content')
 
 
 def expand_tags(obj):
@@ -792,7 +798,7 @@ def expand_tags(obj):
   Args:
     obj (dict): AS1 object
   """
-  if not obj or is_content_html(obj):
+  if not obj or is_html(obj, 'content'):
     return
 
   if obj.get('verb') in ('post', 'update'):
@@ -924,7 +930,7 @@ def _handle_html_content(obj, to_plain_text=False):
     to_plain_text (bool): whether to convert ``obj.content`` to plain text and set
       ``obj.content_is_html``
   """
-  if not is_content_html(obj):
+  if not is_html(obj, 'content'):
     return
 
   tags = obj.setdefault('tags', [])

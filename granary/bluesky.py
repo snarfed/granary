@@ -969,7 +969,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       }
       try:
         start = int(tag['startIndex']) + index_offset
-        if start and as1.is_content_html(obj):
+        if start and as1.is_html(obj, 'content'):
           raise NotImplementedError('HTML content is not supported with index tags')
         end = start + int(tag['length'])
 

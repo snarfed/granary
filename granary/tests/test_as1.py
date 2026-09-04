@@ -1366,7 +1366,7 @@ class As1Test(testutil.TestCase):
     as1.expand_tags(obj)
     self.assertEqual(orig, obj)
 
-  def test_is_content_html(self):
+  def test_is_html(self):
     for obj in (
         {'content_is_html': True},
         {'content': 'foo', 'content_is_html': True},
@@ -1375,7 +1375,7 @@ class As1Test(testutil.TestCase):
         {'content': 'foo &lt; bar'},
     ):
       with self.subTest(obj=obj):
-        self.assertTrue(as1.is_content_html(obj))
+        self.assertTrue(as1.is_html(obj, 'content'))
 
     for obj in (
         {},
@@ -1390,7 +1390,7 @@ class As1Test(testutil.TestCase):
         {'content': 'AT&T'},
     ):
       with self.subTest(obj=obj):
-        self.assertFalse(as1.is_content_html(obj))
+        self.assertFalse(as1.is_html(obj, 'content'))
 
   def test_add_tags_for_html_content_links_mentions(self):
     obj = {

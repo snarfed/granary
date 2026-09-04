@@ -1057,7 +1057,7 @@ def render_content(obj, include_location=True, synthesize_content=True,
   # no HTML tags in it, and it has a newline, then assume yes.
   # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
   # https://github.com/snarfed/granary/issues/80
-  if content and not as1.is_content_html(obj) and '\n' in content:
+  if content and not as1.is_html(obj, 'content') and '\n' in content:
     if white_space_pre:
       content = f'<div style="white-space: pre">{content}</div>'
     else:

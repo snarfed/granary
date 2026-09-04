@@ -10,6 +10,7 @@ http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 """
 import collections
 import copy
+import html
 from html import escape, unescape
 import logging
 import re
@@ -114,6 +115,27 @@ def html_to_text(html, baseurl='', **kwargs):
   return '\n'.join(
     # strip trailing whitespace that html2text adds to ends of some lines
     line.rstrip() for line in unescape(h.handle(html)).splitlines())
+
+
+def whitespace_to_html(val, escape=True):
+  """Converts newlines to ``<br />`` and line-leading spaces to ``&nbsp;``.
+
+  Args:
+    val (str): plain text, or HTML if ``escape`` is False
+    escape (bool): whether to HTML-escape ``val`` first
+
+  Returns:
+    str: HTML
+  """
+  if escape:
+    val = html.escape(val, quote=False)
+
+  lines = []
+  for line in val.split('\n'):
+    stripped = line.lstrip(' ')
+    lines.append('&nbsp;' * (len(line) - len(stripped)) + stripped)
+
+  return '<br />'.join(lines)
 
 
 def load_json(body, url):
@@ -752,7 +774,7 @@ class Source(object, metaclass=SourceMeta):
           pass
 
     if (first_link_to_attachment and (content := obj.get('content'))
-        and not obj.get('attachments') and as1.is_content_html(obj)):
+        and not obj.get('attachments') and as1.is_html(obj, 'content')):
       links = util.parse_html(content).find_all('a')
       if links and links[0].get('href'):
         try:
@@ -946,7 +968,7 @@ class Source(object, metaclass=SourceMeta):
       # HTML formatting.
       summary = None
 
-    is_html = as1.is_content_html(obj)
+    is_html = as1.is_html(obj, 'content')
     if is_html and not ignore_formatting:
       content = html_to_text(content, baseurl=(obj.get('url') or ''),
                              **self.HTML2TEXT_OPTIONS)

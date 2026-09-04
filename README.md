@@ -317,6 +317,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
 * `as1`:
   * `get_rsvps_from_event`: handle when actor is compacted string id.
   * `quoted_posts`: fall back to quoted posts' `url` when they have no `id`.
+  * Rename `is_content_html` to `is_html`, and add a required `field` argument so that it can check fields other than `content`, eg `summary` ([bridgy-fed#2675](https://github.com/snarfed/bridgy-fed/issues/2675)). `is_content_html` is kept for backward compatibility, and deprecated.
 * `as2`:
   * Add new `maybe_hydrate_collection` function that hydrates a collection field in place inside an object.
   * `to_as1`:
@@ -363,6 +364,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
 * `rss`:
   * `from_as1`: don't read image enclosure length from object's `length` field.
 * `source`:
+  * Add new `whitespace_to_html` function that HTML-escapes plain text, converts newlines to `<br>`, and converts line-leading spaces to `&nbsp;` ([bridgy-fed#2675](https://github.com/snarfed/bridgy-fed/issues/2675)).
   * `Source`: add `update`/`preview_update` methods, for updating existing objects.
 
 
