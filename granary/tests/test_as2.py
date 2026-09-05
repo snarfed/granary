@@ -454,6 +454,24 @@ class ActivityStreams2Test(testutil.TestCase):
           field: 'http://the/quoted',
         }))
 
+  def test_to_as1_quote_post_fields_object(self):
+    for field in 'quote', 'quoteUri', '_misskey_quote', 'quoteUrl':
+      with self.subTest(field=field):
+        self.assertEqual({
+          'objectType': 'note',
+          'attachments': [{
+            'objectType': 'note',
+            'id': 'http://the/quoted',
+            'url': 'http://the/quoted',
+          }],
+        }, as2.to_as1({
+          'type': 'Note',
+          field: {
+            'type': 'Note',
+            'id': 'http://the/quoted',
+          },
+        }))
+
   def test_to_as1_string_url_attachment(self):
     self.assertEqual({
       'objectType': 'note',

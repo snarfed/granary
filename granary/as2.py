@@ -779,7 +779,9 @@ def to_as1(obj, use_type=True, get_fn=None):
 
   # check quote post fields on the top level object
   for quote_field in QUOTE_FIELDS:
-    if quote_url := obj.pop(quote_field, None):
+    quoted = as1.get_object(obj, quote_field)
+    obj.pop(quote_field, None)
+    if quote_url := quoted.get('id') or as1.get_url(quoted):
       if quote_url not in quote_urls:
         attachments.append({
           'objectType': 'note',

@@ -325,6 +325,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
     * Fix bug where `Audio`/`Video` objects with a tag-based media link lost their top-level `duration`, `size`, and `url` fields.
     * Handle [FEP-044f's `quote`](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md) and [Fedibird's `quoteUri`](http://fedibird.com/ns#quoteUri) quoted post fields, along with the existing `_misskey_quote` and `quoteUrl`.
     * Set quoted posts' `id`, not just `url`, so that `as1.quoted_posts` finds them.
+    * Handle object-valued quote post fields.
 * `atom`:
   * `to_as1`: read `<link rel=self>`'s `href`, not text value.
   * `to_as1`: convert [`<category>`](https://datatracker.ietf.org/doc/html/rfc4287#section-4.2.2) elements to hashtag tags, using `label` if it's provided, otherwise `term`.
