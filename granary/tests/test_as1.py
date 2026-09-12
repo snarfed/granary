@@ -157,6 +157,17 @@ FOLLOW_WITH_OBJECT['object'] = ACTOR
 
 class As1Test(testutil.TestCase):
 
+  def test_trim_nulls_contentMap(self):
+    self.assertEqual({
+      'verb': 'post',
+      'object': {'contentMap': {'da': ''}},
+    }, as1.trim_nulls({
+      'verb': 'post',
+      'content': '',
+      'object': {'contentMap': {'da': ''}},
+      'contentMap': {},
+    }))
+
   def test_is_public(self):
     self.assertIsNone(as1.is_public(None))
 

@@ -3676,6 +3676,16 @@ class BlueskyTest(testutil.TestCase):
       'langs': ['en', 'fr'],
     }))
 
+  def test_to_as1_post_langs_empty_text(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'contentMap': {'da': ''},
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'langs': ['da'],
+    }))
+
   def test_to_as1_post_view(self):
     self.assert_equals(POST_AS['object'], to_as1(POST_VIEW_BSKY))
 

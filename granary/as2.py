@@ -256,7 +256,7 @@ def set_content(obj, new_content):
     obj (dict): AS2 object
     new_content (str)
   """
-  orig = obj.get('content')
+  orig = obj.get('content') or ''
   obj['content'] = new_content
 
   if content_map := obj.get('contentMap'):
@@ -534,7 +534,7 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
   if loc:
     obj['location'] = from_as1(loc, type='Place', context=None)
 
-  obj = util.trim_nulls(obj)
+  obj = as1.trim_nulls(obj)
   if list(obj.keys()) == ['url']:
     return obj['url']
 

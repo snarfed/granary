@@ -250,6 +250,11 @@ def merge_by_id(obj, field, new):
   obj[field] = sorted(merged.values(), key=itemgetter('id'))
 
 
+def trim_nulls(value, ignore=()):
+  """Wraps :func:`webutil.util.trim_nulls`, keeps empty values in ``contentMap``."""
+  return util.trim_nulls(value, ignore=ignore, keep_empty_values_in=('contentMap',))
+
+
 def is_public(obj, unlisted=True):
   """Returns True if the object is public, False if private, None if unknown.
 

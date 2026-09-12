@@ -284,6 +284,27 @@ class ActivityStreams2Test(testutil.TestCase):
     self.assertEqual(as2_note, as2.from_as1(as1_note))
     self.assertEqual(as1_note, as2.to_as1(as2_note))
 
+  def test_from_as1_empty_contentMap_link_attachment(self):
+    self.assert_equals({
+      'type': 'Note',
+      'contentMap': {'da': ''},
+      'attachment': [{
+        'type': 'Link',
+        'href': 'http://a/link',
+        'name': 'a title',
+        'summary': 'a description',
+      }],
+    }, as2.from_as1({
+      'objectType': 'note',
+      'contentMap': {'da': ''},
+      'attachments': [{
+        'objectType': 'link',
+        'url': 'http://a/link',
+        'displayName': 'a title',
+        'summary': 'a description',
+      }],
+    }), ignore=['@context'])
+
   def test_bad_input_types(self):
     for bad in 1, [2], (3,):
       for fn in as2.to_as1, as2.from_as1:

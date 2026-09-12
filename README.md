@@ -320,6 +320,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * Rename `is_content_html` to `is_html`, and add a required `field` argument so that it can check fields other than `content`, eg `summary` ([bridgy-fed#2675](https://github.com/snarfed/bridgy-fed/issues/2675)). `is_content_html` is kept for backward compatibility, and deprecated.
 * `as2`:
   * Add new `maybe_hydrate_collection` function that hydrates a collection field in place inside an object.
+  * `from_as1`: keep `contentMap` even when all of its values are empty, so that objects with no content don't lose their languages.
   * `to_as1`:
     * Improve `featured` collection (ie pinned post) fetching ([bridgy-fed#2302](https://github.com/snarfed/bridgy-fed/issues/2302)).
     * Fix bug where `Audio`/`Video` objects with a tag-based media link lost their top-level `duration`, `size`, and `url` fields.
@@ -337,7 +338,9 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * `from_as1`:
     * Fix bug where converting a post with more than four images to `app.bsky.embed.gallery` failed validation due to missing `aspectRatio` field.
     * Fix bug with quote posts with attached media and `postView`/`feedViewPost` output.
-  * `to_as1`: for videos, add `image`, falling back to the [Bluesky video CDN](https://video.bsky.app/)'s thumbnail URL.
+  * `to_as1`:
+    * For videos, add `image`, falling back to the [Bluesky video CDN](https://video.bsky.app/)'s thumbnail URL.
+    * Keep language keys in `contentMap` even if their value is empty.
   * `Bluesky`:
     * `create`/`preview_create`: add support for blocks.
     * Add `update`/`preview_update`.

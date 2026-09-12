@@ -25,7 +25,6 @@ from pymediainfo import MediaInfo
 import requests
 from requests_oauth2client import OAuth2AccessTokenAuth, TokenSerializer
 from webutil import util
-from webutil.util import trim_nulls
 
 from . import as1
 from .as2 import QUOTE_RE_SUFFIX
@@ -562,7 +561,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       })
 
     if not out_type or out_type == 'app.bsky.actor.profile':
-      ret = trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
+      ret = as1.trim_nulls({**ret, '$type': 'app.bsky.actor.profile'})
       # Web Monetization
       # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
       if wallet := obj.get('monetization'):
@@ -577,7 +576,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     elif out_type == 'site.standard.publication':
       if not domain:
         raise ValueError("No domain, can't convert to site.standard.publication")
-      ret = trim_nulls({
+      ret = as1.trim_nulls({
         '$type': 'site.standard.publication',
         'url': f'https://{domain}',
         'name': obj.get('displayName') or '',
@@ -622,7 +621,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # WARNING: this includes a few fields that aren't in #profileViewBasic, eg
     # description, followersCount, followsCount
     # https://atproto.com/specs/lexicon#authority-and-control
-    ret = trim_nulls(ret, ignore=('did', 'handle'))
+    ret = as1.trim_nulls(ret, ignore=('did', 'handle'))
 
     # add bot label for automated account objectTypes
     if type in as1.BOT_TYPES:
@@ -1164,8 +1163,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         f'{original_fields_prefix}OriginalUrl': url,
     })
 
-    ret = trim_nulls(ret, ignore=('alt', 'createdAt', 'cid', 'description',
-                                  'text', 'title', 'uri'))
+    ret = as1.trim_nulls(ret, ignore=('alt', 'createdAt', 'cid', 'description',
+                                      'text', 'title', 'uri'))
 
     # also site.standard.document for articles
     if out_type == 'site.standard.document' and not url:
@@ -1174,7 +1173,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     if (type == 'article' and url
         and (multiple or out_type == 'site.standard.document')):
       url_parts = urlparse(url)
-      doc = trim_nulls({
+      doc = as1.trim_nulls({
         '$type': 'site.standard.document',
         'site': urlunparse(url_parts[:2] + ('',) * 4),
         'path': urlunparse(('', '') + url_parts[2:]),
@@ -1206,7 +1205,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         author = from_as1(author, out_type='app.bsky.actor.defs#profileViewBasic',
                           **kwargs)
 
-        ret = trim_nulls({
+        ret = as1.trim_nulls({
           '$type': 'app.bsky.feed.defs#postView',
           'uri': obj.get('id') or url or '',
           'cid': '',
@@ -1906,7 +1905,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
   else:
     raise ValueError(f'Bluesky object has unknown $type: {type}')
 
-  ret = trim_nulls(ret)
+  ret = as1.trim_nulls(ret)
+
   # ugly hack
   if isinstance(ret, dict) and ret.get('author') == {'objectType': 'person'}:
     del ret['author']
@@ -2244,7 +2244,7 @@ class Bluesky(Source):
           }
           cache['ABR ' + id] = reply_count
 
-    resp = self.make_activities_base_response(util.trim_nulls(activities))
+    resp = self.make_activities_base_response(as1.trim_nulls(activities))
     return resp
 
   def get_actor(self, user_id=None):
