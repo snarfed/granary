@@ -100,9 +100,8 @@ HTML = """\
 <article class="h-entry">
   <span class="p-uid"></span>
 
-  <time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
+  <a class="u-url" href="https://perma/link"><time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time></a>
 
-  <a class="u-url" href="https://perma/link">perma/link</a>
   <div class="e-content p-name">
 foo ☕ bar
 </div>
@@ -443,7 +442,7 @@ class AppTest(testutil.TestCase):
     self.assert_equals('text/html; charset=utf-8', resp.headers['Content-Type'])
 
     self.assert_multiline_in("""\
-<time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
+<a href="https://perma/link"><time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time></a>
 <a class="p-name u-url" href="https://perma/link">foo ☕ bar</a>
 <div class="e-content">
 foo ☕ bar
@@ -467,7 +466,7 @@ baz baj
     self.assert_equals('text/html; charset=utf-8', resp.headers['Content-Type'])
 
     self.assert_multiline_in("""\
-<time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time>
+<a href="https://perma/link"><time class="dt-published" datetime="2012-03-04T18:20:37+00:00">2012-03-04T18:20:37+00:00</time></a>
 <a class="p-name u-url" href="https://perma/link">foo ☕ bar</a>
 <div class="e-content">
 foo ☕ bar

@@ -272,6 +272,24 @@ class Microformats2Test(testutil.TestCase):
       }
     }), ignore_blanks=True)
 
+  def test_object_to_html_article_links_published(self):
+    self.assert_multiline_equals("""\
+<article class="h-entry">
+<span class="p-uid"></span>
+<a href="http://post"><time class="dt-published" datetime="2012-02-22T20:26:41">2012-02-22T20:26:41</time></a>
+<a class="p-name u-url" href="http://post">My title</a>
+<div class="e-content">
+my content
+</div>
+</article>
+""", microformats2.object_to_html({
+      'objectType': 'article',
+      'displayName': 'My title',
+      'url': 'http://post',
+      'published': '2012-02-22T20:26:41',
+      'content': 'my content',
+    }), ignore_blanks=True)
+
   def test_render_content_link_with_image(self):
     obj = {
       'content': 'foo',

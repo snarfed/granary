@@ -935,9 +935,21 @@ def json_to_html(obj, parent_props=None):
     event_times.append('  to')
   event_times += [f'  <time class="dt-end">{time}</time>' for time in end]
 
+  # link published time to the post. if there's no name, the time link becomes
+  # the u-url, instead of a separate link with the URL as its text.
+  published = maybe_datetime(prop.get('published'), 'dt-published')
+  linked_name = maybe_linked_name(props)
+  if published and (url := prop.get('url')):
+    if get_html(prop.get('name')) is None:
+      published = maybe_linked(published, url, linked_classname='u-url')
+      linked_name = '\n'.join(maybe_linked('', extra, linked_classname='u-url')
+                              for extra in props['url'][1:])
+    else:
+      published = maybe_linked(published, url)
+
   return HENTRY.substitute(
     prop,
-    published=maybe_datetime(prop.get('published'), 'dt-published'),
+    published=published,
     updated=maybe_datetime(prop.get('updated'), 'dt-updated'),
     types=' '.join(parent_props + types),
     author=hcard_to_html(author, ['p-author']),
@@ -952,7 +964,7 @@ def json_to_html(obj, parent_props=None):
     content_classes=' '.join(content_classes),
     comments=comments_html,
     children='\n'.join(children),
-    linked_name=maybe_linked_name(props),
+    linked_name=linked_name,
     summary=summary,
     event_times='\n'.join(event_times))
 

@@ -359,6 +359,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * Add `from_as1`, which converts an AS1 actor or post to a Mastodon API `Account` or `Status`.
 * `microformats2`:
   * `from_as1`: bug fix for precedence of attachments' `stream`s.
+  * `object_to_html`, `json_to_html`: link `dt-published` to the post's URL. If the post has no name, this link is now its `u-url`, instead of a separate link with the URL as text.
 * `nostr`:
   * `bech32_decode`: return the input unchanged, as documented, instead of raising `AssertionError` or `ValueError`, when the input has a valid checksum but malformed TLV contents.
   * `from_as1`:
