@@ -641,12 +641,10 @@ ATOM = """\
 <img class="u-photo" src="https://p.twimg.com/picture1" alt="the alt text" />
 </a>
 </p>
-<p>  <span class="p-location h-card">
+<p><span class="p-location h-card">
 <data class="p-uid" value="tag:twitter.com:31cb9e7ed29dbe52"></data>
 <a class="p-name u-url" href="https://maps.google.com/maps?q=32.4004416,-98.9852672">Carcassonne, Aude</a>
-
-</span>
-</p>
+</span></p>
 
   ]]></content>
 
@@ -1358,7 +1356,7 @@ class TwitterTest(testutil.TestCase):
     })
     self.assert_equals('💯💯💯 (by @itsmaeril) ', obj['content'])
     self.assert_equals(
-      '💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>) ',
+      '💯💯💯 (by <a href="https://twitter.com/itsmaeril">@itsmaeril</a>)',
       microformats2.render_content(obj).splitlines()[0])
 
   def test_tweet_to_as1_object_full(self):

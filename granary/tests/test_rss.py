@@ -90,7 +90,7 @@ class RssTest(testutil.TestCase):
       },
     }], feed_url='http://this')
     self.assert_multiline_in("""
-<description><![CDATA[Shared <a href="http://example.com/original/post">a post</a> by   <span class="h-card">
+<description><![CDATA[Shared <a href="http://example.com/original/post">a post</a> by <span class="h-card">
 <a class="p-name u-url" href="http://example.com/bob">Bob</a>
 </span>
 The original post]]></description>

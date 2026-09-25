@@ -134,6 +134,43 @@ class Microformats2Test(testutil.TestCase):
     obj = microformats2.to_as1(mf2)
     self.assertEqual('http://nested', obj['object']['url'])
 
+  def test_from_as1_html_summary(self):
+    self.assert_equals([{'html': '<b>x</b> y', 'value': 'x y'}],
+                       microformats2.from_as1({
+                         'objectType': 'note',
+                         'summary': '<b>x</b> y',
+                       })['properties']['summary'])
+
+    self.assert_equals(['x < y'], microformats2.from_as1({
+      'objectType': 'note',
+      'summary': 'x < y',
+    })['properties']['summary'])
+
+  def test_json_to_html_summary(self):
+    self.assert_html_equals("""\
+<article class="h-entry">
+<span class="p-uid"></span>
+<div class="e-summary"><b>x</b> y</div>
+<span class="p-name"></span>
+<div class=""></div>
+</article>
+""", microformats2.json_to_html({
+      'type': ['h-entry'],
+      'properties': {'summary': [{'html': '<b>x</b> y', 'value': 'x y'}]},
+    }))
+
+    self.assert_html_equals("""\
+<article class="h-entry">
+<span class="p-uid"></span>
+<div class="p-summary">x &lt; y</div>
+<span class="p-name"></span>
+<div class=""></div>
+</article>
+""", microformats2.json_to_html({
+      'type': ['h-entry'],
+      'properties': {'summary': ['x < y']},
+    }))
+
   def test_from_as1_unescapes_html_entities(self):
     self.assertEqual({
       'type': ['h-entry'],
@@ -252,7 +289,7 @@ class Microformats2Test(testutil.TestCase):
     }))
 
   def test_object_to_html_note_with_in_reply_to(self):
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 <article class="h-entry">
 <span class="p-uid"></span>
 <div class="e-content p-name">
@@ -270,10 +307,10 @@ class Microformats2Test(testutil.TestCase):
       'object': {
         'content': '@hey great post',
       }
-    }), ignore_blanks=True)
+    }))
 
   def test_object_to_html_article_links_published(self):
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 <article class="h-entry">
 <span class="p-uid"></span>
 <a href="http://post"><time class="dt-published" datetime="2012-02-22T20:26:41">2012-02-22T20:26:41</time></a>
@@ -288,7 +325,7 @@ my content
       'url': 'http://post',
       'published': '2012-02-22T20:26:41',
       'content': 'my content',
-    }), ignore_blanks=True)
+    }))
 
   def test_render_content_link_with_image(self):
     obj = {
@@ -301,12 +338,12 @@ my content
       }]
     }
 
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 foo
 <a class="tag" href="http://link">name</a>
 """, microformats2.render_content(obj, render_attachments=False))
 
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 foo
 <p>
 <a class="link" href="http://link">
@@ -326,7 +363,7 @@ foo
 
     self.assert_equals('foo', microformats2.render_content(obj))
 
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 foo
 <p>
 <img class="u-photo" src="http://1" alt="" />
@@ -336,7 +373,7 @@ foo
 </p>""", microformats2.render_content(obj, render_attachments=True))
 
   def test_render_content_render_image(self):
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 foo
 <p>
 <a class="link" href="http://obj">
@@ -350,7 +387,7 @@ foo
     }, render_image=True))
 
   def test_render_content_render_image_dedupes_render_attachments(self):
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 foo
 <p>
 <a class="link" href="http://obj">
@@ -381,7 +418,7 @@ foo
     }, render_attachments=True, render_image=True))
 
   def test_render_content_attachment_image_list(self):
-    self.assert_multiline_equals("""
+    self.assert_html_equals("""
 <p>
 <img class="u-photo" src="https://the/pic" alt="" />
 </p>
@@ -392,7 +429,7 @@ foo
     }, render_attachments=True, render_image=True))
 
   def test_render_content_newlines_default_white_space_pre(self):
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 <div style="white-space: pre">foo
 bar
 <a href="http://baz">baz</a></div>
@@ -402,7 +439,7 @@ bar
 }))
 
   def test_render_content_convert_newlines_to_brs(self):
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 foo<br />
 bar<br />
 <a href="http://baz">baz</a>
@@ -412,7 +449,7 @@ bar<br />
 }, white_space_pre=False))
 
   def test_render_content_omits_tags_without_urls(self):
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 foo
 <a class="tag" aria-hidden="true" href="http://baj"></a>
 <a class="tag" href="http://baz">baz</a>
@@ -426,7 +463,7 @@ foo
     }))
 
   def test_render_content_location(self):
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 foo
 <p>  <span class="p-location h-card">
   <a class="p-name u-url" href="http://my/place">My place</a>
@@ -439,7 +476,7 @@ foo
           'displayName': 'My place',
           'url': 'http://my/place',
         }
-      }), ignore_blanks=True)
+      }))
 
   def test_render_content_synthesize_content(self):
     for verb, phrase in ('like', 'likes'), ('share', 'shared'):
@@ -472,7 +509,7 @@ foo
 
     self.assert_equals('foo', microformats2.render_content(obj))
 
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 foo
 <p><video class="u-video" src="http://vid/eo" controls="controls" poster="http://im/age">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly. <img src="http://im/age" /></a></video>
 </p>
@@ -497,12 +534,12 @@ foo
     }
 
     out = microformats2.render_content(share, render_attachments=True)
-    self.assert_multiline_equals("""
-Shared <a href="#">a post</a> by foo
+    self.assert_html_equals("""
+Shared a post by foo
 <p><video class="u-video" src="http://vid/eo" controls="controls" poster="http://im/age">Your browser does not support the video tag. <a href="http://vid/eo">Click here to view directly. <img src="http://im/age" /></a></video>
 </p>
 <p><audio class="u-audio" src="http://aud/io" controls="controls">Your browser does not support the audio tag. <a href="http://aud/io">Click here to listen directly.</a></audio>
-</p>""", out, ignore_blanks=True)
+</p>""", out)
 
   def test_render_content_unicode_high_code_points(self):
     """Test Unicode high code point chars.
@@ -528,36 +565,185 @@ Shared <a href="#">a post</a> by foo
   def test_escape_html_attribute_values(self):
     obj = {
       'author': {
-        'image': {'url': 'author-img'},
+        'image': {'url': 'http://author-img'},
         'displayName': 'a " b \' c',
       },
       'attachments': [{
         'objectType': 'image',
-        'image': {'url': 'att-img'},
+        'image': {'url': 'http://att-img'},
         'displayName': 'd & e'}],
     }
 
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 <article class="h-entry">
 <span class="p-uid"></span>
 <span class="p-author h-card">
 <span class="p-name">a " b ' c</span>
-<img class="u-photo" src="author-img" alt="" />
+<img class="u-photo" src="http://author-img" alt="" />
 </span>
 <span class="p-name"></span>
 <div class="">
 </div>
-<img class="u-photo" src="att-img" alt="" />
-</article>""", microformats2.object_to_html(obj), ignore_blanks=True)
+<img class="u-photo" src="http://att-img" alt="" />
+</article>""", microformats2.object_to_html(obj))
 
     content = microformats2.render_content(obj, render_attachments=True)
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 <p>
-<img class="u-photo" src="att-img" alt="d &amp; e" />
-</p>""", content, ignore_blanks=True)
+<img class="u-photo" src="http://att-img" alt="d &amp; e" />
+</p>""", content)
+
+  def test_json_to_html_escapes_text(self):
+    xss = '<b>x</b>"&'
+    self.assert_html_equals("""\
+<article class="h-entry">
+<span class="p-uid">&lt;b&gt;x&lt;/b&gt;"&amp;</span>
+<div class="p-summary">&lt;b&gt;x&lt;/b&gt;"&amp;</div>
+<time class="dt-published" datetime="&lt;b&gt;">&lt;b&gt;</time>
+<span class="p-name"><data class="p-rsvp" value="&lt;b&gt;">&lt;b&gt;x&lt;/b&gt;"&amp;</data></span>
+<div class="e-content">
+<i>ok</i>
+</div>
+<time class="dt-start">&lt;b&gt;</time>
+<span class="u-category">&lt;b&gt;x&lt;/b&gt;"&amp;</span>
+</article>
+""", microformats2.json_to_html({
+      'type': ['h-entry'],
+      'properties': {
+        'uid': [xss],
+        'summary': [xss],
+        'published': ['<b>'],
+        'name': [xss],
+        'rsvp': ['<b>'],
+        'content': [{'value': 'ok', 'html': '<i>ok</i>'}],
+        'start': ['<b>'],
+        'category': [xss],
+      },
+    }))
+
+  def test_hcard_to_html_escapes_text(self):
+    xss = '<b>x</b>"&'
+    self.assert_html_equals("""\
+<span class="h-card">
+<data class="p-uid" value="&lt;b&gt;x&lt;/b&gt;&quot;&amp;"></data>
+<data class="p-numeric-id" value="&lt;b&gt;x&lt;/b&gt;&quot;&amp;"></data>
+<span class="p-name">&lt;b&gt;x&lt;/b&gt;"&amp;</span>
+<span class="p-nickname">&lt;b&gt;x&lt;/b&gt;"&amp;</span>
+<img class="u-photo" src="http://pic" alt="&lt;b&gt;x&lt;/b&gt;&quot;&amp;" />
+</span>
+""", microformats2.hcard_to_html({
+      'type': ['h-card'],
+      'properties': {
+        'uid': [xss],
+        'numeric-id': [xss],
+        'name': [xss],
+        'nickname': [xss],
+        'photo': [{'value': 'http://pic', 'alt': xss}],
+      },
+    }))
+
+  def test_json_to_html_only_links_web_urls(self):
+    self.assert_html_equals("""\
+<article class="h-entry">
+<span class="p-uid"></span>
+<a class="p-name u-url" href="http://ok"></a>
+<div class="">
+</div>
+</article>
+""", microformats2.json_to_html({
+      'type': ['h-entry'],
+      'properties': {
+        'url': ['http://ok', 'javascript:alert(1)'],
+        'in-reply-to': ['javascript:alert(2)'],
+        'tag-of': ['javascript:alert(3)'],
+        'like-of': ['javascript:alert(4)'],
+        'photo': ['javascript:alert(5)'],
+        'video': ['javascript:alert(6)'],
+        'audio': ['javascript:alert(7)'],
+      },
+    }))
+
+    self.assert_html_equals("""\
+<span class="h-card">
+<span class="p-name">alice</span>
+</span>
+""", microformats2.hcard_to_html({
+      'type': ['h-card'],
+      'properties': {
+        'name': ['alice'],
+        'url': ['javascript:alert(1)'],
+        'photo': ['javascript:alert(2)'],
+      },
+    }))
+
+  def test_render_content_escapes_and_only_links_web_urls(self):
+    xss = '<b>x</b>"&'
+    self.assert_html_equals("""\
+hi @m
+<p>
+<img class="u-photo" src="http://img" alt="&lt;b&gt;x&lt;/b&gt;&quot;&amp;" />
+<span class="name">&lt;b&gt;x&lt;/b&gt;"&amp;</span>
+<span class="summary">&lt;b&gt;x&lt;/b&gt;"&amp;!</span>
+</p>
+<a class="p-category" href="http://h">&lt;b&gt;x&lt;/b&gt;"&amp;</a>
+&lt;b&gt;x&lt;/b&gt;"&amp;
+""", microformats2.render_content({
+      'objectType': 'note',
+      'content': 'hi @m',
+      'tags': [{
+        'objectType': 'mention',
+        'url': 'javascript:alert(1)',
+        'startIndex': 3,
+        'length': 2,
+      }, {
+        'objectType': 'hashtag',
+        'url': 'http://h',
+        'displayName': xss,
+      }, {
+        'objectType': 'hashtag',
+        'url': 'javascript:alert(2)',
+        'displayName': xss,
+      }],
+      'attachments': [{
+        'objectType': 'link',
+        'displayName': xss,
+        'summary': xss + '!',
+        'url': 'javascript:alert(3)',
+        'image': {'url': 'http://img'},
+      }],
+    }, render_attachments=True))
+
+  def test_render_content_share_escapes_and_only_links_web_urls(self):
+    xss = '<b>x</b>"&'
+    self.assert_html_equals("""\
+Shared &lt;b&gt;x&lt;/b&gt;"&amp; by
+<span class="h-card">
+<span class="p-name">&lt;b&gt;x&lt;/b&gt;"&amp;</span>
+</span>
+foo
+""", microformats2.render_content({
+      'objectType': 'activity',
+      'verb': 'share',
+      'object': {
+        'url': 'javascript:alert(1)',
+        'displayName': xss,
+        'content': 'foo',
+        'author': {'displayName': xss},
+      },
+    }))
+
+  def test_activities_to_html_escapes_body_class(self):
+    self.assert_html_equals("""\
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body class="&quot;&gt;&lt;b&gt;">
+</body>
+</html>
+""", microformats2.activities_to_html([], body_class='"><b>'))
 
   def test_mention_and_hashtag(self):
-    self.assert_multiline_equals("""
+    self.assert_html_equals("""
 <a class="p-category" href="http://c">c</a>
 <a class="u-mention" aria-hidden="true" href="http://m"></a>""",
                        microformats2.render_content({
@@ -567,7 +753,7 @@ Shared <a href="#">a post</a> by foo
 
   def test_tag_multiple_urls(self):
     expected_urls = ['http://1', 'https://2']
-    expected_html = """
+    expected_html = """\
 <a class="tag" aria-hidden="true" href="http://1"></a>
 <a class="tag" aria-hidden="true" href="https://2"></a>
 """
@@ -593,8 +779,8 @@ Shared <a href="#">a post</a> by foo
     }))
 
   def test_render_author_bare_string_actor(self):
-    self.assert_multiline_equals("""
-Shared <a href="nostr:note1sa9...">a post</a> by   <span class="h-card">
+    self.assert_html_equals("""
+Shared a post by <span class="h-card">
 <data class="p-uid" value="nostr:npub16cn..."></data>
 nostr:npub16cn....
 </span>
@@ -609,7 +795,7 @@ foo bar
         'content': 'foo bar',
         'author': 'nostr:npub16cn...',
       },
-    }), ignore_blanks=True)
+    }))
 
   def test_dont_stop_at_unknown_tag_type(self):
     obj = {'tags': [
@@ -626,7 +812,7 @@ foo bar
             'url': ['http://p'],
           },
         }],
-        'content': [{'html': '\n<a class="tag" aria-hidden="true" href="http://x"></a>'}],
+        'content': [{'html': '<a class="tag" aria-hidden="true" href="http://x"></a>'}],
       },
     }, microformats2.from_as1(obj))
 
@@ -670,7 +856,7 @@ foo bar
 </div>
 
 </article>
-""", html)
+""", html, ignore_blanks=True)
 
   def test_attachments_to_children_quote_post_note_id_becomes_url(self):
     obj = {'attachments': [{'objectType': 'note', 'id': 'http://p'}]}
@@ -827,8 +1013,8 @@ foo bar
       self.assertEqual(expected, microformats2.get_string_urls(objs))
 
   def test_img_blank_alt(self):
-    self.assertEqual('<img class="u-photo" src="foo" alt="" />',
-                      microformats2.img('foo'))
+    self.assertEqual('<img class="u-photo" src="http://foo" alt="" />',
+                      microformats2.img('http://foo'))
 
   def test_json_to_html_no_properties_or_type(self):
     # just check that we don't crash
@@ -836,7 +1022,7 @@ foo bar
 
   def test_tags_to_html_escapes_html(self):
     self.assert_equals(
-      '\n<a class="tag" href="http://foo">&lt;bar&gt;</a>',
+      '<a class="tag" href="http://foo">&lt;bar&gt;</a>',
       microformats2.tags_to_html([{
         'url': 'http://foo',
         'displayName': '<bar>',
@@ -1213,7 +1399,7 @@ foo bar
     self.assertEqual('', microformats2.hcard_to_html({'properties': {}}))
 
   def test_hcard_to_html_only_id(self):
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 <span class="">
   <data class="p-uid" value="https://foo/bar"></data>
   <a class="u-url" href="https://foo/bar">foo/bar</a>
@@ -1222,7 +1408,7 @@ foo bar
   'properties': {
     'uid': ['https://foo/bar'],
   },
-}), ignore_blanks=True)
+}))
 
   def test_share_activity_to_json_html(self):
     """Should translate the full activity, not just the object."""
@@ -1256,12 +1442,12 @@ foo bar
     }, microformats2.activity_to_json(share, synthesize_content=False))
 
     self.assert_multiline_in("""\
-Shared <a href="#">a post</a> by   <span class="h-card">
+Shared a post by <span class="h-card">
 <span class="p-name">author</span>
 """, microformats2.activities_to_html([share]), ignore_blanks=True)
 
   def test_activities_to_html_like(self):
-    self.assert_multiline_equals("""\
+    self.assert_html_equals("""\
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -1284,7 +1470,7 @@ Shared <a href="#">a post</a> by   <span class="h-card">
   'verb': 'like',
   'object': {'url': 'http://localhost/2017-10-01_mastodon-dev-6'},
   'actor': {'url': 'http://localhost:3000/users/ryan'},
-}]), ignore_blanks=True)
+}]))
 
   def test_html_hfeed_to_as1_brs_to_newlines(self):
     """Mostly tests that mf2py converts <br>s to \ns.

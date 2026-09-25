@@ -11,9 +11,7 @@ import html
 import itertools
 import logging
 import urllib.parse
-import string
 import re
-import xml.sax.saxutils
 
 import dateutil.parser
 import humanfriendly
@@ -33,37 +31,6 @@ from . import source
 
 logger = logging.getLogger(__name__)
 
-HENTRY = string.Template("""\
-<article class="$types">
-  <span class="p-uid">$uid</span>
-  $summary
-  $published
-  $updated
-$author
-  $linked_name
-  <div class="$content_classes">
-  $invitees
-  $content
-  </div>
-$attachments
-$sizes
-$event_times
-$location
-$categories
-$links
-$children
-$comments
-</article>
-""")
-HCARD = string.Template("""\
-  <span class="$types">
-    $ids
-    $linked_name
-    $nicknames
-    $photos
-  </span>
-""")
-LINK = string.Template('  <a class="u-$cls" href="$url"></a>')
 AS_TO_MF2_TYPE = {
   'application': ['h-card'],
   'event': ['h-event'],
@@ -223,6 +190,8 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
   # TODO: extract snippet
   name = primary.get('displayName', primary.get('title'))
   summary = primary.get('summary')
+  if as1.is_html(primary, 'summary'):
+    summary = {'html': summary, 'value': util.parse_html(summary).get_text('')}
   note = primary.get('note')
   author = obj.get('author', obj.get('actor', {}))
 
@@ -753,7 +722,8 @@ def activities_to_html(activities, extra='', body_class=''):
 
   Args:
     obj (dict): a decoded JSON ActivityStreams object
-    extra (str): extra HTML to be included inside the body tag, at the top
+    extra (str): extra HTML to be included inside the body tag, at the top.
+      Must be trusted; it's not escaped.
     body_class (str): included as the body tag's class attribute
 
   Returns:
@@ -761,17 +731,9 @@ def activities_to_html(activities, extra='', body_class=''):
     converted to links if they have ``startIndex`` and ``length``, otherwise
     added to the end.
   """
-  html = '\n'.join(object_to_html(_activity_or_object(a)) for a in activities)
-  return f"""\
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body class="{body_class}">
-{extra}
-{html}
-</body>
-</html>
-"""
+  return source.jinja_env.get_template('h-feed.html').render(
+    objs=[object_to_json(_activity_or_object(a)) for a in activities],
+    extra=extra, body_class=body_class)
 
 
 def object_to_html(obj, parent_props=None, synthesize_content=True):
@@ -813,160 +775,88 @@ def json_to_html(obj, parent_props=None):
   Returns:
     str: HTML
   """
+  return str(source.jinja_macros.render(obj, parent_props or [])).strip()
 
-  if not obj:
-    return ''
-  if not parent_props:
-    parent_props = []
 
-  types = obj.get('type', [])
-  if 'h-card' in types:
-    return hcard_to_html(obj, parent_props)
+def _prepare_hentry(obj):
+  """Prepares a non-``h-card`` microformats2 JSON object to render as HTML.
 
+  Args:
+    obj (dict): decoded microformats2 JSON object
+
+  Returns:
+    dict: plain data for the ``hentry`` macro in ``microformats2.html``
+  """
   props = copy.deepcopy(obj.get('properties', {}))
-
-  links = []
-  for prop in 'in-reply-to', 'tag-of':
-    links.extend(LINK.substitute(cls=prop, url=url)
-                 for url in sorted(get_string_urls(props.get(prop, []))))
-
+  has_name = 'name' in props
   prop = first_props(props)
   prop.setdefault('uid', '')
-  author = prop.get('author')
 
-  # if this post is an rsvp, populate its data element. if it's an invite, give
-  # it a default name.
+  # if this post is an rsvp or an invite, give it a default name.
   # do this *before* content since it sets props['name'] if necessary.
-  rsvp = prop.get('rsvp')
-  if rsvp:
+  if rsvp := prop.get('rsvp'):
     if not props.get('name'):
       props['name'] = [{'yes': 'is attending.',
                         'no': 'is not attending.',
                         'maybe': 'might attend.'}.get(rsvp)]
-    props['name'][0] = {
-      'html': f"<data class=\"p-rsvp\" value=\"{rsvp}\">{props['name'][0]}</data>",
-    }
-
   elif props.get('invitee') and not props.get('name'):
     props['name'] = ['invited']
 
-  children = []
-
-  # if this post is itself a follow, like, or repost, link to its target(s).
-  for mftype in ['follow', 'like', 'repost']:
-    for target in props.get(mftype + '-of', []):
-      if isinstance(target, str):
-        children.append(f'<a class="u-{mftype}-of" href="{target}"></a>')
-      else:
-        children.append(json_to_html(target, ['u-' + mftype + '-of']))
-
-  # set up content and name
-  content_html = get_html(prop.get('content', {}))
   content_classes = []
-
-  if content_html:
+  if get_html(prop.get('content')):
     content_classes.append('e-content')
     if not props.get('name'):
       content_classes.append('p-name')
-  else:
+  elif not props.get('name'):
     # if content is empty, set explicit blank name to prevent bad (old)
     # microformats2 implied p-name handling.
     # https://github.com/snarfed/granary/issues/131
-    if not props.get('name'):
-      props['name'] = ['']
+    props['name'] = ['']
 
-  summary = (f"<div class=\"p-summary\">{prop.get('summary')}</div>"
-             if prop.get('summary') else '')
-
-  # attachments
-  # TODO: use photo alt property as alt text once mf2py handles that.
-  # https://github.com/tommorris/mf2py/issues/83
-  attachments = []
-  for name, fn in ('photo', img), ('video', vid), ('audio', aud):
-    attachments.extend(fn(val) for val in props.get(name, []))
-
-  # size(s)
-  # https://github.com/snarfed/granary/issues/169#issuecomment-547918405
-  sizes = []
-  for size in props.get('size', []):
-    bytes = size_to_bytes(size)
-    if size:
-      sizes.append(f'<data class="p-size" value="{bytes}">{humanfriendly.format_size(bytes)}</data>')
-
-  # categories
-  cats = props.get('category', [])
-  people = [
-    hcard_to_html(cat, ['u-category', 'h-card']) for cat in cats
-    if isinstance(cat, dict) and 'h-card' in cat.get('type')
-    and not cat.get('startIndex')]  # mentions are already linkified in content
-  tags = [f'<span class="u-category">{cat}</span>'
-          for cat in cats if isinstance(cat, str)]
-
-  # comments
-  # http://indiewebcamp.com/comment-presentation#How_to_markup
-  # http://indiewebcamp.com/h-cite
-  comments_html = '\n'.join(json_to_html(c, ['p-comment'])
-                            for c in props.get('comment', []))
+  # if this post is itself a follow, like, or repost, link to its target(s).
+  children = []
+  for mftype in 'follow', 'like', 'repost':
+    children += [(target, [f'u-{mftype}-of'])
+                 for target in props.get(f'{mftype}-of', [])]
 
   # embedded likes and reposts of this post
   # http://indiewebcamp.com/like, http://indiewebcamp.com/repost
   for verb in 'like', 'repost':
     # including u-like and u-repost for backcompat means that we must ignore
     # these properties when converting a post that is itself a like or repost
-    if verb + '-of' not in props:
+    if f'{verb}-of' not in props:
       vals = props.get(verb, [])
       if vals and isinstance(vals[0], dict):
-        children += [json_to_html(v, ['u-' + verb]) for v in vals]
+        children += [(val, [f'u-{verb}']) for val in vals]
 
   # embedded children of this post
-  children += [json_to_html(c) for c in obj.get('children', [])]
+  children += [(child, []) for child in obj.get('children', [])]
 
   # location; make sure it's an object
   location = prop.get('location')
   if isinstance(location, str):
     location = {'properties': {'name': [location]}}
 
-  # event times
-  event_times = []
-  start = props.get('start', [])
-  end = props.get('end', [])
-  event_times += [f'  <time class="dt-start">{time}</time>' for time in start]
-  if start and end:
-    event_times.append('  to')
-  event_times += [f'  <time class="dt-end">{time}</time>' for time in end]
+  cats = props.get('category', [])
 
-  # link published time to the post. if there's no name, the time link becomes
-  # the u-url, instead of a separate link with the URL as its text.
-  published = maybe_datetime(prop.get('published'), 'dt-published')
-  linked_name = maybe_linked_name(props)
-  if published and (url := prop.get('url')):
-    if get_html(prop.get('name')) is None:
-      published = maybe_linked(published, url, linked_classname='u-url')
-      linked_name = '\n'.join(maybe_linked('', extra, linked_classname='u-url')
-                              for extra in props['url'][1:])
-    else:
-      published = maybe_linked(published, url)
+  # https://github.com/snarfed/granary/issues/169#issuecomment-547918405
+  sizes = [size_to_bytes(size) for size in props.get('size', []) if size]
 
-  return HENTRY.substitute(
-    prop,
-    published=published,
-    updated=maybe_datetime(prop.get('updated'), 'dt-updated'),
-    types=' '.join(parent_props + types),
-    author=hcard_to_html(author, ['p-author']),
-    location=hcard_to_html(location, ['p-location']),
-    categories='\n'.join(people + tags),
-    attachments='\n'.join(attachments),
-    sizes='\n'.join(sizes),
-    links='\n'.join(links),
-    invitees='\n'.join([hcard_to_html(i, ['p-invitee'])
-                        for i in props.get('invitee', [])]),
-    content=content_html,
-    content_classes=' '.join(content_classes),
-    comments=comments_html,
-    children='\n'.join(children),
-    linked_name=linked_name,
-    summary=summary,
-    event_times='\n'.join(event_times))
+  return {
+    'props': props,
+    'prop': prop,
+    'has_name': has_name,
+    'content_classes': content_classes,
+    'links': [(prop, url) for prop in ('in-reply-to', 'tag-of')
+              for url in sorted(get_string_urls(props.get(prop, [])))],
+    'children': children,
+    'location': location,
+    'sizes': [(bytes, humanfriendly.format_size(bytes)) for bytes in sizes],
+    # mentions are already linkified in content
+    'people': [cat for cat in cats if isinstance(cat, dict)
+               and 'h-card' in cat.get('type') and not cat.get('startIndex')],
+    'categories': [cat for cat in cats if isinstance(cat, str)],
+  }
 
 
 def hcard_to_html(hcard, parent_props=None):
@@ -980,31 +870,22 @@ def hcard_to_html(hcard, parent_props=None):
   Returns:
     str, rendered HTML
   """
-  if not hcard:
-    return ''
-  if not parent_props:
-    parent_props = []
+  return str(source.jinja_macros.hcard(hcard, parent_props or [])).strip()
 
-  # extract first value from multiply valued properties
-  props = hcard.get('properties', {})
-  if props.keys() == set(['uid']):
-    props['url'] = props.get('uid')
 
-  prop = first_props(props)
-  if not prop:
-    return ''
+def _hcard_props(hcard):
+  """Returns an ``h-card``'s properties, with ``url`` defaulting to ``uid``.
 
-  return HCARD.substitute(
-    types=' '.join(uniquify(parent_props + hcard.get('type', []))),
-    ids='\n'.join([f'<data class="p-uid" value="{uid}"></data>'
-                   for uid in props.get('uid', []) if uid] +
-                  [f'<data class="p-numeric-id" value="{nid}"></data>'
-                   for nid in props.get('numeric-id', []) if nid]),
-    linked_name=maybe_linked_name(props),
-    nicknames='\n'.join(f'<span class="p-nickname">{nick}</span>'
-                        for nick in props.get('nickname', []) if nick),
-    photos='\n'.join(img(photo) for photo in props.get('photo', []) if photo),
-  )
+  Args:
+    hcard (dict): decoded JSON ``h-card``
+
+  Returns:
+    dict: multiply-valued properties
+  """
+  props = hcard.get('properties', {}) if hcard else {}
+  if props.keys() == {'uid'}:
+    return {**props, 'url': props['uid']}
+  return props
 
 
 def render_content(obj, include_location=True, synthesize_content=True,
@@ -1031,6 +912,23 @@ def render_content(obj, include_location=True, synthesize_content=True,
   Returns:
     str: rendered HTML
   """
+  return str(source.jinja_macros.content(
+    obj, include_location=include_location,
+    synthesize_content=synthesize_content,
+    render_attachments=render_attachments,
+    render_image=render_image,
+    white_space_pre=white_space_pre)).strip()
+
+
+def _prepare_content(obj, synthesize_content=True, render_attachments=False,
+                     render_image=False, white_space_pre=True):
+  """Prepares an ActivityStreams object's content to render as HTML.
+
+  Args are the same as :func:`render_content`.
+
+  Returns:
+    dict: plain data for the ``content`` macro in ``microformats2.html``
+  """
   obj_type = as1.object_type(obj)
   content = obj.get('content') or ''
 
@@ -1050,30 +948,28 @@ def render_content(obj, include_location=True, synthesize_content=True,
     else:
       tags.setdefault(as1.object_type(t), []).append(t)
 
-  # linkify embedded mention tags inside content.
+  # linkify embedded mention tags inside content. segments are (HTML, URL or
+  # None) tuples.
   # TODO: duplicated in :func:`as2.render_content`. unify?
-  if mentions:
-    mentions.sort(key=lambda t: t['startIndex'])
-    last_end = 0
-    orig = content
-    content = ''
-    for tag in mentions:
-      start = tag['startIndex']
-      end = start + tag['length']
-      content = f"{content}{orig[last_end:start]}<a href=\"{tag['url']}\">{orig[start:end]}</a>"
-      last_end = end
-
-    content += orig[last_end:]
+  segments = []
+  last_end = 0
+  for tag in sorted(mentions, key=lambda t: t['startIndex']):
+    start = tag['startIndex']
+    end = start + tag['length']
+    segments += [(content[last_end:start], None), (content[start:end], tag['url'])]
+    last_end = end
+  segments.append((content[last_end:], None))
 
   # is whitespace in this content meaningful? standard heuristic: if there are
   # no HTML tags in it, and it has a newline, then assume yes.
   # https://indiewebcamp.com/note#Indieweb_whitespace_thinking
   # https://github.com/snarfed/granary/issues/80
+  pre = False
   if content and not as1.is_html(obj, 'content') and '\n' in content:
     if white_space_pre:
-      content = f'<div style="white-space: pre">{content}</div>'
+      pre = True
     else:
-      content = content.replace('\n', '<br />\n')
+      segments = [(text.replace('\n', '<br />\n'), url) for text, url in segments]
 
   # linkify embedded links. ignore the "mention" tags that we added ourselves.
   # TODO: fix the bug in test_linkify_broken() in webutil/tests/test_util.py, then
@@ -1082,30 +978,28 @@ def render_content(obj, include_location=True, synthesize_content=True,
   #   content = util.linkify(content)
 
   # the image field. may be multiply valued.
-  rendered_urls = set()
+  images = []
+  image_urls = set()
   if render_image:
-    urls = get_urls(obj, 'image')
-    content += _render_attachments([{
+    image_urls = set(get_urls(obj, 'image'))
+    images = _prepare_attachments([{
       'objectType': 'image',
       'image': {'url': url},
-    } for url in urls], obj)
-    rendered_urls = set(urls)
-
-  # bookmarked URL
-  targetUrl = obj.get('targetUrl')
-  if obj_type == 'bookmark' and targetUrl:
-    content += f"\nBookmark: {util.pretty_link(targetUrl, attrs={'class': 'u-bookmark-of'})}"
+    } for url in get_urls(obj, 'image')], obj)
 
   # attachments, eg links (aka articles)
   # TODO: use oEmbed? http://oembed.com/ , http://code.google.com/p/python-oembed/
+  attachments = []
   if render_attachments:
     atts = [a for a in obj.get('attachments', [])
             if a.get('objectType') not in ('note', 'article', 'comment')
-            and get_url(a, 'image') not in rendered_urls]
-    content += _render_attachments(atts + tags.pop('article', []), obj)
+            and get_url(a, 'image') not in image_urls]
+    attachments = _prepare_attachments(atts + tags.pop('article', []), obj)
 
   # generate share/like contexts if the activity does not have content
-  # of its own
+  # of its own. only include the first context in the content (if there are
+  # others, they'll be included as separate properties)
+  context = None
   for as_type, verb in (
       ('favorite', 'Favorites'), ('like', 'Likes'), ('share', 'Shared')):
     if (not synthesize_content or obj_type != as_type or 'object' not in obj or
@@ -1113,105 +1007,87 @@ def render_content(obj, include_location=True, synthesize_content=True,
       continue
 
     for target in as1.get_objects(obj):
-      target_url = target.get('url') or target.get('id') or '#'
+      context = {
+        'target': target,
+        'verb': verb,
+        'url': target.get('url') or target.get('id'),
+      }
 
       # sometimes likes don't have enough content to render anything
       # interesting
       if target.keys() <= set(['id', 'url', 'objectType']):
-        content += f"<a href=\"{target_url}\">{verb.lower()} this.</a>"
-
+        context['simple'] = True
       else:
         author = (as1.get_object(target, 'author')
                   or as1.get_object(target, 'actor'))
         # special case for twitter RT's
         if obj_type == 'share' and 'url' in obj and re.search(
             r'^https?://(?:www\.|mobile\.)?twitter\.com/', obj.get('url')):
-          content += f"RT <a href=\"{target_url}\">@{author.get('username')}</a> "
+          context.update({'rt': True, 'username': author.get('username')})
         else:
           # image looks bad in the simplified rendering
           author = {k: v for k, v in author.items() if k != 'image'}
-          content += f"{verb} <a href=\"{target_url}\">{target.get('displayName', target.get('title', 'a post'))}</a> by {hcard_to_html(object_to_json(author, default_object_type='person'))}"
-        content += render_content(target, include_location=include_location,
-                                  synthesize_content=synthesize_content,
-                                  white_space_pre=white_space_pre)
-      # only include the first context in the content (if there are
-      # others, they'll be included as separate properties)
+          context.update({
+            'name': target.get('displayName', target.get('title', 'a post')),
+            'author': object_to_json(author, default_object_type='person'),
+          })
       break
     break
 
+  share_attachments = []
   if render_attachments and obj.get('verb') == 'share':
-    atts = [att for att in itertools.chain.from_iterable(
-              o.get('attachments', []) for o in as1.get_objects(obj))
-            if att.get('objectType') not in ('note', 'article', 'comment')]
-    content += _render_attachments(atts, obj)
+    share_attachments = _prepare_attachments([
+      att for att in itertools.chain.from_iterable(
+        o.get('attachments', []) for o in as1.get_objects(obj))
+      if att.get('objectType') not in ('note', 'article', 'comment')], obj)
 
-  # location
   loc = obj.get('location')
-  if include_location and loc:
-    content += f"\n<p>{hcard_to_html(object_to_json(loc, default_object_type='place'), parent_props=['p-location'])}</p>"
 
   # these are rendered manually in json_to_html()
   for type in set(('like', 'share', 'react')) | as1.ACTOR_TYPES:
     tags.pop(type, None)
 
-  # render the rest
-  content += tags_to_html(tags.pop('hashtag', []), 'p-category')
-  content += tags_to_html(tags.pop('mention', []), 'u-mention', visible=False)
-  content += tags_to_html(sum(tags.values(), []), 'tag')
+  return {
+    'segments': segments,
+    'pre': pre,
+    'images': images,
+    'bookmark': obj.get('targetUrl') if obj_type == 'bookmark' else None,
+    'attachments': attachments,
+    'context': context,
+    'share_attachments': share_attachments,
+    'location': (object_to_json(loc, default_object_type='place')
+                 if loc else None),
+    'hashtags': tags.pop('hashtag', []),
+    'mention_tags': tags.pop('mention', []),
+    'tags': sum(tags.values(), []),
+  }
 
-  return content
 
-
-def _render_attachments(attachments, obj):
-  """Renders ActivityStreams attachments (or tags etc) as HTML.
+def _prepare_attachments(attachments, obj):
+  """Prepares ActivityStreams attachments (or tags etc) to render as HTML.
 
   Args:
     attachments (sequence of dict): decoded JSON ActivityStreams objects
     obj (dict): top-level decoded JSON ActivityStreams object
 
   Returns:
-    str: rendered HTML
+    list of dict: plain data for the ``attachments`` macro in
+    ``microformats2.html``
   """
-  content = ''
-
+  prepared = []
   for att in attachments:
-    name = att.get('displayName') or ''
-    stream_obj = as1.get_object(att, 'stream')
-    stream = stream_obj.get('id') or stream_obj.get('url') or ''
+    stream = as1.get_object(att, 'stream')
+    image = as1.get_object(att, 'image')
+    prepared.append({
+      'type': att.get('objectType'),
+      'name': att.get('displayName') or '',
+      'summary': att.get('summary'),
+      'stream': stream.get('id') or stream.get('url') or '',
+      'image': image.get('id') or image.get('url') or '',
+      'url': att.get('url') or obj.get('url'),
+    })
 
-    image_obj = as1.get_object(att, 'image')
-    image = image_obj.get('id') or image_obj.get('url') or ''
-
-    open_a_tag = False
-    content += '\n<p>'
-
-    type = att.get('objectType')
-    if type == 'video':
-      if stream:
-        content += vid(stream, poster=image)
-    elif type == 'audio':
-      if stream:
-        content += aud(stream)
-    else:
-      url = att.get('url') or obj.get('url')
-      if url:
-        content += f'\n<a class="link" href="{url}">'
-        open_a_tag = True
-      if image:
-        content += '\n' + img(image, name)
-
-    if name and type != 'image':
-      content += f'\n<span class="name">{name}</span>'
-
-    if open_a_tag:
-      content += '\n</a>'
-
-    summary = att.get('summary')
-    if summary and summary != name:
-      content += f'\n<span class="summary">{summary}</span>'
-    content += '\n</p>'
-
-  return content
+  return prepared
 
 
 def find_author(parsed, **kwargs):
@@ -1281,19 +1157,28 @@ def tags_to_html(tags, classname, visible=True):
   Returns:
     str:
   """
-  urls = {}  # stores (url, displayName) tuples
+  return str(source.jinja_macros.tags(tags, classname, visible=visible)).strip()
+
+
+def _tag_links(tags, visible=True):
+  """Returns sorted, de-duped (URL, name) tuples for the given tag objects.
+
+  Args:
+    tags (sequence of dict): decoded JSON ActivityStreams objects
+    visible (bool): whether to include ``displayName``
+
+  Returns:
+    list of (str, str) tuples:
+  """
+  urls = {}
   for tag in tags:
-    name = ''
-    if visible and tag.get('displayName'):
-      name = get_html(tag['displayName'])
+    name = get_text(tag.get('displayName')) if visible else ''
     # loop through individually instead of using update() so that order is
     # preserved.
     for url in as1.object_urls(tag):
       urls[url, name] = None
 
-  return ''.join('\n<a class="%s" %shref="%s">%s</a>' %
-                 (classname, '' if name else 'aria-hidden="true" ', url, name)
-                 for url, name in sorted(urls.keys()))
+  return sorted(urls)
 
 
 def author_display_name(hcard):
@@ -1314,24 +1199,7 @@ def maybe_linked_name(props):
   Returns:
     str: HTML
   """
-  prop = first_props(props)
-  name = get_html(prop.get('name'))
-  url = prop.get('url')
-
-  if name is not None:
-    html = maybe_linked(name, url, linked_classname='p-name u-url',
-                        unlinked_classname='p-name')
-  elif url:
-    html = util.pretty_link(url, attrs={'class': 'u-url'})
-  else:
-    html = ''
-
-  extra_urls = props.get('url', [])[1:]
-  if extra_urls:
-    html += '\n' + '\n'.join(maybe_linked('', url, linked_classname='u-url')
-                             for url in extra_urls)
-
-  return html
+  return str(source.jinja_macros.linked_name(props)).strip()
 
 
 def img(src, alt=''):
@@ -1344,76 +1212,8 @@ def img(src, alt=''):
   Returns:
     str:
   """
-  if isinstance(src, dict):
-    assert not alt
-    alt = src.get('alt') or ''
-    src = src.get('value')
-  return f"<img class=\"u-photo\" src=\"{src}\" alt={xml.sax.saxutils.quoteattr(alt or '')} />"
+  return str(source.jinja_macros.img(src, alt)).strip()
 
-
-def vid(src, poster=''):
-  """Returns an ``<video>`` str with the given ``src`` and ``poster``.
-
-  Args:
-    src (str): URL of the video
-    poster (str): optional URL of the poster or preview image
-
-  Returns:
-    str:
-  """
-  poster_img = f'<img src="{poster}" />' if poster else ''
-
-  # include ="controls" value since this HTML is also used in the Atom
-  # template, which has to validate as XML.
-  return f'<video class="u-video" src="{src}" controls="controls" poster="{poster}">Your browser does not support the video tag. <a href="{src}">Click here to view directly. {poster_img}</a></video>'
-
-
-def aud(src):
-  """Returns an ``<audio>`` str with the given ``src``.
-
-  Args:
-    src (str): URL of the audio
-
-  Returns:
-    str:
-  """
-  return f'<audio class="u-audio" src="{src}" controls="controls">Your browser does not support the audio tag. <a href="{src}">Click here to listen directly.</a></audio>'
-
-
-def maybe_linked(text, url=None, linked_classname=None, unlinked_classname=None):
-  """Wraps text in an ``<a href=...>`` iff a non-empty url is provided.
-
-  Args:
-    text (str)
-    url (str): optional
-    linked_classname (str): optional ``class`` attribute to use if ``url``
-    unlinked_classname (str): optional ``class`` attribute to use if not ``url``
-
-  Returns:
-    str:
-  """
-  if url:
-    classname = f' class="{linked_classname}"' if linked_classname else ''
-    return f'<a{classname} href="{url}">{text}</a>'
-  if unlinked_classname:
-    return f'<span class="{unlinked_classname}">{text}</span>'
-  return text
-
-
-def maybe_datetime(dt, classname):
-  """Returns a ``<time datetime=...>`` elem if ``dt`` is non-empty.
-
-  Args:
-    dt (str): RFC339 datetime or None
-    classname (str): class name
-
-  Returns:
-    str:
-  """
-  if dt:
-    return f'<time class="{classname}" datetime="{dt}">{dt}</time>'
-  else:
-    return ''
 
 
 def size_to_bytes(size):

@@ -426,12 +426,10 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 <img class="u-photo" src="http://attach/image/big" alt="" />
 </a>
 </p>
-<p>  <span class="p-location h-card">
+<p><span class="p-location h-card">
   <data class="p-uid" value="tag:instagram.com:520640"></data>
   <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a>
-
-</span>
-</p>
+</span></p>
 
   ]]></content>
 

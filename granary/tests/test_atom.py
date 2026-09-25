@@ -28,11 +28,10 @@ this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xy
 <img class="u-photo" src="http://attach/image/big" alt="" />
 </a>
 </p>
-<p>  <span class="p-location h-card">
+<p><span class="p-location h-card">
   <data class="p-uid" value="tag:instagram.com:520640"></data>
   <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a>
-</span>
-</p>
+</span></p>
   ]]></content>
 
   <link rel="alternate" type="text/html" href="https://www.instagram.com/p/ABC123/" />
@@ -97,7 +96,7 @@ INSTAGRAM_ACTIVITY = {
       'url': 'https://www.instagram.com/snarfed/',
     },
     'displayName': 'this picture -> is #abc @foo #xyz',
-    'content': 'this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz <p> <a class="link" href="https://www.instagram.com/p/ABC123/"> <img class="u-photo" src="http://attach/image/big" alt="" /> </a> </p> <p> <span class="p-location h-card"> <data class="p-uid" value="tag:instagram.com:520640"></data> <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a> </span> </p>',
+    'content': 'this picture -&gt; is #abc <a href="https://www.instagram.com/foo/">@foo</a> #xyz <p> <a class="link" href="https://www.instagram.com/p/ABC123/"> <img class="u-photo" src="http://attach/image/big" alt="" /> </a> </p> <p><span class="p-location h-card"> <data class="p-uid" value="tag:instagram.com:520640"></data> <a class="p-name u-url" href="https://instagram.com/explore/locations/520640/">Le Truc</a> </span></p>',
     'published': '2012-09-22T05:25:42+00:00',
     'updated': '2012-09-22T05:25:42+00:00',
     'tags': [{
@@ -499,10 +498,8 @@ sharer's comment
 
     out = atom.from_as1([activity], {})
     self.assert_multiline_in("""
-Shared <a href="#">a post</a> by   <span class="h-card">
-
+Shared a post by <span class="h-card">
 <span class="p-name">Mr. Foo</span>
-
 </span>
 original object
 """, out)
@@ -531,7 +528,8 @@ quoted text
 </blockquote>
 """, out)
     self.assert_multiline_in("""
-<p><video class="u-video" src="http://a/vidjo/1.mov" controls="controls" poster="">Your browser does not support the video tag. <a href="http://a/vidjo/1.mov">Click here to view directly. </a></video>
+<p>
+<video class="u-video" src="http://a/vidjo/1.mov" controls="controls" poster="">Your browser does not support the video tag. <a href="http://a/vidjo/1.mov">Click here to view directly. </a></video>
 </p>""", out)
 
   def test_render_event_omits_object_type_verb(self):
@@ -717,10 +715,7 @@ a comment
       },
     }], None)
     self.assert_multiline_in("""
-<p>In reply to
-<a class="h-card p-name u-url" href="https://twitter.com/A">aye</a>,
-
-<a class="h-card p-name u-url" href="https://twitter.com/B">bee</a>:</p>
+<p>In reply to <a class="h-card p-name u-url" href="https://twitter.com/A">aye</a>, <a class="h-card p-name u-url" href="https://twitter.com/B">bee</a>:</p>
 """, got)
 
   def test_rels(self):
@@ -915,9 +910,11 @@ going to Homebrew Website Club
       },
     }], {})
     self.assert_multiline_in("""\
-<p><audio class="u-audio" src="http://a/podcast.mp3" controls="controls">Your browser does not support the audio tag. <a href="http://a/podcast.mp3">Click here to listen directly.</a></audio>
+<p>
+<audio class="u-audio" src="http://a/podcast.mp3" controls="controls">Your browser does not support the audio tag. <a href="http://a/podcast.mp3">Click here to listen directly.</a></audio>
 </p>
-<p><video class="u-video" src="http://a/vidjo/1.mov" controls="controls" poster="http://thumb">Your browser does not support the video tag. <a href="http://a/vidjo/1.mov">Click here to view directly. <img src="http://thumb" /></a></video>
+<p>
+<video class="u-video" src="http://a/vidjo/1.mov" controls="controls" poster="http://thumb">Your browser does not support the video tag. <a href="http://a/vidjo/1.mov">Click here to view directly. <img src="http://thumb" /></a></video>
 </p>
 """, got)
     self.assert_multiline_in("""\
@@ -962,7 +959,6 @@ going to Homebrew Website Club
 <blockquote>
 <img class="u-photo" src="http://pics/1.jpg" alt="" />
 </blockquote>
-
 <blockquote>
 <img class="u-photo" src="http://pics/2.jpg" alt="" />
 </blockquote>

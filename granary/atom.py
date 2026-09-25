@@ -8,12 +8,11 @@ import re
 import urllib.parse
 from xml.etree import ElementTree
 
-import jinja2
 from webutil import util
 
 from . import as1
 from . import microformats2
-from .source import Source
+from .source import jinja_env, Source
 
 CONTENT_TYPE = 'application/atom+xml; charset=utf-8'
 FEED_TEMPLATE = 'user_feed.atom'
@@ -26,9 +25,6 @@ NAMESPACES = {
   'georss': 'http://www.georss.org/georss',
   'thr': 'http://purl.org/syndication/thread/1.0',
 }
-
-jinja_env = jinja2.Environment(
-  loader=jinja2.PackageLoader(__package__, 'templates'), autoescape=True)
 
 
 def _encode_ampersands(text):

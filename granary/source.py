@@ -14,10 +14,12 @@ import html
 from html import escape, unescape
 import logging
 import re
+import textwrap
 import urllib.parse
 
 import brevity
 import html2text
+import jinja2
 import mf2util
 from requests import RequestException
 from webutil import util
@@ -26,6 +28,17 @@ from webutil.util import json_dumps, json_loads
 from . import as1, microformats2
 
 logger = logging.getLogger(__name__)
+
+jinja_env = jinja2.Environment(
+  loader=jinja2.PackageLoader(__package__, 'templates'), autoescape=True,
+  trim_blocks=True, lstrip_blocks=True)
+jinja_env.globals.update({
+  'microformats2': microformats2,
+  'util': util,
+})
+jinja_env.filters['dedent'] = textwrap.dedent
+jinja_env.tests['web'] = util.is_web
+jinja_macros = jinja_env.get_template('macros.html').module
 
 APP = '@app'
 ME = '@me'

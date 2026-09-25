@@ -56,14 +56,16 @@ def discard_fields(obj, fields):
     return obj
 
 
-def create_test_function(fn, original, expected, **kwargs):
+def create_test_function(fn, original, expected, html=False, **kwargs):
   """Create a simple test function that asserts fn(original) == expected.
 
   kwargs are passed to assert_equals (but not assert_multiline_equals).
   """
   def test(self):
     got = fn(original)
-    if isinstance(got, str) and isinstance(expected, str):
+    if html:
+      return self.assert_html_equals(expected, got)
+    elif isinstance(got, str) and isinstance(expected, str):
       return self.assert_multiline_equals(expected, got, ignore_blanks=True)
     else:
       return self.assert_equals(expected, got, in_order=True, **kwargs)
@@ -152,8 +154,8 @@ for src_ext, dst_exts, fn, exclude_prefixes, ignore_fields in mappings:
       f'test_{fn.__module__.split(".")[-1]}_{fn.__name__}_{src[:-len(src_ext)]}'
     ).replace('.', '_').replace('-', '_').strip('_')
     # assert test_name not in test_funcs, test_name
-    test_funcs[test_name] = create_test_function(fn, original, expected,
-                                                 ignore=ignore_fields)
+    test_funcs[test_name] = create_test_function(
+      fn, original, expected, html=dst.endswith('.html'), ignore=ignore_fields)
 
 os.chdir(prevdir)
 

@@ -53,7 +53,7 @@ class JsonFeedTest(testutil.TestCase):
 
   def test_from_as1_image_attachment(self):
     self.assert_equals([{
-      'content_html': '\n<p>\n<img class="u-photo" src="http://pict/ure.jpg" alt="" />\n</p>',
+      'content_html': '<p>\n<img class="u-photo" src="http://pict/ure.jpg" alt="" />\n</p>',
       'attachments': [{
         'url': 'http://pict/ure.jpg',
         'mime_type': 'image/jpeg',
@@ -64,7 +64,7 @@ class JsonFeedTest(testutil.TestCase):
 
   def test_from_as1_ignore_other_attachment_types(self):
     self.assert_equals([{
-      'content_html': '\n<p>\n<a class="link" href="http://some/one">\n</a>\n</p>'
+      'content_html': '<p>\n<a class="link" href="http://some/one">\n</a>\n</p>'
     }], from_as1([{
       'attachments': [{
         'url': 'http://quoted/tweet',
@@ -87,7 +87,7 @@ class JsonFeedTest(testutil.TestCase):
     """
     https://console.cloud.google.com/errors/detail/CMnZ6r6AlaXUSg;time=P30D?project=granary-demo
     """
-    self.assert_equals([{'content_html': """
+    self.assert_equals([{'content_html': """\
 <p>
 <img class="u-photo" src="https://att/image" alt="" />
 </p>"""}], from_as1([{

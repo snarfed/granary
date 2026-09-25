@@ -327,6 +327,8 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
     * Handle [FEP-044f's `quote`](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md) and [Fedibird's `quoteUri`](http://fedibird.com/ns#quoteUri) quoted post fields, along with the existing `_misskey_quote` and `quoteUrl`.
     * Set quoted posts' `id`, not just `url`, so that `as1.quoted_posts` finds them.
     * Handle object-valued quote post fields.
+    * Fix bug where the trailing `RE: ...` link to a quoted post wasn't removed from `content` when its URL had regex special characters or `&`.
+  * `from_as1`, `render_content`: render HTML with Jinja templates in profile link `PropertyValue`s and quoted post `RE: ...` links. Only link `http` and `https` quoted post URLs ([#586](https://github.com/snarfed/granary/issues/586)).
 * `atom`:
   * `to_as1`: read `<link rel=self>`'s `href`, not text value.
   * `to_as1`: convert [`<category>`](https://datatracker.ietf.org/doc/html/rfc4287#section-4.2.2) elements to hashtag tags, using `label` if it's provided, otherwise `term`.
@@ -360,6 +362,10 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
 * `microformats2`:
   * `from_as1`: bug fix for precedence of attachments' `stream`s.
   * `object_to_html`, `json_to_html`: link `dt-published` to the post's URL. If the post has no name, this link is now its `u-url`, instead of a separate link with the URL as text.
+  * Render HTML with Jinja templates instead of Python strings. Only mf2 `{'html': ...}` values and AS1 `content` are rendered as raw HTML. ([#586](https://github.com/snarfed/granary/issues/586))
+  * Only link `http` and `https` URLs in `href`s and `src`s. Other URLs, eg `javascript:` and `nostr:`, are rendered as plain text or omitted. _Breaking change._
+  * Whitespace in rendered HTML has changed.
+  * `from_as1`: if `summary` is HTML, convert it to `{'html': ..., 'value': ...}`, and render it as `e-summary`.
 * `nostr`:
   * `bech32_decode`: return the input unchanged, as documented, instead of raising `AssertionError` or `ValueError`, when the input has a valid checksum but malformed TLV contents.
   * `from_as1`:

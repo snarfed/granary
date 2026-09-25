@@ -727,6 +727,16 @@ class ActivityStreams2Test(testutil.TestCase):
       'url': 'https://example.com/',
     }))
 
+  def test_from_as1_person_propertyvalue_attachment_escapes_url(self):
+    self.assert_equals([{
+      'type': 'PropertyValue',
+      'name': 'Link',
+      'value': '<a rel="me" href="https://example.com/?a=&#34;&gt;&lt;b&gt;"><span class="invisible">https://</span>example.com/?a=&#34;&gt;&lt;b&gt;</a>',
+    }], as2.from_as1({
+      'objectType' : 'person',
+      'url': 'https://example.com/?a="><b>',
+    })['attachment'])
+
   def test_from_as1_person_monetization(self):
     self.assert_equals({
       'type': 'Person',
@@ -1487,6 +1497,39 @@ class ActivityStreams2Test(testutil.TestCase):
       'content_is_html': True,
       'tag': [tag],
     }, obj)
+
+  def test_render_content_quote_escapes_and_only_links_web_urls(self):
+    for url, expected in (
+        ('http://the/url?a="><b>',
+         '<a href="http://the/url?a=&#34;&gt;&lt;b&gt;">http://the/url?a=&#34;&gt;&lt;b&gt;</a>'),
+        ('javascript:alert(1)', 'javascript:alert(1)'),
+    ):
+      with self.subTest(url=url):
+        obj = {'tag': [{
+          'type': 'Link',
+          'mediaType': as2.CONTENT_TYPE_LD_PROFILE,
+          'href': 'http://the/id',
+          'name': f'RE: {url}',
+        }]}
+        as2.render_content(obj)
+        self.assertEqual(
+          f'<span class="quote-inline">RE: {expected}</span>', obj['content'])
+
+  def test_to_as1_quote_removes_re_link_with_special_chars(self):
+    for content in (
+        'foo<br><br>RE: <a href="http://a.b/c?d=1&amp;e=2">http://a.b/c?d=1&amp;e=2</a>',
+        'foo<span class="quote-inline"><br><br>RE: <a href="http://a.b/c?d=1&amp;e=2">http://a.b/c?d=1&amp;e=2</a></span>',
+    ):
+      with self.subTest(content=content):
+        self.assertEqual('foo', as2.to_as1({
+          'type': 'Note',
+          'content': content,
+          'tag': [{
+            'type': 'Link',
+            'mediaType': as2.CONTENT_TYPE_LD_PROFILE,
+            'href': 'http://a.b/c?d=1&e=2',
+          }],
+        })['content'])
 
   def test_is_server_actor(self):
     self.assertFalse(as2.is_server_actor({}))

@@ -1,0 +1,318 @@
+{# Macros for rendering HTML. Used by microformats2.py and as2.py.
+
+Globals, filters, and tests are registered in source.py. The `web` test is
+`webutil.util.is_web`. The `microformats2` global is that module, for its
+helper functions.
+
+The lstrip_blocks and trim_blocks settings and {% filter dedent|trim %} around
+each macro strip whitespace.
+#}
+
+{# microformats2 #}
+
+{# Renders an mf2 property value. HTML is in the html field.
+   https://microformats.org/wiki/microformats2-parsing#parsing_an_e-_property
+ #}
+{% macro value(val) %}{% filter trim %}
+{% if val is mapping and val.html %}
+  {# TODO XSS: raw remote HTML, NOT SANITIZED. sanitize here (eg nh3) before |safe. https://github.com/snarfed/granary/issues/586 #}
+  {{ val.html|safe }}
+{% else %}
+  {{ microformats2.get_text(val) }}
+{% endif %}
+{% endfilter %}{% endmacro %}
+
+{# Renders text, wrapped in an <a> if url is a web URL, otherwise in a <span>
+   if unlinked_classname is provided. #}
+{% macro maybe_linked(text, url, linked_classname=None, unlinked_classname=None) %}{% filter dedent|trim %}
+{% if url is web %}
+  <a {% if linked_classname %}class="{{ linked_classname }}" {% endif %}href="{{ url }}">{{ text }}</a>
+{% elif unlinked_classname %}
+  <span class="{{ unlinked_classname }}">{{ text }}</span>
+{% else %}
+  {{ text }}
+{% endif %}
+{% endfilter %}{% endmacro %}
+
+{# Renders a <time> element if dt is non-empty. #}
+{% macro maybe_datetime(dt, classname) %}{% filter dedent|trim %}
+{% if dt %}
+  <time class="{{ classname }}" datetime="{{ dt }}">{{ dt }}</time>
+{% endif %}
+{% endfilter %}{% endmacro %}
+
+{# Renders a u-photo <img>. src may be a URL or a dict with value and alt. #}
+{% macro img(src, alt='') %}{% filter dedent|trim %}
+{% if src is mapping %}
+  {% set alt = src.alt %}
+  {% set src = src.value %}
+{% endif %}
+{% if src is web %}
+  <img class="u-photo" src="{{ src }}" alt="{{ alt or '' }}" />
+{% endif %}
+{% endfilter %}{% endmacro %}
+
+{# Renders a u-video <video>. Includes controls="controls" value since this HTML
+   is also used in the Atom template, which has to validate as XML. #}
+{% macro vid(src, poster='') %}{% filter dedent|trim %}
+{% if src is web %}
+  {% set poster = poster if poster is web else '' %}
+  <video class="u-video" src="{{ src }}" controls="controls" poster="{{ poster }}">Your browser does not support the video tag. <a href="{{ src }}">Click here to view directly. {% if poster %}<img src="{{ poster }}" />{% endif %}</a></video>
+{% endif %}
+{% endfilter %}{% endmacro %}
+
+{# Renders a u-audio <audio>. #}
+{% macro aud(src) %}{% filter dedent|trim %}
+{% if src is web %}
+  <audio class="u-audio" src="{{ src }}" controls="controls">Your browser does not support the audio tag. <a href="{{ src }}">Click here to listen directly.</a></audio>
+{% endif %}
+{% endfilter %}{% endmacro %}
+
+{# Renders empty u-url links for all URLs in props after the first. #}
+{% macro extra_urls(props) %}{% filter dedent|trim %}
+{% for url in (props.url or [])[1:] if url is web %}
+  <a class="u-url" href="{{ url }}"></a>
+{% endfor %}
+{% endfilter %}{% endmacro %}
+
+{# Renders a p-name, linked to the first u-url if there is one, and the other
+   u-urls. rsvp is only used by h-entries. #}
+{% macro linked_name(props, rsvp=None) %}{% filter dedent|trim %}
+{% set prop = microformats2.first_props(props) %}
+{% if 'name' in props %}
+  {% set name %}
+    {% if rsvp %}
+      <data class="p-rsvp" value="{{ rsvp }}">{{ value(prop.name) }}</data>
+    {% else %}
+      {{ value(prop.name) }}
+    {% endif %}
+  {% endset %}
+  {{ maybe_linked(name|trim, prop.url, 'p-name u-url', 'p-name') }}
+{% elif prop.url %}
+  {{ util.pretty_link(prop.url, attrs={'class': 'u-url'})|safe }}
+{% endif %}
+{{ extra_urls(props) }}
+{% endfilter %}{% endmacro %}
+
+{# Renders links to AS1 tags, or just their names if they don't have web URLs. #}
+{% macro tags(tags, classname, visible=True) %}{% filter dedent|trim %}
+{% for url, name in microformats2._tag_links(tags, visible) %}
+  {% if url is web %}
+    <a class="{{ classname }}" {% if not name %}aria-hidden="true" {% endif %}href="{{ url }}">{{ name }}</a>
+  {% else %}
+    {{ name }}
+  {% endif %}
+{% endfor %}
+{% endfilter %}{% endmacro %}
+
+{# Renders an mf2 h-card. #}
+{% macro hcard(hcard, parent_props=[]) %}{% filter dedent|trim %}
+{% set props = microformats2._hcard_props(hcard) %}
+{% if props %}
+  <span class="{{ util.uniquify(parent_props + (hcard.type or []))|join(' ') }}">
+  {% for uid in props.uid if uid %}
+    <data class="p-uid" value="{{ uid }}"></data>
+  {% endfor %}
+  {% for nid in props['numeric-id'] if nid %}
+    <data class="p-numeric-id" value="{{ nid }}"></data>
+  {% endfor %}
+    {{ linked_name(props)|indent(4) }}
+  {% for nick in props.nickname if nick %}
+    <span class="p-nickname">{{ nick }}</span>
+  {% endfor %}
+  {% for photo in props.photo if photo %}
+    {{ img(photo) }}
+  {% endfor %}
+  </span>
+{% endif %}
+{% endfilter %}{% endmacro %}
+
+{# Renders an mf2 object, either h-card or h-entry. #}
+{% macro render(obj, parent_props=[]) %}{% filter trim %}
+{% if obj and 'h-card' in (obj.type or []) %}
+  {{ hcard(obj, parent_props) }}
+{% elif obj %}
+  {{ hentry(obj, parent_props) }}
+{% endif %}
+{% endfilter %}{% endmacro %}
+
+{# Renders a non-h-card mf2 object, eg h-entry, h-event, or h-cite. #}
+{% macro hentry(obj, parent_props=[]) %}{% filter trim %}
+{% set e = microformats2._prepare_hentry(obj) %}
+{% set prop = e.prop %}
+{% set published = maybe_datetime(prop.published, 'dt-published') %}
+{% set link_published = published and prop.url %}
+<article class="{{ (parent_props + (obj.type or []))|join(' ') }}">
+  <span class="p-uid">{{ prop.uid }}</span>
+{% if prop.summary %}
+  <div class="{{ 'e-summary' if prop.summary.html else 'p-summary' }}">{{ value(prop.summary) }}</div>
+{% endif %}
+{% if link_published %}
+  {{ maybe_linked(published, prop.url, None if e.has_name else 'u-url') }}
+{% elif published %}
+  {{ published }}
+{% endif %}
+{% if prop.updated %}
+  {{ maybe_datetime(prop.updated, 'dt-updated') }}
+{% endif %}
+{% if prop.author %}
+  {{ hcard(prop.author, ['p-author'])|indent(2) }}
+{% endif %}
+{% if link_published and not e.has_name %}
+  {{ extra_urls(e.props)|indent(2) }}
+{% else %}
+  {{ linked_name(e.props, rsvp=prop.rsvp)|indent(2) }}
+{% endif %}
+  <div class="{{ e.content_classes|join(' ') }}">
+{% for invitee in e.props.invitee %}
+  {{ hcard(invitee, ['p-invitee'])|indent(2) }}
+{% endfor %}
+{% if e.content_classes %}
+  {{ value(prop.content) }}
+{% endif %}
+  </div>
+{% for val in e.props.photo %}
+  {{ img(val) }}
+{% endfor %}
+{% for val in e.props.video %}
+  {{ vid(val) }}
+{% endfor %}
+{% for val in e.props.audio %}
+  {{ aud(val) }}
+{% endfor %}
+{% for bytes, size in e.sizes %}
+  <data class="p-size" value="{{ bytes }}">{{ size }}</data>
+{% endfor %}
+{% for start in e.props.start %}
+  <time class="dt-start">{{ start }}</time>
+{% endfor %}
+{% if e.props.start and e.props.end %}
+  to
+{% endif %}
+{% for end in e.props.end %}
+  <time class="dt-end">{{ end }}</time>
+{% endfor %}
+{% if e.location %}
+  {{ hcard(e.location, ['p-location'])|indent(2) }}
+{% endif %}
+{% for cat in e.people %}
+  {{ hcard(cat, ['u-category', 'h-card'])|indent(2) }}
+{% endfor %}
+{% for cat in e.categories %}
+  <span class="u-category">{{ cat }}</span>
+{% endfor %}
+{% for cls, url in e.links if url is web %}
+  <a class="u-{{ cls }}" href="{{ url }}"></a>
+{% endfor %}
+{% for child, child_props in e.children %}
+  {% if child is not string %}
+  {{ render(child, child_props)|indent(2) }}
+  {% elif child is web %}
+  <a class="{{ child_props[0] }}" href="{{ child }}"></a>
+  {% endif %}
+{% endfor %}
+{% for comment in e.props.comment %}
+  {{ render(comment, ['p-comment'])|indent(2) }}
+{% endfor %}
+</article>
+{% endfilter %}{% endmacro %}
+
+{# Renders AS1 attachments, prepared by microformats2._prepare_attachments. #}
+{% macro attachments(atts) %}{% filter dedent|trim %}
+{% for att in atts %}
+  {% set linked = att.type not in ('video', 'audio') and att.url is web %}
+<p>
+  {% if linked %}
+    <a class="link" href="{{ att.url }}">
+  {% endif %}
+  {% if att.type == 'video' %}
+    {{ vid(att.stream, poster=att.image) }}
+  {% elif att.type == 'audio' %}
+    {{ aud(att.stream) }}
+  {% elif att.image is web %}
+    {{ img(att.image, att.name) }}
+  {% endif %}
+  {% if att.name and att.type != 'image' %}
+    <span class="name">{{ att.name }}</span>
+  {% endif %}
+  {% if linked %}
+    </a>
+  {% endif %}
+  {% if att.summary and att.summary != att.name %}
+    <span class="summary">{{ att.summary }}</span>
+  {% endif %}
+</p>
+{% endfor %}
+{% endfilter %}{% endmacro %}
+
+{# Renders an AS1 object's content. See microformats2.render_content. #}
+{% macro content(obj, include_location=True, synthesize_content=True,
+                 render_attachments=False, render_image=False,
+                 white_space_pre=True) %}{% filter trim %}
+{% set c = microformats2._prepare_content(
+  obj, synthesize_content=synthesize_content,
+  render_attachments=render_attachments, render_image=render_image,
+  white_space_pre=white_space_pre) %}
+{% set ctx = c.context %}
+{# TODO XSS: raw remote HTML, NOT SANITIZED. sanitize here (eg nh3) before |safe. https://github.com/snarfed/granary/issues/586 #}
+{% if c.pre %}<div style="white-space: pre">{% endif %}
+{% for text, url in c.segments -%}
+  {% if url is web -%}
+    <a href="{{ url }}">{{ text|safe }}</a>
+  {%- else -%}
+    {{ text|safe }}
+  {%- endif %}
+{%- endfor %}
+{% if c.pre %}</div>{% endif %}
+
+{% if c.images %}
+  {{ attachments(c.images) }}
+{% endif %}
+{% if c.bookmark %}
+  Bookmark: {{ util.pretty_link(c.bookmark, attrs={'class': 'u-bookmark-of'})|safe }}
+{% endif %}
+{% if c.attachments %}
+  {{ attachments(c.attachments) }}
+{% endif %}
+{% if ctx.simple %}
+  {{ maybe_linked(ctx.verb|lower ~ ' this.', ctx.url) }}
+{% elif ctx.rt %}
+  RT {{ maybe_linked('@' ~ ctx.username, ctx.url) }}
+  {{ content(ctx.target, include_location=include_location,
+             synthesize_content=synthesize_content,
+             white_space_pre=white_space_pre) }}
+{% elif ctx %}
+  {{ ctx.verb }} {{ maybe_linked(ctx.name, ctx.url) }} by {{ hcard(ctx.author) }}
+  {{ content(ctx.target, include_location=include_location,
+             synthesize_content=synthesize_content,
+             white_space_pre=white_space_pre) }}
+{% endif %}
+{% if c.share_attachments %}
+  {{ attachments(c.share_attachments) }}
+{% endif %}
+{% if include_location and c.location %}
+  <p>{{ hcard(c.location, ['p-location']) }}</p>
+{% endif %}
+{% if c.hashtags %}
+  {{ tags(c.hashtags, 'p-category') }}
+{% endif %}
+{% if c.mention_tags %}
+  {{ tags(c.mention_tags, 'u-mention', visible=False) }}
+{% endif %}
+{% if c.tags %}
+  {{ tags(c.tags, 'tag') }}
+{% endif %}
+{% endfilter %}{% endmacro %}
+
+{# AS2 #}
+
+{# Renders a Mastodon profile link for a PropertyValue. The anchor text has to
+   contain the full URL for Mastodon's profile link verification. #}
+{% macro rel_me_link(url, scheme) %}{% filter trim %}
+<a rel="me" href="{{ url }}"><span class="invisible">{{ scheme }}</span>{{ url.removeprefix(scheme) }}</a>
+{% endfilter %}{% endmacro %}
+
+{# Renders an inline RE: link to a FEP-e232 quote post. Only links web URLs. #}
+{% macro quote_inline(url, newlines=False) %}{% filter trim %}
+<span class="quote-inline">{% if newlines %}<br><br>{% endif %}RE: {% if url is web %}<a href="{{ url }}">{{ url }}</a>{% else %}{{ url }}{% endif %}</span>
+{% endfilter %}{% endmacro %}

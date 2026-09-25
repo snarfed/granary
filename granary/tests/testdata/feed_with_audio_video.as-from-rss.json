@@ -3,7 +3,7 @@
   "url": "http://podcast/post",
   "objectType": "article",
   "displayName": "i'm ready to speak",
-  "content": "<p>some HTML</p>\n    <p><audio class=\"u-audio\" controls=\"controls\" src=\"http://a/podcast.mp3\">Your browser does not support the audio tag. <a href=\"http://a/podcast.mp3\">Click here to listen directly.</a></audio>\n    </p>",
+  "content": "<p>some HTML</p>\n<p>\n<audio class=\"u-audio\" controls=\"controls\" src=\"http://a/podcast.mp3\">Your browser does not support the audio tag. <a href=\"http://a/podcast.mp3\">Click here to listen directly.</a></audio>\n</p>",
   "published": "2012-12-05T00:58:26+07:00",
   "tags": [{
     "displayName": "a tag"
@@ -35,7 +35,7 @@
   "url": "http://vidjo/post",
   "objectType": "article",
   "displayName": "i'm ready to perform",
-  "content": "<p><video class=\"u-video\" controls=\"controls\" poster=\"\" src=\"http://a/vidjo.mov\">Your browser does not support the video tag. <a href=\"http://a/vidjo.mov\">Click here to view directly. </a></video>\n    </p>",
+  "content": "<p>\n<video class=\"u-video\" controls=\"controls\" poster=\"\" src=\"http://a/vidjo.mov\">Your browser does not support the video tag. <a href=\"http://a/vidjo.mov\">Click here to view directly. </a></video>\n</p>",
   "published": "2012-12-04T00:00:00+00:00",
   "attachments": [{
     "stream": {

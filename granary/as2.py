@@ -20,7 +20,7 @@ from webutil import util
 from webutil.util import json_dumps, json_loads
 
 from . import as1
-from .source import html_to_text, Source, whitespace_to_html
+from .source import html_to_text, jinja_macros, Source, whitespace_to_html
 
 logger = logging.getLogger(__name__)
 
@@ -415,12 +415,10 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
         parsed = urlparse(url)
         if parsed.path == '/':
           url = url.removesuffix('/')
-        scheme = f'{parsed.scheme}://'
-        visible = url.removeprefix(scheme)
         links[url] = {
           'type': 'PropertyValue',
           'name': name or 'Link',
-          'value': f'<a rel="me" href="{url}"><span class="invisible">{scheme}</span>{visible}</a>',
+          'value': str(jinja_macros.rel_me_link(url, f'{parsed.scheme}://')),
         }
         util.add(obj['@context'], PROPERTY_VALUE_CONTEXT)
 
@@ -764,8 +762,9 @@ def to_as1(obj, use_type=True, get_fn=None):
       # intent, but way too complicated for right now.
       # https://socialhub.activitypub.rocks/t/fep-e232-object-links/2722/29
       obj.setdefault('content', '')
+      escaped = re.escape(html.escape(url, quote=False))
       obj['content'] = re.sub(
-        fr'(<span[^>]*>)?(\s|(<br>)+)?RE: (</span>)?(<a href="{url}">)?<?{url}>?(</a>)?(</span>)?\s?$', '',
+        fr'(<span[^>]*>)?(\s|(<br>)+)?RE: (</span>)?(<a href="{escaped}">)?<?{escaped}>?(</a>)?(</span>)?\s?$', '',
         obj['content'])
       continue
 
@@ -1014,9 +1013,9 @@ def render_content(obj):
       if (tag.get('type') == 'Link' and
           tag.get('mediaType') in CONTENT_TYPES and
           name.startswith('RE: ')):
-        url = name.removeprefix('RE: ')
-        newlines = '<br><br>' if content else ''
-        content = (content or '') + f'<span class="quote-inline">{newlines}RE: <a href="{url}">{url}</a></span>'
+        quote = jinja_macros.quote_inline(
+          name.removeprefix('RE: '), newlines=bool(content))
+        content = (content or '') + str(quote)
         break
 
   if content != obj.get('content'):
