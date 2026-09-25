@@ -141,6 +141,7 @@ app.json.compact = False
 app.config.from_pyfile('config.py')
 app.url_map.converters['regex'] = flask_util.RegexConverter
 app.after_request(flask_util.default_modern_headers)
+app.post(flask_util.CSP_REPORT_PATH)(flask_util.csp_report)
 app.register_error_handler(Exception, flask_util.handle_exception)
 app.before_request(flask_util.canonicalize_domain(
   ('granary-demo.appspot.com', 'www.granary.io'), 'granary.io'))
