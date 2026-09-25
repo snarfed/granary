@@ -28,32 +28,6 @@
   transition: background-color 2s;
 }
 </style>
-<script type="text/javascript">
-function onHashChange() {
-  var id = location.href.match(/#(.+)$/);
-  if (id) {
-    var elem = document.getElementById(id[1]);
-    if (elem) {
-      elem.style.backgroundColor = "#FFFFAA";
-    }
-  }
-}
-window.addEventListener('hashchange', onHashChange);
-document.addEventListener('DOMContentLoaded', onHashChange);
-
-function update_and_maybe_submit() {
-  update_form();
-  maybe_submit();
-}
-window.onload = update_and_maybe_submit;
-
-function spinner(visibility) {
-  elems = document.getElementsByClassName('spinner');
-  for (i = 0; i < elems.length; i++) {
-    elems[i].style.visibility = visibility;
-  }
-}
-</script>
 
 <main class="tp-main">
 <div class="container">
@@ -178,8 +152,7 @@ Try it below! Also <a href="https://granary.readthedocs.io/">see the docs</a> an
 
 
 {% if entity or site %}
-<form id="demo-form" action="/demo" method="get" target="results"
-      onsubmit="spinner('visible')">
+<form id="demo-form" action="/demo" method="get" target="results">
 <input type="hidden" id="site" name="site" value="{{ site }}" />
 <input type="hidden" name="cache" value="false" />
 <p><code>
@@ -218,7 +191,7 @@ Try it below! Also <a href="https://granary.readthedocs.io/">see the docs</a> an
 <label> @self </label>
 <input type="hidden" id="group_id" name="group_id" value="@self" />
 {% elif site != 'github' %}
-<select id="group_id" name="group_id" onchange="update_form()">
+<select id="group_id" name="group_id">
   {% if site != 'instagram' %}
     <option value="@all">@all</option>
   {% endif %}
@@ -313,16 +286,14 @@ Try it below! Also <a href="https://granary.readthedocs.io/">see the docs</a> an
 <input type="hidden" name="interactive" value="true" />
 
 <br>
-<button type="submit" class="btn btn-default"
-        onclick="render_demo_request()">GET</button>
+<button type="submit" class="btn btn-default">GET</button>
 <img id="demo-spinner" class="spinner" src="/static/spinner.gif" width="30" />
 </p>
 </form>
 {% endif %}
 
 {% if input %}
-<form id="url-form" action="/url" method="get" target="results"
-      onsubmit="spinner('visible')">
+<form id="url-form" action="/url" method="get" target="results">
 <p><code>
 <label>/ url ? input = </label>
 <select id="input" name="input">
@@ -363,8 +334,7 @@ Try it below! Also <a href="https://granary.readthedocs.io/">see the docs</a> an
 <input type="hidden" name="plaintext" value="true" />
 <input type="hidden" name="cache" value="false" />
 <input type="hidden" name="interactive" value="true" />
-<button type="submit" class="btn btn-default"
-        onclick="render_url_request()">GET</button>
+<button type="submit" class="btn btn-default">GET</button>
 </code>
 <img id="url-spinner" class="spinner" src="/static/spinner.gif" width="30" />
 </p>
@@ -374,7 +344,7 @@ Try it below! Also <a href="https://granary.readthedocs.io/">see the docs</a> an
 
 <div id="results">
 <p><code id="request"></code></p>
-<iframe name="results" onload="spinner('hidden')" onerror="spinner('hidden')">
+<iframe name="results">
 </iframe>
 </div>
 

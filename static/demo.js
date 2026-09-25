@@ -6,6 +6,56 @@ var OAUTH_INPUT_IDS = ['access_token', 'auth_entity',
                        'access_token_key', 'access_token_secret',
                        'user_id', 'instance', 'app_password'];
 
+// highlight fragments
+function onHashChange() {
+  var id = location.href.match(/#(.+)$/);
+  if (id) {
+    var elem = document.getElementById(id[1]);
+    if (elem) {
+      elem.style.backgroundColor = "#FFFFAA";
+    }
+  }
+}
+window.addEventListener('hashchange', onHashChange);
+document.addEventListener('DOMContentLoaded', onHashChange);
+
+window.addEventListener('load', () => {
+  update_form();
+  maybe_submit();
+});
+
+document.addEventListener('submit', (event) => {
+  if (event.target.id == 'demo-form') {
+    render_demo_request();
+    spinner('visible');
+  } else if (event.target.id == 'url-form') {
+    render_url_request();
+    spinner('visible');
+  }
+});
+
+document.addEventListener('change', (event) => {
+  if (event.target.id == 'group_id') {
+    update_form();
+  }
+});
+
+// load and error don't bubble, so these listen in the capture phase
+for (const type of ['load', 'error']) {
+  document.addEventListener(type, (event) => {
+    if (event.target.name == 'results') {
+      spinner('hidden');
+    }
+  }, true);
+}
+
+function spinner(visibility) {
+  elems = document.getElementsByClassName('spinner');
+  for (i = 0; i < elems.length; i++) {
+    elems[i].style.visibility = visibility;
+  }
+}
+
 function render_demo_request() {
   var site = get('site');
   var user_id = get('user_id') || '@me';

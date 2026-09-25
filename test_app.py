@@ -196,6 +196,15 @@ class AppTest(testutil.TestCase):
                        content_type='application/reports+json')
     self.assert_equals(204, resp.status_code)
 
+  def test_templates_have_no_inline_js(self):
+    # inline event handlers, inline <script>s, and javascript: URLs would all
+    # need 'unsafe-inline' in our Content-Security-Policy
+    for name in app.jinja_env.list_templates(extensions=['html']):
+      source, _, _ = app.jinja_env.loader.get_source(app.jinja_env, name)
+      with self.subTest(name):
+        self.assertNotRegex(
+          source, r'(?i)\son[a-z]+=|<script(?![^>]*\ssrc=)[^>]*>|javascript:')
+
   def test_front_page_farcaster(self):
     resp = client.get('/?site=farcaster')
     self.assert_equals(200, resp.status_code)
