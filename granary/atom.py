@@ -7,7 +7,6 @@ import mimetypes
 import re
 import urllib.parse
 from xml.etree import ElementTree
-import xml.sax.saxutils
 
 import jinja2
 from webutil import util
@@ -410,8 +409,7 @@ def _prepare_activity(a, reader=True):
   # http://atomenabled.org/developers/syndication/#requiredEntryElements
   display_name = (a.get('displayName') or a.get('content') or obj.get('title')
                   or obj.get('displayName') or obj.get('content') or 'Untitled')
-  a['displayName'] = util.ellipsize(xml.sax.saxutils.escape(
-    util.parse_html(display_name).get_text('')))
+  a['displayName'] = util.ellipsize(util.parse_html(display_name).get_text(''))
 
   children = []
   image_urls_seen = set()

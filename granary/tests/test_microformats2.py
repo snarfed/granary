@@ -596,7 +596,7 @@ Shared <a href="#">a post</a> by foo
     self.assert_multiline_equals("""
 Shared <a href="nostr:note1sa9...">a post</a> by   <span class="h-card">
 <data class="p-uid" value="nostr:npub16cn..."></data>
-<a title="nostr:npub16cn..." class="u-url" href="nostr:npub16cn...">nostr:npub16cn....</a>
+nostr:npub16cn....
 </span>
 foo bar
 """, microformats2.render_content({

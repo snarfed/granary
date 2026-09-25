@@ -481,7 +481,7 @@ class AtomTest(testutil.TestCase):
 
     out = atom.from_as1([activity], {})
     self.assert_multiline_in("""
-<title>sharer's comment</title>
+<title>sharer&#39;s comment</title>
 """, out)
     self.assert_multiline_in("""
 sharer's comment
