@@ -76,7 +76,7 @@ app = [
 ]
 tests = [
     'hypothesis>=6.0',
-    'lxml>=4.6',
+    'lxml>=6.0',
     'mf2py>=2.0',
 ]
 docs = [
