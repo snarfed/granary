@@ -1,3 +1,4 @@
+{% import 'macros.html' as macros %}
 {% set obj = as1.get_object(activity) or activity %}
 {% set actor = activity.actor or as1.get_object(obj, 'author') %}
 {% include "author.atom" %}
@@ -31,9 +32,19 @@
 {% endfor %}
 
 {{ obj.rendered_content|safe }}
-{% for child in obj.rendered_children %}
+{% for child in obj.atom_children %}
 <blockquote>
-{{ child|safe }}
+{% filter encode_ampersands|trim %}
+  {% if child.image %}
+    {{ macros.img(child.image) }}
+  {% else %}
+    {% if child.author_props %}{{ macros.linked_name(child.author_props) }}: {% endif %}
+    {{- macros.content(child.attachment, include_location=child.reader,
+                       render_attachments=True, render_image=child.render_image,
+                       white_space_pre=False) }}
+  {% endif %}
+{% endfilter %}
+
 </blockquote>
 {% endfor %}
   ]]></content>

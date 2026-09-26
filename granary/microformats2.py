@@ -1181,41 +1181,6 @@ def _tag_links(tags, visible=True):
   return sorted(urls)
 
 
-def author_display_name(hcard):
-  """Returns a human-readable string display name for an ``h-card`` object."""
-  name = None
-  if hcard:
-    prop = first_props(hcard.get('properties'))
-    name = prop.get('name') or prop.get('uid')
-  return name if name else 'Unknown'
-
-
-def maybe_linked_name(props):
-  """Returns the HTML for a ``p-name`` with an optional ``u-url`` inside.
-
-  Args:
-    props (dict): multiply-valued properties
-
-  Returns:
-    str: HTML
-  """
-  return str(source.jinja_macros.linked_name(props)).strip()
-
-
-def img(src, alt=''):
-  """Returns an ``<img>`` str with the given ``src``, ``class``, and ``alt``.
-
-  Args:
-    src (str): URL or dict with value and (optionally) ``alt``
-    alt (str): ``alt`` attribute value, or None
-
-  Returns:
-    str:
-  """
-  return str(source.jinja_macros.img(src, alt)).strip()
-
-
-
 def size_to_bytes(size):
   """Converts a string file size to an integer number of bytes.
 

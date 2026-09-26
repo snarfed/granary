@@ -1012,10 +1012,6 @@ foo bar
         ):
       self.assertEqual(expected, microformats2.get_string_urls(objs))
 
-  def test_img_blank_alt(self):
-    self.assertEqual('<img class="u-photo" src="http://foo" alt="" />',
-                      microformats2.img('http://foo'))
-
   def test_json_to_html_no_properties_or_type(self):
     # just check that we don't crash
     microformats2.json_to_html({'x': 'y'})
@@ -1027,14 +1023,6 @@ foo bar
         'url': 'http://foo',
         'displayName': '<bar>',
       }], 'tag'))
-
-  def test_maybe_linked_name_escapes_html(self):
-    self.assert_equals(
-      '<a class="p-name u-url" href="http://foo">&lt;bar&gt;</a>',
-      microformats2.maybe_linked_name({
-        'url': ['http://foo'],
-        'name': ['<bar>'],
-      }))
 
   def test_to_as1_with_location_hcard(self):
     obj = microformats2.to_as1({

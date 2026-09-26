@@ -366,6 +366,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * Only link `http` and `https` URLs in `href`s and `src`s. Other URLs, eg `javascript:` and `nostr:`, are rendered as plain text or omitted. _Breaking change._
   * Whitespace in rendered HTML has changed.
   * `from_as1`: if `summary` is HTML, convert it to `{'html': ..., 'value': ...}`, and render it as `e-summary`.
+  * Remove `author_display_name`, `img`, and `maybe_linked_name`. _Breaking change._
 * `nostr`:
   * `bech32_decode`: return the input unchanged, as documented, instead of raising `AssertionError` or `ValueError`, when the input has a valid checksum but malformed TLV contents.
   * `from_as1`:

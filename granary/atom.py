@@ -30,6 +30,8 @@ NAMESPACES = {
 def _encode_ampersands(text):
   return UNENCODED_AMPERSANDS_RE.sub('&amp;', text)
 
+jinja_env.filters['encode_ampersands'] = _encode_ampersands
+
 
 def _tag(elem):
   """Removes the namespace from an ElementTree element tag."""
@@ -407,7 +409,7 @@ def _prepare_activity(a, reader=True):
                   or obj.get('displayName') or obj.get('content') or 'Untitled')
   a['displayName'] = util.ellipsize(util.parse_html(display_name).get_text(''))
 
-  children = []
+  children = []  # dicts, rendered in _entry.atom
   image_urls_seen = set()
   image_atts = []
 
@@ -431,17 +433,15 @@ def _prepare_activity(a, reader=True):
     if type in ('note', 'article', 'comment', 'service'):
       # only render this attachment's images if at least one is new
       images = set(util.get_urls(att, 'image'))
-      render_image = bool(images - image_urls_seen)
-      image_urls_seen |= images
-      html = microformats2.render_content(
-        att, include_location=reader, render_attachments=True,
-        render_image=render_image, white_space_pre=False)
       author = att.get('author')
-      if author:
-        name = microformats2.maybe_linked_name(
-          microformats2.object_to_json(author).get('properties') or {})
-        html = f'{name.strip()}: {html}'
-      children.append(html)
+      children.append({
+        'attachment': att,
+        'author_props': (microformats2.object_to_json(author).get('properties')
+                         if author else None),
+        'render_image': bool(images - image_urls_seen),
+        'reader': reader,
+      })
+      image_urls_seen |= images
 
   # render image(s) that we haven't already seen
   for image in image_atts + as1.get_objects(obj, 'image'):
@@ -457,10 +457,10 @@ def _prepare_activity(a, reader=True):
                              _encode_ampersands(re.escape(rest))))
     if (url not in image_urls_seen and
         not img_src_re.search(obj['rendered_content'])):
-      children.append(microformats2.img(url))
+      children.append({'image': url})
       image_urls_seen.add(url)
 
-  obj['rendered_children'] = [_encode_ampersands(child) for child in children]
+  obj['atom_children'] = children
 
   # make sure published and updated are strict RFC 3339 timestamps
   for prop in 'published', 'updated':
