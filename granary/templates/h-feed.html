@@ -6,7 +6,7 @@
 {# extra is trusted HTML from the caller #}
 {{ extra|safe }}
 {% for obj in objs %}
-{{ macros.render(obj) }}
+{{ macros.render(obj, sanitize=sanitize) }}
 {% endfor %}
 </body>
 </html>

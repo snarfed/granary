@@ -717,7 +717,7 @@ json_to_activities = hfeed_to_as1
 """Deprecated! Use :func:`hfeed_to_as1` instead."""
 
 
-def activities_to_html(activities, extra='', body_class=''):
+def activities_to_html(activities, extra='', body_class='', sanitize=True):
   """Converts ActivityStreams activities to a microformats2 HTML ``h-feed``.
 
   Args:
@@ -725,6 +725,8 @@ def activities_to_html(activities, extra='', body_class=''):
     extra (str): extra HTML to be included inside the body tag, at the top.
       Must be trusted; it's not escaped.
     body_class (str): included as the body tag's class attribute
+    sanitize (bool): whether to sanitize HTML values, eg ``content``, with nh3.
+      Only set to False if the input is trusted!
 
   Returns:
     str: the content field in ``obj`` with the tags in the ``tags`` field
@@ -733,10 +735,11 @@ def activities_to_html(activities, extra='', body_class=''):
   """
   return source.jinja_env.get_template('h-feed.html').render(
     objs=[object_to_json(_activity_or_object(a)) for a in activities],
-    extra=extra, body_class=body_class)
+    extra=extra, body_class=body_class, sanitize=sanitize)
 
 
-def object_to_html(obj, parent_props=None, synthesize_content=True):
+def object_to_html(obj, parent_props=None, synthesize_content=True,
+                   sanitize=True):
   """Converts an ActivityStreams object to microformats2 HTML.
 
   Features:
@@ -752,6 +755,8 @@ def object_to_html(obj, parent_props=None, synthesize_content=True):
       this object is embedded, eg ``['u-repost-of']``
     synthesize_content (bool): whether to generate synthetic content if the object
       doesn't have its own, eg ``likes this`` or ``shared this``
+    sanitize (bool): whether to sanitize HTML values, eg ``content``, with nh3.
+      Only set to False if the input is trusted!
 
   Returns:
     str: the content field in ``obj`` with tags in the ``tags`` field converted
@@ -759,10 +764,10 @@ def object_to_html(obj, parent_props=None, synthesize_content=True):
     end.
   """
   return json_to_html(object_to_json(obj, synthesize_content=synthesize_content),
-                      parent_props=parent_props)
+                      parent_props=parent_props, sanitize=sanitize)
 
 
-def json_to_html(obj, parent_props=None):
+def json_to_html(obj, parent_props=None, sanitize=True):
   """Converts a microformats2 JSON object to microformats2 HTML.
 
   See :func:`object_to_html` for details.
@@ -771,11 +776,14 @@ def json_to_html(obj, parent_props=None):
     obj (dict): a decoded microformats2 JSON object
     parent_props (list): of str, the properties of the parent object where
       this object is embedded, eg ``u-repost-of``
+    sanitize (bool): whether to sanitize HTML values, eg ``content``, with nh3.
+      Only set to False if the input is trusted!
 
   Returns:
     str: HTML
   """
-  return str(source.jinja_macros.render(obj, parent_props or [])).strip()
+  return str(source.jinja_macros.render(obj, parent_props or [],
+                                        sanitize=sanitize)).strip()
 
 
 def _prepare_hentry(obj):
@@ -859,18 +867,21 @@ def _prepare_hentry(obj):
   }
 
 
-def hcard_to_html(hcard, parent_props=None):
+def hcard_to_html(hcard, parent_props=None, sanitize=True):
   """Renders an h-card as HTML.
 
   Args:
     hcard (dict): decoded JSON ``h-card``
     parent_props (list): of str, the properties of the parent object where
       this object is embedded, eg ``['p-author']``
+    sanitize (bool): whether to sanitize HTML values, eg ``content``, with nh3.
+      Only set to False if the input is trusted!
 
   Returns:
     str, rendered HTML
   """
-  return str(source.jinja_macros.hcard(hcard, parent_props or [])).strip()
+  return str(source.jinja_macros.hcard(hcard, parent_props or [],
+                                       sanitize=sanitize)).strip()
 
 
 def _hcard_props(hcard):
@@ -896,6 +907,8 @@ def render_content(obj, include_location=True, synthesize_content=True,
   Includes tags, mentions, and non-note/article attachments. (Note/article
   attachments are converted to mf2 children in object_to_json and then rendered
   in :func:`json_to_html`.)
+
+  WARNING: Doesn't sanitize HTML from ``obj``, eg ``content``/``summary``!
 
   Args:
     obj (dict): decoded JSON ActivityStreams object

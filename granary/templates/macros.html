@@ -13,10 +13,13 @@ each macro strip whitespace.
 {# Renders an mf2 property value. HTML is in the html field.
    https://microformats.org/wiki/microformats2-parsing#parsing_an_e-_property
  #}
-{% macro value(val) %}{% filter trim %}
+{% macro value(val, sanitize=True) %}{% filter trim %}
 {% if val is mapping and val.html %}
-  {# TODO XSS: raw remote HTML, NOT SANITIZED. sanitize here (eg nh3) before |safe. https://github.com/snarfed/granary/issues/586 #}
-  {{ val.html|safe }}
+  {% if sanitize %}
+    {% filter sanitize %}{{ val.html|safe }}{% endfilter %}
+  {% else %}
+    {{ val.html|safe }}
+  {% endif %}
 {% else %}
   {{ microformats2.get_text(val) }}
 {% endif %}
@@ -77,14 +80,14 @@ each macro strip whitespace.
 
 {# Renders a p-name, linked to the first u-url if there is one, and the other
    u-urls. rsvp is only used by h-entries. #}
-{% macro linked_name(props, rsvp=None) %}{% filter dedent|trim %}
+{% macro linked_name(props, rsvp=None, sanitize=True) %}{% filter dedent|trim %}
 {% set prop = microformats2.first_props(props) %}
 {% if 'name' in props %}
   {% set name %}
     {% if rsvp %}
-      <data class="p-rsvp" value="{{ rsvp }}">{{ value(prop.name) }}</data>
+      <data class="p-rsvp" value="{{ rsvp }}">{{ value(prop.name, sanitize=sanitize) }}</data>
     {% else %}
-      {{ value(prop.name) }}
+      {{ value(prop.name, sanitize=sanitize) }}
     {% endif %}
   {% endset %}
   {{ maybe_linked(name|trim, prop.url, 'p-name u-url', 'p-name') }}
@@ -106,7 +109,7 @@ each macro strip whitespace.
 {% endfilter %}{% endmacro %}
 
 {# Renders an mf2 h-card. #}
-{% macro hcard(hcard, parent_props=[]) %}{% filter dedent|trim %}
+{% macro hcard(hcard, parent_props=[], sanitize=True) %}{% filter dedent|trim %}
 {% set props = microformats2._hcard_props(hcard) %}
 {% if props %}
   <span class="{{ util.uniquify(parent_props + (hcard.type or []))|join(' ') }}">
@@ -116,7 +119,7 @@ each macro strip whitespace.
   {% for nid in props['numeric-id'] if nid %}
     <data class="p-numeric-id" value="{{ nid }}"></data>
   {% endfor %}
-    {{ linked_name(props)|indent(4) }}
+    {{ linked_name(props, sanitize=sanitize)|indent(4) }}
   {% for nick in props.nickname if nick %}
     <span class="p-nickname">{{ nick }}</span>
   {% endfor %}
@@ -128,16 +131,16 @@ each macro strip whitespace.
 {% endfilter %}{% endmacro %}
 
 {# Renders an mf2 object, either h-card or h-entry. #}
-{% macro render(obj, parent_props=[]) %}{% filter trim %}
+{% macro render(obj, parent_props=[], sanitize=True) %}{% filter trim %}
 {% if obj and 'h-card' in (obj.type or []) %}
-  {{ hcard(obj, parent_props) }}
+  {{ hcard(obj, parent_props, sanitize=sanitize) }}
 {% elif obj %}
-  {{ hentry(obj, parent_props) }}
+  {{ hentry(obj, parent_props, sanitize=sanitize) }}
 {% endif %}
 {% endfilter %}{% endmacro %}
 
 {# Renders a non-h-card mf2 object, eg h-entry, h-event, or h-cite. #}
-{% macro hentry(obj, parent_props=[]) %}{% filter trim %}
+{% macro hentry(obj, parent_props=[], sanitize=True) %}{% filter trim %}
 {% set e = microformats2._prepare_hentry(obj) %}
 {% set prop = e.prop %}
 {% set published = maybe_datetime(prop.published, 'dt-published') %}
@@ -145,7 +148,7 @@ each macro strip whitespace.
 <article class="{{ (parent_props + (obj.type or []))|join(' ') }}">
   <span class="p-uid">{{ prop.uid }}</span>
 {% if prop.summary %}
-  <div class="{{ 'e-summary' if prop.summary.html else 'p-summary' }}">{{ value(prop.summary) }}</div>
+  <div class="{{ 'e-summary' if prop.summary.html else 'p-summary' }}">{{ value(prop.summary, sanitize=sanitize) }}</div>
 {% endif %}
 {% if link_published %}
   {{ maybe_linked(published, prop.url, None if e.has_name else 'u-url') }}
@@ -156,19 +159,19 @@ each macro strip whitespace.
   {{ maybe_datetime(prop.updated, 'dt-updated') }}
 {% endif %}
 {% if prop.author %}
-  {{ hcard(prop.author, ['p-author'])|indent(2) }}
+  {{ hcard(prop.author, ['p-author'], sanitize=sanitize)|indent(2) }}
 {% endif %}
 {% if link_published and not e.has_name %}
   {{ extra_urls(e.props)|indent(2) }}
 {% else %}
-  {{ linked_name(e.props, rsvp=prop.rsvp)|indent(2) }}
+  {{ linked_name(e.props, rsvp=prop.rsvp, sanitize=sanitize)|indent(2) }}
 {% endif %}
   <div class="{{ e.content_classes|join(' ') }}">
 {% for invitee in e.props.invitee %}
-  {{ hcard(invitee, ['p-invitee'])|indent(2) }}
+  {{ hcard(invitee, ['p-invitee'], sanitize=sanitize)|indent(2) }}
 {% endfor %}
 {% if e.content_classes %}
-  {{ value(prop.content) }}
+  {{ value(prop.content, sanitize=sanitize) }}
 {% endif %}
   </div>
 {% for val in e.props.photo %}
@@ -193,10 +196,10 @@ each macro strip whitespace.
   <time class="dt-end">{{ end }}</time>
 {% endfor %}
 {% if e.location %}
-  {{ hcard(e.location, ['p-location'])|indent(2) }}
+  {{ hcard(e.location, ['p-location'], sanitize=sanitize)|indent(2) }}
 {% endif %}
 {% for cat in e.people %}
-  {{ hcard(cat, ['u-category', 'h-card'])|indent(2) }}
+  {{ hcard(cat, ['u-category', 'h-card'], sanitize=sanitize)|indent(2) }}
 {% endfor %}
 {% for cat in e.categories %}
   <span class="u-category">{{ cat }}</span>
@@ -206,13 +209,13 @@ each macro strip whitespace.
 {% endfor %}
 {% for child, child_props in e.children %}
   {% if child is not string %}
-  {{ render(child, child_props)|indent(2) }}
+  {{ render(child, child_props, sanitize=sanitize)|indent(2) }}
   {% elif child is web %}
   <a class="{{ child_props[0] }}" href="{{ child }}"></a>
   {% endif %}
 {% endfor %}
 {% for comment in e.props.comment %}
-  {{ render(comment, ['p-comment'])|indent(2) }}
+  {{ render(comment, ['p-comment'], sanitize=sanitize)|indent(2) }}
 {% endfor %}
 </article>
 {% endfilter %}{% endmacro %}
@@ -245,7 +248,8 @@ each macro strip whitespace.
 {% endfor %}
 {% endfilter %}{% endmacro %}
 
-{# Renders an AS1 object's content. See microformats2.render_content. #}
+{# Renders an AS1 object's content. See microformats2.render_content.
+   WARNING: Doesn't sanitize! #}
 {% macro content(obj, include_location=True, synthesize_content=True,
                  render_attachments=False, render_image=False,
                  white_space_pre=True) %}{% filter trim %}
@@ -254,7 +258,7 @@ each macro strip whitespace.
   render_attachments=render_attachments, render_image=render_image,
   white_space_pre=white_space_pre) %}
 {% set ctx = c.context %}
-{# TODO XSS: raw remote HTML, NOT SANITIZED. sanitize here (eg nh3) before |safe. https://github.com/snarfed/granary/issues/586 #}
+{# raw remote HTML, not sanitized #}
 {% if c.pre %}<div style="white-space: pre">{% endif %}
 {% for text, url in c.segments -%}
   {% if url is web -%}

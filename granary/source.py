@@ -10,6 +10,7 @@ http://activitystrea.ms/specs/json/targeting/1.0/#anchor3
 """
 import collections
 import copy
+import functools
 import html
 from html import escape, unescape
 import logging
@@ -21,6 +22,7 @@ import brevity
 import html2text
 import jinja2
 import mf2util
+import nh3
 from requests import RequestException
 from webutil import util
 from webutil.util import json_dumps, json_loads
@@ -28,6 +30,22 @@ from webutil.util import json_dumps, json_loads
 from . import as1, microformats2
 
 logger = logging.getLogger(__name__)
+
+# for sanitizing remote HTML that we display. nh3's defaults, plus class on all
+# tags for microformats and fediverse markup, rel on links, and the tags and
+# attributes that our microformats2 HTML uses. style is limited to white-space.
+# https://nh3.readthedocs.io/
+SANITIZE_TAGS = nh3.ALLOWED_TAGS | {'audio', 'video'}
+SANITIZE_ATTRIBUTES = {
+  **nh3.ALLOWED_ATTRIBUTES,
+  '*': {'aria-hidden', 'class'},
+  'a': nh3.ALLOWED_ATTRIBUTES['a'] | {'rel'},
+  'audio': {'controls', 'src'},
+  'data': {'value'},
+  'div': {'style'},
+  'time': {'datetime'},
+  'video': {'controls', 'poster', 'src'},
+}
 
 jinja_env = jinja2.Environment(
   loader=jinja2.PackageLoader(__package__, 'templates'), autoescape=True,
@@ -37,6 +55,9 @@ jinja_env.globals.update({
   'util': util,
 })
 jinja_env.filters['dedent'] = textwrap.dedent
+jinja_env.filters['sanitize'] = functools.partial(
+  nh3.clean, tags=SANITIZE_TAGS, attributes=SANITIZE_ATTRIBUTES, link_rel=None,
+  filter_style_properties={'white-space'})
 jinja_env.tests['web'] = util.is_web
 jinja_macros = jinja_env.get_template('macros.html').module
 

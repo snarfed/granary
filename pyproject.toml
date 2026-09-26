@@ -50,6 +50,7 @@ dependencies = [
     'lexrpc>=2.2',
     'mf2util>=0.5.0',
     'multiformats>=0.3.1',
+    'nh3>=0.3',
     'oauth-dropins>=8.0',
     'praw>=7.3.0',
     'prawcore>=2.1',
