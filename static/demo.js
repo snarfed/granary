@@ -89,7 +89,7 @@ function render_demo_request() {
       if (elem && elem.value)
         url += '&' + elem.name + '=' + get(OAUTH_INPUT_IDS[i]);
     }
-    request.innerHTML = 'GET <a href="' + url + '">' + url + '</a>';
+    render_request(url);
   }
 }
 
@@ -99,8 +99,14 @@ function render_url_request() {
       + '&output=' + get('output')
       + '&url=' + get('url');
 
-  document.getElementById('request').innerHTML =
-    'GET <a href="' + url + '">' + url + '</a>';
+  render_request(url);
+}
+
+// Renders a GET link to url in the request element.
+function render_request(url) {
+  var link = document.createElement('a');
+  link.href = link.textContent = url;
+  document.getElementById('request').replaceChildren('GET ', link);
 }
 
 function update_form() {
