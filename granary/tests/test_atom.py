@@ -1,6 +1,7 @@
 """Unit tests for atom.py."""
 import copy
 from unittest.mock import patch
+from xml.etree import ElementTree
 
 import requests
 from webutil import testutil, util
@@ -415,6 +416,20 @@ class AtomTest(testutil.TestCase):
     self.assert_multiline_in(
       '<title>I’ve been looking over Mike Hoerger’s Pandemic Mitigation Collaborative - Data Tracker which estimates...</title>\n',
       atom.from_as1([activity], {}))
+
+  def test_content_cdata_end_doesnt_break_out(self):
+    evil = ']]><x:script xmlns:x="http://www.w3.org/1999/xhtml">alert(1)</x:script><![CDATA['
+    got = atom.activities_to_atom([{
+      'objectType': 'note',
+      'content': f'<p>foo{evil}</p>',
+      'attachments': [{'objectType': 'note', 'content': f'bar{evil}'}],
+    }], {})
+
+    root = ElementTree.fromstring(got)
+    self.assertEqual([], [elem.tag for elem in root.iter() if 'xhtml' in elem.tag])
+    content = root.find('{http://www.w3.org/2005/Atom}entry/{http://www.w3.org/2005/Atom}content').text
+    self.assertIn(f'foo{evil}', content)
+    self.assertIn(f'bar{evil}', content)
 
   def test_render_content_as_html(self):
     self.assert_multiline_in(

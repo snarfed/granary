@@ -15,7 +15,7 @@
     <summary>{{ obj.summary }}</summary>
   {% endif %}
 
-  <content type="html"><![CDATA[
+  <content type="html"><![CDATA[{% filter escape_cdata_end %}
 {% if obj.actor %}
   <div>
   <p>{{ activity.annotation }}</p>
@@ -47,6 +47,7 @@
 
 </blockquote>
 {% endfor %}
+{% endfilter %}
   ]]></content>
 
   <link rel="alternate" type="text/html" href="{{ url }}" />

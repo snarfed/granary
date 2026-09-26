@@ -31,6 +31,8 @@ def _encode_ampersands(text):
   return UNENCODED_AMPERSANDS_RE.sub('&amp;', text)
 
 jinja_env.filters['encode_ampersands'] = _encode_ampersands
+# split ]]> so that content can't end the CDATA section early and inject XML
+jinja_env.filters['escape_cdata_end'] = lambda text: str(text).replace(']]>', ']]]]><![CDATA[>')
 
 
 def _tag(elem):

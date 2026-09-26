@@ -340,6 +340,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
 * `atom`:
   * `to_as1`: read `<link rel=self>`'s `href`, not text value.
   * `to_as1`: convert [`<category>`](https://datatracker.ietf.org/doc/html/rfc4287#section-4.2.2) elements to hashtag tags, using `label` if it's provided, otherwise `term`.
+  * `from_as1`: fix XSS: escape `]]>` in content so that it can't end the `<content>` CDATA section early and inject XML elements, eg `<script>`.
 * `bluesky`:
   * `from_as1`: handle blank `published`/`updated` values, eg whitespace.
   * `url_to_did_web`:
