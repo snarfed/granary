@@ -22,6 +22,7 @@ dnspython==2.8.0
 domain2idna==1.12.5
 feedgen==1.0.0
 feedparser==6.0.14
+feedparser-sgmllib==2.1.0
 flask==3.1.3
 flask-caching==2.4.1
 furl==2.1.4
@@ -58,10 +59,10 @@ markupsafe==3.0.3
 mf2py==2.0.2
 multiformats==0.3.1.post4
 multiformats-config==0.3.1
+nh3==0.3.7
 oauthlib==3.3.1
 opentelemetry-api==1.44.0
 orderedmultidict==1.0.2
-packaging==26.3
 pkce==1.0.3
 praw==8.0.3
 prawcore==4.0.0
@@ -82,8 +83,6 @@ requests==2.34.2
 requests-hardened==1.3.0
 requests-oauth2client==1.8.0
 requests-oauthlib==2.0.0
-setuptools==84.0.0
-sgmllib3k==1.0.0
 simple-websocket==1.1.0
 six==1.17.0
 soupsieve==2.9.2
@@ -99,16 +98,3 @@ websocket-client==1.9.2
 websockets==16.1.1
 werkzeug==3.1.8
 wsproto==1.3.2
-
-# The following packages were excluded from the output:
-# arroba
-# brevity
-# carbox
-# dag-json
-# flask-gae-static
-# lexrpc
-# mf2util
-# oauth-dropins
-# pymemcache
-# pywebutil
-# secp256k1
