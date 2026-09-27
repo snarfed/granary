@@ -5595,6 +5595,85 @@ class BlueskyTest(testutil.TestCase):
       'record': expected,
     })
 
+  @patch.object(util.session, 'post', return_value=requests_response({
+    'uri': 'at://did:plc:me/app.bsky.feed.post/abc123',
+    'cid': 'sydddddd',
+  }))
+  @patch.object(util.session, 'get')
+  def test_create_with_blobs(self, mock_get, mock_post):
+    self.assert_equals({
+      'id': 'at://did:plc:me/app.bsky.feed.post/abc123',
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create(POST_AS_IMAGES['object'],
+                      blobs={NEW_BLOB_URL: NEW_BLOB}).content)
+
+    mock_get.assert_not_called()
+    self.assertEqual(1, mock_post.call_count)
+
+    expected = copy.deepcopy(POST_BSKY_IMAGES)
+    del expected['fooOriginalText']
+    del expected['fooOriginalUrl']
+    mock_post.assert_called_once()
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.feed.post',
+      'record': expected,
+    })
+
+  @patch.object(util.session, 'post', return_value=requests_response({
+    'uri': 'at://did:plc:me/app.bsky.feed.post/abc123',
+    'cid': 'sydddddd',
+  }))
+  @patch.object(util.session, 'get')
+  def test_create_with_video_blobs(self, mock_get, mock_post):
+    video_blob = {**NEW_BLOB, 'mimeType': 'video/mp4'}
+    self.assert_equals({
+      'id': 'at://did:plc:me/app.bsky.feed.post/abc123',
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create(POST_AS_VIDEO['object'],
+                      blobs={NEW_BLOB_URL: video_blob}).content)
+
+    mock_get.assert_not_called()
+    self.assertEqual(1, mock_post.call_count)
+
+    expected = copy.deepcopy(POST_BSKY_VIDEO)
+    del expected['fooOriginalText']
+    del expected['fooOriginalUrl']
+
+    mock_post.assert_called_once()
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.feed.post',
+      'record': expected,
+    })
+
+  @patch.object(util.session, 'post', return_value=requests_response({
+    'uri': 'at://did:plc:me/app.bsky.feed.post/abc123',
+    'cid': 'sydddddd',
+  }))
+  def test_create_video_without_text(self, mock_post):
+    video_blob = {**NEW_BLOB, 'mimeType': 'video/mp4'}
+    obj = {
+      **POST_AS_VIDEO['object'],
+      'content': '',
+    }
+    self.assert_equals({
+      'id': 'at://did:plc:me/app.bsky.feed.post/abc123',
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create(obj, blobs={NEW_BLOB_URL: video_blob}).content)
+
+    expected = copy.deepcopy(POST_BSKY_VIDEO)
+    del expected['fooOriginalText']
+    del expected['fooOriginalUrl']
+    expected['text'] = ''
+
+    mock_post.assert_called_once()
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.feed.post',
+      'record': expected,
+    })
+
   @patch.object(util.session, 'post')
   @patch.object(util.session, 'get')
   def test_create_with_non_image_media(self, mock_get, mock_post):

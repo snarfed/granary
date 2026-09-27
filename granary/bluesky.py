@@ -2438,20 +2438,24 @@ class Bluesky(Source):
       if not cursor or len(follows) >= MAX_FOLLOWS:
         return follows[:MAX_FOLLOWS]
 
-  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
+  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False,
+             blobs=None):
     """Creates a post, reply, repost, or like.
 
     Args:
       obj (dict): ActivityStreams object
       include_link (str)
       ignore_formatting (bool)
+      blobs (dict): optional mapping from str image or video URL in ``obj`` to
+        ``$type: blob`` dict for blobs that have already been uploaded to the
+        user's PDS. These URLs aren't fetched or uploaded again.
 
     Returns:
       CreationResult: whose content will be a dict with ``id``, ``url``, and
       ``type`` keys (all optional) for the newly created object (or None)
     """
     return self._create(obj, preview=False, include_link=include_link,
-                        ignore_formatting=ignore_formatting)
+                        ignore_formatting=ignore_formatting, blobs=blobs)
 
   def preview_create(self, obj, include_link=OMIT_LINK,
                      ignore_formatting=False):
@@ -2524,7 +2528,7 @@ class Bluesky(Source):
       return self.client.com.atproto.repo.createRecord(input)
 
   def _create(self, obj, preview=None, update=False, include_link=OMIT_LINK,
-              ignore_formatting=False):
+              ignore_formatting=False, blobs=None):
     assert preview in (False, True)
     assert self.did
     type = obj.get('objectType')
@@ -2555,7 +2559,8 @@ class Bluesky(Source):
     atts = obj.get('attachments', [])
     images = util.dedupe_urls(util.get_list(obj, 'image') +
                               [a for a in atts if a.get('objectType') == 'image'])
-    has_media = images and (type in ('note', 'article') or is_reply)
+    videos = [a for a in atts if a.get('objectType') == 'video']
+    has_media = (images or videos) and (type in ('note', 'article') or is_reply)
 
     # prefer displayName over content for articles
     #
@@ -2671,7 +2676,7 @@ class Bluesky(Source):
                                description=preview_description)
 
       else:
-        blobs, aspects = self.upload_media(images)
+        blobs, aspects = self.upload_media(images, existing=blobs)
         post_atp = from_as1(obj, blobs=blobs, aspects=aspects, client=self)
         post_atp['text'] = content
 
@@ -2787,15 +2792,18 @@ class Bluesky(Source):
 
     return {}
 
-  def upload_media(self, media):
+  def upload_media(self, media, existing=None):
     """
     Args:
       media (sequence of dict AS1 objects)
+      existing (dict): optional mapping from str URL to dict blob for media that
+        has already been uploaded. These URLs are skipped and included as is in
+        the returned existing.
 
     Returns:
       (dict mapping string URL to dict blob, dict mapping string URL to (int width, int height)) tuple:
     """
-    blobs = {}
+    blobs = dict(existing or {})
     aspects = {}
 
     for obj in media:

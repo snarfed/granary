@@ -354,6 +354,8 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
     * Keep language keys in `contentMap` even if their value is empty.
   * `Bluesky`:
     * `create`/`preview_create`: add support for blocks.
+    * `create`/`preview_create`: allow posts with videos but no text.
+    * `create`, `upload_media`: add `blobs` kwarg for images and videos that have already been uploaded.
     * Add `update`/`preview_update`.
 * `farcaster`:
   * `from_as1`/`to_as1`: update timestamps to use [Farcaster's custom epoch](https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps), 2026-01-01.
