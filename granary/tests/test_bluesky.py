@@ -1903,6 +1903,27 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(expected, self.from_as1(
       POST_AS_IMAGES, blobs={NEW_BLOB_URL: BLOB}))
 
+  def test_from_as1_post_with_image_blobs_as1_dimensions(self):
+    obj = copy.deepcopy(POST_AS_IMAGES)
+    obj['object']['image'][0].update({'width': 123, 'height': 456})
+    expected = copy.deepcopy(POST_BSKY_IMAGES)
+    expected['embed']['images'][0].update({
+      'image': BLOB,
+      'aspectRatio': {'width': 123, 'height': 456},
+    })
+    self.assert_equals(expected, self.from_as1(obj, blobs={NEW_BLOB_URL: BLOB}))
+
+  def test_from_as1_post_with_image_blobs_aspects_override_as1_dimensions(self):
+    obj = copy.deepcopy(POST_AS_IMAGES)
+    obj['object']['image'][0].update({'width': 123, 'height': 456})
+    expected = copy.deepcopy(POST_BSKY_IMAGES)
+    expected['embed']['images'][0].update({
+      'image': BLOB,
+      'aspectRatio': {'width': 7, 'height': 8},
+    })
+    self.assert_equals(expected, self.from_as1(
+      obj, blobs={NEW_BLOB_URL: BLOB}, aspects={NEW_BLOB_URL: (7, 8)}))
+
   def test_from_as1_post_with_image_subset_of_blobs(self):
     expected = copy.deepcopy(POST_BSKY_IMAGES)
     expected['embed']['images'][0]['image'] = BLOB
@@ -1959,6 +1980,14 @@ class BlueskyTest(testutil.TestCase):
     aspects = {NEW_BLOB_URL: (123, 456)}
     self.assert_equals(expected, self.from_as1(POST_AS_VIDEO, blobs=blobs,
                                                aspects=aspects))
+
+  def test_from_as1_post_with_video_blobs_as1_dimensions(self):
+    obj = copy.deepcopy(POST_AS_VIDEO)
+    obj['object']['attachments'][0]['stream'].update({'width': 123, 'height': 456})
+    expected = copy.deepcopy(POST_BSKY_VIDEO)
+    expected['embed']['aspectRatio'] = {'width': 123, 'height': 456}
+    blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
+    self.assert_equals(expected, self.from_as1(obj, blobs=blobs))
 
   def test_from_as1_post_with_gallery(self):
     self.assert_equals(POST_BSKY, self.from_as1(POST_AS_GALLERY))

@@ -1377,6 +1377,21 @@ class As1Test(testutil.TestCase):
     as1.expand_tags(obj)
     self.assertEqual(orig, obj)
 
+  def test_aspect_ratio(self):
+    for obj, expected in (
+        ({'width': 123, 'height': 456}, (123, 456)),
+        ({'width': '123', 'height': '456'}, (123, 456)),
+        ({'width': 123.0, 'height': 456.0}, (123, 456)),
+        ({}, None),
+        ({'width': 123}, None),
+        ({'width': 0, 'height': 456}, None),
+        ({'width': -1, 'height': 456}, None),
+        ({'width': 12.5, 'height': 456}, None),
+        ({'width': 'foo', 'height': 456}, None),
+    ):
+      with self.subTest(obj=obj):
+        self.assertEqual(expected, as1.aspect_ratio(obj))
+
   def test_is_html(self):
     for obj in (
         {'content_is_html': True},

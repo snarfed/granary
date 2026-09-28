@@ -441,6 +441,9 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   ``maxGraphemes`` or ``maxLength`` in its lexicon, it's truncated with an ``…``
   ellipsis character at the end in order to fit.
 
+  TODO: drop ``aspects`` in favor of ``width``/``height`` fields in ``image``
+    objects themselves
+
   Args:
     obj (dict): AS1 object or activity
     out_type (str): desired output lexicon ``$type``
@@ -478,7 +481,6 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   Raises:
     ValueError: if the object can't be converted, eg if the ``objectType`` or
       ``verb`` fields are missing or unsupported
-
   """
   if isinstance(client, Bluesky):
     client = client._client
@@ -754,7 +756,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
             'image': blob,
             'alt': alt,
           }
-          if aspect := aspects.get(url):
+          if aspect := aspects.get(url) or as1.aspect_ratio(img):
             image_record['aspectRatio'] = {
               'width': aspect[0],
               'height': aspect[1]
@@ -786,7 +788,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           'alt': alt,
         }
 
-        if aspect := aspects.get(url):
+        stream = as1.get_object(att, 'stream')
+        if aspect := aspects.get(url) or as1.aspect_ratio(stream):
           video_record_embed['aspectRatio'] = {
             'width': aspect[0],
             'height': aspect[1]

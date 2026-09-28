@@ -677,6 +677,23 @@ def object_urls(obj):
     value(u) for u in util.get_list(obj, 'url') + util.get_list(obj, 'urls')))
 
 
+def aspect_ratio(obj):
+  """Returns an object's dimensions from its ``width`` and ``height``.
+
+  Args:
+    obj (dict): AS1 object, eg an image or a video's ``stream``
+
+  Returns:
+    (int width, int height) tuple, or None if either is missing or isn't a
+    positive integer
+  """
+  width = obj.get('width')
+  height = obj.get('height')
+  if (util.is_int(width) and util.is_int(height)
+      and int(width) > 0 and int(height) > 0):
+    return int(width), int(height)
+
+
 def targets(obj):
   """Collects an AS1 activity or object's targets.
 
