@@ -331,7 +331,8 @@ def web_url_to_at_uri(url, handle=None, did=None):
   return f'at://{id}/{collection}/{rkey}'
 
 
-def from_as1_to_strong_ref(obj, client=None, value=False, raise_=False):
+def from_as1_to_strong_ref(obj, client=None, value=False, raise_=False,
+                           validate=True):
   """Converts an AS1 object to an ATProto ``com.atproto.repo.strongRef``.
 
   Uses AS1 ``id`` or ``url`, which should be an ``at://`` URI.
@@ -345,6 +346,9 @@ def from_as1_to_strong_ref(obj, client=None, value=False, raise_=False):
       returned object
     raise_ (bool): whether to raise ``ValueError`` if ``client`` is provided and
       we can't fetch the object's record and populate ``cid``
+    validate (bool): if False, and ``obj``'s id isn't an ``at://`` URI or
+      Bluesky URL, returns a strong ref with that id as ``uri`` and no ``cid``,
+      which is invalid
 
   Returns:
     dict: ATProto ``com.atproto.repo.strongRef`` record
@@ -361,6 +365,9 @@ def from_as1_to_strong_ref(obj, client=None, value=False, raise_=False):
   else:
     at_uri = Bluesky.post_id(id) or ''
     match = AT_URI_RE.fullmatch(at_uri)
+
+  if not match and id and not validate:
+    return {'uri': id}
 
   if not match or not client:
     if not match and raise_:
@@ -428,7 +435,8 @@ def from_as1_datetime(val):
 
 def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
              original_fields_prefix=None, as_embed=False, raise_=False,
-             dynamic_sensitive_labels=False, multiple=False, domain=None):
+             dynamic_sensitive_labels=False, multiple=False, domain=None,
+             validate=True):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
@@ -474,6 +482,9 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       the actor has a ``monetization`` property. Default False.
     domain (str): optional. A DNS domain for the actor. Only used with
       ``out_type='site.standard.publication'``, and required then.
+    validate (bool): if False, allows generating invalid records. Currently
+      only allows replies to non-Bluesky objects, with their ids in the reply
+      refs' ``uri`` and no ``cid``.
 
   Returns:
     dict or list: ``app.bsky.*`` object, or list of objects if ``multiple`` is True
@@ -1101,10 +1112,10 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     # in reply to
     reply = None
-    in_reply_to = Bluesky.base_object(obj)
+    in_reply_to = Bluesky.base_object(obj, bluesky_only=validate)
     if in_reply_to and not is_dm:
-      parent_ref = from_as1_to_strong_ref(in_reply_to, client=client,
-                                          value=True, raise_=raise_)
+      parent_ref = from_as1_to_strong_ref(in_reply_to, client=client, value=True,
+                                          raise_=raise_, validate=validate)
       root_ref = (parent_ref.pop('value', {}).get('reply', {}).get('root')
                   or parent_ref)
       reply = {
@@ -2442,13 +2453,16 @@ class Bluesky(Source):
         return follows[:MAX_FOLLOWS]
 
   def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False,
-             blobs=None):
+             validate=True, blobs=None, **kwargs):
     """Creates a post, reply, repost, or like.
 
     Args:
       obj (dict): ActivityStreams object
       include_link (str)
       ignore_formatting (bool)
+      validate (bool): if False, allows creating invalid records, eg replies
+        to non-Bluesky posts, and passes ``validate: false`` to
+        ``createRecord``. See :func:`from_as1`.
       blobs (dict): optional mapping from str image or video URL in ``obj`` to
         ``$type: blob`` dict for blobs that have already been uploaded to the
         user's PDS. These URLs aren't fetched or uploaded again.
@@ -2458,7 +2472,8 @@ class Bluesky(Source):
       ``type`` keys (all optional) for the newly created object (or None)
     """
     return self._create(obj, preview=False, include_link=include_link,
-                        ignore_formatting=ignore_formatting, blobs=blobs)
+                        ignore_formatting=ignore_formatting, validate=validate,
+                        blobs=blobs)
 
   def preview_create(self, obj, include_link=OMIT_LINK,
                      ignore_formatting=False):
@@ -2507,13 +2522,15 @@ class Bluesky(Source):
     return self._create(obj, preview=True, update=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def _write_record(self, record, rkey=None):
+  def _write_record(self, record, rkey=None, validate=True):
     """Creates a new repo record, or updates an existing one in place.
 
     Args:
       record (dict): ATProto record to write
       rkey (str): optional, the rkey of an existing record to update in place.
         If not provided, a new record is created instead.
+      validate (bool): if False, tells the PDS not to validate the record
+        against its lexicon
 
     Returns:
       dict: ``com.atproto.repo.createRecord`` or ``putRecord`` output, with
@@ -2524,6 +2541,8 @@ class Bluesky(Source):
       'collection': record['$type'],
       'record': record,
     }
+    if not validate:
+      input['validate'] = False
 
     if rkey:
       return self.client.com.atproto.repo.putRecord({**input, 'rkey': rkey})
@@ -2531,14 +2550,14 @@ class Bluesky(Source):
       return self.client.com.atproto.repo.createRecord(input)
 
   def _create(self, obj, preview=None, update=False, include_link=OMIT_LINK,
-              ignore_formatting=False, blobs=None):
+              ignore_formatting=False, validate=True, blobs=None):
     assert preview in (False, True)
     assert self.did
     type = obj.get('objectType')
     verb = obj.get('verb')
 
     try:
-      base_obj = self.base_object(obj)
+      base_obj = self.base_object(obj, bluesky_only=validate)
     except ValueError as e:
       e_str = str(e)
       return creation_result(abort=True, error_plain=e_str,
@@ -2680,7 +2699,8 @@ class Bluesky(Source):
 
       else:
         blobs, aspects = self.upload_media(images, existing=blobs)
-        post_atp = from_as1(obj, blobs=blobs, aspects=aspects, client=self)
+        post_atp = from_as1(obj, blobs=blobs, aspects=aspects, client=self,
+                            validate=validate)
         post_atp['text'] = content
 
         # facet for link to original post, if any
@@ -2700,7 +2720,7 @@ class Bluesky(Source):
               },
             })
 
-        result = self._write_record(post_atp, rkey=rkey)
+        result = self._write_record(post_atp, rkey=rkey, validate=validate)
         return creation_result({
           'id': result['uri'],
           'url': at_uri_to_web_url(result['uri'], handle=self.handle),
@@ -2712,7 +2732,8 @@ class Bluesky(Source):
         error_plain=f'Cannot publish type={type}, verb={verb} to Bluesky',
         error_html=f'Cannot publish type={type}, verb={verb} to Bluesky')
 
-    result = self._write_record(from_as1(obj, client=self), rkey=rkey)
+    result = self._write_record(from_as1(obj, client=self, validate=validate),
+                                rkey=rkey, validate=validate)
     return creation_result({
       'id': result['uri'],
       'url': result_url,
@@ -2754,12 +2775,21 @@ class Bluesky(Source):
     return creation_result(description=f'<span class="verb">delete</span> <a href="{url}">this</a>.')
 
   @classmethod
-  def base_object(cls, obj):
+  def base_object(cls, obj, bluesky_only=True):
     """Wraps :meth:`Source.base_object` and infers ``id`` and/or ``url``.
 
     TODO: unify with :meth:`Source.base_object`, probably with a ``new
     normalize_url`` or similar function that determines if a URL is on this source.
     maybe with :class:`util.UrlCanonicalizer`?
+
+    Args:
+      obj (dict): AS1 object or activity
+      bluesky_only (bool): if False, and none of the base objects are on
+        Bluesky/ATProto, returns the first non-Bluesky base object instead of
+        raising ``ValueError``
+
+    Raises:
+      ValueError: if no ATProto base object is found and ``bluesky_only`` is True
     """
     for field in ('inReplyTo', 'object', 'target'):
       if not (bases := as1.get_objects(obj, field)):
@@ -2789,7 +2819,10 @@ class Bluesky(Source):
             base.setdefault('url', Bluesky.user_url(id))
             return base
 
-        non_bluesky.extend(ids)
+        non_bluesky.append(base)
+
+      if non_bluesky and not bluesky_only:
+        return non_bluesky[0]
 
       raise ValueError(f"{field} {non_bluesky} doesn't look like Bluesky/ATProto")
 

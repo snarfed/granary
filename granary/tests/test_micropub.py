@@ -81,23 +81,26 @@ class MicropubTest(testutil.TestCase):
     })
 
   def test_create_reply(self):
-    self.mock_post.return_value = requests_response(
-      '', headers={'Location': 'http://my/reply'})
-    result = self.micropub.create({
-      'objectType': 'comment',
-      'content': '@hey great post',
-      'inReplyTo': [{'url': 'http://reply/target'}],
-    })
+    for kwargs in {}, {'validate': False}:
+      with self.subTest(kwargs=kwargs):
+        self.mock_post.reset_mock()
+        self.mock_post.return_value = requests_response(
+          '', headers={'Location': 'http://my/reply'})
+        result = self.micropub.create({
+          'objectType': 'comment',
+          'content': '@hey great post',
+          'inReplyTo': [{'url': 'http://reply/target'}],
+        }, **kwargs)
 
-    self.assert_equals({'id': 'http://my/reply', 'url': 'http://my/reply'},
-                       result.content, result)
-    self.assert_post(json={
-      'type': ['h-entry'],
-      'properties': {
-        'content': ['@hey great post'],
-        'in-reply-to': ['http://reply/target'],
-      },
-    })
+        self.assert_equals({'id': 'http://my/reply', 'url': 'http://my/reply'},
+                           result.content, result)
+        self.assert_post(json={
+          'type': ['h-entry'],
+          'properties': {
+            'content': ['@hey great post'],
+            'in-reply-to': ['http://reply/target'],
+          },
+        })
 
   def test_create_like(self):
     self.mock_post.return_value = requests_response(

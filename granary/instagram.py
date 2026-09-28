@@ -403,7 +403,8 @@ class Instagram(source.Source):
     """
     return None
 
-  def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
+  def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False,
+             **kwargs):
     """Creates a new comment or like.
 
     Args:

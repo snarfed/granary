@@ -793,7 +793,8 @@ class Mastodon(source.Source):
       'author': self.to_as1_actor(account),
     }
 
-  def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
+  def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False,
+             **kwargs):
     """Creates a status (aka toot), reply, boost (aka reblog), or favorite.
 
     https://docs.joinmastodon.org/methods/statuses/

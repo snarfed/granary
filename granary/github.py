@@ -503,7 +503,8 @@ class GitHub(source.Source):
       'context': f'{owner}/{repo}',
     }, parse_json=False).text
 
-  def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
+  def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False,
+             **kwargs):
     """Creates a new issue or comment.
 
     Args:

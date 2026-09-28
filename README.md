@@ -347,6 +347,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
     * Strip trailing dots from fully qualified hostnames. They previously produced `did:web:`s that `did_web_to_url` rejected as invalid.
     * Don't log a spurious "contained a port" warning for URLs with upper case hostnames.
   * `from_as1`:
+    * Add `validate` kwarg to allow generating invalid records, eg replies to non-Bluesky objects.
     * Populate image and video `aspectRatio` from AS1 `width` and `height` if they're not in `aspects`.
     * Fix bug where converting a post with more than four images to `app.bsky.embed.gallery` failed validation due to missing `aspectRatio` field.
     * Fix bug with quote posts with attached media and `postView`/`feedViewPost` output.
@@ -357,6 +358,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
     * `create`/`preview_create`: add support for blocks.
     * `create`/`preview_create`: allow posts with videos but no text.
     * `create`, `upload_media`: add `blobs` kwarg for images and videos that have already been uploaded.
+    * `create`: add `validate` kwarg. If False, allows replies to non-Bluesky posts, and passes `validate: false` to `createRecord`.
     * Add `update`/`preview_update`.
 * `farcaster`:
   * `from_as1`/`to_as1`: update timestamps to use [Farcaster's custom epoch](https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps), 2026-01-01.
@@ -388,6 +390,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
 * `source`:
   * Add new `whitespace_to_html` function that HTML-escapes plain text, converts newlines to `<br>`, and converts line-leading spaces to `&nbsp;` ([bridgy-fed#2675](https://github.com/snarfed/bridgy-fed/issues/2675)).
   * `Source`: add `update`/`preview_update` methods, for updating existing objects.
+  * `Source.create`: add `validate` kwarg. If False, subclasses may create objects that aren't valid in their native protocol.
 
 
 ### 11.0 - 2026-07-02

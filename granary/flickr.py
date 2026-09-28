@@ -68,7 +68,7 @@ class Flickr(source.Source):
       params, file, self.access_token_key, self.access_token_secret)
 
   def create(self, obj, include_link=source.OMIT_LINK,
-             ignore_formatting=False):
+             ignore_formatting=False, **kwargs):
     """Creates a photo, comment, or favorite.
 
     Args:

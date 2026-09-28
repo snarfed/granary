@@ -1130,7 +1130,8 @@ class Nostr(Source):
 
     return events
 
-  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
+  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False,
+             **kwargs):
     """Creates a new object: a post, comment, like, repost, etc.
 
     See :meth:`Source.create` docstring for details.

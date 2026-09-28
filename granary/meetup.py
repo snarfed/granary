@@ -41,7 +41,8 @@ class Meetup(source.Source):
   def __init__(self, access_token):
     self.access_token = access_token
 
-  def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):
+  def create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False,
+             **kwargs):
     return self._create(obj, False, include_link, ignore_formatting)
 
   def preview_create(self, obj, include_link=source.OMIT_LINK, ignore_formatting=False):

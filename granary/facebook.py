@@ -589,7 +589,7 @@ class Facebook(source.Source):
       activity_user_id, activity_id, reaction_user_id, reaction_id, activity=activity)
 
   def create(self, obj, include_link=source.OMIT_LINK,
-             ignore_formatting=False):
+             ignore_formatting=False, **kwargs):
     """Creates a new post, comment, like, or RSVP.
 
     Args:

@@ -934,6 +934,21 @@ class BlueskyTest(testutil.TestCase):
                      'com.atproto.repo.getRecord'
                      '?repo=did%3Aal%3Aice&collection=app.bsky.feed.post&rkey=bar')
 
+  @patch.object(util.session, 'get')
+  def test_from_as1_to_strong_ref_validate_false(self, mock_get):
+    for obj, expected in (
+        ('https://foo/bar', {'uri': 'https://foo/bar'}),
+        ({'id': 'https://foo/bar'}, {'uri': 'https://foo/bar'}),
+        ({'url': 'https://foo/bar'}, {'uri': 'https://foo/bar'}),
+        ('at://f.oo/b.ar.xY/baz', {'uri': 'at://f.oo/b.ar.xY/baz', 'cid': ''}),
+    ):
+      with self.subTest(obj=obj):
+        self.assertEqual(expected, from_as1_to_strong_ref(obj, validate=False))
+
+    self.assertEqual({'uri': 'https://foo/bar'}, from_as1_to_strong_ref(
+      'https://foo/bar', client=self.bs._client, validate=False))
+    mock_get.assert_not_called()
+
   @patch.object(util.session, 'get', return_value=requests_response(status=404))
   def test_from_as1_to_strong_ref_raise(self, mock_get):
     with self.assertRaises(ValueError):
@@ -2924,6 +2939,61 @@ class BlueskyTest(testutil.TestCase):
         'id': 'https://social.atiusamy.com/notes/9vdetlseu2g408ox',
         'inReplyTo': ['https://social.atiusamy.com/notes/9vder4g1u2g408ov'],
       })
+
+  @patch.object(util.session, 'get')
+  def test_from_as1_reply_not_bluesky_atproto_validate_false(self, mock_get):
+    ref = {'uri': 'https://social.atiusamy.com/notes/9vder4g1u2g408ov'}
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': '',
+      'fooOriginalUrl': 'https://social.atiusamy.com/notes/9vdetlseu2g408ox',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'reply': {
+        '$type': 'app.bsky.feed.post#replyRef',
+        'root': ref,
+        'parent': ref,
+      },
+    }, self.from_as1({
+      'objectType': 'comment',
+      'id': 'https://social.atiusamy.com/notes/9vdetlseu2g408ox',
+      'inReplyTo': ['https://social.atiusamy.com/notes/9vder4g1u2g408ov'],
+    }, validate=False, client=self.bs._client, raise_=True))
+
+    mock_get.assert_not_called()
+
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'uri': 'at://did:al:ice/app.bsky.feed.post/parent-tid',
+    'cid': 'sydddddd',
+    'value': {},
+  }))
+  def test_from_as1_reply_client_validate_false(self, mock_get):
+    expected = copy.deepcopy(REPLY_BSKY)
+    expected['reply']['root']['cid'] = expected['reply']['parent']['cid'] = 'sydddddd'
+    self.assert_equals(expected, self.from_as1(
+      REPLY_AS['object'], client=self.bs._client, raise_=True, validate=False))
+
+    self.assert_call(mock_get,
+                     'com.atproto.repo.getRecord'
+                     '?repo=did%3Aal%3Aice&collection=app.bsky.feed.post&rkey=parent-tid')
+
+  @patch.object(util.session, 'get', return_value=requests_response(status=404))
+  def test_from_as1_reply_client_fetch_fails_raise_validate_false(self, _):
+    with self.assertRaises(ValueError):
+      self.from_as1(REPLY_AS['object'], client=self.bs._client, raise_=True,
+                    validate=False)
+
+  def test_from_as1_reply_to_website_validate_false(self):
+    self.assert_equals(REPLY_BSKY_NO_CIDS,
+                       self.from_as1(REPLY_TO_WEBSITE_AS, validate=False))
+
+  def test_base_object_bluesky_only_false(self):
+    self.assertEqual({'id': 'https://foo/bar'}, self.bs.base_object(
+      {'inReplyTo': 'https://foo/bar'}, bluesky_only=False))
+
+    self.assertEqual({
+      'url': 'https://bsky.app/profile/did:al:ice/post/parent-tid',
+      'id': 'at://did:al:ice/app.bsky.feed.post/parent-tid',
+    }, self.bs.base_object(REPLY_TO_WEBSITE_AS['object'], bluesky_only=False))
 
   def test_from_as1_reply_composite_inReplyTo(self):
     reply = copy.deepcopy(REPLY_AS['object'])
@@ -5153,7 +5223,39 @@ class BlueskyTest(testutil.TestCase):
       'inReplyTo': 'https://snarfed.org/post',
     })
     self.assertTrue(resp.abort)
-    self.assertEqual("inReplyTo ['https://snarfed.org/post'] doesn't look like Bluesky/ATProto", resp.error_plain)
+    self.assertEqual("inReplyTo [{'id': 'https://snarfed.org/post'}] doesn't look like Bluesky/ATProto", resp.error_plain)
+
+  @patch.object(util.session, 'post', return_value=requests_response({
+    'uri': 'at://did:plc:me/app.bsky.feed.post/abc123',
+    'cid': 'sydddddd',
+  }))
+  @patch.object(util.session, 'get')
+  def test_create_reply_to_non_bluesky_validate_false(self, mock_get, mock_post):
+    self.assert_equals({
+      'id': 'at://did:plc:me/app.bsky.feed.post/abc123',
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create({
+      **REPLY_AS['object'],
+      'inReplyTo': 'https://snarfed.org/post',
+    }, validate=False).content)
+
+    mock_get.assert_not_called()
+    ref = {'uri': 'https://snarfed.org/post'}
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.feed.post',
+      'validate': False,
+      'record': {
+        '$type': 'app.bsky.feed.post',
+        'text': 'I hereby reply to this',
+        'createdAt': '2008-08-08T03:04:05.000Z',
+        'reply': {
+          '$type': 'app.bsky.feed.post#replyRef',
+          'root': ref,
+          'parent': ref,
+        },
+      },
+    })
 
   def test_preview_reply(self):
     for in_reply_to in ['at://did:al:ice/app.bsky.feed.post/parent-tid',

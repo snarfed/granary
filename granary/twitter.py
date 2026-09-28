@@ -640,7 +640,7 @@ class Twitter(source.Source):
     return values
 
   def create(self, obj, include_link=source.OMIT_LINK,
-             ignore_formatting=False):
+             ignore_formatting=False, **kwargs):
     """Creates a tweet, reply tweet, retweet, or favorite.
 
     Args:

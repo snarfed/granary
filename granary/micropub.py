@@ -69,7 +69,8 @@ class Micropub(Source):
 
     return resp
 
-  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
+  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False,
+             **kwargs):
     """Creates a new Micropub post.
 
     https://micropub.spec.indieweb.org/#create
@@ -78,6 +79,7 @@ class Micropub(Source):
       obj (dict): ActivityStreams object
       include_link (str)
       ignore_formatting (bool)
+      kwargs: ignored, eg ``validate``
 
     Returns:
       CreationResult: content will be a dict with ``id`` and ``url`` keys,

@@ -413,7 +413,8 @@ class Source(object, metaclass=SourceMeta):
     """
     raise NotImplementedError()
 
-  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
+  def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False,
+             validate=True):
     """Creates a new object: a post, comment, like, share, RSVP, block, etc.
 
     Subclasses should override this. Different sites will support different
@@ -428,6 +429,8 @@ class Source(object, metaclass=SourceMeta):
         (if it has one) in the content.
       ignore_formatting (bool): whether to use content text as is, instead of
         converting its HTML to plain text styling (newlines, etc.)
+      validate (bool): if False, subclasses may create objects that aren't
+        valid in their native protocol, eg replies to posts on other networks.
 
     Returns:
       CreationResult: The result. ``content`` will be a dict or None. If the
