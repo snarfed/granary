@@ -2811,6 +2811,22 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_repost(self):
     self.assert_equals(REPOST_BSKY_NO_CIDS, self.from_as1(REPOST_AS))
 
+  @patch.object(util.session, 'get')
+  def test_from_as1_like_and_repost_non_bluesky_validate_false(self, mock_get):
+    for verb, type in ('like', 'app.bsky.feed.like'), ('share', 'app.bsky.feed.repost'):
+      with self.subTest(verb=verb):
+        self.assert_equals({
+          '$type': type,
+          'subject': {'uri': 'https://mas.to/post'},
+          'createdAt': '2022-01-02T03:04:05.000Z',
+        }, self.from_as1({
+          'objectType': 'activity',
+          'verb': verb,
+          'object': 'https://mas.to/post',
+        }, client=self.bs._client, raise_=True, validate=False))
+
+    mock_get.assert_not_called()
+
   def test_from_as1_repost_reasonRepost(self):
     got = self.from_as1(REPOST_AS, out_type='app.bsky.feed.defs#reasonRepost')
     self.assert_equals(REPOST_BSKY_REASON, got)
@@ -3952,6 +3968,44 @@ class BlueskyTest(testutil.TestCase):
       'id': None,
       'url': None,
     }), to_as1(REPLY_BSKY))
+
+  def test_to_as1_reply_to_non_bluesky(self):
+    ref = {'uri': 'https://mas.to/post'}
+    self.assert_equals({
+      'objectType': 'comment',
+      'id': 'at://did:al:ice/app.bsky.feed.post/tid',
+      'url': 'https://bsky.app/profile/did:al:ice/post/tid',
+      'content': 'a reply',
+      'published': '2022-01-02T03:04:05.000Z',
+      'inReplyTo': [{
+        'id': 'https://mas.to/post',
+        'url': 'https://mas.to/post',
+      }],
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': 'a reply',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'reply': {
+        '$type': 'app.bsky.feed.post#replyRef',
+        'root': ref,
+        'parent': ref,
+      },
+    }, uri='at://did:al:ice/app.bsky.feed.post/tid'))
+
+  def test_to_as1_like_and_repost_non_bluesky(self):
+    for type, verb in ('app.bsky.feed.like', 'like'), ('app.bsky.feed.repost', 'share'):
+      with self.subTest(type=type):
+        self.assert_equals({
+          'objectType': 'activity',
+          'verb': verb,
+          'id': f'at://did:al:ice/{type}/123',
+          'actor': 'did:al:ice',
+          'object': 'https://mas.to/post',
+        }, to_as1({
+          '$type': type,
+          'subject': {'uri': 'https://mas.to/post'},
+        }, uri=f'at://did:al:ice/{type}/123', repo_did='did:al:ice'),
+        ignore=['published'])
 
   def test_to_as1_reply_postView(self):
     self.assert_equals(REPLY_AS['object'], to_as1(REPLY_POST_VIEW_BSKY))
@@ -5149,6 +5203,36 @@ class BlueskyTest(testutil.TestCase):
       'record': post_bsky,
     })
 
+  @patch.object(util.session, 'post', return_value=requests_response({
+    'uri': 'at://did:dy:d/app.bsky.feed.post/abc123',
+    'cid': 'sydddddd',
+  }))
+  def test_update_reply_to_non_bluesky_validate_false(self, mock_post):
+    self.bs.update({
+      'objectType': 'comment',
+      'id': 'at://did:dy:d/app.bsky.feed.post/abc123',
+      'content': 'my updated reply',
+      'inReplyTo': 'https://mas.to/post',
+    }, validate=False)
+
+    ref = {'uri': 'https://mas.to/post'}
+    self.assert_call(mock_post, 'com.atproto.repo.putRecord', json={
+      'repo': 'did:dy:d',
+      'collection': 'app.bsky.feed.post',
+      'rkey': 'abc123',
+      'validate': False,
+      'record': {
+        '$type': 'app.bsky.feed.post',
+        'text': 'my updated reply',
+        'createdAt': '2022-01-02T03:04:05.000Z',
+        'reply': {
+          '$type': 'app.bsky.feed.post#replyRef',
+          'root': ref,
+          'parent': ref,
+        },
+      },
+    })
+
   def test_preview_update_post(self):
     post_as = {
       **POST_AS['object'],
@@ -5489,6 +5573,43 @@ class BlueskyTest(testutil.TestCase):
       'id': at_uri,
       'url': 'https://bsky.app/profile/did:web:bob.com/followers',
     }, result.content)
+
+  @patch.object(util.session, 'post', return_value=requests_response({
+    'uri': 'at://did:plc:me/app.bsky.graph.follow/123',
+    'cid': 'sydddddd',
+  }))
+  def test_create_activities_non_bluesky_validate_false(self, mock_post):
+    for verb, collection, object, subject in (
+        ('follow', 'app.bsky.graph.follow', 'https://mas.to/users/bob',
+         'https://mas.to/users/bob'),
+        ('block', 'app.bsky.graph.block', 'https://mas.to/users/bob',
+         'https://mas.to/users/bob'),
+        ('like', 'app.bsky.feed.like', 'https://mas.to/post',
+         {'uri': 'https://mas.to/post'}),
+        ('share', 'app.bsky.feed.repost', 'https://mas.to/post',
+         {'uri': 'https://mas.to/post'}),
+    ):
+      with self.subTest(verb=verb):
+        result = self.bs.create({
+          'objectType': 'activity',
+          'verb': verb,
+          'object': object,
+        }, validate=False)
+        self.assertEqual({
+          'id': 'at://did:plc:me/app.bsky.graph.follow/123',
+          'url': object,
+        }, result.content)
+
+        self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+          'repo': self.bs.did,
+          'collection': collection,
+          'validate': False,
+          'record': {
+            '$type': collection,
+            'subject': subject,
+            'createdAt': '2022-01-02T03:04:05.000Z',
+          },
+        })
 
   def test_create_follow_missing_object(self):
     result = self.bs.create({

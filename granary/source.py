@@ -463,7 +463,7 @@ class Source(object, metaclass=SourceMeta):
     """
     raise NotImplementedError()
 
-  def update(self, obj):
+  def update(self, obj, validate=True):
     """Updates an existing object: a post, comment, like, share, block, etc.
 
     Subclasses should override this.
@@ -474,6 +474,7 @@ class Source(object, metaclass=SourceMeta):
       obj (dict): ActivityStreams object with the new field values. ``id``
         (or ``url``, depending on the site) must be the silo id of the
         existing object to update.
+      validate (bool): see :meth:`create`
 
     Returns:
       CreationResult: The result. ``content`` will be a dict or None. If the

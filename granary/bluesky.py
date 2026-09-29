@@ -651,7 +651,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     if not out_type or out_type == 'app.bsky.feed.repost':
       ret = {
         '$type': 'app.bsky.feed.repost',
-        'subject': from_as1_to_strong_ref(inner_obj, client=client, raise_=raise_),
+        'subject': from_as1_to_strong_ref(inner_obj, client=client, raise_=raise_,
+                                          validate=validate),
         'createdAt': from_as1_datetime(obj.get('published')),
       }
     elif out_type == 'app.bsky.feed.defs#reasonRepost':
@@ -670,7 +671,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   elif type == 'like':
     ret = {
       '$type': 'app.bsky.feed.like',
-      'subject': from_as1_to_strong_ref(inner_obj, client=client, raise_=raise_),
+      'subject': from_as1_to_strong_ref(inner_obj, client=client, raise_=raise_,
+                                        validate=validate),
       'createdAt': from_as1_datetime(obj.get('published')),
     }
 
@@ -1546,6 +1548,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     } for name in obj.get('tags', []))
 
     in_reply_to = obj.get('reply', {}).get('parent', {}).get('uri')
+    try:
+      in_reply_to_url = at_uri_to_web_url(in_reply_to)
+    except ValueError:  # not an at:// URI
+      in_reply_to_url = in_reply_to
 
     # convert self labels to AS1 sensitive and content warning in summary
     # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
@@ -1572,7 +1578,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'summary': '; '.join(content_warnings),
       'inReplyTo': [{
         'id': in_reply_to,
-        'url': at_uri_to_web_url(in_reply_to),
+        'url': in_reply_to_url,
       }],
       'published': obj.get('createdAt', ''),
       'tags': tags,
@@ -1797,7 +1803,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'object': subject,
       'actor': repo_did,
     }
-    if subject and uri_repo:
+    # non-at:// subjects are from "invalid" likes of non-Bluesky posts
+    if subject and subject.startswith('at://') and uri_repo:
       if web_url := at_uri_to_web_url(subject):
         # synthetic fragment
         ret['url'] = f'{web_url}#liked_by_{uri_repo}'
@@ -1812,7 +1819,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'actor': repo_did,
       'published': obj.get('createdAt'),
     }
-    if subject and uri_repo:
+    # non-at:// subjects are from "invalid" reposts of non-Bluesky posts
+    if subject and subject.startswith('at://') and uri_repo:
       if web_url := at_uri_to_web_url(subject):
         # synthetic fragment
         ret['url'] = f'{web_url}#reposted_by_{uri_repo}'
@@ -2490,7 +2498,8 @@ class Bluesky(Source):
     return self._create(obj, preview=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def update(self, obj, include_link=OMIT_LINK, ignore_formatting=False):
+  def update(self, obj, include_link=OMIT_LINK, ignore_formatting=False,
+             validate=True, **kwargs):
     """Updates an existing post, reply, like, repost, follow, or block.
 
     ``obj['id']`` must be the at:// URI of the existing record to update.
@@ -2499,13 +2508,14 @@ class Bluesky(Source):
       obj (dict): ActivityStreams object
       include_link (str)
       ignore_formatting (bool)
+      validate (bool): see :meth:`create`
 
     Returns:
       CreationResult: whose content will be a dict with ``id`` and ``url``
       keys (all optional) for the updated object (or None)
     """
     return self._create(obj, preview=False, update=True, include_link=include_link,
-                        ignore_formatting=ignore_formatting)
+                        ignore_formatting=ignore_formatting, validate=validate)
 
   def preview_update(self, obj, include_link=OMIT_LINK,
                      ignore_formatting=False):
@@ -2565,6 +2575,10 @@ class Bluesky(Source):
 
     base_id = base_obj.get('id')
     base_url = base_obj.get('url')
+    non_bluesky_base = (not validate and base_obj
+                        and not (base_id or '').startswith(('at://', 'did:')))
+    if non_bluesky_base:
+      base_id = base_url = base_id or base_url
 
     is_reply = type == 'comment' or obj.get('inReplyTo')
 
@@ -2621,7 +2635,8 @@ class Bluesky(Source):
         preview_description += f"<span class=\"verb\">{verb_label}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
         return creation_result(description=preview_description)
 
-      result_url = at_uri_to_web_url(base_id) + '/liked-by'
+      result_url = (base_url if non_bluesky_base
+                    else at_uri_to_web_url(base_id) + '/liked-by')
 
     elif type == 'activity' and verb == 'share':
       if not base_url:
@@ -2635,7 +2650,8 @@ class Bluesky(Source):
           preview_description += f"<span class=\"verb\">{verb_label}</span> <a href=\"{base_url}\">this {self.TYPE_LABELS['post']}</a>."
           return creation_result(description=preview_description)
 
-      result_url = at_uri_to_web_url(base_id) + '/reposted-by'
+      result_url = (base_url if non_bluesky_base
+                    else at_uri_to_web_url(base_id) + '/reposted-by')
 
     elif type == 'activity' and verb == 'follow':
       if not base_id:
@@ -2649,7 +2665,7 @@ class Bluesky(Source):
         preview_description += f"<span class=\"verb\">{verb_label}</span> <a href=\"{base_url}\">this user</a>."
         return creation_result(description=preview_description)
 
-      result_url = base_url + '/followers'
+      result_url = base_url if non_bluesky_base else base_url + '/followers'
 
     elif type == 'activity' and verb == 'block':
       if not base_id:
