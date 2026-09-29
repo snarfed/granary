@@ -589,6 +589,7 @@ LIKE_AS = {
   'id': 'at://alice.com/app.bsky.feed.like/123',
   'url': 'https://bsky.app/profile/did:al:ice/post/tid#liked_by_alice.com',
   'object': 'at://did:al:ice/app.bsky.feed.post/tid',
+  'published': '2022-01-02T03:04:05.000Z',
 }
 LIKE_BSKY = {
   '$type': 'app.bsky.feed.like',

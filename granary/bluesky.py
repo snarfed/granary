@@ -1770,7 +1770,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
                         type='app.bsky.actor.defs#profileViewBasic', **kwargs),
       }
 
-  elif type in ('app.bsky.graph.follow', 'app.bsky.graph.block',
+  elif type in ('app.bsky.graph.follow',
+                'app.bsky.graph.block',
                 'app.bsky.graph.listblock'):
     ret = {
       'objectType': 'activity',
@@ -1794,36 +1795,22 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'content': content,
     }
 
-  elif type == 'app.bsky.feed.like':
+  elif type in ('app.bsky.feed.like', 'app.bsky.feed.repost'):
     subject = obj.get('subject', {}).get('uri')
     ret = {
       'objectType': 'activity',
-      'verb': 'like',
-      'id': uri,
-      'object': subject,
-      'actor': repo_did,
-    }
-    # non-at:// subjects are from "invalid" likes of non-Bluesky posts
-    if subject and subject.startswith('at://') and uri_repo:
-      if web_url := at_uri_to_web_url(subject):
-        # synthetic fragment
-        ret['url'] = f'{web_url}#liked_by_{uri_repo}'
-
-  elif type == 'app.bsky.feed.repost':
-    subject = obj.get('subject', {}).get('uri')
-    ret = {
-      'objectType': 'activity',
-      'verb': 'share',
+      'verb': 'like' if type == 'app.bsky.feed.like' else 'share',
       'id': uri,
       'object': subject,
       'actor': repo_did,
       'published': obj.get('createdAt'),
     }
-    # non-at:// subjects are from "invalid" reposts of non-Bluesky posts
+    # non-at:// subjects are from "invalid" likes/reposts of non-Bluesky posts
     if subject and subject.startswith('at://') and uri_repo:
       if web_url := at_uri_to_web_url(subject):
         # synthetic fragment
-        ret['url'] = f'{web_url}#reposted_by_{uri_repo}'
+        verb = 'liked' if type == 'app.bsky.feed.like' else 'reposted'
+        ret['url'] = f'{web_url}#{verb}_by_{uri_repo}'
 
   elif type == 'app.bsky.feed.defs#threadViewPost':
     post = obj.get('post', {})
