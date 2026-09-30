@@ -85,7 +85,14 @@ class Micropub(Source):
       CreationResult: content will be a dict with ``id`` and ``url`` keys,
       both the new post's URL, if the server returned one in its ``Location``
       response header, otherwise an empty dict.
+
+    Raises:
+      NotImplementedError: for blocks, since they would be published as public
+        posts
     """
+    if obj.get('verb') == 'block':
+      raise NotImplementedError('Micropub does not support blocks')
+
     mf2 = microformats2.from_as1(obj)
     props = mf2['properties']
     for prop in SERVER_OWNED_PROPERTIES:

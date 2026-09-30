@@ -134,6 +134,32 @@ class MicropubTest(testutil.TestCase):
       'properties': {'repost-of': ['http://reposted/post']},
     })
 
+  def test_create_follow(self):
+    self.mock_post.return_value = requests_response(
+      '', headers={'Location': 'http://my/follow'})
+    result = self.micropub.create({
+      'objectType': 'activity',
+      'verb': 'follow',
+      'object': 'http://followee/',
+    })
+
+    self.assert_equals({'id': 'http://my/follow', 'url': 'http://my/follow'},
+                       result.content, result)
+    self.assert_post(json={
+      'type': ['h-entry'],
+      'properties': {'follow-of': ['http://followee/']},
+    })
+
+  def test_create_block_not_implemented(self):
+    with self.assertRaises(NotImplementedError):
+      self.micropub.create({
+        'objectType': 'activity',
+        'verb': 'block',
+        'object': 'http://blockee/',
+      })
+
+    self.mock_post.assert_not_called()
+
   def test_create_rsvp(self):
     self.mock_post.return_value = requests_response(
       '', headers={'Location': 'http://my/rsvp'})
