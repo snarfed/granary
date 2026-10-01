@@ -323,6 +323,7 @@ _Non-breaking changes:_
 Add new `micropub.Micropub` source class that implements the [Micropub](https://micropub.spec.indieweb.org/) API.
 
 * `as1`:
+  * Add new `snippet` function that generates a short, human-readable, plain text summary of an object or activity, eg `replied to http://x: hello` or `followed http://x` ([#450](https://github.com/snarfed/granary/issues/450)).
   * `get_rsvps_from_event`: handle when actor is compacted string id.
   * `quoted_posts`: fall back to quoted posts' `url` when they have no `id`.
   * Rename `is_content_html` to `is_html`, and add a required `field` argument so that it can check fields other than `content`, eg `summary` ([bridgy-fed#2675](https://github.com/snarfed/bridgy-fed/issues/2675)). `is_content_html` is kept for backward compatibility, and deprecated.

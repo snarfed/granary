@@ -988,6 +988,56 @@ class As1Test(testutil.TestCase):
       }],
     }))
 
+  def test_snippet(self):
+    for expected, obj in (
+        ('', {}),
+        ('', {'objectType': 'person', 'displayName': 'Alice'}),
+        ('hello', {'objectType': 'note', 'content': 'hello'}),
+        ('hello', {'objectType': 'note', 'content': '<p>hello</p>'}),
+        ('a title', {'objectType': 'article', 'displayName': 'a title'}),
+        ('hello', {
+          'objectType': 'activity',
+          'verb': 'post',
+          'object': {'objectType': 'note', 'content': 'hello'},
+        }),
+        ('replied to http://x : hello', {
+          'objectType': 'comment',
+          'content': 'hello',
+          'inReplyTo': [{'id': 'tag:x', 'url': 'http://x'}],
+        }),
+        ('replied to tag:x : hello', {
+          'objectType': 'note',
+          'content': 'hello',
+          'inReplyTo': 'tag:x',
+        }),
+        ('quoted http://x : hello', {
+          'objectType': 'note',
+          'content': 'hello',
+          'attachments': [{'objectType': 'note', 'url': 'http://x'}],
+        }),
+        ('replied to http://x, quoted http://y : hello', {
+          'objectType': 'note',
+          'content': 'hello',
+          'inReplyTo': {'url': 'http://x'},
+          'attachments': [{'objectType': 'note', 'url': 'http://y'}],
+        }),
+        ('liked http://x', {'verb': 'like', 'object': 'http://x'}),
+        ('liked http://x', {
+          'objectType': 'activity',
+          'verb': 'like',
+          'object': {'id': 'tag:x', 'url': 'http://x'},
+        }),
+        ('reposted http://x', {'verb': 'share', 'object': 'http://x'}),
+        ('followed http://x', {'verb': 'follow', 'object': 'http://x'}),
+        ('blocked http://x', {'verb': 'block', 'object': 'http://x'}),
+        ('unfollowed http://x', {'verb': 'stop-following', 'object': 'http://x'}),
+        ('deleted http://x', {'verb': 'delete', 'object': 'http://x'}),
+        ('is attending http://x', {'verb': 'rsvp-yes', 'object': 'http://x'}),
+        ('', {'verb': 'foo', 'object': 'http://x'}),
+    ):
+      with self.subTest(obj=obj):
+        self.assertEqual(expected, as1.snippet(obj))
+
   def test_expand_tags_plain_text_bare_mention(self):
     obj = {
       'objectType': 'note',

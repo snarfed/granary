@@ -78,6 +78,24 @@ POST_TYPES = frozenset((
   'note',
 ))
 
+# verb => human-readable phrase, used in snippet
+SNIPPET_PHRASES = {
+  'accept': 'accepted',
+  'block': 'blocked',
+  'delete': 'deleted',
+  'favorite': 'liked',
+  'follow': 'followed',
+  'like': 'liked',
+  'rsvp-interested': 'is interested in',
+  'rsvp-maybe': 'might attend',
+  'rsvp-no': 'is not attending',
+  'rsvp-yes': 'is attending',
+  'share': 'reposted',
+  'stop-following': 'unfollowed',
+  'undo': 'undid',
+  'update': 'updated',
+}
+
 # used in original_post_discovery
 _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 
@@ -776,6 +794,50 @@ def mentions(obj):
 
   return [t['url'] for t in get_objects(obj, 'tags')
           if t.get('url') and t.get('objectType') == 'mention']
+
+
+def snippet(obj):
+  """Returns a short, human-readable, plain text summary of an object or activity.
+
+  Doesn't include the actor or author. Examples: ``hello``,
+  ``replied to http://x: hello``, ``quoted http://x: hello``,
+  ``liked http://x``, ``followed http://x``.
+
+  https://github.com/snarfed/granary/issues/450
+
+  Args:
+    obj (dict): AS1 object or activity
+
+  Returns:
+    str: possibly empty
+  """
+  if obj.get('verb') == 'post':
+    obj = get_object(obj)
+
+  def url(o):
+    return get_url(o) or o.get('id')
+
+  if phrase := SNIPPET_PHRASES.get(obj.get('verb')):
+    target = url(get_object(obj))
+    return f'{phrase} {target}' if target else phrase
+
+  if object_type(obj) not in POST_TYPES:
+    return ''
+
+  content = obj.get('content') or ''
+  if is_html(obj, 'content'):
+    content = source.html_to_text(content)
+  content = content or obj.get('displayName') or ''
+
+  context = []
+  if replied_to := [u for o in get_objects(obj, 'inReplyTo') if (u := url(o))]:
+    context.append(f'replied to {replied_to[0]}')
+  if quoted := [u for a in get_objects(obj, 'attachments')
+                if a.get('objectType') == 'note' and (u := url(a))]:
+    context.append(f'quoted {quoted[0]}')
+
+  context = ', '.join(context)
+  return f'{context} : {content}' if context and content else context or content
 
 
 def is_html(obj, field):
