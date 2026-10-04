@@ -2,6 +2,7 @@
   "@context": [
     "https://www.w3.org/ns/activitystreams",
     "https://purl.archive.org/miscellany",
+    {"quote": {"@id": "https://w3id.org/fep/044f#quote", "@type": "@id"}},
     {"_misskey_quote": "https://misskey-hub.net/ns#_misskey_quote"}
   ],
   "type": "Note",
@@ -30,6 +31,7 @@
       "image": {"type": "Image", "url": "https://alice/jpg"}
     }
   }],
+  "quote": "https://bsky.app/orig/post",
   "quoteUrl": "https://bsky.app/orig/post",
   "_misskey_quote": "https://bsky.app/orig/post"
 }

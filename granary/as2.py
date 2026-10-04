@@ -41,8 +41,9 @@ CONTEXT = [
   # https://swicg.github.io/miscellany/
   'https://purl.archive.org/miscellany',
 ]
+FEP044F_QUOTE_CONTEXT = {'quote': {'@id': 'https://w3id.org/fep/044f#quote', '@type': '@id'}}
 MISSKEY_QUOTE_CONTEXT = {'_misskey_quote': 'https://misskey-hub.net/ns#_misskey_quote'}
-# quoted post id fields, in order of preference
+# quoted post id fields
 # https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md
 # http://fedibird.com/ns#quoteUri
 # https://misskey-hub.net/ns#_misskey_quote
@@ -375,11 +376,14 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
       if not quotes:
         # first quote, add it to top level object
         obj.update({
+          # https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md
+          'quote': href,
           # https://misskey-hub.net/ns#_misskey_quote
           '_misskey_quote': href,
           # https://socialhub.activitypub.rocks/t/repost-share-with-quote-a-k-a-attach-someone-elses-post-to-your-own-post/659/19
           'quoteUrl': href,
         })
+        util.add(obj['@context'], FEP044F_QUOTE_CONTEXT)
         util.add(obj['@context'], MISSKEY_QUOTE_CONTEXT)
         content = obj.get('content') or ''
         if not QUOTE_RE_SUFFIX.search(html_to_text(content)):

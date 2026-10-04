@@ -218,6 +218,7 @@ class ActivityStreams2Test(testutil.TestCase):
         'href': 'http://the/id',
         'name': 'RE: http://the/url',
       }],
+      'quote': 'http://the/id',
       'quoteUrl': 'http://the/id',
       '_misskey_quote': 'http://the/id'
     }, as2.from_as1({
@@ -257,6 +258,7 @@ class ActivityStreams2Test(testutil.TestCase):
         'name': 'RE: http://the/url',
         'mediaType': 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
       }],
+      'quote': 'http://the/id',
       'quoteUrl': 'http://the/id',
       '_misskey_quote': 'http://the/id',
     }, as2.from_as1({
