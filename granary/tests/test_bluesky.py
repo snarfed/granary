@@ -3607,6 +3607,17 @@ class BlueskyTest(testutil.TestCase):
       'description': 'one <two> <thr&ee>',
     }))
 
+  def test_to_as1_profile_whitespace_in_bio(self):
+    # https://github.com/snarfed/bridgy-fed/issues/2675#issuecomment-5967794652
+    self.assert_equals({
+      'objectType': 'person',
+      'summary': 'one <a href="http://li.nk/foo">li.nk/foo</a><br />&nbsp;&nbsp;two<br /><br />three',
+      'url': 'http://li.nk/foo',
+    }, to_as1({
+      '$type': 'app.bsky.actor.profile',
+      'description': 'one http://li.nk/foo\n  two\n\nthree',
+    }))
+
   def test_to_as1_profile_bsky_social_handle_is_not_url(self):
     self.assert_equals({
       'objectType': 'person',
@@ -3635,7 +3646,7 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_profile_view_email_address_in_description(self):
     self.assert_equals({
       **ACTOR_AS,
-      'summary': 'ᵖᵒᵉᵗʳʸ • ᵃʳᵗ ♡︎ －\n📩 hi＠gmail.com ',
+      'summary': 'ᵖᵒᵉᵗʳʸ • ᵃʳᵗ ♡︎ －<br />📩 hi＠gmail.com ',
     }, to_as1({
       **ACTOR_PROFILE_VIEW_BSKY,
         'description': 'ᵖᵒᵉᵗʳʸ • ᵃʳᵗ ♡︎ －\n📩 hi＠gmail.com ',

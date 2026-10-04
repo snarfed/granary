@@ -37,6 +37,7 @@ from .source import (
   INCLUDE_IF_TRUNCATED,
   OMIT_LINK,
   Source,
+  whitespace_to_html,
 )
 
 logger = logging.getLogger(__name__)
@@ -1390,7 +1391,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     if website := obj.get('website'):
       urls.append(website)
 
-    summary = util.linkify(html.escape(obj.get('description') or ''), pretty=True)
+    desc = html.escape(obj.get('description') or '')
+    summary = whitespace_to_html(util.linkify(desc, pretty=True), escape=False)
     urls.extend(util.extract_links(summary))
 
     if type == 'app.bsky.feed.generator':

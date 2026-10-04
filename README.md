@@ -356,6 +356,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
     * Handle invalid replies, likes, and reposts of non-Bluesky objects, ie with non-`at://` URIs in their strong refs.
     * For videos, add `image`, falling back to the [Bluesky video CDN](https://video.bsky.app/)'s thumbnail URL.
     * Keep language keys in `contentMap` even if their value is empty.
+    * For profiles, convert newlines and line-leading spaces in `description` to HTML in `summary` ([bridgy-fed#2675](https://github.com/snarfed/bridgy-fed/issues/2675)).
   * `Bluesky`:
     * `create`/`preview_create`: add support for blocks.
     * `create`/`preview_create`: allow posts with videos but no text.
