@@ -16,6 +16,8 @@ from os.path import splitext
 import re
 from urllib.parse import urlparse
 
+from bs4.dammit import EntitySubstitution
+from bs4.formatter import HTMLFormatter
 from webutil import util
 from webutil.util import json_dumps, json_loads
 
@@ -152,6 +154,9 @@ MASTODON_ALLOWED_IMAGE_TYPES = ('image/jpeg', 'image/png', 'image/gif', 'image/w
 
 # https://codeberg.org/fediverse/fep/src/branch/main/fep/e232/fep-e232.md#user-content-examples
 QUOTE_RE_SUFFIX = re.compile(r'\s+RE: <?[^\s]+>?\s?$')
+# escapes &, <, and >, and serializes void elements as eg <br>, not <br/>
+HTML_FORMATTER = HTMLFormatter(entity_substitution=EntitySubstitution.substitute_xml,
+                               void_element_close_prefix='')
 
 # https://socialhub.activitypub.rocks/t/fep-d556-server-level-actor-discovery-using-webfinger/3861/3
 # https://codeberg.org/fediverse/fep/src/branch/main/fep/d556/fep-d556.md
@@ -754,18 +759,6 @@ def to_as1(obj, use_type=True, get_fn=None):
         'displayName': None,
       })
       attachments.append(quote)
-
-      # remove RE: ... text suffix if it's there
-      #
-      # TODO: do full HTML parsing of content, look for innerText that matches
-      # name, and update those links' targets. that's technically FEP-e232's
-      # intent, but way too complicated for right now.
-      # https://socialhub.activitypub.rocks/t/fep-e232-object-links/2722/29
-      obj.setdefault('content', '')
-      escaped = re.escape(html.escape(url, quote=False))
-      obj['content'] = re.sub(
-        fr'(<span[^>]*>)?(\s|(<br>)+)?RE: (</span>)?(<a href="{escaped}">)?<?{escaped}>?(</a>)?(</span>)?\s?$', '',
-        obj['content'])
       continue
 
     else:
@@ -788,6 +781,15 @@ def to_as1(obj, use_type=True, get_fn=None):
           'url': quote_url,
         })
         quote_urls.append(quote_url)
+
+  # remove quote post RE: ... fallback links. the quotes are now in attachments
+  content = obj.get('content')
+  if quote_urls and content and 'quote-inline' in content:
+    # html.parser, not lxml, since lxml adds <html>, <body>, and <p> wrappers
+    soup = util.parse_html(content, features='html.parser')
+    for elem in soup.find_all(class_='quote-inline'):
+      elem.extract()
+    obj['content'] = soup.decode(formatter=HTML_FORMATTER)
 
   # pinned posts
   # https://docs.joinmastodon.org/spec/activitypub/#featured

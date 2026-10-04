@@ -1515,21 +1515,49 @@ class ActivityStreams2Test(testutil.TestCase):
         self.assertEqual(
           f'<span class="quote-inline">RE: {expected}</span>', obj['content'])
 
-  def test_to_as1_quote_removes_re_link_with_special_chars(self):
-    for content in (
-        'foo<br><br>RE: <a href="http://a.b/c?d=1&amp;e=2">http://a.b/c?d=1&amp;e=2</a>',
-        'foo<span class="quote-inline"><br><br>RE: <a href="http://a.b/c?d=1&amp;e=2">http://a.b/c?d=1&amp;e=2</a></span>',
+  def test_to_as1_quote_removes_quote_inline(self):
+    for content, expected in (
+        ('foo<span class="quote-inline"><br><br>RE: <a href="http://a.b/c?d=1&amp;e=2">http://a.b/c?d=1&amp;e=2</a></span>',
+         'foo'),
+        # Mastodon
+        ('<p class="quote-inline">RE: <a href="http://a.b/c?d=1&amp;e=2" target="_blank" rel="nofollow noopener"><span class="invisible">http://</span><span class="ellipsis">a.b/c?d=1&amp;</span><span class="invisible">e=2</span></a></p><p>foo<br>bar &amp; baz</p>',
+         '<p>foo<br>bar &amp; baz</p>'),
     ):
-      with self.subTest(content=content):
-        self.assertEqual('foo', as2.to_as1({
-          'type': 'Note',
-          'content': content,
-          'tag': [{
+      for quote, attachment in (
+          ({'quote': 'http://a.b/c?d=1&e=2'}, {
+            'objectType': 'note',
+            'id': 'http://a.b/c?d=1&e=2',
+            'url': 'http://a.b/c?d=1&e=2',
+          }),
+          ({'tag': [{
             'type': 'Link',
             'mediaType': as2.CONTENT_TYPE_LD_PROFILE,
             'href': 'http://a.b/c?d=1&e=2',
-          }],
-        })['content'])
+          }]}, {
+            'objectType': 'note',
+            'id': 'http://a.b/c?d=1&e=2',
+          }),
+      ):
+        with self.subTest(content=content, quote=quote):
+          self.assertEqual({
+            'objectType': 'note',
+            'content': expected,
+            'attachments': [attachment],
+          }, as2.to_as1({
+            'type': 'Note',
+            'content': content,
+            **quote,
+          }))
+
+  def test_to_as1_quote_inline_without_quote(self):
+    content = '<p class="quote-inline">RE: <a href="http://a.b/c">http://a.b/c</a></p><p>foo</p>'
+    self.assertEqual({
+      'objectType': 'note',
+      'content': content,
+    }, as2.to_as1({
+      'type': 'Note',
+      'content': content,
+    }))
 
   def test_is_server_actor(self):
     self.assertFalse(as2.is_server_actor({}))

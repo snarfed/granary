@@ -336,7 +336,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
     * Handle [FEP-044f's `quote`](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md) and [Fedibird's `quoteUri`](http://fedibird.com/ns#quoteUri) quoted post fields, along with the existing `_misskey_quote` and `quoteUrl`.
     * Set quoted posts' `id`, not just `url`, so that `as1.quoted_posts` finds them.
     * Handle object-valued quote post fields.
-    * Fix bug where the trailing `RE: ...` link to a quoted post wasn't removed from `content` when its URL had regex special characters or `&`.
+    * For quote posts, remove inline `RE: ...` fallback links from `content` based on the [`quote-inline` class](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md), including Mastodon's leading `<p class="quote-inline">`, instead of just trailing `RE: [URL]` text.
   * `from_as1`, `render_content`: render HTML with Jinja templates in profile link `PropertyValue`s and quoted post `RE: ...` links. Only link `http` and `https` quoted post URLs ([#586](https://github.com/snarfed/granary/issues/586)).
 * `atom`:
   * `to_as1`: read `<link rel=self>`'s `href`, not text value.
