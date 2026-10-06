@@ -286,6 +286,13 @@ POST_BSKY_EMBED = {
     },
   },
 }
+POST_AS_EMBED_IMAGE = {
+  **POST_AS_EMBED,
+  'attachments': [{
+    **EMBED_EXTERNAL_ATTACHMENT,
+    'image': [{'url': NEW_BLOB_URL}],
+  }],
+}
 
 POST_VIEW_BSKY_EMBED = copy.deepcopy(POST_VIEW_BSKY)
 POST_VIEW_BSKY_EMBED['record'].update({
@@ -5976,6 +5983,69 @@ class BlueskyTest(testutil.TestCase):
       'collection': 'app.bsky.feed.post',
       'record': expected,
     })
+
+  @patch.object(util.session, 'post')
+  @patch.object(util.session, 'get')
+  def test_create_with_cited_attachment_image(self, mock_get, mock_post):
+    mock_get.return_value = requests_response(
+      b'pic', headers={'Content-Type': 'image/jpeg'})
+
+    at_uri = 'at://did:plc:me/app.bsky.feed.post/abc123'
+    mock_post.side_effect = [
+      requests_response({'blob': NEW_BLOB}),
+      requests_response({'uri': at_uri, 'cid': 'sydddddd'}),
+    ]
+
+    self.assert_equals({
+      'id': at_uri,
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.create(POST_AS_EMBED_IMAGE).content)
+
+    mock_get.assert_called_with(NEW_BLOB_URL, stream=True, timeout=HTTP_TIMEOUT,
+                                headers={'User-Agent': util.user_agent})
+
+    expected = copy.deepcopy(POST_BSKY_EMBED)
+    del expected['fooOriginalText']
+    del expected['fooOriginalUrl']
+    expected['embed']['external']['thumb'] = NEW_BLOB
+    self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+      'repo': self.bs.did,
+      'collection': 'app.bsky.feed.post',
+      'record': expected,
+    })
+
+  @patch.object(util.session, 'post', return_value=requests_response({
+    'uri': 'at://did:plc:me/app.bsky.feed.post/abc123',
+    'cid': 'sydddddd',
+  }))
+  @patch.object(util.session, 'get')
+  def test_create_with_cited_attachment_bad_image(self, mock_get, mock_post):
+    expected = copy.deepcopy(POST_BSKY_EMBED)
+    del expected['fooOriginalText']
+    del expected['fooOriginalUrl']
+
+    max_size = LEXRPC.defs['app.bsky.embed.external#external']['properties']['thumb']['maxSize']
+    for resp in (
+        requests_response(status=404),
+        requests_response(b'x' * (max_size + 1),
+                          headers={'Content-Type': 'image/jpeg'}),
+    ):
+      with self.subTest(status=resp.status_code):
+        mock_get.return_value = resp
+        mock_post.reset_mock()
+
+        self.bs.create(POST_AS_EMBED_IMAGE)
+
+        # no uploadBlob, and the embed has no thumb
+        mock_get.assert_called_with(NEW_BLOB_URL, stream=True,
+                                    timeout=HTTP_TIMEOUT,
+                                    headers={'User-Agent': util.user_agent})
+        mock_post.assert_called_once()
+        self.assert_call(mock_post, 'com.atproto.repo.createRecord', json={
+          'repo': self.bs.did,
+          'collection': 'app.bsky.feed.post',
+          'record': expected,
+        })
 
   @patch.object(util.session, 'post')
   def test_preview_with_too_many_media(self, mock_post):
