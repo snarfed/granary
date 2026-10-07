@@ -2498,13 +2498,15 @@ class Bluesky(Source):
       include_link (str)
       ignore_formatting (bool)
       validate (bool): see :meth:`create`
+      kwargs: passed through to :meth:`_create`, eg ``blobs``. See :meth:`create`
 
     Returns:
       CreationResult: whose content will be a dict with ``id`` and ``url``
       keys (all optional) for the updated object (or None)
     """
     return self._create(obj, preview=False, update=True, include_link=include_link,
-                        ignore_formatting=ignore_formatting, validate=validate)
+                        ignore_formatting=ignore_formatting, validate=validate,
+                        **kwargs)
 
   def preview_update(self, obj, include_link=OMIT_LINK,
                      ignore_formatting=False):

@@ -5892,6 +5892,33 @@ class BlueskyTest(testutil.TestCase):
     })
 
   @patch.object(util.session, 'post', return_value=requests_response({
+    'uri': 'at://did:dy:d/app.bsky.feed.post/abc123',
+    'cid': 'sydddddd',
+  }))
+  @patch.object(util.session, 'get')
+  def test_update_with_blobs(self, mock_get, mock_post):
+    self.assert_equals({
+      'id': 'at://did:dy:d/app.bsky.feed.post/abc123',
+      'url': 'https://bsky.app/profile/handull/post/abc123',
+    }, self.bs.update({
+      **POST_AS_IMAGES['object'],
+      'id': 'at://did:dy:d/app.bsky.feed.post/abc123',
+    }, blobs={NEW_BLOB_URL: NEW_BLOB}).content)
+
+    mock_get.assert_not_called()
+
+    expected = copy.deepcopy(POST_BSKY_IMAGES)
+    del expected['fooOriginalText']
+    del expected['fooOriginalUrl']
+    mock_post.assert_called_once()
+    self.assert_call(mock_post, 'com.atproto.repo.putRecord', json={
+      'repo': 'did:dy:d',
+      'collection': 'app.bsky.feed.post',
+      'rkey': 'abc123',
+      'record': expected,
+    })
+
+  @patch.object(util.session, 'post', return_value=requests_response({
     'uri': 'at://did:plc:me/app.bsky.feed.post/abc123',
     'cid': 'sydddddd',
   }))
