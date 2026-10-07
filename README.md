@@ -362,6 +362,8 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
     * `create`/`preview_create`: add support for blocks.
     * `create`/`preview_create`: allow posts with videos but no text.
     * `create`, `upload_media`: add `blobs` kwarg for images and videos that have already been uploaded.
+    * `create`: upload images in `article`, `link`, and `note` attachments as thumbnails in their external embeds (link previews). ([#1195](https://github.com/snarfed/granary/issues/1195))
+    * `upload_media`: add `max_size` kwarg.
     * `create`, `update`: add `validate` kwarg. If False, allows replies to, likes of, reposts of, follows of, and blocks of non-Bluesky objects and users, and passes `validate: false` to `createRecord`/`putRecord`.
     * Add `update`/`preview_update`.
 * `farcaster`:
