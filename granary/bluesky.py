@@ -2584,11 +2584,11 @@ class Bluesky(Source):
     atts = obj.get('attachments', [])
     images = util.dedupe_urls(util.get_list(obj, 'image') +
                               [a for a in atts if a.get('objectType') == 'image'])
-    # images in cited attachments, eg link previews, are uploaded for external
+    # images in other attachments, eg link previews, are uploaded for external
     # embed thumbs. kept out of images so that they don't become image embeds
-    cite_images = [img for att in atts
-                   if att.get('objectType') in ('article', 'link', 'note')
-                   for img in as1.get_objects(att, 'image')]
+    att_images = [img for att in atts
+                  if att.get('objectType') in ('article', 'link', 'note')
+                  for img in as1.get_objects(att, 'image')]
     videos = [a for a in atts if a.get('objectType') == 'video']
     has_media = (images or videos) and (type in ('note', 'article') or is_reply)
 
@@ -2709,14 +2709,13 @@ class Bluesky(Source):
 
       else:
         blobs, aspects = self.upload_media(images, existing=blobs)
-        # external embed thumbs are best effort. if a cited image can't be
+        # external embed thumbs are best effort. if a thumbnail image can't be
         # fetched or is too big, post without it instead of failing
         max_thumb = LEXRPC.defs['app.bsky.embed.external#external']['properties']['thumb']['maxSize']
         try:
-          blobs, _ = self.upload_media(cite_images, existing=blobs,
-                                       max_size=max_thumb)
+          blobs, _ = self.upload_media(att_images, existing=blobs, max_size=max_thumb)
         except (requests.RequestException, ValueError) as e:
-          logger.warning(f'Skipping cited attachment image for embed thumb: {e}')
+          logger.warning(f'Skipping attachment image for embed thumb: {e}')
         post_atp = from_as1(obj, blobs=blobs, aspects=aspects, client=self,
                             validate=validate)
         post_atp['text'] = content

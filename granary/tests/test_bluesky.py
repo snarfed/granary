@@ -5986,7 +5986,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'post')
   @patch.object(util.session, 'get')
-  def test_create_with_cited_attachment_image(self, mock_get, mock_post):
+  def test_create_with_link_attachment_with_image(self, mock_get, mock_post):
     mock_get.return_value = requests_response(
       b'pic', headers={'Content-Type': 'image/jpeg'})
 
@@ -6019,7 +6019,7 @@ class BlueskyTest(testutil.TestCase):
     'cid': 'sydddddd',
   }))
   @patch.object(util.session, 'get')
-  def test_create_with_cited_attachment_bad_image(self, mock_get, mock_post):
+  def test_create_with_link_attachment_with_too_big_image(self, mock_get, mock_post):
     expected = copy.deepcopy(POST_BSKY_EMBED)
     del expected['fooOriginalText']
     del expected['fooOriginalUrl']
