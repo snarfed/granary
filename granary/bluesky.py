@@ -2521,7 +2521,7 @@ class Bluesky(Source):
     return self._create(obj, preview=True, update=True, include_link=include_link,
                         ignore_formatting=ignore_formatting)
 
-  def _write_record(self, record, rkey=None, validate=True):
+  def write_record(self, record, rkey=None, validate=True):
     """Creates a new repo record, or updates an existing one in place.
 
     Args:
@@ -2737,7 +2737,7 @@ class Bluesky(Source):
               },
             })
 
-        result = self._write_record(post_atp, rkey=rkey, validate=validate)
+        result = self.write_record(post_atp, rkey=rkey, validate=validate)
         return creation_result({
           'id': result['uri'],
           'url': at_uri_to_web_url(result['uri'], handle=self.handle),
@@ -2749,7 +2749,7 @@ class Bluesky(Source):
         error_plain=f'Cannot publish type={type}, verb={verb} to Bluesky',
         error_html=f'Cannot publish type={type}, verb={verb} to Bluesky')
 
-    result = self._write_record(from_as1(obj, client=self, validate=validate),
+    result = self.write_record(from_as1(obj, client=self, validate=validate),
                                 rkey=rkey, validate=validate)
     return creation_result({
       'id': result['uri'],
