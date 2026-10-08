@@ -101,6 +101,9 @@ FROM_AS1_TYPES = {
     'app.bsky.graph.block',
     'app.bsky.graph.listblock',
   ),
+  'event': (
+    'community.lexicon.calendar.event',
+  ),
   'flag': (
     'com.atproto.moderation.createReport#input',
   ),
@@ -1275,6 +1278,39 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
     ret = as1.trim_nulls(ret)
 
+  elif type == 'event':
+    # https://activitystrea.ms/specs/json/schema/activity-schema.html#event
+    # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/calendar
+    content = obj.get('content') or ''
+    if as1.is_html(obj, 'content'):
+      content = html_to_text(content)
+
+    ret = {
+      '$type': 'community.lexicon.calendar.event',
+      'name': obj.get('displayName') or '',
+      'description': content or summary,
+      'createdAt': from_as1_datetime(obj.get('published')),
+      'uris': [{'uri': url} for url in as1.object_urls(obj)],
+    }
+    for as1_field, bsky_field in ('startTime', 'startsAt'), ('endTime', 'endsAt'):
+      if val := obj.get(as1_field):
+        ret[bsky_field] = from_as1_datetime(val)
+
+    if loc := as1.get_object(obj, 'location'):
+      try:
+        ret['locations'] = [from_as1({**loc, 'objectType': 'place'})]
+      except ValueError:
+        if loc_url := as1.get_url(loc):
+          ret['locations'] = [{
+            '$type': 'community.lexicon.calendar.event#uri',
+            'name': loc.get('displayName'),
+            'uri': loc_url,
+          }]
+        else:
+          logger.info(f"Dropping location without coordinates, address with country, or URL: {loc}")
+
+    ret = as1.trim_nulls(ret, ignore=('name',))
+
   elif type == 'collection':
       ret = {
         '$type': 'app.bsky.graph.list',
@@ -1933,6 +1969,35 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     for field in 'latitude', 'longitude':
       if util.is_float(val := obj.get(field)):
         ret[field] = float(val)
+
+  elif type == 'community.lexicon.calendar.event':
+    # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/calendar
+    # https://activitystrea.ms/specs/json/schema/activity-schema.html#event
+    urls = [{'displayName': u.get('name'), 'value': u.get('uri')}
+            for u in obj.get('uris', [])]
+    ret = {
+      'objectType': 'event',
+      'id': uri,
+      'url': urls[0]['value'] if urls else None,
+      'urls': urls if len(urls) > 1 else None,
+      'displayName': obj.get('name'),
+      'content': obj.get('description'),
+      'published': obj.get('createdAt'),
+      'startTime': obj.get('startsAt'),
+      'endTime': obj.get('endsAt'),
+    }
+
+    # AS1 only supports one location, so use the first
+    if locs := obj.get('locations'):
+      loc = locs[0]
+      if loc.get('$type') == 'community.lexicon.calendar.event#uri':
+        ret['location'] = {
+          'objectType': 'place',
+          'displayName': loc.get('name'),
+          'url': loc.get('uri'),
+        }
+      else:
+        ret['location'] = to_as1(loc)
 
   elif type == 'site.standard.document':
     ret = {

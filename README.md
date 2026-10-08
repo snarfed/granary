@@ -345,7 +345,9 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * `to_as1`: convert [`<category>`](https://datatracker.ietf.org/doc/html/rfc4287#section-4.2.2) elements to hashtag tags, using `label` if it's provided, otherwise `term`.
   * `from_as1`: fix XSS: escape `]]>` in content so that it can't end the `<content>` CDATA section early and inject XML elements, eg `<script>`.
 * `bluesky`:
-  * `from_as1`, `to_as1`: Convert AS1 `place`s to/from [`community.lexicon.location.geo`](https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/location/geo.json) and [`community.lexicon.location.address`](https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/location/address.json) objects. `to_as1` also converts `community.lexicon.location.fsq` and `community.lexicon.location.hthree`.
+  * `from_as1`, `to_as1`:
+    * Convert AS1 `place`s to/from [`community.lexicon.location.*`](https://tangled.org/lexicon.community/lexicons/tree/main/community/lexicon/location).
+    * Convert AS1 `event`s to/from [`community.lexicon.calendar.event`](https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/calendar/event.json), including locations.
   * `from_as1`:
     * Add `validate` kwarg to allow generating invalid records, eg replies to, likes of, and reposts of non-Bluesky objects.
     * Populate image and video `aspectRatio` from AS1 `width` and `height` if they're not in `aspects`.

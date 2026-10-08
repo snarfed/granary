@@ -2427,6 +2427,120 @@ class BlueskyTest(testutil.TestCase):
         'address': {'country': 'US'},
       }, out_type='community.lexicon.location.geo')
 
+  def test_from_as1_event(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'description': 'this event is gonna be great',
+      'createdAt': '2017-01-22T01:29:15.000Z',
+      'startsAt': '2017-07-13T00:30:00.000Z',
+      'endsAt': '2017-07-13T02:30:00.000Z',
+      'locations': [{
+        '$type': 'community.lexicon.location.geo',
+        'name': 'the place',
+        'latitude': '38.3004',
+        'longitude': '-76.50745',
+      }],
+      'uris': [
+        {'uri': 'http://example.com/event-xyz'},
+        {'uri': 'http://example.com/tickets'},
+      ],
+    }, from_as1({
+      'objectType': 'event',
+      'id': 'tag:example.com,2011:event-xyz',
+      'url': 'http://example.com/event-xyz',
+      'urls': [{'value': 'http://example.com/tickets'}],
+      'displayName': 'XYZ',
+      'summary': "it's happening!",
+      'content': '<p>this event is gonna be great</p>',
+      'published': '2017-01-22T01:29:15+00:00',
+      'startTime': '2017-07-12T17:30:00-07:00',
+      'endTime': '2017-07-12T19:30:00-07:00',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'the place',
+        'latitude': 38.3004,
+        'longitude': -76.50745,
+      },
+    }))
+
+  def test_from_as1_event_minimal(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.calendar.event',
+      'name': '',
+      'description': "it's happening!",
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'event',
+      'summary': "it's happening!",
+    }))
+
+  def test_from_as1_event_address_location(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'locations': [{
+        '$type': 'community.lexicon.location.address',
+        'name': 'the place',
+        'street': '123 Main St',
+        'locality': 'Springfield',
+        'region': 'OR',
+        'postalCode': '97477',
+        'country': 'US',
+      }],
+    }, from_as1({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'the place',
+        'url': 'http://the/place',
+        'address': {
+          'streetAddress': '123 Main St',
+          'locality': 'Springfield',
+          'region': 'OR',
+          'postalCode': '97477',
+          'country': 'US',
+        },
+      },
+    }))
+
+  def test_from_as1_event_url_location(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'locations': [{
+        '$type': 'community.lexicon.calendar.event#uri',
+        'name': 'the place',
+        'uri': 'http://the/place',
+      }],
+    }, from_as1({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'the place',
+        'url': 'http://the/place',
+        'address': {'locality': 'Springfield'},
+      },
+    }))
+
+  def test_from_as1_event_name_only_location(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'the place',
+      },
+    }))
+
   def test_from_as1_article_multiple(self):
     self.assert_equals([{
       '$type': 'app.bsky.feed.post',
@@ -4694,6 +4808,109 @@ class BlueskyTest(testutil.TestCase):
       'region': 'OR',
       'postalCode': '97477',
       'country': 'US',
+    }))
+
+  def test_to_as1_event(self):
+    self.assert_equals({
+      'objectType': 'event',
+      'id': 'at://did:plc:foo/community.lexicon.calendar.event/123',
+      'url': 'http://example.com/event-xyz',
+      'urls': [
+        {'value': 'http://example.com/event-xyz'},
+        {'displayName': 'Tickets', 'value': 'http://example.com/tickets'},
+      ],
+      'displayName': 'XYZ',
+      'content': 'this event is gonna be great',
+      'published': '2017-01-22T01:29:15.000Z',
+      'startTime': '2017-07-13T00:30:00.000Z',
+      'endTime': '2017-07-13T02:30:00.000Z',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'the place',
+        'latitude': 38.3004,
+        'longitude': -76.50745,
+      },
+    }, to_as1({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'description': 'this event is gonna be great',
+      'createdAt': '2017-01-22T01:29:15.000Z',
+      'startsAt': '2017-07-13T00:30:00.000Z',
+      'endsAt': '2017-07-13T02:30:00.000Z',
+      'mode': 'community.lexicon.calendar.event#inperson',
+      'status': 'community.lexicon.calendar.event#scheduled',
+      'locations': [{
+        '$type': 'community.lexicon.location.geo',
+        'name': 'the place',
+        'latitude': '38.3004',
+        'longitude': '-76.50745',
+      }, {
+        '$type': 'community.lexicon.calendar.event#uri',
+        'uri': 'http://other/place',
+      }],
+      'uris': [
+        {'uri': 'http://example.com/event-xyz'},
+        {'uri': 'http://example.com/tickets', 'name': 'Tickets'},
+      ],
+    }, uri='at://did:plc:foo/community.lexicon.calendar.event/123'))
+
+  def test_to_as1_event_minimal(self):
+    self.assert_equals({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'published': '2017-01-22T01:29:15.000Z',
+    }, to_as1({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'createdAt': '2017-01-22T01:29:15.000Z',
+    }))
+
+  def test_to_as1_event_address_location(self):
+    self.assert_equals({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'the place',
+        'address': {
+          'streetAddress': '123 Main St',
+          'locality': 'Springfield',
+          'region': 'OR',
+          'postalCode': '97477',
+          'country': 'US',
+        },
+      },
+    }, to_as1({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'locations': [{
+        '$type': 'community.lexicon.location.address',
+        'name': 'the place',
+        'street': '123 Main St',
+        'locality': 'Springfield',
+        'region': 'OR',
+        'postalCode': '97477',
+        'country': 'US',
+      }],
+    }))
+
+  def test_to_as1_event_uri_location(self):
+    self.assert_equals({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'the place',
+        'url': 'http://the/place',
+      },
+    }, to_as1({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'locations': [{
+        '$type': 'community.lexicon.calendar.event#uri',
+        'name': 'the place',
+        'uri': 'http://the/place',
+      }],
     }))
 
   def test_to_as1_document(self):
