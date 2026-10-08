@@ -1978,6 +1978,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     ret = {
       'objectType': 'event',
       'id': uri,
+      'author': repo_did,
       'url': urls[0]['value'] if urls else None,
       'urls': urls if len(urls) > 1 else None,
       'displayName': obj.get('name'),

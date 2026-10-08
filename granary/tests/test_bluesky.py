@@ -4814,6 +4814,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       'objectType': 'event',
       'id': 'at://did:plc:foo/community.lexicon.calendar.event/123',
+      'author': 'did:plc:foo',
       'url': 'http://example.com/event-xyz',
       'urls': [
         {'value': 'http://example.com/event-xyz'},
@@ -4852,7 +4853,8 @@ class BlueskyTest(testutil.TestCase):
         {'uri': 'http://example.com/event-xyz'},
         {'uri': 'http://example.com/tickets', 'name': 'Tickets'},
       ],
-    }, uri='at://did:plc:foo/community.lexicon.calendar.event/123'))
+    }, uri='at://did:plc:foo/community.lexicon.calendar.event/123',
+       repo_did='did:plc:foo'))
 
   def test_to_as1_event_minimal(self):
     self.assert_equals({
