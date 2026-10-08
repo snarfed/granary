@@ -641,6 +641,50 @@ class ActivityStreams2Test(testutil.TestCase):
         },
       })
 
+  def test_from_as1_position_to_lat_lon(self):
+    self.assertEqual({
+      '@context': as2.CONTEXT,
+      'type': 'Event',
+      'location': {
+        'type': 'Place',
+        'name': 'California',
+        'position': '+38.300400-076.507450/',
+        'latitude': 38.3004,
+        'longitude': -76.50745,
+      },
+    }, as2.from_as1({
+      'objectType': 'event',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'California',
+        'position': '+38.300400-076.507450/',
+      },
+    }))
+
+  def test_from_as1_position_existing_lat_lon(self):
+    self.assertEqual({
+      '@context': as2.CONTEXT,
+      'type': 'Place',
+      'position': '+38.300400-076.507450/',
+      'latitude': 1.23,
+      'longitude': 4.56,
+    }, as2.from_as1({
+      'objectType': 'place',
+      'position': '+38.300400-076.507450/',
+      'latitude': 1.23,
+      'longitude': 4.56,
+    }))
+
+  def test_from_as1_position_invalid(self):
+    self.assertEqual({
+      '@context': as2.CONTEXT,
+      'type': 'Place',
+      'position': 'xyz',
+    }, as2.from_as1({
+      'objectType': 'place',
+      'position': 'xyz',
+    }))
+
   def test_address(self):
     for actor in [
         'http://a.b/@me',

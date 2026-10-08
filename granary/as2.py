@@ -21,7 +21,7 @@ from bs4.formatter import HTMLFormatter
 from webutil import util
 from webutil.util import json_dumps, json_loads
 
-from . import as1
+from . import as1, microformats2
 from .source import html_to_text, jinja_macros, Source, whitespace_to_html
 
 logger = logging.getLogger(__name__)
@@ -537,6 +537,11 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
           logger.warning(f'Dropping unexpected duration {duration!r}; expected int, is {duration.__class__}')
 
   # location
+  position = microformats2.ISO_6709_RE.fullmatch(obj.get('position') or '')
+  if position and 'latitude' not in obj and 'longitude' not in obj:
+    # regex match above already checked that these are valid floats
+    obj['latitude'], obj['longitude'] = (float(val) for val in position.groups())
+
   loc = obj.get('location')
   if loc:
     obj['location'] = from_as1(loc, type='Place', context=None)
