@@ -110,6 +110,10 @@ FROM_AS1_TYPES = {
   'like': (
     'app.bsky.feed.like',
   ),
+  'place': (
+    'community.lexicon.location.geo',
+    'community.lexicon.location.address',
+  ),
   'share': (
     'app.bsky.feed.repost',
     'app.bsky.feed.defs#feedViewPost',
@@ -1242,6 +1246,35 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         'post': ret,
       }
 
+  elif type == 'place':
+    # https://activitystrea.ms/specs/json/schema/activity-schema.html#place
+    # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/location
+    address = obj.get('address')
+    lat = obj.get('latitude')
+    lon = obj.get('longitude')
+    if lat and lon and out_type != 'community.lexicon.location.address':
+      ret = {
+        '$type': 'community.lexicon.location.geo',
+        'name': obj.get('displayName'),
+        'latitude': str(lat),
+        'longitude': str(lon),
+      }
+    elif (isinstance(address, dict) and address.get('country')
+          and out_type != 'community.lexicon.location.geo'):
+      ret = {
+        '$type': 'community.lexicon.location.address',
+        'name': obj.get('displayName'),
+        'street': address.get('streetAddress'),
+        'locality': address.get('locality'),
+        'region': address.get('region'),
+        'postalCode': address.get('postalCode'),
+        'country': address['country'],
+      }
+    else:
+      raise ValueError(f"place needs latitude and longitude or address with country to convert to {out_type or 'community.lexicon.location.*'}")
+
+    ret = as1.trim_nulls(ret)
+
   elif type == 'collection':
       ret = {
         '$type': 'app.bsky.graph.list',
@@ -1879,6 +1912,27 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     ret = {
       'monetization': obj.get('address'),
     }
+
+  elif type in ('community.lexicon.location.address',
+                'community.lexicon.location.fsq',
+                'community.lexicon.location.geo',
+                'community.lexicon.location.hthree'):
+    # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/location
+    # https://activitystrea.ms/specs/json/schema/activity-schema.html#place
+    ret = {
+      'objectType': 'place',
+      'displayName': obj.get('name'),
+      'address': {
+        'streetAddress': obj.get('street'),
+        'locality': obj.get('locality'),
+        'region': obj.get('region'),
+        'postalCode': obj.get('postalCode'),
+        'country': obj.get('country'),
+      },
+    }
+    for field in 'latitude', 'longitude':
+      if util.is_float(val := obj.get(field)):
+        ret[field] = float(val)
 
   elif type == 'site.standard.document':
     ret = {

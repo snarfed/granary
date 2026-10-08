@@ -2367,6 +2367,66 @@ class BlueskyTest(testutil.TestCase):
     with self.assertRaises(ValueError):
       from_as1(ACTOR_AS, out_type='site.standard.publication')
 
+  def test_from_as1_place_geo(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.location.geo',
+      'name': 'the place',
+      'latitude': '38.3004',
+      'longitude': '-76.50745',
+    }, from_as1({
+      'objectType': 'place',
+      'displayName': 'the place',
+      'latitude': 38.3004,
+      'longitude': -76.50745,
+      'address': {
+        'locality': 'Springfield',
+        'country': 'US',
+      },
+    }))
+
+  def test_from_as1_place_address(self):
+    expected = {
+      '$type': 'community.lexicon.location.address',
+      'name': 'the place',
+      'street': '123 Main St',
+      'locality': 'Springfield',
+      'region': 'OR',
+      'postalCode': '97477',
+      'country': 'US',
+    }
+    place = {
+      'objectType': 'place',
+      'displayName': 'the place',
+      'address': {
+        'streetAddress': '123 Main St',
+        'locality': 'Springfield',
+        'region': 'OR',
+        'postalCode': '97477',
+        'country': 'US',
+      },
+    }
+    self.assert_equals(expected, from_as1(place))
+
+    place.update({'latitude': 38.3004, 'longitude': -76.50745})
+    self.assert_equals(expected, from_as1(
+      place, out_type='community.lexicon.location.address'))
+
+  def test_from_as1_place_not_enough_data(self):
+    for place in (
+        {'displayName': 'the place'},
+        {'latitude': 38.3004},
+        {'address': {'locality': 'Springfield'}},
+        {'address': 'Springfield, OR'},
+    ):
+      with self.subTest(place=place), self.assertRaises(ValueError):
+        from_as1({'objectType': 'place', **place})
+
+    with self.assertRaises(ValueError):
+      from_as1({
+        'objectType': 'place',
+        'address': {'country': 'US'},
+      }, out_type='community.lexicon.location.geo')
+
   def test_from_as1_article_multiple(self):
     self.assert_equals([{
       '$type': 'app.bsky.feed.post',
@@ -4588,6 +4648,52 @@ class BlueskyTest(testutil.TestCase):
     }, to_as1({
       '$type': 'community.lexicon.payments.webMonetization',
       'address': 'http://wal/let',
+    }))
+
+  def test_to_as1_location_geo(self):
+    self.assert_equals({
+      'objectType': 'place',
+      'displayName': 'the place',
+      'latitude': 38.3004,
+      'longitude': -76.50745,
+    }, to_as1({
+      '$type': 'community.lexicon.location.geo',
+      'name': 'the place',
+      'latitude': '38.3004',
+      'longitude': '-76.50745',
+      'altitude': '12',
+    }))
+
+  def test_to_as1_location_geo_bad_coordinates(self):
+    self.assert_equals({
+      'objectType': 'place',
+      'displayName': 'the place',
+    }, to_as1({
+      '$type': 'community.lexicon.location.geo',
+      'name': 'the place',
+      'latitude': 'abc',
+      'longitude': '',
+    }))
+
+  def test_to_as1_location_address(self):
+    self.assert_equals({
+      'objectType': 'place',
+      'displayName': 'the place',
+      'address': {
+        'streetAddress': '123 Main St',
+        'locality': 'Springfield',
+        'region': 'OR',
+        'postalCode': '97477',
+        'country': 'US',
+      },
+    }, to_as1({
+      '$type': 'community.lexicon.location.address',
+      'name': 'the place',
+      'street': '123 Main St',
+      'locality': 'Springfield',
+      'region': 'OR',
+      'postalCode': '97477',
+      'country': 'US',
     }))
 
   def test_to_as1_document(self):

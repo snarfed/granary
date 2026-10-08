@@ -345,20 +345,21 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * `to_as1`: convert [`<category>`](https://datatracker.ietf.org/doc/html/rfc4287#section-4.2.2) elements to hashtag tags, using `label` if it's provided, otherwise `term`.
   * `from_as1`: fix XSS: escape `]]>` in content so that it can't end the `<content>` CDATA section early and inject XML elements, eg `<script>`.
 * `bluesky`:
-  * `from_as1`: handle blank `published`/`updated` values, eg whitespace.
-  * `url_to_did_web`:
-    * Strip trailing dots from fully qualified hostnames. They previously produced `did:web:`s that `did_web_to_url` rejected as invalid.
-    * Don't log a spurious "contained a port" warning for URLs with upper case hostnames.
+  * `from_as1`, `to_as1`: Convert AS1 `place`s to/from [`community.lexicon.location.geo`](https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/location/geo.json) and [`community.lexicon.location.address`](https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/location/address.json) objects. `to_as1` also converts `community.lexicon.location.fsq` and `community.lexicon.location.hthree`.
   * `from_as1`:
     * Add `validate` kwarg to allow generating invalid records, eg replies to, likes of, and reposts of non-Bluesky objects.
     * Populate image and video `aspectRatio` from AS1 `width` and `height` if they're not in `aspects`.
     * Fix bug where converting a post with more than four images to `app.bsky.embed.gallery` failed validation due to missing `aspectRatio` field.
     * Fix bug with quote posts with attached media and `postView`/`feedViewPost` output.
+    * Handle blank `published`/`updated` values, eg whitespace.
   * `to_as1`:
     * Handle invalid replies, likes, and reposts of non-Bluesky objects, ie with non-`at://` URIs in their strong refs.
     * For videos, add `image`, falling back to the [Bluesky video CDN](https://video.bsky.app/)'s thumbnail URL.
     * Keep language keys in `contentMap` even if their value is empty.
     * For profiles, convert newlines and line-leading spaces in `description` to HTML in `summary` ([bridgy-fed#2675](https://github.com/snarfed/bridgy-fed/issues/2675)).
+  * `url_to_did_web`:
+    * Strip trailing dots from fully qualified hostnames. They previously produced `did:web:`s that `did_web_to_url` rejected as invalid.
+    * Don't log a spurious "contained a port" warning for URLs with upper case hostnames.
   * `Bluesky`:
     * `create`/`preview_create`: add support for blocks.
     * `create`/`preview_create`: allow posts with videos but no text.
