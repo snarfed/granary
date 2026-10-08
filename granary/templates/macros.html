@@ -126,6 +126,11 @@ each macro strip whitespace.
   {% for photo in props.photo if photo %}
     {{ img(photo) }}
   {% endfor %}
+  {% for field in microformats2.AS_TO_MF2_ADDRESS_FIELDS.values() %}
+    {% for val in props[field] if val %}
+      <span class="p-{{ field }}">{{ val }}</span>
+    {% endfor %}
+  {% endfor %}
   </span>
 {% endif %}
 {% endfilter %}{% endmacro %}

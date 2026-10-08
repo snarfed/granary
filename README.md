@@ -384,11 +384,19 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
 * `mastodon`:
   * Add `from_as1`, which converts an AS1 actor or post to a Mastodon API `Account` or `Status`.
 * `microformats2`:
-  * `from_as1`: bug fix for precedence of attachments' `stream`s.
+  * Convert location addresses between AS1 `address` and mf2 `street-address`, `locality`, `region`, `postal-code`, and `country-name`.
+  * Normalize `start`/`startTime` and `end`/`endTime` to ISO 8601, like `published` and `updated`.
+  * `from_as1`:
+    * Bug fix for precedence of attachments' `stream`s.
+    * If `summary` is HTML, convert it to `{'html': ..., 'value': ...}`, and render it as `e-summary`.
+  * `to_as1`:
+    * Convert plain text and `h-adr` `location`s. Previously they were dropped.
+    * `h-event`:
+      * If `end` is missing, populate `endTime` based on `start` and `duration`.
+      * If `content` is missing, fall back to `description`.
   * `object_to_html`, `json_to_html`: link `dt-published` to the post's URL. If the post has no name, this link is now its `u-url`, instead of a separate link with the URL as text.
   * Render HTML with Jinja templates instead of Python strings. Only mf2 `{'html': ...}` values and AS1 `content` are rendered as raw HTML. ([#586](https://github.com/snarfed/granary/issues/586))
   * Whitespace in rendered HTML has changed.
-  * `from_as1`: if `summary` is HTML, convert it to `{'html': ..., 'value': ...}`, and render it as `e-summary`.
 * `nostr`:
   * `bech32_decode`: return the input unchanged, as documented, instead of raising `AssertionError` or `ValueError`, when the input has a valid checksum but malformed TLV contents.
   * `from_as1`:

@@ -66,6 +66,17 @@ MF2_TO_AS_TYPE_VERB = {
   'rsvp': ('activity', None),  # json_to_object() will generate verb from rsvp
   'tag': ('activity', 'tag'),
 }
+# AS1 place address fields to mf2 h-card/h-adr properties
+# https://activitystrea.ms/specs/json/schema/activity-schema.html#address
+# https://microformats.org/wiki/h-adr
+AS_TO_MF2_ADDRESS_FIELDS = {
+  'streetAddress': 'street-address',
+  'locality': 'locality',
+  'region': 'region',
+  'postalCode': 'postal-code',
+  'country': 'country-name',
+}
+
 # ISO 6709 location string. http://en.wikipedia.org/wiki/ISO_6709
 ISO_6709_RE = re.compile(r'([-+][0-9.]+)([-+][0-9.]+).*/')
 
@@ -222,6 +233,7 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
       if stream:
         break
 
+  # string ISO 8601 timedelta
   duration = stream.get('duration')
   if duration is not None:
     if util.is_int(duration):
@@ -278,11 +290,16 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
                                   trim_nulls=False, default_object_type='place')],
       'comment': [object_to_json(c, trim_nulls=False, entry_class='h-cite')
                   for c in as1.get_object(obj, 'replies').get('items', [])],
-      'start': [primary.get('startTime')],
-      'end': [primary.get('endTime')],
+      'start': [maybe_normalize_iso8601(primary.get('startTime'))],
+      'end': [maybe_normalize_iso8601(primary.get('endTime'))],
     },
     'children': children,
   }
+
+  address = primary.get('address')
+  if isinstance(address, dict):
+    for as1_field, mf2_field in AS_TO_MF2_ADDRESS_FIELDS.items():
+      ret['properties'][mf2_field] = [address.get(as1_field)]
 
   # content. emulate e- vs p- microformats2 parsing: e- if there are HTML tags,
   # otherwise p-.
@@ -512,16 +529,16 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   # https://indieweb.org/duration
   # https://en.wikipedia.org/wiki/ISO_8601#Durations
   duration = prop.get('duration') or prop.get('length')
+  duration_s = None
   if duration:
     if util.is_int(duration):
-      duration = int(duration)
+      duration_s = int(duration)
     else:
       parsed = util.parse_iso8601_duration(duration)
       if parsed:
-        duration = int(parsed.total_seconds())
+        duration_s = int(parsed.total_seconds())
       else:
         logger.debug(f'Unknown format for length or duration {duration!r}')
-        duration = None
 
   stream = None
   bytes = size_to_bytes(prop.get('size'))
@@ -531,7 +548,7 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
       'stream': {
         'url': url,
         # int seconds: http://activitystrea.ms/specs/json/1.0/#media-link
-        'duration': duration,
+        'duration': duration_s,
         # file size in bytes. nonstandard, not in AS1 or AS2
         'size': bytes,
       },
@@ -540,18 +557,29 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     if atts:
       stream = atts[0]['stream']
 
+  # start/end time
+  start = maybe_normalize_iso8601(prop.get('start'))
+  end = maybe_normalize_iso8601(prop.get('end'))
+  if duration_s and start and not end:
+    try:
+      end = (dateutil.parser.parse(start) + timedelta(seconds=duration_s)).isoformat()
+    except (OverflowError, ValueError) as e:
+      logger.debug(f"Couldn't add duration {duration_s} to start {start}: {e}")
+
   obj = {
     'id': prop.get('uid'),
     'objectType': as_type,
     'verb': as_verb,
     'published': maybe_normalize_iso8601(prop.get('published')),
     'updated': maybe_normalize_iso8601(prop.get('updated')),
-    'startTime': prop.get('start'),
-    'endTime': prop.get('end'),
+    'startTime': start,
+    'endTime': end,
     'displayName': get_text(prop.get('name')),
     'username': prop.get('nickname'),
     'summary': get_text(prop.get('summary') or prop.get('note')),
-    'content': get_html(prop.get('content')),
+    # description is h-event's old name for content
+    # https://microformats.org/wiki/h-event#Properties
+    'content': get_html(prop.get('content') or prop.get('description')),
     'url': urls[0]['value'] if urls else None,
     'urls': urls if len(urls) > 1 or rel_urls else None,
     # image is special cased below, to handle alt
@@ -595,6 +623,12 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     loc = interpreted.get('location')
     if loc:
       obj['location']['objectType'] = 'place'
+      if not obj['location'].get('displayName'):
+        obj['location']['displayName'] = get_text(loc.get('name'))
+      obj['location']['address'] = {
+        as1_field: get_text(loc.get(mf2_field))
+        for as1_field, mf2_field in AS_TO_MF2_ADDRESS_FIELDS.items()
+      }
       lat, lng = loc.get('latitude'), loc.get('longitude')
       if lat and lng:
         try:

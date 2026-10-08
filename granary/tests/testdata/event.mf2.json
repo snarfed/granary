@@ -7,8 +7,8 @@
     "url": ["http://example.com/event-xyz"],
     "published": ["2017-01-22T01:29:15+00:00"],
     "content": ["this event is gonna be great"],
-    "start": ["2017-07-12 17:30"],
-    "end": ["2017-07-12 19:30"],
+    "start": ["2017-07-12T17:30:00"],
+    "end": ["2017-07-12T19:30:00"],
     "location": [{
       "type": ["h-card", "p-location"],
       "properties": {

@@ -1048,7 +1048,158 @@ foo bar
       'position': '+50.820641-0.149522/',
       'displayName': 'Timeless Coffee Roasters',
       'url': 'https://kylewm.com/venues/timeless-coffee-roasters-oakland-california',
+      'address': {
+        'locality': 'Oakland',
+        'region': 'California',
+      },
     }, obj['location'])
+
+  def test_to_as1_with_location_string(self):
+    self.assert_equals({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'the place',
+      },
+    }, microformats2.to_as1({
+      'type': ['h-event'],
+      'properties': {
+        'name': ['XYZ'],
+        'location': ['the place'],
+      },
+    }))
+
+  def test_to_as1_with_location_adr(self):
+    self.assert_equals({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'location': {
+        'objectType': 'place',
+        'address': {
+          'streetAddress': '123 Main St',
+          'locality': 'Springfield',
+          'region': 'OR',
+          'postalCode': '97477',
+          'country': 'US',
+        },
+      },
+    }, microformats2.to_as1({
+      'type': ['h-event'],
+      'properties': {
+        'name': ['XYZ'],
+        'location': [{
+          'type': ['h-adr'],
+          'properties': {
+            'street-address': ['123 Main St'],
+            'locality': ['Springfield'],
+            'region': ['OR'],
+            'postal-code': ['97477'],
+            'country-name': ['US'],
+          },
+          'value': '123 Main St Springfield OR 97477 US',
+        }],
+      },
+    }))
+
+  def test_from_as1_location_address(self):
+    event = {
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'the place',
+        'address': {
+          'streetAddress': '123 Main St',
+          'locality': 'Springfield',
+          'region': 'OR',
+          'postalCode': '97477',
+          'country': 'US',
+        },
+      },
+    }
+    self.assert_equals({
+      'type': ['h-event'],
+      'properties': {
+        'name': ['XYZ'],
+        'location': [{
+          'type': ['h-card', 'p-location'],
+          'properties': {
+            'name': ['the place'],
+            'street-address': ['123 Main St'],
+            'locality': ['Springfield'],
+            'region': ['OR'],
+            'postal-code': ['97477'],
+            'country-name': ['US'],
+          },
+        }],
+      },
+    }, microformats2.from_as1(event))
+
+    self.assert_multiline_in("""\
+<span class="p-location h-card">
+<span class="p-name">the place</span>
+<span class="p-street-address">123 Main St</span>
+<span class="p-locality">Springfield</span>
+<span class="p-region">OR</span>
+<span class="p-postal-code">97477</span>
+<span class="p-country-name">US</span>
+</span>
+""", microformats2.object_to_html(event), ignore_blanks=True)
+
+  def test_to_as1_event_duration(self):
+    for duration, start, end in (
+        ('PT2H30M', '2017-07-12T17:30:00-07:00', '2017-07-12T20:00:00-07:00'),
+        ('9000', '2017-07-12 17:30', '2017-07-12T20:00:00'),
+        ('PT2H30M', 'not a time', None),
+        ('xyz', '2017-07-12T17:30:00-07:00', None),
+    ):
+      with self.subTest(duration=duration, start=start):
+        self.assert_equals(end, microformats2.to_as1({
+          'type': ['h-event'],
+          'properties': {
+            'start': [start],
+            'duration': [duration],
+          },
+        }).get('endTime'))
+
+  def test_to_as1_event_duration_doesnt_override_end(self):
+    self.assert_equals({
+      'objectType': 'event',
+      'startTime': '2017-07-12T17:30:00-07:00',
+      'endTime': '2017-07-12T19:30:00-07:00',
+    }, microformats2.to_as1({
+      'type': ['h-event'],
+      'properties': {
+        'start': ['2017-07-12T17:30:00-07:00'],
+        'end': ['2017-07-12T19:30:00-07:00'],
+        'duration': ['PT5H'],
+      },
+    }))
+
+  def test_to_as1_event_description(self):
+    self.assert_equals({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'content': 'this event is gonna be great',
+    }, microformats2.to_as1({
+      'type': ['h-event'],
+      'properties': {
+        'name': ['XYZ'],
+        'description': ['this event is gonna be great'],
+      },
+    }))
+
+    self.assert_equals({
+      'objectType': 'event',
+      'content': 'the content',
+    }, microformats2.to_as1({
+      'type': ['h-event'],
+      'properties': {
+        'content': ['the content'],
+        'description': ['the description'],
+      },
+    }))
 
   def test_to_as1_with_location_geo(self):
     self._test_to_as1_with_location({
