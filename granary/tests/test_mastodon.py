@@ -1322,6 +1322,17 @@ class MastodonTest(testutil.TestCase):
     self.assertEqual('foo ☕ bar<br /><br /><video controls src="http://foo.com/video.mp4"><a href="http://foo.com/video.mp4">a fun video</a></video> &nbsp; <img src="http://foo.com/image.jpg" alt="a fun image" />',
                      preview.content)
 
+  def test_preview_with_media_list_object_types(self):
+    preview = self.mastodon.preview_create({
+      **MEDIA_OBJECT,
+      'objectType': ['note', 'place'],
+      'attachments': [{**att, 'objectType': [att['objectType'], 'place']}
+                      for att in MEDIA_OBJECT['attachments']],
+    })
+    self.assertEqual('<span class="verb">toot</span>:', preview.description)
+    self.assertEqual('foo ☕ bar<br /><br /><video controls src="http://foo.com/video.mp4"><a href="http://foo.com/video.mp4">a fun video</a></video> &nbsp; <img src="http://foo.com/image.jpg" alt="a fun image" />',
+                     preview.content)
+
   def test_preview_create_override_truncate_text_length(self):
     m = mastodon.Mastodon(INSTANCE, access_token='towkin',
                           user_id=ACCOUNT['id'], truncate_text_length=8)

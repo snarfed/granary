@@ -177,6 +177,7 @@ class As1Test(testutil.TestCase):
                 {'objectType': 'unknown'}]},
         {'to': [{'alias': 'xyz'},
                 {'objectType': 'unknown'}]},
+        {'to': [{'objectType': ['unknown']}]},
     ):
       with self.subTest(obj=obj):
         self.assertIsNone(as1.is_public(obj))
@@ -396,6 +397,10 @@ class As1Test(testutil.TestCase):
     for before, after in (({}, {}),
                           ({'x': 1}, {'y': 2}),
                           ({'to': None}, {'to': ''}),
+                          ({'objectType': 'note'}, {'objectType': ['note']}),
+                          ({'objectType': ['note', 'x']}, {'objectType': 'note'}),
+                          ({'object': {'objectType': 'note'}},
+                           {'object': {'objectType': ['note', 'x']}}),
                           (fb_post, fb_post_edited),
                           (fb_comment, fb_comment_edited),
                           (gp_like, gp_like_edited)):
@@ -417,6 +422,7 @@ class As1Test(testutil.TestCase):
     for before, after in ((fb_comment, fb_comment_edited),
                           (fb_comment, fb_comment_edited_inReplyTo),
                           (gp_like, gp_like_edited),
+                          ({'objectType': 'note'}, {'objectType': ['article', 'note']}),
                           (fb_invite, fb_rsvp)):
       self.assertTrue(as1.activity_changed(before, after, log=True),
                       f'{before}\n{after}')
@@ -500,6 +506,9 @@ class As1Test(testutil.TestCase):
                     {'url': 'http://b'}],
            'attachments': [{'url': 'http://c', 'objectType': 'mention'}]},
           ['http://a/', 'http://b/', 'http://c/'])
+
+    check({'tags': [{'url': 'http://a', 'objectType': ['article', 'note']}]},
+          ['http://a/'])
 
     # non-article objectType
     urls = [{'url': 'http://x.com/y', 'objectType': 'image'}]
@@ -793,6 +802,21 @@ class As1Test(testutil.TestCase):
     self.assertEqual([{'id': 1}, {'id': 2}], got)
     assert got[0] is not x['object'][0]
 
+  def test_object_type(self):
+    for expected, obj in (
+        (None, {}),
+        ('note', {'objectType': 'note'}),
+        ('like', {'verb': 'like'}),
+        ('like', {'objectType': 'activity', 'verb': 'like'}),
+        (None, {'objectType': []}),
+        ('person', {'objectType': ['person']}),
+        ('person', {'objectType': ['person', 'place']}),
+        ('like', {'objectType': ['activity'], 'verb': 'like'}),
+        ('like', {'objectType': [], 'verb': 'like'}),
+    ):
+      with self.subTest(obj=obj):
+        self.assertEqual(expected, as1.object_type(obj))
+
   def test_get_owner(self):
     with self.assertRaises(ValueError):
       as1.get_owner('x')
@@ -807,6 +831,7 @@ class As1Test(testutil.TestCase):
         ('a', {'author': {'id': 'a'}}),
         ('a', {'author': {'url': 'a'}}),
         ('a', {'id': 'a', 'objectType': 'organization'}),
+        ('a', {'id': 'a', 'objectType': ['organization', 'place']}),
         (None, {'x': 'y', 'objectType': 'organization'}),
         (None, {'verb': 'post', 'object': {}}),
         ('a', {'verb': 'post', 'object': {'author': 'a'}}),
@@ -931,6 +956,10 @@ class As1Test(testutil.TestCase):
           'id': 'x',
           'url': 'y',
         }]},
+        {'attachments': [{
+          'objectType': ['note', 'article'],
+          'id': 'x',
+        }]},
     ):
       self.assertEqual(['x'], as1.quoted_posts(obj))
 
@@ -972,6 +1001,10 @@ class As1Test(testutil.TestCase):
              'url': 'x',
            }]},
          },
+        {'tags': [{
+          'objectType': ['mention', 'person'],
+          'url': 'x',
+        }]},
     ):
       self.assertEqual(['x'], as1.mentions(obj))
 
@@ -994,6 +1027,7 @@ class As1Test(testutil.TestCase):
         ('', {'objectType': 'person', 'displayName': 'Alice'}),
         ('hello', {'objectType': 'note', 'content': 'hello'}),
         ('hello', {'objectType': 'note', 'content': '<p>hello</p>'}),
+        ('hello', {'objectType': ['note', 'place'], 'content': 'hello'}),
         ('a title', {'objectType': 'article', 'displayName': 'a title'}),
         ('hello', {
           'objectType': 'activity',
@@ -1067,6 +1101,23 @@ class As1Test(testutil.TestCase):
     as1.expand_tags(obj)
     self.assertEqual([{
       'objectType': 'hashtag',
+      'displayName': 'hache-☕',
+      'startIndex': 4,
+      'length': 8,
+    }], obj.get('tags'))
+
+  def test_expand_tags_list_object_types(self):
+    obj = {
+      'objectType': ['note', 'article'],
+      'content': 'foo #hache-☕ bar',
+      'tags': [{
+        'objectType': ['hashtag', 'tag'],
+        'displayName': 'hache-☕',
+      }],
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([{
+      'objectType': ['hashtag', 'tag'],
       'displayName': 'hache-☕',
       'startIndex': 4,
       'length': 8,

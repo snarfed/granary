@@ -690,7 +690,7 @@ class Twitter(source.Source):
       newly created Twitter object.
     """
     assert preview in (False, True)
-    type = obj.get('objectType')
+    type = util.get_first(obj, 'objectType')
     verb = obj.get('verb')
 
     base_obj = self.base_object(obj)
@@ -706,7 +706,7 @@ class Twitter(source.Source):
     lng = obj.get('location', {}).get('longitude')
 
     # prefer displayName over content for articles
-    type = obj.get('objectType')
+    type = util.get_first(obj, 'objectType')
     prefer_content = type == 'note' or (base_url and (type == 'comment'
                                                       or obj.get('inReplyTo')))
     preview_description = ''
@@ -1329,7 +1329,7 @@ class Twitter(source.Source):
 
     # person mentions
     obj['to'].extend(tag for tag in obj['tags']
-                     if tag.get('objectType') in ('person', 'mention')
+                     if as1.object_type(tag) in ('person', 'mention')
                      and tag.get('indices')[1] <= text_start)
 
     # replace entities with display URLs, convert start/end indices to start/length

@@ -128,7 +128,7 @@ def from_as1(obj):
 
     header = ''
     for img in as1.get_objects(obj, 'image'):
-      if img.get('objectType') == 'featured' and (url := img.get('url')):
+      if as1.object_type(img) == 'featured' and (url := img.get('url')):
         header = url
         break
 
@@ -197,7 +197,7 @@ def from_as1(obj):
       }
 
     for tag in as1.get_objects(obj, 'tags'):
-      tag_type = tag.get('objectType')
+      tag_type = as1.object_type(tag)
       if tag_type in as1.ACTOR_TYPES or tag_type == 'mention':
         acct = (tag.get('displayName') or '').removeprefix('@')
         status['mentions'].append({
@@ -206,7 +206,7 @@ def from_as1(obj):
           'acct': acct,
           'url': tag.get('url'),
         })
-      elif tag.get('objectType') == 'hashtag':
+      elif as1.object_type(tag) == 'hashtag':
         status['tags'].append({
           'name': (tag.get('displayName') or '').lstrip('#'),
           'url': tag.get('url'),
@@ -219,7 +219,7 @@ def from_as1(obj):
       img['objectType'] = 'image'
 
     for att in images + as1.get_objects(obj, 'attachments'):
-      media_type = AS1_TO_MEDIA_TYPES.get(att.get('objectType'))
+      media_type = AS1_TO_MEDIA_TYPES.get(as1.object_type(att))
       if not media_type:
         continue
 
@@ -848,7 +848,7 @@ class Mastodon(source.Source):
       created object.
     """
     assert preview in (False, True)
-    type = obj.get('objectType')
+    type = util.get_first(obj, 'objectType')
     verb = obj.get('verb')
 
     base_obj = self.base_object(obj)
@@ -859,8 +859,8 @@ class Mastodon(source.Source):
     is_rsvp = (verb and verb.startswith('rsvp-')) or verb == 'invite'
     atts = obj.get('attachments', [])
     images = util.dedupe_urls(util.get_list(obj, 'image') +
-                              [a for a in atts if a.get('objectType') == 'image'])
-    videos = util.dedupe_urls([obj] + [a for a in atts if a.get('objectType') == 'video'],
+                              [a for a in atts if as1.object_type(a) == 'image'])
+    videos = util.dedupe_urls([obj] + [a for a in atts if as1.object_type(a) == 'video'],
                               key='stream')
     has_media = (images or videos) and (type in ('note', 'article') or is_reply)
 

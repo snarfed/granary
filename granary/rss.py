@@ -92,7 +92,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None,
     if inner_obj and activity.get('verb', 'post') in ('create', 'post'):
       obj = inner_obj
 
-    if activity.get('objectType') == 'person':
+    if as1.object_type(activity) == 'person':
       continue
 
     item = fg.add_entry(order='append')
@@ -118,7 +118,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None,
       {'term': t['displayName']} for t in obj.get('tags', [])
       if t.get('displayName') and
       t.get('verb') not in ('like', 'react', 'share') and
-      t.get('objectType') not in ('article', 'person', 'mention')]
+      as1.object_type(t) not in ('article', 'person', 'mention')]
     item.category(categories)
 
     as1_author = as1.get_object(obj, 'author')
@@ -153,7 +153,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None,
 
       url = stream.get('url') or ''
       mime = mimetypes.guess_type(url, strict=False)[0] or ''
-      if (att.get('objectType') in ('audio', 'video') or
+      if (as1.object_type(att) in ('audio', 'video') or
           mime and mime.split('/')[0] in ('audio', 'video')):
         if item_has_stream_enclosure:
           logger.info(f'Warning: item {id} already has an RSS enclosure, skipping additional enclosure {url}')

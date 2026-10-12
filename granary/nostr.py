@@ -491,7 +491,7 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None, multiple=False)
 
     for img in as1.get_objects(obj, 'image'):
       if url := img.get('url') or img.get('id'):
-        field = 'banner' if img.get('objectType') == 'featured' else 'picture'
+        field = 'banner' if as1.object_type(img) == 'featured' else 'picture'
         content.setdefault(field, url)
 
     event.update({
@@ -558,7 +558,7 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None, multiple=False)
     # tags: hashtags are NIP-12 't' tags, mentions are NIP-27 URIs in content
     mentions = []
     for tag in util.get_list(obj, 'tags'):
-      tag_type = tag.get('objectType')
+      tag_type = as1.object_type(tag)
       if tag_type == 'hashtag' and (name := tag.get('displayName')):
         event['tags'].append(['t', name])
       elif tag_type == 'mention' and (url := tag.get('url')):
@@ -814,7 +814,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
 
     if alt:
       for att in obj['attachments']:
-        if (att.get('objectType') in ('video', 'audio')
+        if (as1.object_type(att) in ('video', 'audio')
             and not att.get('displayName')):
           att['displayName'] = alt
           break
@@ -913,7 +913,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
   if isinstance(obj.get('object'), list) and len(obj['object']) == 1:
     obj['object'] = obj['object'][0]
 
-  if obj.get('objectType') == 'activity' and (pubkey := event.get('pubkey')):
+  if util.get_first(obj, 'objectType') == 'activity' and (pubkey := event.get('pubkey')):
     obj['actor'] = make_id(pubkey, 'npub')
 
   return Source.postprocess_object(obj)

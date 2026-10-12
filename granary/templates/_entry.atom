@@ -3,8 +3,8 @@
 {% set actor = activity.actor or as1.get_object(obj, 'author') %}
 {% include "author.atom" %}
 
-  {% if obj.objectType %}
-    <activity:object-type>http://activitystrea.ms/schema/1.0/{{ obj.objectType }}</activity:object-type>
+  {% if util.get_first(obj, 'objectType') %}
+    <activity:object-type>http://activitystrea.ms/schema/1.0/{{ util.get_first(obj, 'objectType') }}</activity:object-type>
   {% endif %}
 
   {% set url = as1.get_url(activity) or as1.get_url(obj) %}
@@ -25,7 +25,7 @@
   </div>
 {% endif %}
 
-{% for to in obj.to|selectattr('objectType', 'eq', 'person') %}
+{% for to in obj.to if as1.object_type(to) == 'person' %}
   {% if loop.first %}<p>In reply to {% endif -%}
   <a class="h-card p-name u-url" href="{{ to.url }}">{{ to.displayName }}</a>
   {%- if loop.last %}:</p>{% else %}, {% endif %}
@@ -58,7 +58,7 @@
       <link rel="ostatus:attention" href="{{ url }}" />
       <link rel="mentioned" href="{{ url }}" />
     {% endif %}
-    {% if tag.displayName and tag.get('objectType') in ('hashtag', None) and not tag.verb %}
+    {% if tag.displayName and util.get_first(tag, 'objectType') in ('hashtag', None) and not tag.verb %}
       <category term="{{ tag.displayName }}" />
     {% endif %}
   {% endfor %}
@@ -70,7 +70,7 @@
   {% if activity.verb in VERBS_WITH_OBJECT and (obj.url or obj.id) %}
     <activity:object>{{ obj.url or obj.id }}</activity:object>
   {% endif %}
-  {% set base = activity if (activity.verb in VERBS_WITH_OBJECT or obj.objectType == 'bookmark') else obj %}
+  {% set base = activity if (activity.verb in VERBS_WITH_OBJECT or as1.object_type(obj) == 'bookmark') else obj %}
   <published>{{ base.published }}</published>
   <updated>{{ base.updated or base.published }}</updated>
   {% for orig in obj.inReplyTo or activity.context.inReplyTo %}
@@ -87,9 +87,9 @@
   <link rel="self" href="{{ url or activity.id }}" />
 
   {% for att in obj.attachments %}
-    {% if att.objectType in ('audio', 'video') and att.stream.url %}
+    {% if as1.object_type(att) in ('audio', 'video') and att.stream.url %}
       <link rel="enclosure" href="{{ att.stream.url }}" type="{{ mimetypes.guess_type(att.stream.url, strict=False)[0] or '' }}" />
-    {% elif att.objectType == 'image' %}
+    {% elif as1.object_type(att) == 'image' %}
       {% set url = att.image.url or att.url %}
       {% if url %}
         <link rel="enclosure" href="{{ url }}" type="{{ mimetypes.guess_type(url, strict=False)[0] or '' }}" />

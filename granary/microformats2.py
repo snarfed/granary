@@ -223,7 +223,7 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
   attachments = defaultdict(list)
   for prop in 'attachments', 'tags':
     for elem in get_list(primary, prop):
-      attachments[elem.get('objectType')].append(elem)
+      attachments[util.get_first(elem, 'objectType')].append(elem)
 
   # prefer duration and size from object's stream, then first video, then first
   # audio
@@ -334,10 +334,10 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
     tags = util.get_list(obj, 'object')
   ret['properties']['category'] = []
   for tag in tags:
-    if tag.get('objectType') in as1.ACTOR_TYPES:
+    if as1.object_type(tag) in as1.ACTOR_TYPES:
       ret['properties']['category'].append(
         object_to_json(tag, entry_class='u-category h-card'))
-    elif tag.get('objectType') == 'hashtag' or obj_type == 'tag':
+    elif as1.object_type(tag) == 'hashtag' or obj_type == 'tag':
       name = tag.get('displayName')
       if name:
         ret['properties']['category'].append(name)
@@ -735,7 +735,7 @@ def hfeed_to_as1(parsed, actor=None):
     if 'h-entry' in types or 'h-event' in types or 'h-cite' in types:
       obj = json_to_object(item, actor=actor)
       obj['content_is_html'] = True
-      if obj.get('verb') or obj.get('objectType') == 'activity':
+      if obj.get('verb') or util.get_first(obj, 'objectType') == 'activity':
         activities.append(obj)
       else:
         activities.append({
@@ -1039,7 +1039,7 @@ def _prepare_content(obj, synthesize_content=True, render_attachments=False,
   attachments = []
   if render_attachments:
     atts = [a for a in obj.get('attachments', [])
-            if a.get('objectType') not in ('note', 'article', 'comment')
+            if as1.object_type(a) not in ('note', 'article', 'comment')
             and get_url(a, 'image') not in image_urls]
     attachments = _prepare_attachments(atts + tags.pop('article', []), obj)
 
@@ -1086,7 +1086,7 @@ def _prepare_content(obj, synthesize_content=True, render_attachments=False,
     share_attachments = _prepare_attachments([
       att for att in itertools.chain.from_iterable(
         o.get('attachments', []) for o in as1.get_objects(obj))
-      if att.get('objectType') not in ('note', 'article', 'comment')], obj)
+      if as1.object_type(att) not in ('note', 'article', 'comment')], obj)
 
   loc = obj.get('location')
 
@@ -1126,7 +1126,7 @@ def _prepare_attachments(attachments, obj):
     stream = as1.get_object(att, 'stream')
     image = as1.get_object(att, 'image')
     prepared.append({
-      'type': att.get('objectType'),
+      'type': util.get_first(att, 'objectType'),
       'name': att.get('displayName') or '',
       'summary': att.get('summary'),
       'stream': stream.get('id') or stream.get('url') or '',

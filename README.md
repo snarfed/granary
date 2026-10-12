@@ -322,6 +322,8 @@ _Non-breaking changes:_
 
 Add new `micropub.Micropub` source class that implements the [Micropub](https://micropub.spec.indieweb.org/) API.
 
+Handle list-valued AS1 `objectType` everywhere, using its first element, including in `as1.object_type`.
+
 * `as1`:
   * Add new `snippet` function that generates a short, human-readable, plain text summary of an object or activity, eg `replied to http://x: hello` or `followed http://x` ([#450](https://github.com/snarfed/granary/issues/450)).
   * `get_rsvps_from_event`: handle when actor is compacted string id.
@@ -332,6 +334,7 @@ Add new `micropub.Micropub` source class that implements the [Micropub](https://
   * `from_as1`: keep `contentMap` even when all of its values are empty, so that objects with no content don't lose their languages.
   * `from_as1`: add [FEP-044f's `quote`](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md) field to quote posts, along with the existing `_misskey_quote` and `quoteUrl` ([bridgy-fed#1956](https://github.com/snarfed/bridgy-fed/issues/1956)).
   * `from_as1`: convert places' ISO 6709 `position` to `latitude` and `longitude`.
+  * `from_as1`, `to_as1`: preserve multiply-valued AS1 `objectType` to/from AS2 `type`. Unknown types are dropped. `verb` is still singly valued.
   * `to_as1`:
     * Improve `featured` collection (ie pinned post) fetching ([bridgy-fed#2302](https://github.com/snarfed/bridgy-fed/issues/2302)).
     * Fix bug where `Audio`/`Video` objects with a tag-based media link lost their top-level `duration`, `size`, and `url` fields.

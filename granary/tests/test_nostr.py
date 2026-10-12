@@ -493,6 +493,39 @@ class NostrTest(testutil.TestCase):
     self.assert_equals(note, to_as1(event))
     self.assert_equals(event, from_as1(note))
 
+  def test_from_as1_list_object_types(self):
+    self.assert_equals({
+      'kind': KIND_NOTE,
+      'pubkey': PUBKEY,
+      'content': 'Something to say',
+      'created_at': NOW_TS,
+      'tags': [['t', 'foo']],
+    }, from_as1({
+      'objectType': ['note', 'place'],
+      'author': PUBKEY_URI,
+      'content': 'Something to say',
+      'published': NOW_ISO,
+      'tags': [{
+        'objectType': ['hashtag', 'tag'],
+        'displayName': 'foo',
+      }],
+    }), ignore=['id'])
+
+    self.assert_equals({
+      'kind': KIND_PROFILE,
+      'pubkey': PUBKEY,
+      'content': json_dumps({
+        'name': 'Alice',
+        'banner': 'http://ban/ner',
+      }, sort_keys=True, ensure_ascii=False),
+      'tags': [],
+    }, from_as1({
+      'objectType': ['person', 'place'],
+      'id': PUBKEY_URI,
+      'displayName': 'Alice',
+      'image': [{'objectType': ['featured'], 'url': 'http://ban/ner'}],
+    }), ignore=['created_at', 'id'])
+
   def test_from_as1_note_with_mention_tags(self):
     note = {
       'objectType': 'note',

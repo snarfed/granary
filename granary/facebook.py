@@ -641,12 +641,12 @@ class Facebook(source.Source):
     """
     # TODO: validation, error handling
     assert preview in (False, True)
-    type = obj.get('objectType')
+    type = util.get_first(obj, 'objectType')
     verb = obj.get('verb')
 
     base_obj = self.base_object(obj, verb=verb)
     base_id = base_obj.get('id')
-    base_type = base_obj.get('objectType')
+    base_type = util.get_first(base_obj, 'objectType')
     base_url = base_obj.get('url')
     if base_id and not base_url:
       base_url = base_obj['url'] = self.object_url(base_id)
@@ -852,7 +852,7 @@ class Facebook(source.Source):
       url = tag.get('url', '')
       id = url.split('/')[-1]
       if (util.domain_from_link(url) == self.DOMAIN and util.is_int(id) and
-          tag.get('objectType') == 'person' and
+          as1.object_type(tag) == 'person' and
           not tag.get('startIndex')):  # mentions are linkified separately
         tag = copy.copy(tag)
         tag['id'] = id
@@ -978,7 +978,7 @@ class Facebook(source.Source):
 
       elif len(path_parts) == 1:
         # maybe a profile/page URL?
-        if not base_obj.get('objectType'):
+        if not util.get_first(base_obj, 'objectType'):
           base_obj['objectType'] = 'person'  # or page
         if not base_id:
           base_id = base_obj['id'] = path_parts[0]
@@ -1047,7 +1047,7 @@ class Facebook(source.Source):
       return {}
 
     activity = {
-      'verb': VERBS.get(post.get('type', obj.get('objectType')), 'post'),
+      'verb': VERBS.get(post.get('type', util.get_first(obj, 'objectType')), 'post'),
       'published': obj.get('published'),
       'updated': obj.get('updated'),
       'fb_id': post.get('id'),

@@ -749,6 +749,39 @@ cast_add_body {
       }],
     }))
 
+  def test_from_as1_list_object_types(self):
+    self.assertEqual(message("""
+type: MESSAGE_TYPE_CAST_ADD
+cast_add_body {
+  text: "foo  #news"
+  mentions: 456
+  mentions_positions: 4
+}
+"""), from_as1({
+      'objectType': ['note', 'place'],
+      'author': 'farcaster://123',
+      'published': '2022-01-02T03:04:05+00:00',
+      'content': 'foo @alice #news',
+      'tags': [{
+        'objectType': ['mention', 'person'],
+        'url': 'farcaster://456',
+        'displayName': 'alice',
+      }, {
+        'objectType': ['hashtag'],
+        'displayName': 'news',
+      }],
+    }))
+
+    self.assertEqual([
+      user_data_message(456, 'USER_DATA_TYPE_DISPLAY', 'Alice'),
+      user_data_message(456, 'USER_DATA_TYPE_BANNER', 'https://example.com/ban.jpg'),
+    ], from_as1({
+      'objectType': ['person', 'place'],
+      'id': 'farcaster://456',
+      'displayName': 'Alice',
+      'image': [{'objectType': ['featured'], 'url': 'https://example.com/ban.jpg'}],
+    }))
+
   def test_from_as1_plain_text_url_mention_hashtag(self):
     self.assertEqual(message("""
 type: MESSAGE_TYPE_CAST_ADD

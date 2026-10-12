@@ -425,7 +425,7 @@ def _prepare_activity(a, reader=True):
   attachments = a.get('attachments') or obj.get('attachments') or []
   for att in attachments:
     att['stream'] = util.get_first(att, 'stream')
-    type = att.get('objectType')
+    type = as1.object_type(att)
 
     if type == 'image':
       att['image'] = util.get_first(att, 'image')

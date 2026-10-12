@@ -905,6 +905,40 @@ class ActivityStreams2Test(testutil.TestCase):
       'name': 'Golden Gate Park Bike & Skate',
     }))
 
+  def test_to_as1_multiple_types_preserved(self):
+    for expected, input in (
+        ({'objectType': ['person', 'place']}, {'type': ['Person', 'Place']}),
+        ({'objectType': 'place'}, {'type': ['Place']}),
+        ({'objectType': 'place'}, {'type': ['Place', 'Place']}),
+        ({'objectType': 'place'}, {'type': ['geojson:Feature', 'Place']}),
+        ({}, {'type': ['geojson:Feature']}),
+        ({'objectType': ['comment', 'place'], 'inReplyTo': ['http://orig']},
+         {'type': ['Note', 'Place'], 'inReplyTo': 'http://orig'}),
+        ({'objectType': 'comment', 'inReplyTo': ['http://orig']},
+         {'type': ['Note', 'Article'], 'inReplyTo': 'http://orig'}),
+        ({'objectType': 'activity', 'verb': 'like'}, {'type': ['Like', 'Announce']}),
+        ({'objectType': 'note', 'verb': 'like'}, {'type': ['Like', 'Note']}),
+        ({'objectType': ['note', 'place'], 'verb': 'like'},
+         {'type': ['Note', 'Like', 'Place', 'Announce']}),
+    ):
+      with self.subTest(input=input):
+        self.assertEqual(expected, as2.to_as1(input))
+
+  def test_from_as1_multiple_object_types_preserved(self):
+    for expected, input in (
+        ({'type': ['Note', 'Place']}, {'objectType': ['note', 'place']}),
+        ({'type': 'Place'}, {'objectType': ['place']}),
+        ({'type': 'Place'}, {'objectType': ['place', 'place']}),
+        ({'type': 'Place'}, {'objectType': ['unknown', 'place']}),
+        ({}, {'objectType': ['unknown']}),
+        ({'type': 'Note'}, {'objectType': ['comment', 'note']}),
+        ({'type': 'Like'}, {'objectType': ['activity'], 'verb': 'like'}),
+        ({'type': ['Like', 'Note', 'Place']},
+         {'objectType': ['note', 'place'], 'verb': 'like'}),
+    ):
+      with self.subTest(input=input):
+        self.assertEqual(expected, as2.from_as1(input, context=None))
+
   def test_to_as1_update_string_object(self):
     self.assertEqual({
       'objectType': 'activity',

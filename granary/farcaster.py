@@ -617,7 +617,7 @@ def from_as1(obj, username=None):
     # mentions
     mentions = []
     for tag in as1.get_objects(obj, 'tags'):
-      if tag.get('objectType') == 'mention':
+      if as1.object_type(tag) == 'mention':
         match = FARCASTER_URI_RE.fullmatch(tag.get('url', ''))
         if match and match['fid'] and not match['hash']:
           mentions.append((tag.get('startIndex'), tag.get('length'),
@@ -749,7 +749,7 @@ def _from_as1_actor(obj, username=None):
   if val := obj.get('summary'):
     add(USER_DATA_TYPE_BIO, val)
   for img in as1.get_objects(obj, 'image'):
-    if img.get('objectType') == 'featured':
+    if as1.object_type(img) == 'featured':
       if url := img.get('url'):
         add(USER_DATA_TYPE_BANNER, url)
     elif url := as1.get_url(img) or img.get('id'):
@@ -870,7 +870,7 @@ class Farcaster(source.Source):
     def add_activities(resp):
       for msg in resp.messages:
         obj = to_as1(msg)
-        if obj.get('objectType') != 'activity':
+        if util.get_first(obj, 'objectType') != 'activity':
           obj = {
             'objectType': 'activity',
             'verb': 'post',

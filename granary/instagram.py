@@ -459,7 +459,7 @@ class Instagram(source.Source):
         keys for the newly created Instagram object
     """
     # TODO: validation, error handling
-    type = obj.get('objectType')
+    type = util.get_first(obj, 'objectType')
     verb = obj.get('verb')
     base_obj = self.base_object(obj)
     base_id = base_obj.get('id')

@@ -287,7 +287,7 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
     coll = as1.get_object(obj, field)
     if coll.keys() == {'id'}:
       return coll['id']
-    elif coll.get('objectType') in ('collection', None):
+    elif util.get_first(coll, 'objectType') in ('collection', None):
       ret = from_as1(coll, context=None)
       ret['items'] = [from_as1(elem, context=None)
                       for elem in util.get_list(ret, 'items')]
@@ -306,10 +306,15 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
   obj = copy.deepcopy(obj)
   actor = obj.get('actor')
   verb = obj.pop('verb', None)
-  obj_type = obj.pop('objectType', None)
-  type = (OBJECT_TYPE_TO_TYPE.get(verb or obj_type) or
-          VERB_TO_TYPE.get(verb or obj_type) or
-          type)
+  obj_types = util.pop_list(obj, 'objectType')
+  if verb:
+    obj_types.insert(0, verb)
+  obj_type = obj_types[0] if obj_types else None
+  types = util.uniquify(
+    t for as1_type in obj_types
+    if (t := OBJECT_TYPE_TO_TYPE.get(as1_type) or VERB_TO_TYPE.get(as1_type)))
+  if types:
+    type = types[0]
 
   obj.pop('numeric_id', None)
 
@@ -365,7 +370,7 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
     id = att.get('id')
     url = att.get('url')
     href = id or url
-    if att.get('objectType') == 'note' and href:
+    if as1.object_type(att) == 'note' and href:
       quote = from_as1(att, context=None, top_level=False)
       quote.update({
         'type': 'Link',
@@ -448,7 +453,7 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
   title = obj.pop('title', None)
 
   obj.update({
-    'type': type,
+    'type': [type] + types[1:] if types[1:] else type,
     'name': display_name or title,
     'actor': from_as1(actor, context=None, top_level=False),
     'attachment': attachments,
@@ -488,7 +493,7 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
     for img in images:
       # objectType featured is non-standard; granary uses it for u-featured
       # microformats2 images
-      if isinstance(img, dict) and img.get('objectType') == 'featured':
+      if isinstance(img, dict) and as1.object_type(img) == 'featured':
         featured.append(img)
         continue
 
@@ -611,19 +616,22 @@ def to_as1(obj, use_type=True, get_fn=None):
     obj['content'] = util.get_first(obj, 'content')
 
   # type to objectType + verb
-  type = obj.pop('type', None)
+  types = util.pop_list(obj, 'type')
+  for type in types:
+    if not isinstance(type, str):
+      raise ValueError(f'Expected type to be string, got {type!r}')
+
+  known = [t for t in types if t in TYPE_TO_OBJECT_TYPE or t in TYPE_TO_VERB]
+  type = (known or types or [None])[0]
   if use_type:
-    if type:
-      if isinstance(type, (list, tuple)):
-        type = type[0]
-      elif not isinstance(type, str):
-        raise ValueError(f'Expected type to be string, got {type!r}')
-    obj['objectType'] = TYPE_TO_OBJECT_TYPE.get(type)
-    obj['verb'] = TYPE_TO_VERB.get(type)
+    obj_types = [TYPE_TO_OBJECT_TYPE[t] for t in known if t in TYPE_TO_OBJECT_TYPE]
+    if obj.get('inReplyTo'):
+      obj_types = ['comment' if t in ('note', 'article') else t for t in obj_types]
+    obj_types = util.uniquify(obj_types)
+    obj['objectType'] = obj_types[0] if len(obj_types) == 1 else obj_types
+    obj['verb'] = next((TYPE_TO_VERB[t] for t in known if t in TYPE_TO_VERB), None)
     inner_obj = as1.get_object(obj)
-    if obj.get('inReplyTo') and obj['objectType'] in ('note', 'article'):
-      obj['objectType'] = 'comment'
-    elif inner_obj.get('type') == 'Event':
+    if inner_obj.get('type') == 'Event':
       if type == 'Accept':
         obj['verb'] = 'rsvp-yes'
       elif type == 'Reject':
@@ -641,7 +649,7 @@ def to_as1(obj, use_type=True, get_fn=None):
       type = media_type_prefix.capitalize()
       obj['mimeType'] = media_type
       # don't override featured objectType for banner
-      if obj.get('objectType') != 'featured':
+      if as1.object_type(obj) != 'featured':
         obj['objectType'] = media_type_prefix
 
   # attachments: Mastodon profile metadata fields, with type PropertyValue.
@@ -711,7 +719,7 @@ def to_as1(obj, use_type=True, get_fn=None):
   if type in ('Create', 'Update'):
     for inner_obj in inner_objs:
       if (isinstance(inner_obj, dict)
-          and inner_obj.get('objectType') not in as1.ACTOR_TYPES):
+          and as1.object_type(inner_obj) not in as1.ACTOR_TYPES):
         author = inner_obj.setdefault('author', {})
         if isinstance(author, dict):
           author.update(actor)

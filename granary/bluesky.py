@@ -545,7 +545,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     banner = None
     for img in as1.get_objects(obj, 'image'):
       url = util.get_url(img)
-      if img.get('objectType') == 'featured' and url:
+      if as1.object_type(img) == 'featured' and url:
         banner = url
         break
 
@@ -877,7 +877,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     text_end = len(full_text)
     for tag in tags:
       # check that the link is at the end and the text is the url
-      if (tag.get('objectType') != 'link' or tag.get('url') != tag.get('displayName') or
+      if (as1.object_type(tag) != 'link' or tag.get('url') != tag.get('displayName') or
           tag.get('startIndex', 0) + tag.get('length', 0) + index_offset != text_end):
         continue
 
@@ -904,7 +904,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     for att in attachments:
       att_id = att.get('id') or ''
       att_url = as1.get_url(att) or ''
-      if not (att.get('objectType') in ('article', 'link', 'note')
+      if not (as1.object_type(att) in ('article', 'link', 'note')
               and (att_url or att_id)):
         continue
 
@@ -979,7 +979,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     hashtag_facets = set()  # contains string displayNames, lower cased
     for tag in tags:
       name = tag.get('displayName', '').strip().lstrip('@#')
-      tag_type = tag.get('objectType')
+      tag_type = util.get_first(tag, 'objectType')
       if name and not tag_type:
         tag_type = 'hashtag'
 
@@ -2433,7 +2433,7 @@ class Bluesky(Source):
       logger.warning(e)
       return {}
 
-    if obj.get('objectType') == 'activity':
+    if util.get_first(obj, 'objectType') == 'activity':
       return obj
     return {
       'id': obj.get('id'),
@@ -2674,7 +2674,7 @@ class Bluesky(Source):
               ignore_formatting=False, validate=True, blobs=None):
     assert preview in (False, True)
     assert self.did
-    type = obj.get('objectType')
+    type = util.get_first(obj, 'objectType')
     verb = obj.get('verb')
 
     try:
@@ -2705,13 +2705,13 @@ class Bluesky(Source):
 
     atts = obj.get('attachments', [])
     images = util.dedupe_urls(util.get_list(obj, 'image') +
-                              [a for a in atts if a.get('objectType') == 'image'])
+                              [a for a in atts if as1.object_type(a) == 'image'])
     # images in other attachments, eg link previews, are uploaded for external
     # embed thumbs. kept out of images so that they don't become image embeds
     att_images = [img for att in atts
-                  if att.get('objectType') in ('article', 'link', 'note')
+                  if as1.object_type(att) in ('article', 'link', 'note')
                   for img in as1.get_objects(att, 'image')]
-    videos = [a for a in atts if a.get('objectType') == 'video']
+    videos = [a for a in atts if as1.object_type(a) == 'video']
     has_media = (images or videos) and (type in ('note', 'article') or is_reply)
 
     # prefer displayName over content for articles
@@ -2936,7 +2936,7 @@ class Bluesky(Source):
 
       non_bluesky = []
       for base in bases:
-        if base.get('objectType') == 'bookmark':
+        if as1.object_type(base) == 'bookmark':
           # awkward. TODO: clean up. see test_create_bookmark in test_bluesky.py
           return {}
 

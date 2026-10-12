@@ -110,13 +110,15 @@ def object_type(obj):
 
   Details: http://activitystrea.ms/specs/json/1.0/#activity-object
 
+  If ``objectType`` is a list, uses its first element.
+
   Args:
     obj (dict): decoded JSON ActivityStreams object
 
   Returns:
     str: ActivityStreams object type
   """
-  type = obj.get('objectType')
+  type = util.get_first(obj, 'objectType')
   return type if type and type != 'activity' else obj.get('verb')
 
 
@@ -193,7 +195,7 @@ def get_owner(obj):
   if ids:
     return ids[0]
 
-  if obj.get('objectType') in ACTOR_TYPES:
+  if object_type(obj) in ACTOR_TYPES:
     ids = util.get_list(obj, 'id')
     if ids:
       return ids[0]
@@ -308,7 +310,7 @@ def is_public(obj, unlisted=True):
     to_cc = get_to_cc(obj) or get_to_cc(inner_obj)
 
   aliases = util.trim_nulls([t.get('alias') for t in to_cc])
-  object_types = util.trim_nulls([t.get('objectType') for t in to_cc])
+  object_types = util.trim_nulls([util.get_first(t, 'objectType') for t in to_cc])
 
   if '@public' in aliases or ('@unlisted' in aliases and unlisted):
     return True
@@ -491,8 +493,9 @@ def activity_changed(before, after, inReplyTo=True, log=False):
     bool:
   """
   def changed(b, a, field, label, ignore=None):
-    b_val = b.get(field)
-    a_val = a.get(field)
+    get = util.get_first if field == 'objectType' else dict.get
+    b_val = get(b, field)
+    a_val = get(a, field)
 
     if ignore and isinstance(b_val, dict) and isinstance(a_val, dict):
       b_val = copy_.copy(b_val)
@@ -582,7 +585,7 @@ def original_post_discovery(
 
   # find all candidate URLs
   tags = [t.get('url') for t in obj.get('attachments', []) + obj.get('tags', [])
-          if t.get('objectType') in ('article', 'link', 'mention', 'note', None)]
+          if util.get_first(t, 'objectType') in ('article', 'link', 'mention', 'note', None)]
   candidates = (tags + util.extract_links(content) +
                 obj.get('upstreamDuplicates', []) +
                 util.get_list(obj, 'targetUrl'))
@@ -743,7 +746,7 @@ def targets(obj):
     targets.extend(get_ids(o, 'inReplyTo') + quoted_posts(o))
 
     for tag in get_objects(o, 'tags'):
-      if tag.get('objectType') not in ('tag', 'hashtag'):
+      if util.get_first(tag, 'objectType') not in ('tag', 'hashtag'):
         targets += [tag.get('id'), tag.get('url')]
 
     verb = o.get('verb')
@@ -774,7 +777,7 @@ def quoted_posts(obj):
     obj = get_object(obj)
 
   return [id for a in get_objects(obj, 'attachments')
-          if a.get('objectType') == 'note' and (id := a.get('id') or get_url(a))]
+          if object_type(a) == 'note' and (id := a.get('id') or get_url(a))]
 
 
 def mentions(obj):
@@ -793,7 +796,7 @@ def mentions(obj):
     obj = get_object(obj)
 
   return [t['url'] for t in get_objects(obj, 'tags')
-          if t.get('url') and t.get('objectType') == 'mention']
+          if t.get('url') and object_type(t) == 'mention']
 
 
 def snippet(obj):
@@ -833,7 +836,7 @@ def snippet(obj):
   if replied_to := [u for o in get_objects(obj, 'inReplyTo') if (u := url(o))]:
     context.append(f'replied to {replied_to[0]}')
   if quoted := [u for a in get_objects(obj, 'attachments')
-                if a.get('objectType') == 'note' and (u := url(a))]:
+                if object_type(a) == 'note' and (u := url(a))]:
     context.append(f'quoted {quoted[0]}')
 
   context = ', '.join(context)
@@ -907,7 +910,7 @@ def expand_tags(obj):
       continue
 
     # for article/link tags, search for the URL
-    type = tag.get('objectType')
+    type = util.get_first(tag, 'objectType')
     if type in ('article', 'link'):
       if url := tag.get('url'):
         start = content.find(url)

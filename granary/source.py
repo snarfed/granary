@@ -768,7 +768,7 @@ class Source(object, metaclass=SourceMeta):
       if not activity.get('title'):
         verb = DISPLAY_VERBS.get(activity.get('verb'))
         obj_name = obj.get('displayName')
-        obj_type = TYPE_DISPLAY_NAMES.get(obj.get('objectType'))
+        obj_type = TYPE_DISPLAY_NAMES.get(util.get_first(obj, 'objectType'))
         if obj_name and not verb:
           activity['title'] = obj_name
         elif verb and (obj_name or obj_type):

@@ -56,6 +56,17 @@ def discard_fields(obj, fields):
     return obj
 
 
+def listify_object_types(obj):
+  """Wraps all AS1 ``objectType`` values in lists, recursively."""
+  if isinstance(obj, dict):
+    return {k: [v] if k == 'objectType' else listify_object_types(v)
+            for k, v in obj.items()}
+  elif isinstance(obj, list):
+    return [listify_object_types(elem) for elem in obj]
+  else:
+    return obj
+
+
 def create_test_function(fn, original, expected, html=False, **kwargs):
   """Create a simple test function that asserts fn(original) == expected.
 
@@ -156,6 +167,11 @@ for src_ext, dst_exts, fn, exclude_prefixes, ignore_fields in mappings:
     # assert test_name not in test_funcs, test_name
     test_funcs[test_name] = create_test_function(
       fn, original, expected, html=dst.endswith('.html'), ignore=ignore_fields)
+
+    if src_ext == 'as.json':
+      test_funcs[f'{test_name}_list_object_type'] = create_test_function(
+        fn, listify_object_types(original), expected,
+        html=dst.endswith('.html'), ignore=ignore_fields)
 
 os.chdir(prevdir)
 

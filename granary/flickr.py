@@ -132,7 +132,7 @@ class Flickr(source.Source):
       name = obj.get('displayName')
       people = self._get_person_tags(obj)
       hashtags = [t.get('displayName') for t in obj.get('tags', [])
-                  if t.get('objectType') == 'hashtag' and t.get('displayName')]
+                  if as1.object_type(t) == 'hashtag' and t.get('displayName')]
       lat = obj.get('location', {}).get('latitude')
       lng = obj.get('location', {}).get('longitude')
 
@@ -335,7 +335,7 @@ class Flickr(source.Source):
     for tag in obj.get('tags', []):
       url = tag.get('url', '')
       if (util.domain_from_link(url) == 'flickr.com' and
-          tag.get('objectType') == 'person'):
+          as1.object_type(tag) == 'person'):
         resp = self.call_api_method('flickr.urls.lookupUser', {'url': url})
         id = resp.get('user', {}).get('id')
         if id:

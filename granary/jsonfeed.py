@@ -50,7 +50,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None, home_page_url=No
   items = []
   for activity in activities:
     obj = as1.get_object(activity) or activity
-    if obj.get('objectType') == 'person':
+    if as1.object_type(obj) == 'person':
       continue
     author = as1.get_object(obj, 'author')
     content = microformats2.render_content(
@@ -79,7 +79,7 @@ def from_as1(activities, actor=None, title=None, feed_url=None, home_page_url=No
     for att in obj.get('attachments', []):
       url = util.get_url(att, 'stream') or util.get_url(att, 'image')
       mime = mimetypes.guess_type(url, strict=False)[0] if url else None
-      if (att.get('objectType') in ATTACHMENT_TYPES or
+      if (as1.object_type(att) in ATTACHMENT_TYPES or
           mime and mime.split('/')[0] in ATTACHMENT_TYPES):
         item['attachments'].append({
           'url': url or '',

@@ -938,6 +938,41 @@ going to Homebrew Website Club
 """, got, ignore_blanks=True)
     self.assertNotIn('unused', got)
 
+  def test_list_object_types(self):
+    got = atom.from_as1([{
+      'object': {
+        'objectType': ['note', 'article'],
+        'content': 'foo bar',
+        'to': [{
+          'objectType': ['person', 'place'],
+          'url': 'https://twitter.com/A',
+          'displayName': 'aye',
+        }],
+        'tags': [{
+          'objectType': ['hashtag'],
+          'displayName': 'baz',
+        }],
+        'attachments': [{
+          'objectType': ['audio'],
+          'stream': {'url': 'http://a/podcast.mp3'},
+        }, {
+          'objectType': ['image'],
+          'url': 'http://a/pic.jpg',
+        }],
+      },
+    }], {})
+    self.assert_multiline_in("""\
+<activity:object-type>http://activitystrea.ms/schema/1.0/note</activity:object-type>
+""", got)
+    self.assert_multiline_in("""
+<p>In reply to <a class="h-card p-name u-url" href="https://twitter.com/A">aye</a>:</p>
+""", got)
+    self.assert_multiline_in('<category term="baz" />', got)
+    self.assert_multiline_in("""\
+<link rel="enclosure" href="http://a/podcast.mp3" type="audio/mpeg" />
+<link rel="enclosure" href="http://a/pic.jpg" type="image/jpeg" />
+""", got, ignore_blanks=True)
+
   def test_reader_param_and_location(self):
     activity = {
       'object': {
