@@ -1227,9 +1227,12 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # TODO: replies as so.sprk.feed.reply, crossposts
     spark_media = None
     max_images = LEXRPC.defs['so.sprk.media.images']['properties']['images']['maxLength']
-    if video_record_embed and len(attachments) == 1 and not images:
+    # as2.to_as1 etc duplicate images into attachments, so ignore those
+    image_urls = [img.get('url') or img.get('id') for img in images]
+    other_atts = [att for att in attachments if util.get_url(att) not in image_urls]
+    if video_record_embed and len(other_atts) == 1 and not images:
       spark_media = {**video_record_embed, '$type': 'so.sprk.media.video'}
-    elif (spark_images and not attachments
+    elif (spark_images and not other_atts
           and len(images) == len(spark_images) <= max_images):
       spark_media = {
         '$type': 'so.sprk.media.images',

@@ -2055,6 +2055,16 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals([POST_BSKY_IMAGES, POST_SPARK_IMAGES], self.from_as1(
       POST_AS_IMAGES, blobs={NEW_BLOB_URL: NEW_BLOB}, multiple=True))
 
+  def test_from_as1_post_with_image_also_in_attachments_multiple_spark(self):
+    # eg from as2.to_as1
+    obj = copy.deepcopy(POST_AS_IMAGES)
+    obj['object']['attachments'] = [{
+      **obj['object']['image'][0],
+      'objectType': 'image',
+    }]
+    self.assert_equals([POST_BSKY_IMAGES, POST_SPARK_IMAGES], self.from_as1(
+      obj, blobs={NEW_BLOB_URL: NEW_BLOB}, multiple=True))
+
   def test_from_as1_post_with_video_blobs_multiple_spark(self):
     blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
     self.assert_equals([POST_BSKY_VIDEO, POST_SPARK_VIDEO], self.from_as1(
