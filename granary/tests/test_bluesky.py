@@ -2305,6 +2305,30 @@ class BlueskyTest(testutil.TestCase):
       },
     }, client=self.bs, raise_=True))
 
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'uri': 'at://did:fo:o/app.bsky.feed.post/bar',
+    'cid': 'sydddddd',
+    'value': {'x': 'y'},
+  }))
+  def test_from_as1_actor_pinned_post_not_in_spark_profile(self, _):
+    actor = {
+      'objectType': 'person',
+      'featured': {'items': ['at://did:fo:o/app.bsky.feed.post/bar']},
+    }
+    self.assert_equals([{
+      '$type': 'app.bsky.actor.profile',
+      'pinnedPost': {
+        'uri': 'at://did:fo:o/app.bsky.feed.post/bar',
+        'cid': 'sydddddd',
+      },
+    }, {
+      '$type': 'so.sprk.actor.profile',
+    }], self.from_as1(actor, client=self.bs, multiple=True))
+
+    self.assert_equals({
+      '$type': 'so.sprk.actor.profile',
+    }, self.from_as1(actor, client=self.bs, out_type='so.sprk.actor.profile'))
+
   def test_from_as1_actor_multiple_without_monetization(self):
     self.assert_equals([{
       '$type': 'app.bsky.actor.profile',
@@ -2313,7 +2337,65 @@ class BlueskyTest(testutil.TestCase):
       'website': 'https://alice.com/',
       'fooOriginalDescription': 'hi there',
       'fooOriginalUrl': 'https://alice.com/',
+    }, {
+      '$type': 'so.sprk.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
     }], self.from_as1(ACTOR_AS, multiple=True))
+
+  def test_from_as1_actor_to_spark_profile(self):
+    self.assert_equals({
+      '$type': 'so.sprk.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'avatar': NEW_BLOB,
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+    }, self.from_as1(ACTOR_AS, out_type='so.sprk.actor.profile',
+                     blobs={'https://alice.com/alice.jpg': NEW_BLOB}))
+
+  def test_from_as1_actor_multiple_blobs_bot_label(self):
+    self.assert_equals([{
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'avatar': NEW_BLOB,
+      'banner': OLD_BLOB,
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+      'labels': {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val': BOT_LABEL}],
+      },
+    }, {
+      '$type': 'so.sprk.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'avatar': NEW_BLOB,
+      'banner': OLD_BLOB,
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+      'labels': {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val': BOT_LABEL}],
+      },
+    }], self.from_as1({
+      **ACTOR_AS,
+      'objectType': 'service',
+      'image': [
+        {'url': 'https://alice.com/alice.jpg'},
+        {'url': 'https://alice.com/banner.jpg', 'objectType': 'featured'},
+      ],
+    }, multiple=True, blobs={
+      'https://alice.com/alice.jpg': NEW_BLOB,
+      'https://alice.com/banner.jpg': OLD_BLOB,
+    }))
 
   def test_from_as1_actor_multiple_with_monetization(self):
     actor_with_wallet = {
@@ -2322,6 +2404,13 @@ class BlueskyTest(testutil.TestCase):
     }
     expected = [{
       '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+    }, {
+      '$type': 'so.sprk.actor.profile',
       'displayName': 'Alice',
       'description': 'hi there',
       'website': 'https://alice.com/',
@@ -3902,6 +3991,33 @@ class BlueskyTest(testutil.TestCase):
       'labels': [{'val': BOT_LABEL}],
     })
     self.assertEqual('service', got['objectType'])
+
+  def test_to_as1_spark_profile(self):
+    self.assert_equals({
+      'objectType': 'service',
+      'id': 'did:plc:foo',
+      'username': 'alice.com',
+      'url': 'https://sprk.so/profile/alice.com',
+      'urls': ['https://sprk.so/profile/alice.com', 'https://alice.com/'],
+      'displayName': 'Alice',
+      'summary': 'hi there',
+      'image': [
+        {'url': NEW_BLOB_URL},
+        {'url': OLD_BLOB_URL, 'objectType': 'featured'},
+      ],
+      'published': '2007-07-07T03:04:05.000Z',
+    }, to_as1({
+      '$type': 'so.sprk.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'avatar': NEW_BLOB,
+      'banner': OLD_BLOB,
+      'labels': {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val': BOT_LABEL}],
+      },
+      'createdAt': '2007-07-07T03:04:05.000Z',
+    }, repo_did='did:plc:foo', repo_handle='alice.com'))
 
   def test_to_as1_profile_bot_label_negated(self):
     got = to_as1({
