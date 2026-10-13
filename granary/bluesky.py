@@ -133,9 +133,13 @@ FROM_AS1_TYPES = {
   ),
 }
 
-PROFILE_TYPES = (
+ATP_PROFILE_TYPES = (
   'app.bsky.actor.profile',
   'so.sprk.actor.profile',
+)
+ATP_POST_TYPES = (
+  'app.bsky.feed.post',
+  'so.sprk.feed.post',
 )
 
 AUTHORITY_CHARS = 'a-zA-Z0-9-.:'
@@ -591,7 +595,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         f'{original_fields_prefix}OriginalUrl': url or id,
       })
 
-    if not out_type or out_type in PROFILE_TYPES:
+    if not out_type or out_type in ATP_PROFILE_TYPES:
       # TODO: Spark pinnedPost. needs to be a so.sprk.feed.post
       if out_type == 'so.sprk.actor.profile':
         ret['pinnedPost'] = None
@@ -650,7 +654,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # add bot label for automated account objectTypes
     if type in as1.BOT_TYPES:
       bsky_type = ret.get('$type')
-      if bsky_type in PROFILE_TYPES:
+      if bsky_type in ATP_PROFILE_TYPES:
         ret['labels'] = {
           '$type': 'com.atproto.label.defs#selfLabels',
           'values': [{'val': BOT_LABEL}],
@@ -1227,6 +1231,10 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # TODO: replies as so.sprk.feed.reply, crossposts
     spark_media = None
     max_images = LEXRPC.defs['so.sprk.media.images']['properties']['images']['maxLength']
+    # TODO: handle too many images, and images without blobs, consistently. right
+    # now we include all images with blobs in Bluesky posts, even if that's more
+    # than app.bsky.embed.gallery's maxLength, but skip Spark posts entirely.
+    #
     # as2.to_as1 etc duplicate images into attachments, so ignore those
     image_urls = [img.get('url') or img.get('id') for img in images]
     other_atts = [att for att in attachments if util.get_url(att) not in image_urls]
@@ -1508,7 +1516,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
   kwargs = {'repo_did': repo_did, 'repo_handle': repo_handle, 'pds': pds}
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
-  if type in PROFILE_TYPES + (
+  if type in ATP_PROFILE_TYPES + (
               'app.bsky.actor.defs#profileView',
               'app.bsky.actor.defs#profileViewBasic',
               'app.bsky.actor.defs#profileViewDetailed',
@@ -1521,7 +1529,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
     handle = obj.get('handle')
     did = obj.get('did')
-    if type in PROFILE_TYPES:
+    if type in ATP_PROFILE_TYPES:
       if not handle:
         handle = repo_handle
       if not did:
@@ -1530,7 +1538,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     # urls: bsky.app profile, did:web domain, bsky.app feed generator, links in bio
     urls = []
     if handle:
-      profile_type = type if type in PROFILE_TYPES else 'app.bsky.actor.profile'
+      profile_type = type if type in ATP_PROFILE_TYPES else 'app.bsky.actor.profile'
       urls.append(COLLECTION_TO_WEB_URL[profile_type].format(id=handle))
       if not util.domain_or_parent_in(handle, [DEFAULT_PDS_DOMAIN]):
         urls.append(f'https://{handle}/')
@@ -1574,7 +1582,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
     # avatar and banner are blobs in app.bsky.actor.profile; convert to URLs
     repo_did = repo_did or did
-    if type in PROFILE_TYPES + ('app.bsky.feed.generator',):
+    if type in ATP_PROFILE_TYPES + ('app.bsky.feed.generator',):
       if repo_did and pds:
         for img in ret['image']:
           img['url'] = blob_to_url(blob=img['url'], repo_did=repo_did, pds=pds)
@@ -1585,7 +1593,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     # https://docs.bsky.app/docs/advanced-guides/resolving-identities#for-backend-services
     # https://activitystrea.ms/specs/json/targeting/1.0/
     labels = (obj.get('labels', {}).get('values', [])
-                if type in PROFILE_TYPES
+                if type in ATP_PROFILE_TYPES
               else obj.get('labels', []))
     for label in labels:
       if label.get('val') == NO_UNAUTHENTICATED_LABEL and not label.get('neg'):
@@ -1640,7 +1648,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       tag = {}
 
       for feat in facet.get('features', []):
-        feat_type = feat.get('$type', '').replace('so.sprk.', 'app.bsky.')
+        feat_type = (feat.get('$type') or '').replace('so.sprk.', 'app.bsky.')
         if feat_type == 'app.bsky.richtext.facet#link':
           tag.update({
             'objectType': 'article',
@@ -1756,7 +1764,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       })
 
     # embeds
-    embed = obj.get('embed') or obj.get('media') or {}
+    embed = obj.get('media' if type == 'so.sprk.feed.post' else 'embed') or {}
     embed_type = embed.get('$type')
     if embed_type in ('app.bsky.embed.images',
                       'app.bsky.embed.gallery',

@@ -4482,6 +4482,35 @@ class BlueskyTest(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_post_facet_feature_null_type(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'foo bar',
+      'tags': [{
+        'displayName': 'bar',
+        'startIndex': 4,
+        'length': 3,
+      }],
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo bar',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{'$type': None}],
+        'index': {'byteStart': 4, 'byteEnd': 7},
+      }],
+    }))
+
+  def test_to_as1_post_ignores_non_spark_media_field(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'content': 'foo',
+    }, to_as1({
+      '$type': 'app.bsky.feed.post',
+      'text': 'foo',
+      'media': 'bar',
+    }))
+
   def test_to_as1_spark_post_with_images(self):
     self.assert_equals({
       'objectType': 'note',
