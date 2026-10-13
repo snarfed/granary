@@ -393,6 +393,31 @@ EMBED_VIDEO = {
 POST_BSKY_VIDEO = copy.deepcopy(POST_BSKY)
 POST_BSKY_VIDEO['embed'] = EMBED_VIDEO
 
+POST_SPARK = {
+  '$type': 'so.sprk.feed.post',
+  'caption': {'text': 'My original post'},
+  'fooOriginalText': 'My original post',
+  'fooOriginalUrl': 'https://bsky.app/profile/did:al:ice/post/tid',
+  'createdAt': '2007-07-07T03:04:05.000Z',
+}
+POST_SPARK_IMAGES = {
+  **POST_SPARK,
+  'media': {
+    '$type': 'so.sprk.media.images',
+    'images': [{
+      'alt': 'my alt text',
+      'image': NEW_BLOB,
+    }],
+  },
+}
+POST_SPARK_VIDEO = {
+  **POST_SPARK,
+  'media': {
+    **EMBED_VIDEO,
+    '$type': 'so.sprk.media.video',
+  },
+}
+
 POST_VIEW_BSKY_VIDEO = copy.deepcopy(POST_VIEW_BSKY)
 POST_VIEW_BSKY_VIDEO['record']['embed'] = EMBED_VIDEO
 POST_VIEW_BSKY_VIDEO['embed'] = {
@@ -814,6 +839,10 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual(
       'https://bsky.app/profile/did:plc:asdf/lists/123',
       at_uri_to_web_url('at://did:plc:asdf/app.bsky.graph.list/123'))
+
+    self.assertEqual(
+      'https://sprk.so/post/did:plc:asdf/123',
+      at_uri_to_web_url('at://did:plc:asdf/so.sprk.feed.post/123'))
 
 
     with self.assertRaises(ValueError):
@@ -2011,6 +2040,132 @@ class BlueskyTest(testutil.TestCase):
     expected['embed']['aspectRatio'] = {'width': 123, 'height': 456}
     blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
     self.assert_equals(expected, self.from_as1(obj, blobs=blobs))
+
+  def test_from_as1_post_with_image_blobs_multiple_spark(self):
+    self.assert_equals([POST_BSKY_IMAGES, POST_SPARK_IMAGES], self.from_as1(
+      POST_AS_IMAGES, blobs={NEW_BLOB_URL: NEW_BLOB}, multiple=True))
+
+  def test_from_as1_post_with_video_blobs_multiple_spark(self):
+    blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
+    self.assert_equals([POST_BSKY_VIDEO, POST_SPARK_VIDEO], self.from_as1(
+      POST_AS_VIDEO, blobs=blobs, multiple=True))
+
+  def test_from_as1_post_with_gallery_blobs_multiple_spark(self):
+    blobs = {url: NEW_BLOB for url in GALLERY_URLS}
+    self.assert_equals([POST_BSKY_GALLERY, {
+      **POST_SPARK,
+      'media': {
+        '$type': 'so.sprk.media.images',
+        'images': [{
+          'alt': '',
+          'image': NEW_BLOB,
+          'aspectRatio': {'width': 1, 'height': 1},
+        } for _ in GALLERY_URLS],
+      },
+    }], self.from_as1(POST_AS_GALLERY, blobs=blobs, multiple=True))
+
+  def test_from_as1_post_to_spark(self):
+    self.assert_equals({
+      '$type': 'so.sprk.feed.post',
+      'caption': {
+        'text': 'foo #bar',
+        'facets': [{
+          '$type': 'so.sprk.richtext.facet',
+          'features': [{
+            '$type': 'so.sprk.richtext.facet#tag',
+            'tag': 'bar',
+          }],
+          'index': {
+            'byteStart': 4,
+            'byteEnd': 8,
+          },
+        }],
+      },
+      'media': {
+        '$type': 'so.sprk.media.images',
+        'images': [{
+          'alt': 'my alt text',
+          'image': NEW_BLOB,
+          'aspectRatio': {'width': 3, 'height': 4},
+        }],
+      },
+      'langs': ['en'],
+      'labels': {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val': 'graphic-media'}],
+      },
+      'tags': ['baz'],
+      'createdAt': '2007-07-07T03:04:05.000Z',
+      'fooOriginalText': 'foo #bar',
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': 'foo #bar',
+      'contentMap': {'en': 'foo #bar'},
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': '#bar',
+        'startIndex': 4,
+        'length': 4,
+      }, {
+        'objectType': 'hashtag',
+        'displayName': '#baz',
+      }],
+      'image': [{
+        'url': NEW_BLOB_URL,
+        'displayName': 'my alt text',
+        'width': 3,
+        'height': 4,
+      }],
+      'sensitive': True,
+      'published': '2007-07-07T03:04:05.000Z',
+    }, out_type='so.sprk.feed.post', blobs={NEW_BLOB_URL: NEW_BLOB}))
+
+  def test_from_as1_post_multiple_no_spark_if_lossy(self):
+    video = POST_AS_VIDEO['object']['attachments'][0]
+    blobs = {
+      NEW_BLOB_URL: NEW_BLOB,
+      **{f'http://pic/{i}': NEW_BLOB for i in range(13)},
+    }
+
+    for name, obj in (
+        ('image and video', {'image': [NEW_BLOB_URL], 'attachments': [video]}),
+        ('image without blob', {'image': [NEW_BLOB_URL, 'http://no/blob']}),
+        ('too many images', {'image': [f'http://pic/{i}' for i in range(13)]}),
+        ('link', {'image': [NEW_BLOB_URL], 'attachments': [{
+          'objectType': 'link',
+          'url': 'http://a/link',
+        }]}),
+        ('audio', {'image': [NEW_BLOB_URL], 'attachments': [{
+          'objectType': 'audio',
+          'stream': {'url': 'http://a/udio'},
+        }]}),
+        ('two videos', {'attachments': [video, {
+          'objectType': 'video',
+          'stream': {'url': 'http://no/blob'},
+        }]}),
+        ('article', {'objectType': 'article', 'image': [NEW_BLOB_URL]}),
+    ):
+      with self.subTest(name):
+        got = self.from_as1({'objectType': 'note', 'content': 'foo', **obj},
+                            blobs=blobs, multiple=True)
+        self.assertEqual(['app.bsky.feed.post'], [rec['$type'] for rec in got])
+
+  def test_from_as1_post_to_spark_no_media(self):
+    for obj in POST_AS, POST_AS_IMAGES:
+      with self.assertRaises(ValueError):
+        self.from_as1(obj, out_type='so.sprk.feed.post')
+
+  def test_from_as1_reply_with_image_multiple_no_spark(self):
+    reply = copy.deepcopy(REPLY_AS)
+    reply['object']['image'] = POST_AS_IMAGES['object']['image']
+    self.assert_equals([{
+      **REPLY_BSKY_NO_CIDS,
+      'embed': EMBED_IMAGES,
+    }], self.from_as1(reply, blobs={NEW_BLOB_URL: NEW_BLOB}, multiple=True))
+
+    with self.assertRaises(ValueError):
+      self.from_as1(reply, blobs={NEW_BLOB_URL: NEW_BLOB},
+                    out_type='so.sprk.feed.post')
 
   def test_from_as1_post_with_gallery(self):
     self.assert_equals(POST_BSKY, self.from_as1(POST_AS_GALLERY))
@@ -3530,6 +3685,81 @@ class BlueskyTest(testutil.TestCase):
     'cid': 'sydddddd',
     'value': {},
   }))
+  def test_from_as1_quote_post_with_image_multiple_no_spark(self, _):
+    quote = {
+      'objectType': 'note',
+      'content': 'late morning ...',
+      'attachments': [{
+        'objectType': 'note',
+        'url': 'https://bsky.app/profile/did:x:y/post/ab',
+      }],
+      'image': [NEW_BLOB_URL],
+    }
+    kwargs = {'client': self.bs._client, 'blobs': {NEW_BLOB_URL: NEW_BLOB}}
+
+    self.assert_equals([{
+      '$type': 'app.bsky.feed.post',
+      'text': 'late morning ...',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.recordWithMedia',
+        'record': {
+          '$type': 'app.bsky.embed.record',
+          'record': {
+            'uri': 'at://did:al:ice/app.bsky.feed.post/tid',
+            'cid': 'sydddddd',
+          },
+        },
+        'media': {
+          '$type': 'app.bsky.embed.images',
+          'images': [{
+            '$type': 'app.bsky.embed.images#image',
+            'alt': '',
+            'image': NEW_BLOB,
+          }],
+        },
+      },
+      'fooOriginalText': 'late morning ...',
+    }], self.from_as1(quote, multiple=True, **kwargs))
+
+    with self.assertRaises(ValueError):
+      self.from_as1(quote, out_type='so.sprk.feed.post', **kwargs)
+
+  def test_from_as1_quote_of_non_bluesky_post_with_image_multiple_no_spark(self):
+    quote = {
+      'objectType': 'note',
+      'content': 'late morning ...',
+      'attachments': [{
+        'objectType': 'note',
+        'url': 'https://orig/quoted',
+      }],
+      'image': [NEW_BLOB_URL],
+    }
+
+    self.assert_equals([{
+      '$type': 'app.bsky.feed.post',
+      'text': 'late morning ...',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.images',
+        'images': [{
+          '$type': 'app.bsky.embed.images#image',
+          'alt': '',
+          'image': NEW_BLOB,
+        }],
+      },
+      'fooOriginalText': 'late morning ...',
+    }], self.from_as1(quote, multiple=True, blobs={NEW_BLOB_URL: NEW_BLOB}))
+
+    with self.assertRaises(ValueError):
+      self.from_as1(quote, out_type='so.sprk.feed.post',
+                    blobs={NEW_BLOB_URL: NEW_BLOB})
+
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'uri': 'at://did:al:ice/app.bsky.feed.post/tid',
+    'cid': 'sydddddd',
+    'value': {},
+  }))
   def test_from_as1_quote_post_with_image_out_type_postView(self, mock_get):
     got = self.from_as1({
       'objectType': 'note',
@@ -4231,6 +4461,87 @@ class BlueskyTest(testutil.TestCase):
         'aspectRatio': {'width': 480, 'height': 640},
       }],
     }))
+
+  def test_to_as1_spark_post_with_images(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'at://did:plc:foo/so.sprk.feed.post/tid',
+      'url': 'https://sprk.so/post/did:plc:foo/tid',
+      'author': 'did:plc:foo',
+      'content': 'My original post',
+      'published': '2007-07-07T03:04:05.000Z',
+      'image': POST_AS_IMAGES['object']['image'],
+    }, to_as1(POST_SPARK_IMAGES, repo_did='did:plc:foo',
+              uri='at://did:plc:foo/so.sprk.feed.post/tid'))
+
+  def test_to_as1_spark_post_with_video(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'at://did:plc:foo/so.sprk.feed.post/tid',
+      'url': 'https://sprk.so/post/did:plc:foo/tid',
+      'author': 'did:plc:foo',
+      'content': 'My original post',
+      'published': '2007-07-07T03:04:05.000Z',
+      'attachments': [{
+        'objectType': 'video',
+        'displayName': 'my alt text',
+        'stream': {
+          'url': NEW_BLOB_URL,
+          'mimeType': 'video/mp4',
+        },
+      }],
+    }, to_as1(POST_SPARK_VIDEO, repo_did='did:plc:foo',
+              uri='at://did:plc:foo/so.sprk.feed.post/tid'))
+
+  def test_to_as1_spark_post_facets_langs_labels_tags(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'author': 'did:plc:foo',
+      'content': 'foo #bar',
+      'contentMap': {'en': 'foo #bar'},
+      'summary': 'Explicit or potentially disturbing media',
+      'sensitive': True,
+      'published': '2007-07-07T03:04:05.000Z',
+      'image': [NEW_BLOB_URL],
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'bar',
+        'url': 'https://bsky.app/search?q=%23bar',
+        'startIndex': 4,
+        'length': 4,
+      }, {
+        'objectType': 'hashtag',
+        'displayName': 'baz',
+        'url': 'https://bsky.app/search?q=%23baz',
+      }],
+    }, to_as1({
+      '$type': 'so.sprk.feed.post',
+      'caption': {
+        'text': 'foo #bar',
+        'facets': [{
+          '$type': 'so.sprk.richtext.facet',
+          'features': [{
+            '$type': 'so.sprk.richtext.facet#tag',
+            'tag': 'bar',
+          }],
+          'index': {
+            'byteStart': 4,
+            'byteEnd': 8,
+          },
+        }],
+      },
+      'media': {
+        '$type': 'so.sprk.media.images',
+        'images': [{'alt': '', 'image': NEW_BLOB}],
+      },
+      'langs': ['en'],
+      'labels': {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val': 'graphic-media'}],
+      },
+      'tags': ['baz'],
+      'createdAt': '2007-07-07T03:04:05.000Z',
+    }, repo_did='did:plc:foo'))
 
   def test_to_as1_post_with_video(self):
     self.assert_equals(trim_nulls({

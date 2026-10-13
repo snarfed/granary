@@ -88,6 +88,7 @@ FROM_AS1_TYPES = {
 } | {
   type: (
     'app.bsky.feed.post',
+    'so.sprk.feed.post',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#postView',
   ) for type in POST_TYPES
@@ -286,6 +287,8 @@ def at_uri_to_web_url(uri, handle=None):
     return f'{Bluesky.user_url(handle or did)}'
 
   collection, tid = parsed.path.strip('/').split('/')
+  if collection == 'so.sprk.feed.post':
+    return f'{SPARK_URL}/post/{did}/{tid}'
 
   type = COLLECTION_TO_BSKY_APP_TYPE.get(collection)
   if not type:
@@ -753,6 +756,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   elif verb in ('post', 'update') and type in POST_TYPES:
     # images => embeds
     images_embed = images_record_embed = None
+    spark_images = []
     if images := as1.get_objects(obj, 'image'):
       images_embed_items = []
       use_gallery = len(images) > 4
@@ -800,14 +804,19 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
             'image': blob,
             'alt': alt,
           }
+          spark_image = {
+            'image': blob,
+            'alt': alt,
+          }
           if aspect := aspects.get(url) or as1.aspect_ratio(img):
-            image_record['aspectRatio'] = {
+            image_record['aspectRatio'] = spark_image['aspectRatio'] = {
               'width': aspect[0],
               'height': aspect[1]
             }
           elif use_gallery:
             image_record['aspectRatio'] = DEFAULT_ASPECT_RATIO
           images_record_items.append(image_record)
+          spark_images.append(spark_image)
 
     # first video => embed
     attachments = util.get_list(obj, 'attachments')
@@ -1213,6 +1222,52 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     ret = as1.trim_nulls(ret, ignore=('alt', 'createdAt', 'cid', 'description',
                                       'text', 'title', 'uri'))
 
+    # also Spark post for notes with images or video. Spark posts only have
+    # either images or a single video, so only generate one if that's all this
+    # post has, ie no quote, link, or other media
+    # TODO: replies as so.sprk.feed.reply, crossposts
+    spark_media = None
+    max_images = LEXRPC.defs['so.sprk.media.images']['properties']['images']['maxLength']
+    if video_record_embed and len(attachments) == 1 and not images:
+      spark_media = {**video_record_embed, '$type': 'so.sprk.media.video'}
+    elif (spark_images and not attachments
+          and len(images) == len(spark_images) <= max_images):
+      spark_media = {
+        '$type': 'so.sprk.media.images',
+        'images': spark_images,
+      }
+
+    spark_ok = (spark_media and ret['$type'] == 'app.bsky.feed.post'
+                and not reply and type != 'article' and not as_embed)
+    if out_type == 'so.sprk.feed.post' and not spark_ok:
+      raise ValueError('Spark posts need just images or a single video, all with blobs, and no replies, quotes, links, or DMs')
+
+    if spark_ok and (multiple or out_type == 'so.sprk.feed.post'):
+      spark = as1.trim_nulls({
+        **ret,
+        '$type': 'so.sprk.feed.post',
+        'text': None,
+        'facets': None,
+        'embed': None,
+        'caption': {
+          'text': ret['text'],
+          'facets': [{
+            **facet,
+            '$type': 'so.sprk.richtext.facet',
+            'features': [{
+              **feat,
+              '$type': feat['$type'].replace('app.bsky.', 'so.sprk.'),
+            } for feat in facet['features']],
+          } for facet in ret.get('facets', [])],
+        },
+        'media': spark_media,
+      }, ignore=('alt', 'createdAt'))
+
+      if multiple:
+        rets = [ret, spark]
+      else:
+        ret = spark
+
     # also site.standard.document for articles
     if out_type == 'site.standard.document' and not url:
         raise ValueError("No url or id, can't convert to site.standard.document")
@@ -1569,27 +1624,32 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
   elif type in ('app.bsky.feed.post',
                 'chat.bsky.convo.defs#messageInput',
                 'chat.bsky.convo.defs#messageView',
+                'so.sprk.feed.post',
                 ):
-    text = obj.get('text', '')
+    # Spark posts are the same as Bluesky posts except text and facets are in
+    # caption, and embed is media
+    text_obj = (obj.get('caption') or {}) if type == 'so.sprk.feed.post' else obj
+    text = text_obj.get('text', '')
     text_encoded = text.encode()
 
     # convert facets to tags
     tags = []
-    for facet in obj.get('facets', []):
+    for facet in text_obj.get('facets', []):
       tag = {}
 
       for feat in facet.get('features', []):
-        if feat.get('$type') == 'app.bsky.richtext.facet#link':
+        feat_type = feat.get('$type', '').replace('so.sprk.', 'app.bsky.')
+        if feat_type == 'app.bsky.richtext.facet#link':
           tag.update({
             'objectType': 'article',
             'url': feat.get('uri'),
           })
-        elif feat.get('$type') == 'app.bsky.richtext.facet#mention':
+        elif feat_type == 'app.bsky.richtext.facet#mention':
           tag.update({
             'objectType': 'mention',
             'url': Bluesky.user_url(feat.get('did')),
           })
-        elif feat.get('$type') == 'app.bsky.richtext.facet#tag':
+        elif feat_type == 'app.bsky.richtext.facet#tag':
           name = feat.get('tag')
           tag.update({
             'objectType': 'hashtag',
@@ -1694,13 +1754,17 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       })
 
     # embeds
-    embed = obj.get('embed') or {}
+    embed = obj.get('embed') or obj.get('media') or {}
     embed_type = embed.get('$type')
-    if embed_type in ('app.bsky.embed.images', 'app.bsky.embed.gallery'):
+    if embed_type in ('app.bsky.embed.images',
+                      'app.bsky.embed.gallery',
+                      'so.sprk.media.images',
+                      ):
       ret['image'] = to_as1(embed, **kwargs)
     elif embed_type in ('app.bsky.embed.external',
                         'app.bsky.embed.record',
                         'app.bsky.embed.video',
+                        'so.sprk.media.video',
                         ):
       ret['attachments'] = [to_as1(embed, **kwargs)]
     elif embed_type == 'app.bsky.embed.recordWithMedia':
@@ -1752,7 +1816,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         else:
           assert False, f'Unknown embed media type: {media_type}'
 
-  elif type in ('app.bsky.embed.images', 'app.bsky.embed.gallery'):
+  elif type in ('app.bsky.embed.images',
+                'app.bsky.embed.gallery',
+                'so.sprk.media.images',
+                ):
     ret = []
     if repo_did and pds:
       for img in obj.get('images') or obj.get('items') or []:
@@ -1767,7 +1834,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
             as1_img = url
           ret.append(as1_img)
 
-  elif type == 'app.bsky.embed.video':
+  elif type in ('app.bsky.embed.video', 'so.sprk.media.video'):
     ret = {}
     if repo_did and pds:
       if vid := obj['video']:
@@ -1778,9 +1845,12 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
             'url': url,
             'mimeType': vid.get('mimeType'),
           },
-          'image': VIDEO_THUMBNAIL_URL.format(did=urllib.parse.quote(repo_did),
-                                              cid=blob_cid(vid)),
-          'displayName': obj.get('alt'),}
+          'displayName': obj.get('alt'),
+        }
+        # only Bluesky's video CDN generates thumbnails
+        if type == 'app.bsky.embed.video':
+          ret['image'] = VIDEO_THUMBNAIL_URL.format(
+            did=urllib.parse.quote(repo_did), cid=blob_cid(vid))
 
   elif type in ('app.bsky.embed.images#view', 'app.bsky.embed.gallery#view'):
     ret = []
