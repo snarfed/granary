@@ -844,6 +844,16 @@ class BlueskyTest(testutil.TestCase):
       'https://sprk.so/post/did:plc:asdf/123',
       at_uri_to_web_url('at://did:plc:asdf/so.sprk.feed.post/123'))
 
+    self.assertEqual(
+      'https://bsky.app/profile/did:plc:asdf',
+      at_uri_to_web_url('at://did:plc:asdf/app.bsky.actor.profile/self'))
+    self.assertEqual(
+      'https://sprk.so/profile/did:plc:asdf',
+      at_uri_to_web_url('at://did:plc:asdf/so.sprk.actor.profile/self'))
+    self.assertEqual(
+      'https://sprk.so/profile/snarfed.org',
+      at_uri_to_web_url('at://did:plc:asdf/so.sprk.actor.profile/self',
+                        handle='snarfed.org'))
 
     with self.assertRaises(ValueError):
       at_uri_to_web_url('http://not/at/uri')

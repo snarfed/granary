@@ -12,7 +12,7 @@ from webutil import testutil
 from ...bluesky import (
   at_uri_to_web_url,
   Bluesky,
-  COLLECTION_TO_BSKY_APP_TYPE,
+  BSKY_APP_TYPE_TO_COLLECTION,
   did_web_to_url,
   from_as1,
   LEXRPC,
@@ -28,7 +28,7 @@ VALIDATOR = Base(truncate=False, validate=True)
 # urlparse lower cases hostnames
 HOSTS = domains().map(str.lower)
 DIDS = st.from_regex(r'did:plc:[a-z2-7]{24}', fullmatch=True)
-COLLECTIONS = st.sampled_from(sorted(COLLECTION_TO_BSKY_APP_TYPE))
+COLLECTIONS = st.sampled_from(sorted(BSKY_APP_TYPE_TO_COLLECTION.values()))
 RKEYS = st.text(alphabet=ascii_letters + digits + '.:~_-', min_size=1, max_size=16)
 
 # objectType is optional in OBJECTS, and from_as1 raises ValueError without one,
