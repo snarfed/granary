@@ -122,6 +122,7 @@ FROM_AS1_TYPES = {
   ),
   'like': (
     'app.bsky.feed.like',
+    'so.sprk.feed.like',
   ),
   'place': (
     'community.lexicon.location.geo',
@@ -129,6 +130,7 @@ FROM_AS1_TYPES = {
   ),
   'share': (
     'app.bsky.feed.repost',
+    'so.sprk.feed.repost',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#reasonRepost',
   ),
@@ -701,15 +703,23 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           'address': wallet,
         })
 
+  elif type in ('like', 'share') and out_type not in (
+      'app.bsky.feed.defs#reasonRepost', 'app.bsky.feed.defs#feedViewPost'):
+    # Spark likes and reposts have the same schemas (not lexicons) as Bluesky's. use
+    # them if the subject is a Spark record
+    subject = from_as1_to_strong_ref(inner_obj, client=client, raise_=raise_,
+                                     validate=validate)
+    match = AT_URI_RE.fullmatch(subject.get('uri', ''))
+    nsid = ('so.sprk' if match and match['collection'].startswith('so.sprk.')
+            else 'app.bsky')
+    ret = {
+      '$type': out_type or f'{nsid}.feed.{"like" if type == "like" else "repost"}',
+      'subject': subject,
+      'createdAt': from_as1_datetime(obj.get('published')),
+    }
+
   elif type == 'share':
-    if not out_type or out_type == 'app.bsky.feed.repost':
-      ret = {
-        '$type': 'app.bsky.feed.repost',
-        'subject': from_as1_to_strong_ref(inner_obj, client=client, raise_=raise_,
-                                          validate=validate),
-        'createdAt': from_as1_datetime(obj.get('published')),
-      }
-    elif out_type == 'app.bsky.feed.defs#reasonRepost':
+    if out_type == 'app.bsky.feed.defs#reasonRepost':
       ret = {
         '$type': 'app.bsky.feed.defs#reasonRepost',
         'by': from_as1(actor, out_type='app.bsky.actor.defs#profileViewBasic', **kwargs),
@@ -721,14 +731,6 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         'post': from_as1(inner_obj, out_type='app.bsky.feed.defs#postView', **kwargs),
         'reason': from_as1(obj, out_type='app.bsky.feed.defs#reasonRepost', **kwargs),
       }
-
-  elif type == 'like':
-    ret = {
-      '$type': 'app.bsky.feed.like',
-      'subject': from_as1_to_strong_ref(inner_obj, client=client, raise_=raise_,
-                                        validate=validate),
-      'createdAt': from_as1_datetime(obj.get('published')),
-    }
 
   elif type in ('follow', 'block'):
     if not inner_obj:
@@ -2026,11 +2028,13 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'content': content,
     }
 
-  elif type in ('app.bsky.feed.like', 'app.bsky.feed.repost'):
+  elif type in ('app.bsky.feed.like', 'app.bsky.feed.repost',
+                'so.sprk.feed.like', 'so.sprk.feed.repost'):
+    is_like = type.endswith('.like')
     subject = obj.get('subject', {}).get('uri')
     ret = {
       'objectType': 'activity',
-      'verb': 'like' if type == 'app.bsky.feed.like' else 'share',
+      'verb': 'like' if is_like else 'share',
       'id': uri,
       'object': subject,
       'actor': repo_did,
@@ -2040,7 +2044,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     if subject and subject.startswith('at://') and uri_repo:
       if web_url := at_uri_to_web_url(subject):
         # synthetic fragment
-        verb = 'liked' if type == 'app.bsky.feed.like' else 'reposted'
+        verb = 'liked' if is_like else 'reposted'
         ret['url'] = f'{web_url}#{verb}_by_{uri_repo}'
 
   elif type == 'app.bsky.feed.defs#threadViewPost':

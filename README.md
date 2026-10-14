@@ -351,9 +351,8 @@ Handle list-valued AS1 `objectType` everywhere, using its first element, includi
   * `from_as1`, `to_as1`:
     * Convert AS1 `place`s to/from [`community.lexicon.location.*`](https://tangled.org/lexicon.community/lexicons/tree/main/community/lexicon/location).
     * Convert AS1 `event`s to/from [`community.lexicon.calendar.event`](https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/calendar/event.json), including locations.
-    * Convert AS1 actors to/from [Spark](https://sprk.so/) `so.sprk.actor.profile` ([bridgy-fed#2736](https://github.com/snarfed/bridgy-fed/issues/2736)).
-    * Convert AS1 `note`s with images or video to/from [Spark](https://sprk.so/) `so.sprk.feed.post`/`so.sprk.feed.reply` ([bridgy-fed#2736](https://github.com/snarfed/bridgy-fed/issues/2736)).
-  * `web_url_to_at_uri`: add support for `sprk.so` profile and post URLs.
+    * Convert AS1 actors, notes, replies, likes, and reposts to/from [Spark](https://sprk.so/) `so.sprk.*` records ([bridgy-fed#2736](https://github.com/snarfed/bridgy-fed/issues/2736)).
+  * `web_url_to_at_uri`, `at_uri_to_web_url`: add support for `sprk.so` profile and post URLs.
   * `from_as1`:
     * Add `validate` kwarg to allow generating invalid records, eg replies to, likes of, and reposts of non-Bluesky objects.
     * Populate image and video `aspectRatio` from AS1 `width` and `height` if they're not in `aspects`.

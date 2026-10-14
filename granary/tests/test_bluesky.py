@@ -3279,6 +3279,47 @@ class BlueskyTest(testutil.TestCase):
 
     mock_get.assert_not_called()
 
+  def test_from_as1_like_and_repost_of_spark_post(self):
+    for verb, type in (
+        ('like', 'so.sprk.feed.like'),
+        ('share', 'so.sprk.feed.repost'),
+    ):
+      for object in ('at://did:al:ice/so.sprk.feed.post/tid',
+                     'https://sprk.so/post/did:al:ice/tid'):
+        with self.subTest(verb=verb, object=object):
+          self.assert_equals({
+            '$type': type,
+            'subject': {
+              'uri': 'at://did:al:ice/so.sprk.feed.post/tid',
+              'cid': '',
+            },
+            'createdAt': '2022-01-02T03:04:05.000Z',
+          }, self.from_as1({
+            'objectType': 'activity',
+            'verb': verb,
+            'object': object,
+          }))
+
+  def test_from_as1_like_and_repost_out_type_overrides_inferred(self):
+    for verb, bsky, spark in (
+        ('like', 'app.bsky.feed.like', 'so.sprk.feed.like'),
+        ('share', 'app.bsky.feed.repost', 'so.sprk.feed.repost'),
+    ):
+      with self.subTest(verb=verb):
+        got = self.from_as1({
+          'objectType': 'activity',
+          'verb': verb,
+          'object': 'at://did:al:ice/so.sprk.feed.post/tid',
+        }, out_type=bsky)
+        self.assertEqual(bsky, got['$type'])
+
+        got = self.from_as1({
+          'objectType': 'activity',
+          'verb': verb,
+          'object': 'at://did:al:ice/app.bsky.feed.post/tid',
+        }, out_type=spark)
+        self.assertEqual(spark, got['$type'])
+
   def test_from_as1_repost_reasonRepost(self):
     got = self.from_as1(REPOST_AS, out_type='app.bsky.feed.defs#reasonRepost')
     self.assert_equals(REPOST_BSKY_REASON, got)
@@ -4889,6 +4930,28 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_like_uri(self):
     self.assert_equals(LIKE_AS, to_as1(
       LIKE_BSKY, uri='at://alice.com/app.bsky.feed.like/123'))
+
+  def test_to_as1_spark_like_and_repost(self):
+    for type, verb, fragment in (
+        ('so.sprk.feed.like', 'like', 'liked'),
+        ('so.sprk.feed.repost', 'share', 'reposted'),
+    ):
+      with self.subTest(type=type):
+        self.assert_equals({
+          'objectType': 'activity',
+          'verb': verb,
+          'id': f'at://alice.com/{type}/123',
+          'url': f'https://sprk.so/post/did:al:ice/tid#{fragment}_by_alice.com',
+          'object': 'at://did:al:ice/so.sprk.feed.post/tid',
+          'published': '2022-01-02T03:04:05.000Z',
+        }, to_as1({
+          '$type': type,
+          'subject': {
+            'uri': 'at://did:al:ice/so.sprk.feed.post/tid',
+            'cid': 'sydddddd',
+          },
+          'createdAt': '2022-01-02T03:04:05.000Z',
+        }, uri=f'at://alice.com/{type}/123'))
 
   def test_to_as1_listView(self):
     self.assert_equals({
