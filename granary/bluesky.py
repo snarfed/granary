@@ -96,6 +96,7 @@ FROM_AS1_TYPES = {
   type: (
     'app.bsky.feed.post',
     'so.sprk.feed.post',
+    'so.sprk.feed.reply',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#postView',
   ) for type in POST_TYPES
@@ -140,6 +141,7 @@ ATP_PROFILE_TYPES = (
 ATP_POST_TYPES = (
   'app.bsky.feed.post',
   'so.sprk.feed.post',
+  'so.sprk.feed.reply',
 )
 
 AUTHORITY_CHARS = 'a-zA-Z0-9-.:'
@@ -149,6 +151,11 @@ BSKY_APP_URL_RE = re.compile(fr"""
   /profile/(?P<id>[{AUTHORITY_CHARS}]+)
   (/(?P<type>{"|".join(BSKY_APP_TYPE_TO_COLLECTION)})
    /(?P<tid>[{RKEY_CHARS}]+))?
+  """, re.VERBOSE)
+SPARK_URL_RE = re.compile(fr"""
+  https://sprk\.so
+  (/profile/(?P<id>[{AUTHORITY_CHARS}]+)
+   |/post/(?P<did>[{AUTHORITY_CHARS}]+)/(?P<rkey>[{RKEY_CHARS}]+))
   """, re.VERBOSE)
 
 DEFAULT_PDS_DOMAIN = 'bsky.social'
@@ -301,21 +308,23 @@ def at_uri_to_web_url(uri, handle=None):
 
 
 def web_url_to_at_uri(url, handle=None, did=None):
-  """Converts a ``https://bsky.app`` URL to an ``at://`` URI.
+  """Converts a ``https://bsky.app`` or ``https://sprk.so`` URL to an ``at://`` URI.
 
   https://atproto.com/specs/at-uri-scheme
 
   Currently supports profile, post, and feed URLs with DIDs and handles, eg:
 
   * ``https://bsky.app/profile/did:plc:123abc``
-  * ``https://bsky.app/profile/vito.fyi/post/3jt7sst7vok2u``
+  * ``https://bsky.app/profile/alice.example/post/456def``
   * ``https://bsky.app/profile/bsky.app/feed/mutuals``
+  * ``https://sprk.so/profile/alice.example``
+  * ``https://sprk.so/post/did:plc:123abc/456def``
 
   If both ``handle`` and ``did`` are provided, and ``handle`` matches the URL,
   the handle in the resulting URI will be replaced with ``did``.
 
   Args:
-    url (str): ``bsky.app`` URL
+    url (str): ``bsky.app`` or ``sprk.so`` URL
     handle (str): Bluesky handle, or None
     did (str): Valid DID, or None
 
@@ -323,14 +332,22 @@ def web_url_to_at_uri(url, handle=None, did=None):
     str: ``at://`` URI, or None
 
   Raises:
-    ValueError: if ``url`` can't be parsed as a ``bsky.app`` profile or post URL
+    ValueError: if ``url`` can't be parsed as a ``bsky.app`` or ``sprk.so``
+      profile or post URL
   """
   if not url:
     return None
 
+  if match := SPARK_URL_RE.fullmatch(url):
+    if not (id := match.group('id')):
+      return f'at://{match.group("did")}/so.sprk.feed.post/{match.group("rkey")}'
+    if did and handle and id == handle:
+      id = did
+    return f'at://{id}/so.sprk.actor.profile/self'
+
   match = BSKY_APP_URL_RE.fullmatch(url)
   if not match:
-    raise ValueError(f"{url} doesn't look like a bsky.app profile or post URL")
+    raise ValueError(f"{url} doesn't look like a bsky.app or sprk.so profile or post URL")
 
   id = match.group('id')
   assert id
@@ -1225,10 +1242,51 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     ret = as1.trim_nulls(ret, ignore=('alt', 'createdAt', 'cid', 'description',
                                       'text', 'title', 'uri'))
 
+    spark_facets = [{
+      **facet,
+      '$type': 'so.sprk.richtext.facet',
+      'features': [{
+        **feat,
+        '$type': feat['$type'].replace('app.bsky.', 'so.sprk.'),
+      } for feat in facet['features']],
+    } for facet in ret.get('facets', [])]
+
+    # Spark reply if the parent is a Spark record. Spark replies only support text
+    # and one image; drop anything else
+    # https://github.com/sprksocial/server/blob/main/lexicons/so/sprk/feed/reply.json
+    if out_type == 'so.sprk.feed.reply' and not reply:
+      raise ValueError("Not a reply, can't convert to so.sprk.feed.reply")
+
+    if reply:
+      spark_parent = ((parent := AT_URI_RE.fullmatch(reply['parent'].get('uri', '')))
+                      and parent['collection'].startswith('so.sprk.'))
+      if out_type == 'so.sprk.feed.reply' or (spark_parent and not out_type):
+        # log anything we're dropping
+        if tags := ret.get('tags'):
+          logger.info(f"so.sprk.feed.reply doesn't support tags {tags} ; dropping")
+        if len(spark_images) > 1:
+          logger.info(f"so.sprk.feed.reply doesn't support multiple images; dropping")
+        embed_type = ret.get('embed', {}).get('$type')
+        if embed_type not in (None, 'app.bsky.embed.images', 'app.bsky.embed.gallery'):
+          logger.info(f"so.sprk.feed.reply doesn't support {embed_type} ; dropping")
+
+        ret = as1.trim_nulls({
+          **ret,
+          '$type': 'so.sprk.feed.reply',
+          'reply': {**reply, '$type': 'so.sprk.feed.reply#replyRef'},
+          'facets': spark_facets,
+          'embed': None,
+          'tags': None,
+          'media': None
+        }, ignore=('alt', 'createdAt', 'cid', 'text', 'uri'))
+
+        if spark_images:
+          ret['media'] = {**spark_images[0], '$type': 'so.sprk.media.image'}
+
     # also Spark post for notes with images or video. Spark posts only have
     # either images or a single video, so only generate one if that's all this
     # post has, ie no quote, link, or other media
-    # TODO: replies as so.sprk.feed.reply, crossposts
+    # TODO: crossposts
     spark_media = None
     max_images = LEXRPC.defs['so.sprk.media.images']['properties']['images']['maxLength']
     # TODO: handle too many images, and images without blobs, consistently. right
@@ -1261,14 +1319,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         'embed': None,
         'caption': {
           'text': ret['text'],
-          'facets': [{
-            **facet,
-            '$type': 'so.sprk.richtext.facet',
-            'features': [{
-              **feat,
-              '$type': feat['$type'].replace('app.bsky.', 'so.sprk.'),
-            } for feat in facet['features']],
-          } for facet in ret.get('facets', [])],
+          'facets': spark_facets,
         },
         'media': spark_media,
       }, ignore=('alt', 'createdAt'))
@@ -1635,9 +1686,10 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
                 'chat.bsky.convo.defs#messageInput',
                 'chat.bsky.convo.defs#messageView',
                 'so.sprk.feed.post',
+                'so.sprk.feed.reply',
                 ):
-    # Spark posts are the same as Bluesky posts except text and facets are in
-    # caption, and embed is media
+    # Spark posts and replies are the same as Bluesky posts except embed is
+    # media, and in posts, text and facets are in caption
     text_obj = (obj.get('caption') or {}) if type == 'so.sprk.feed.post' else obj
     text = text_obj.get('text', '')
     text_encoded = text.encode()
@@ -1764,10 +1816,11 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       })
 
     # embeds
-    embed = obj.get('media' if type == 'so.sprk.feed.post' else 'embed') or {}
+    embed = obj.get('media' if type.startswith('so.sprk.') else 'embed') or {}
     embed_type = embed.get('$type')
     if embed_type in ('app.bsky.embed.images',
                       'app.bsky.embed.gallery',
+                      'so.sprk.media.image',
                       'so.sprk.media.images',
                       ):
       ret['image'] = to_as1(embed, **kwargs)
@@ -1828,11 +1881,14 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
   elif type in ('app.bsky.embed.images',
                 'app.bsky.embed.gallery',
+                'so.sprk.media.image',
                 'so.sprk.media.images',
                 ):
     ret = []
     if repo_did and pds:
-      for img in obj.get('images') or obj.get('items') or []:
+      imgs = ([obj] if type == 'so.sprk.media.image'
+              else obj.get('images') or obj.get('items') or [])
+      for img in imgs:
         if image := img.get('image'):
           url = blob_to_url(blob=image, repo_did=repo_did, pds=pds)
           as1_img = {'url': url}
@@ -2376,7 +2432,7 @@ class Bluesky(Source):
 
     if (len(url.removeprefix('at://').split('/')) == 3
         # only return at:// URIs for posts, not profiles
-        and not url.endswith('/app.bsky.actor.profile/self')):
+        and not any(url.endswith(f'/{type}/self') for type in ATP_PROFILE_TYPES)):
       return url
 
   def get_activities_response(self, user_id=None, group_id=None, app_id=None,
@@ -3049,7 +3105,7 @@ class Bluesky(Source):
 
         base = copy.deepcopy(base)
         for id in ids:
-          if id.startswith('https://bsky.app/'):
+          if id.startswith(('https://bsky.app/', 'https://sprk.so/')):
             base.setdefault('id', web_url_to_at_uri(id))
             base.setdefault('url', id)
             return base

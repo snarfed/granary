@@ -875,6 +875,12 @@ class BlueskyTest(testutil.TestCase):
          'at://did:plc:123/app.bsky.graph.list/abc'),
         ('https://bsky.app/profile/foo.com/lists/abc',
          'at://foo.com/app.bsky.graph.list/abc'),
+        ('https://sprk.so/profile/foo.com',
+         'at://foo.com/so.sprk.actor.profile/self'),
+        ('https://sprk.so/profile/did:plc:foo',
+         'at://did:plc:foo/so.sprk.actor.profile/self'),
+        ('https://sprk.so/post/did:plc:foo/3jv3wdw2hkt25',
+         'at://did:plc:foo/so.sprk.feed.post/3jv3wdw2hkt25'),
     ):
       with self.subTest(url=url):
         self.assertEqual(expected, web_url_to_at_uri(url))
@@ -3394,6 +3400,153 @@ class BlueskyTest(testutil.TestCase):
                      'com.atproto.repo.getRecord'
                      '?repo=did%3Aal%3Aice&collection=app.bsky.feed.post&rkey=parent-tid')
 
+  def test_from_as1_reply_to_spark_post(self):
+    expected = {
+      '$type': 'so.sprk.feed.reply',
+      'text': 'I hereby reply to this',
+      'fooOriginalText': 'I hereby reply to this',
+      'fooOriginalUrl': 'https://bsky.app/profile/did:dy:d/post/tid',
+      'createdAt': '2008-08-08T03:04:05.000Z',
+      'reply': {
+        '$type': 'so.sprk.feed.reply#replyRef',
+        'root': {
+          'uri': 'at://did:al:ice/so.sprk.feed.post/parent-tid',
+          'cid': '',
+        },
+        'parent': {
+          'uri': 'at://did:al:ice/so.sprk.feed.post/parent-tid',
+          'cid': '',
+        },
+      },
+    }
+
+    for in_reply_to in ('at://did:al:ice/so.sprk.feed.post/parent-tid',
+                        'https://sprk.so/post/did:al:ice/parent-tid'):
+      with self.subTest(in_reply_to=in_reply_to):
+        reply = {**REPLY_AS['object'], 'inReplyTo': in_reply_to}
+        self.assert_equals(expected, self.from_as1(reply))
+        self.assert_equals([expected], self.from_as1(reply, multiple=True))
+
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'uri': 'at://did:al:ice/so.sprk.feed.reply/parent-tid',
+    'cid': 'my+parent+syd',
+    'value': {
+      '$type': 'so.sprk.feed.reply',
+      'text': 'foo',
+      'createdAt': '2007-07-07T03:04:05.000Z',
+      'reply': {
+        'parent': {
+          'uri': 'at://did:bo:b/so.sprk.feed.post/root-tid',
+          'cid': 'my+root+syd',
+        },
+        'root': {
+          'uri': 'at://did:bo:b/so.sprk.feed.post/root-tid',
+          'cid': 'my+root+syd',
+        },
+      },
+    },
+  }))
+  def test_from_as1_reply_to_spark_reply_client_root(self, mock_get):
+    self.assert_equals({
+      '$type': 'so.sprk.feed.reply',
+      'text': 'I hereby reply to this',
+      'fooOriginalText': 'I hereby reply to this',
+      'fooOriginalUrl': 'https://bsky.app/profile/did:dy:d/post/tid',
+      'createdAt': '2008-08-08T03:04:05.000Z',
+      'reply': {
+        '$type': 'so.sprk.feed.reply#replyRef',
+        'parent': {
+          'uri': 'at://did:al:ice/so.sprk.feed.reply/parent-tid',
+          'cid': 'my+parent+syd',
+        },
+        'root': {
+          'uri': 'at://did:bo:b/so.sprk.feed.post/root-tid',
+          'cid': 'my+root+syd',
+        },
+      },
+    }, self.from_as1({
+      **REPLY_AS['object'],
+      'inReplyTo': 'at://did:al:ice/so.sprk.feed.reply/parent-tid',
+    }, client=self.bs._client))
+
+    self.assert_call(mock_get,
+                     'com.atproto.repo.getRecord'
+                     '?repo=did%3Aal%3Aice&collection=so.sprk.feed.reply&rkey=parent-tid')
+
+  def test_from_as1_reply_to_spark_post_drops_unsupported(self):
+    self.assert_equals({
+      '$type': 'so.sprk.feed.reply',
+      'text': 'foo #bar',
+      'facets': [{
+        '$type': 'so.sprk.richtext.facet',
+        'features': [{
+          '$type': 'so.sprk.richtext.facet#tag',
+          'tag': 'bar',
+        }],
+        'index': {
+          'byteStart': 4,
+          'byteEnd': 8,
+        },
+      }],
+      'media': {
+        '$type': 'so.sprk.media.image',
+        'image': NEW_BLOB,
+        'alt': 'first',
+      },
+      'fooOriginalText': 'foo #bar',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'reply': {
+        '$type': 'so.sprk.feed.reply#replyRef',
+        'root': {
+          'uri': 'at://did:al:ice/so.sprk.feed.post/parent-tid',
+          'cid': '',
+        },
+        'parent': {
+          'uri': 'at://did:al:ice/so.sprk.feed.post/parent-tid',
+          'cid': '',
+        },
+      },
+    }, self.from_as1({
+      'objectType': 'comment',
+      'content': 'foo #bar',
+      'inReplyTo': 'at://did:al:ice/so.sprk.feed.post/parent-tid',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': '#bar',
+        'startIndex': 4,
+        'length': 4,
+      }, {
+        'objectType': 'hashtag',
+        'displayName': '#baz',
+      }],
+      'image': [
+        {'url': 'http://pic/1', 'displayName': 'first'},
+        {'url': 'http://pic/2', 'displayName': 'second'},
+      ],
+      'attachments': [{
+        'objectType': 'link',
+        'url': 'http://a/link',
+      }],
+    }, blobs={'http://pic/1': NEW_BLOB, 'http://pic/2': NEW_BLOB}))
+
+  def test_from_as1_reply_out_type_overrides_inferred(self):
+    spark_parent = {
+      **REPLY_AS['object'],
+      'inReplyTo': 'at://did:al:ice/so.sprk.feed.post/parent-tid',
+    }
+    got = self.from_as1(spark_parent, out_type='app.bsky.feed.post')
+    self.assertEqual('app.bsky.feed.post', got['$type'])
+    self.assertEqual('at://did:al:ice/so.sprk.feed.post/parent-tid',
+                     got['reply']['parent']['uri'])
+
+    got = self.from_as1(REPLY_AS['object'], out_type='so.sprk.feed.reply')
+    self.assertEqual('so.sprk.feed.reply', got['$type'])
+    self.assertEqual('at://did:al:ice/app.bsky.feed.post/parent-tid',
+                     got['reply']['parent']['uri'])
+
+    with self.assertRaises(ValueError):
+      self.from_as1(POST_AS, out_type='so.sprk.feed.reply')
+
   def test_from_as1_reply_not_bluesky_atproto(self):
     with self.assertRaises(ValueError):
       self.from_as1({
@@ -4510,6 +4663,42 @@ class BlueskyTest(testutil.TestCase):
       'text': 'foo',
       'media': 'bar',
     }))
+
+  def test_to_as1_spark_reply(self):
+    self.assert_equals({
+      'objectType': 'comment',
+      'id': 'at://did:plc:foo/so.sprk.feed.reply/tid',
+      'author': 'did:plc:foo',
+      'content': 'I hereby reply to this',
+      'published': '2008-08-08T03:04:05.000Z',
+      'inReplyTo': [{
+        'id': 'at://did:al:ice/so.sprk.feed.post/parent-tid',
+        'url': 'https://sprk.so/post/did:al:ice/parent-tid',
+      }],
+      'image': [{
+        'url': NEW_BLOB_URL,
+        'displayName': 'my alt text',
+      }],
+    }, to_as1({
+      '$type': 'so.sprk.feed.reply',
+      'text': 'I hereby reply to this',
+      'createdAt': '2008-08-08T03:04:05.000Z',
+      'reply': {
+        'root': {
+          'uri': 'at://did:al:ice/so.sprk.feed.post/parent-tid',
+          'cid': 'my+root+syd',
+        },
+        'parent': {
+          'uri': 'at://did:al:ice/so.sprk.feed.post/parent-tid',
+          'cid': 'my+parent+syd',
+        },
+      },
+      'media': {
+        '$type': 'so.sprk.media.image',
+        'image': NEW_BLOB,
+        'alt': 'my alt text',
+      },
+    }, repo_did='did:plc:foo', uri='at://did:plc:foo/so.sprk.feed.reply/tid'))
 
   def test_to_as1_spark_post_with_images(self):
     self.assert_equals({
@@ -5926,6 +6115,8 @@ class BlueskyTest(testutil.TestCase):
         ('at://did:dy:d/po.s.t/tid', 'at://did:dy:d/po.s.t/tid'),
         ('https://bsky.app/profile/did:dy:d/post/tid',
          'at://did:dy:d/app.bsky.feed.post/tid'),
+        ('https://sprk.so/profile/did:dy:d', None),
+        ('https://sprk.so/post/did:dy:d/tid', 'at://did:dy:d/so.sprk.feed.post/tid'),
     ]:
       with self.subTest(input=input):
         self.assertEqual(expected, self.bs.post_id(input))
