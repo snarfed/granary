@@ -854,6 +854,10 @@ class BlueskyTest(testutil.TestCase):
       'https://sprk.so/profile/snarfed.org',
       at_uri_to_web_url('at://did:plc:asdf/so.sprk.actor.profile/self',
                         handle='snarfed.org'))
+    self.assertEqual(
+      'https://grain.social/profile/snarfed.org',
+      at_uri_to_web_url('at://did:plc:asdf/social.grain.actor.profile/self',
+                        handle='snarfed.org'))
 
     with self.assertRaises(ValueError):
       at_uri_to_web_url('http://not/at/uri')
@@ -2504,6 +2508,8 @@ class BlueskyTest(testutil.TestCase):
       },
     }, {
       '$type': 'so.sprk.actor.profile',
+    }, {
+      '$type': 'social.grain.actor.profile',
     }], self.from_as1(actor, client=self.bs, multiple=True))
 
     self.assert_equals({
@@ -2525,6 +2531,12 @@ class BlueskyTest(testutil.TestCase):
       'website': 'https://alice.com/',
       'fooOriginalDescription': 'hi there',
       'fooOriginalUrl': 'https://alice.com/',
+    }, {
+      '$type': 'social.grain.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
     }], self.from_as1(ACTOR_AS, multiple=True))
 
   def test_from_as1_actor_to_spark_profile(self):
@@ -2538,6 +2550,26 @@ class BlueskyTest(testutil.TestCase):
       'fooOriginalUrl': 'https://alice.com/',
     }, self.from_as1(ACTOR_AS, out_type='so.sprk.actor.profile',
                      blobs={'https://alice.com/alice.jpg': NEW_BLOB}))
+
+  def test_from_as1_actor_to_grain_profile(self):
+    self.assert_equals({
+      '$type': 'social.grain.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'avatar': NEW_BLOB,
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+    }, self.from_as1({
+      **ACTOR_AS,
+      'objectType': 'service',
+      'image': [
+        {'url': 'https://alice.com/alice.jpg'},
+        {'url': 'https://alice.com/banner.jpg', 'objectType': 'featured'},
+      ],
+    }, out_type='social.grain.actor.profile', blobs={
+      'https://alice.com/alice.jpg': NEW_BLOB,
+      'https://alice.com/banner.jpg': OLD_BLOB,
+    }))
 
   def test_from_as1_actor_multiple_blobs_bot_label(self):
     self.assert_equals([{
@@ -2566,6 +2598,13 @@ class BlueskyTest(testutil.TestCase):
         '$type': 'com.atproto.label.defs#selfLabels',
         'values': [{'val': BOT_LABEL}],
       },
+    }, {
+      '$type': 'social.grain.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'avatar': NEW_BLOB,
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
     }], self.from_as1({
       **ACTOR_AS,
       'objectType': 'service',
@@ -2595,6 +2634,12 @@ class BlueskyTest(testutil.TestCase):
       'displayName': 'Alice',
       'description': 'hi there',
       'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+    }, {
+      '$type': 'social.grain.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
       'fooOriginalDescription': 'hi there',
       'fooOriginalUrl': 'https://alice.com/',
     }, {
@@ -4460,6 +4505,25 @@ class BlueskyTest(testutil.TestCase):
         '$type': 'com.atproto.label.defs#selfLabels',
         'values': [{'val': BOT_LABEL}],
       },
+      'createdAt': '2007-07-07T03:04:05.000Z',
+    }, repo_did='did:plc:foo', repo_handle='alice.com'))
+
+  def test_to_as1_grain_profile(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'did:plc:foo',
+      'username': 'alice.com',
+      'url': 'https://grain.social/profile/alice.com',
+      'urls': ['https://grain.social/profile/alice.com', 'https://alice.com/'],
+      'displayName': 'Alice',
+      'summary': 'hi there',
+      'image': [{'url': NEW_BLOB_URL}],
+      'published': '2007-07-07T03:04:05.000Z',
+    }, to_as1({
+      '$type': 'social.grain.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'avatar': NEW_BLOB,
       'createdAt': '2007-07-07T03:04:05.000Z',
     }, repo_did='did:plc:foo', repo_handle='alice.com'))
 

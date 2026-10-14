@@ -69,6 +69,7 @@ COLLECTION_TO_WEB_URL = {
   'app.bsky.graph.list': 'https://bsky.app/profile/{id}/lists/{rkey}',
   'so.sprk.actor.profile': 'https://sprk.so/profile/{id}',
   'so.sprk.feed.post': 'https://sprk.so/post/{did}/{rkey}',
+  'social.grain.actor.profile': 'https://grain.social/profile/{id}',
 }
 # Maps path elements in bsky.app URLs to AT Protocol NSID collections.
 # Used in web_url_to_at_uri.
@@ -86,8 +87,9 @@ POST_TYPES = as1.POST_TYPES | set(['bookmark'])
 FROM_AS1_TYPES = {
   type: (
     'app.bsky.actor.profile',
-    'so.sprk.actor.profile',
     'site.standard.publication',
+    'so.sprk.actor.profile',
+    'social.grain.actor.profile',
     'app.bsky.actor.defs#profileView',
     'app.bsky.actor.defs#profileViewBasic',
     'app.bsky.actor.defs#profileViewDetailed',
@@ -139,6 +141,7 @@ FROM_AS1_TYPES = {
 ATP_PROFILE_TYPES = (
   'app.bsky.actor.profile',
   'so.sprk.actor.profile',
+  'social.grain.actor.profile',
 )
 ATP_POST_TYPES = (
   'app.bsky.feed.post',
@@ -516,11 +519,9 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       we can't fetch an object's record
     dynamic_sensitive_labels (bool): if enabled we attempt to determine the bluesky
       label based on ``summary``
-    multiple (bool): if True, always return a list of output records. When
-      converting an input actor to an output ``app.bsky.actor.profile`` record,
-      also includes a ``so.sprk.actor.profile`` record, and a
-      ``community.lexicon.payments.webMonetization`` record if the actor has a
-      ``monetization`` property. Default False.
+    multiple (bool): if True, always return a list of output records,
+      including eg ``so.sprk.*``, ``social.grain.*``, and
+      ``community.lexicon.payments.webMonetization``. Default False.
     domain (str): optional. A DNS domain for the actor. Only used with
       ``out_type='site.standard.publication'``, and required then.
     validate (bool): if False, allows generating invalid records. Currently
@@ -684,7 +685,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     if ret['$type'] == 'app.bsky.actor.profile':
       rets = [ret]
 
-      # Spark profile, same as Bluesky's except for pinnedPost
+      # Spark, same as Bluesky's except for pinnedPost
       # https://github.com/sprksocial/server/blob/main/lexicons/so/sprk/actor/profile.json
       if multiple:
         rets.append(as1.trim_nulls({
@@ -692,6 +693,10 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           '$type': 'so.sprk.actor.profile',
           'pinnedPost': None,
         }))
+
+        # Grain, also similar to Bluesky's, but even more minimal
+        # https://tangled.org/grain.social/grain/blob/main/lexicons/social/grain/actor/profile.json
+        rets.append({**ret, '$type': 'social.grain.actor.profile'})
 
       # Web Monetization
       # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
@@ -702,6 +707,12 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           '$type': 'community.lexicon.payments.webMonetization',
           'address': wallet,
         })
+
+    # Grain profiles only have displayName, description, avatar, createdAt
+    for profile in rets or [ret]:
+      if profile['$type'] == 'social.grain.actor.profile':
+        for field in 'banner', 'labels', 'pinnedPost', 'website':
+          profile.pop(field, None)
 
   elif type in ('like', 'share') and out_type not in (
       'app.bsky.feed.defs#reasonRepost', 'app.bsky.feed.defs#feedViewPost'):
