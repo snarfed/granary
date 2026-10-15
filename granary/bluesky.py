@@ -560,7 +560,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       raise ValueError(f"{type} {verb} doesn't support out_type {out_type}")
 
   # summary can be HTML; convert to plain text
-  summary = orig_summary = obj.get('summary') or ''
+  summary = obj.get('summary') or ''
   summary_is_html = (bool(BeautifulSoup(summary, 'html.parser').find())
                      or HTML_ENTITY_RE.search(summary))
   if summary_is_html:
@@ -574,145 +574,18 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
   # TODO: once we're on Python 3.10, switch this to a match statement!
   if type in as1.ACTOR_TYPES:
-    # avatar and banner. banner is featured image, if available
-    avatar = util.get_url(obj, 'image')
-    banner = None
-    for img in as1.get_objects(obj, 'image'):
-      url = util.get_url(img)
-      if as1.object_type(img) == 'featured' and url:
-        banner = url
-        break
+    rets = _from_as1_actor(
+      obj, out_type=out_type, multiple=multiple, summary=summary,
+      blobs=blobs, client=client, raise_=raise_, domain=domain,
+      original_fields_prefix=original_fields_prefix)
 
-    # extract pinned post from featured collection.
-    # note that we skip pinned post ids that aren't at:// URIs!
-    pinned_post = None
-    if featured := as1.get_object(obj, 'featured'):
-      if first := (as1.get_id(featured, 'orderedItems')
-                   or as1.get_id(featured, 'items')):
-        if first.startswith('at://'):
-          pinned_post = from_as1_to_strong_ref(first, client=client, raise_=raise_)
-
-    url = as1.get_url(obj)
-    id = obj.get('id')
-    if not url and id:
-      parsed = util.parse_tag_uri(id)
-      if parsed:
-        # This is only really formatted as a URL to keep url_to_did_web below happy
-        url = f'https://{parsed[0]}'
-
-    ret = {
-      'displayName': obj.get('displayName'),
-      'description': summary,
-      'avatar': blobs.get(avatar),
-      'banner': blobs.get(banner),
-      'pinnedPost': pinned_post,
-      'website': url,
-    }
-
-    if original_fields_prefix:
-      ret.update({
-        f'{original_fields_prefix}OriginalDescription': orig_summary,
-        f'{original_fields_prefix}OriginalUrl': url or id,
-      })
-
-    if not out_type or out_type in ATP_PROFILE_TYPES:
-      # TODO: Spark pinnedPost. needs to be a so.sprk.feed.post
-      if out_type == 'so.sprk.actor.profile':
-        ret['pinnedPost'] = None
-      ret = as1.trim_nulls({**ret, '$type': out_type or 'app.bsky.actor.profile'})
-
-    elif out_type == 'site.standard.publication':
-      if not domain:
-        raise ValueError("No domain, can't convert to site.standard.publication")
-      ret = as1.trim_nulls({
-        '$type': 'site.standard.publication',
-        'url': f'https://{domain}',
-        'name': obj.get('displayName') or '',
-        'description': summary,
-        'icon': blobs.get(avatar),
-      }, ignore=('name',))
-
-    else:
-      did_web = ''
-      if id and id.startswith('did:web:'):
-        did_web = id
-      else:
-        try:
-          did_web = url_to_did_web(url)
-        except ValueError as e:
-          logger.info(f"Couldn't generate did:web: {e}")
-
-      # handles must be hostnames
-      # https://atproto.com/specs/handle
-      username = obj.get('username')
-      parsed = urlparse(url)
-      domain = parsed.netloc
-      did_web_bare = did_web.removeprefix('did:web:')
-      handle = (username if username and HANDLE_RE.fullmatch(username)
-                else did_web_bare if ':' not in did_web_bare
-                else domain if domain
-                else '')
-
-      ret.update({
-        '$type': out_type,
-        # TODO: more specific than domain, many users will be on shared domains
-        'did': id if id and id.startswith('did:') else did_web,
-        'handle': handle,
-        'avatar': avatar,
-        'banner': banner,
-        # these collections aren't not in AS1, they're borrowed from ActivityPub:
-        # https://www.w3.org/TR/activitypub/#followers
-        'followersCount': obj.get('followers', {}).get('totalItems'),
-        'followsCount': obj.get('following', {}).get('totalItems'),
-      })
-
-    # WARNING: this includes a few fields that aren't in #profileViewBasic, eg
-    # description, followersCount, followsCount
-    # https://atproto.com/specs/lexicon#authority-and-control
-    ret = as1.trim_nulls(ret, ignore=('did', 'handle'))
-
-    # add bot label for automated account objectTypes
-    if type in as1.BOT_TYPES:
-      bsky_type = ret.get('$type')
-      if bsky_type in ATP_PROFILE_TYPES:
-        ret['labels'] = {
-          '$type': 'com.atproto.label.defs#selfLabels',
-          'values': [{'val': BOT_LABEL}],
-        }
-      elif bsky_type.startswith('app.bsky.actor.defs#'):
-        ret['labels'] = [{'val': BOT_LABEL}]
-
-    if ret['$type'] == 'app.bsky.actor.profile':
-      rets = [ret]
-
-      # Spark, same as Bluesky's except for pinnedPost
-      # https://github.com/sprksocial/server/blob/main/lexicons/so/sprk/actor/profile.json
-      if multiple:
-        rets.append(as1.trim_nulls({
-          **ret,
-          '$type': 'so.sprk.actor.profile',
-          'pinnedPost': None,
-        }))
-
-        # Grain, also similar to Bluesky's, but even more minimal
-        # https://tangled.org/grain.social/grain/blob/main/lexicons/social/grain/actor/profile.json
-        rets.append({**ret, '$type': 'social.grain.actor.profile'})
-
-      # Web Monetization
-      # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
-      if wallet := obj.get('monetization'):
-        if wallet.startswith('$'):
-          wallet = wallet.replace('$', 'https://', 1)
-        rets.append({
-          '$type': 'community.lexicon.payments.webMonetization',
-          'address': wallet,
-        })
-
-    # Grain profiles only have displayName, description, avatar, createdAt
-    for profile in rets or [ret]:
-      if profile['$type'] == 'social.grain.actor.profile':
-        for field in 'banner', 'labels', 'pinnedPost', 'website':
-          profile.pop(field, None)
+  elif verb in ('post', 'update') and type in POST_TYPES:
+    rets = _from_as1_post(
+      obj, multiple=multiple, actor=actor, summary=summary,
+      out_type=out_type, blobs=blobs, aspects=aspects, client=client,
+      original_fields_prefix=original_fields_prefix, as_embed=as_embed,
+      raise_=raise_, dynamic_sensitive_labels=dynamic_sensitive_labels,
+      validate=validate)
 
   elif type in ('like', 'share') and out_type not in (
       'app.bsky.feed.defs#reasonRepost', 'app.bsky.feed.defs#feedViewPost'):
@@ -785,621 +658,6 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       # https://github.com/bluesky-social/atproto/blob/651d4c2a3447525c68d3bf1b8492bdafb0a88c66/lexicons/com/atproto/moderation/createReport.json#L21
       'reason': (obj.get('content') or summary)[:2000],
     }
-
-  elif verb in ('post', 'update') and type in POST_TYPES:
-    # images => embeds
-    images_embed = images_record_embed = None
-    spark_images = []
-    if images := as1.get_objects(obj, 'image'):
-      images_embed_items = []
-      use_gallery = len(images) > 4
-      if use_gallery:
-        images_embed = {
-          '$type': 'app.bsky.embed.gallery#view',
-          'items': images_embed_items,
-        }
-      else:
-        images_embed = {
-          '$type': 'app.bsky.embed.images#view',
-          'images': images_embed_items,
-        }
-
-      for img in images:
-        url = img.get('url') or img.get('id')
-        alt = img.get('displayName') or ''
-        view_item = {
-          '$type': ('app.bsky.embed.gallery#viewImage' if use_gallery
-                    else 'app.bsky.embed.images#viewImage'),
-          ('thumbnail' if use_gallery else 'thumb'): url,
-          'fullsize': url,
-          'alt': alt,
-        }
-        if use_gallery:
-          view_item['aspectRatio'] = DEFAULT_ASPECT_RATIO
-        images_embed_items.append(view_item)
-
-        if blob := blobs.get(url):
-          if not images_record_embed:
-            images_record_items = []
-            if use_gallery:
-              images_record_embed = {
-                '$type': 'app.bsky.embed.gallery',
-                'items': images_record_items,
-              }
-            else:
-              images_record_embed = {
-                '$type': 'app.bsky.embed.images',
-                'images': images_record_items,
-              }
-          image_record = {
-            '$type': ('app.bsky.embed.gallery#image' if use_gallery
-                      else 'app.bsky.embed.images#image'),
-            'image': blob,
-            'alt': alt,
-          }
-          spark_image = {
-            'image': blob,
-            'alt': alt,
-          }
-          if aspect := aspects.get(url) or as1.aspect_ratio(img):
-            image_record['aspectRatio'] = spark_image['aspectRatio'] = {
-              'width': aspect[0],
-              'height': aspect[1]
-            }
-          elif use_gallery:
-            image_record['aspectRatio'] = DEFAULT_ASPECT_RATIO
-          images_record_items.append(image_record)
-          spark_images.append(spark_image)
-
-    # first video => embed
-    attachments = util.get_list(obj, 'attachments')
-    has_audio_attachment = any(as1.object_type(att) == 'audio' for att in attachments)
-    video = video_embed = video_record_embed = None
-    video_missing_blob = False
-    for att in attachments:
-      url = util.get_url(att, 'stream')
-      blob = blobs.get(url)
-      if url and blob and as1.object_type(att) == 'video':
-        video = url
-        alt = att.get('displayName') or ''
-        video_embed = {
-          '$type': 'app.bsky.embed.video#view',
-          'cid': blob_cid(blob),
-          'playlist': '?',
-          'alt': alt,
-        }
-        video_record_embed = {
-          '$type': 'app.bsky.embed.video',
-          'video': blob,
-          'alt': alt,
-        }
-
-        stream = as1.get_object(att, 'stream')
-        if aspect := aspects.get(url) or as1.aspect_ratio(stream):
-          video_record_embed['aspectRatio'] = {
-            'width': aspect[0],
-            'height': aspect[1]
-          }
-        break
-      elif as1.object_type(att) == 'video':
-        video_missing_blob = True
-
-    # by default, original post link goes into an external embed. Bluesky can't
-    # do either images or video along with an external embed in the same post
-    # though, https://github.com/bluesky-social/atproto/discussions/2575 , so if
-    # the post has those, put the original post link at the end of the text
-    # instead, after truncating.
-    original_post_embed_name = original_post_text_suffix = None
-    include_link = None
-    url = as1.get_url(obj) or obj.get('id')
-    if url:
-      snippet = f'Original post on {util.domain_from_link(url)}'
-      original_post_embed_name = snippet
-      original_post_text_suffix = f'[{snippet}]'
-      if has_audio_attachment:
-        original_post_embed_name = '[Audio] ' + original_post_embed_name
-        original_post_text_suffix = '[Audio] ' + original_post_text_suffix
-      elif video_missing_blob:
-        original_post_embed_name = '[Video] ' + original_post_embed_name
-        original_post_text_suffix = '[Video] ' + original_post_text_suffix
-      original_post_text_suffix = '\n\n' + original_post_text_suffix
-
-      if images or video:
-        include_link = INCLUDE_LINK if has_audio_attachment or video_missing_blob else INCLUDE_IF_TRUNCATED
-      else:
-        include_link = OMIT_LINK  # link will be in the external embed, not text
-
-    # convert text from HTML and truncate
-    orig_content = obj.get('content', '')
-    as1.convert_html_content_to_text(obj)
-    as1.expand_tags(obj)
-
-    tags = util.get_list(obj, 'tags')
-
-    # handle summary. for articles, use instead of content. for notes, assume
-    # it's a fediverse-style content warnings, add above content.
-    # https://github.com/snarfed/bridgy-fed/issues/1001
-    full_text = content = obj.get('content') or ''
-    index_offset = 0
-    preview_record = None
-    if type == 'article' or as_embed:
-      if (preview := obj.get('preview')) and as1.object_type(preview) == 'note':
-        # we'll take text and facets from this below
-        preview_record = from_as1(preview, **kwargs)
-      else:
-        full_text = summary
-      tags = []  # tags are presumably in content, not summary
-    elif summary:
-      prefix = f'[{summary}]\n\n'
-      full_text = prefix + full_text
-      index_offset = len(prefix)
-
-    # attachments to embed(s), including quoted posts
-    record_embed = record_record_embed = external_embed = external_record_embed = None
-
-    # convert Bluesky post link at end of content to a quote
-    attachment_urls = [att['url'] for att in attachments if 'url' in att]
-    text_end = len(full_text)
-    for tag in tags:
-      # check that the link is at the end and the text is the url
-      if (as1.object_type(tag) != 'link' or tag.get('url') != tag.get('displayName') or
-          tag.get('startIndex', 0) + tag.get('length', 0) + index_offset != text_end):
-        continue
-
-      # check the link is to a bluesky post and not already in attachments
-      if ((tag['url'].startswith('at://')
-           or ((match := BSKY_APP_URL_RE.fullmatch(tag['url']))
-               and match.group('type') == 'post'))
-          and not tag['url'] in attachment_urls):
-        start_index = tag['startIndex'] + index_offset
-
-        # check link is on its own line
-        if start_index > 0 and full_text[start_index - 1] != '\n':
-          continue
-
-        # create attachment
-        attachments.append({
-          'objectType' : 'note',
-          'url' : tag['url']
-        })
-
-        # remove link
-        full_text = full_text[:start_index - 1]
-
-    for att in attachments:
-      att_id = att.get('id') or ''
-      att_url = as1.get_url(att) or ''
-      if not (as1.object_type(att) in ('article', 'link', 'note')
-              and (att_url or att_id)):
-        continue
-
-      if (att_id.startswith('at://') or att_id.startswith(Bluesky.BASE_URL) or
-          att_url.startswith('at://') or att_url.startswith(Bluesky.BASE_URL)):
-        # quoted Bluesky post
-        embed = from_as1(att, **kwargs).get('post') or {}
-        embed['value'] = embed.pop('record', None)
-        record_embed = {
-          '$type': f'app.bsky.embed.record#view',
-          'record': {
-            **embed,
-            '$type': f'app.bsky.embed.record#viewRecord',
-            # override these so that trim_nulls below will remove them
-            'likeCount': None,
-            'replyCount': None,
-            'repostCount': None,
-          },
-        }
-        record_record_embed = {
-          '$type': f'app.bsky.embed.record',
-          'record': from_as1_to_strong_ref(att, client=client, raise_=raise_),
-        }
-        full_text = QUOTE_RE_SUFFIX.sub('', full_text)
-      else:
-        # external link
-        external_record_embed = to_external_embed(att, blobs=blobs)
-        external_embed = {
-          '$type': f'app.bsky.embed.external#view',
-          'external': {
-            **external_record_embed['external'],
-            '$type': f'app.bsky.embed.external#viewExternal',
-            'thumb': util.get_first(att, 'image'),
-          },
-        }
-
-    # language(s)
-    # (we steal contentMap from AS2, it's not officially part of AS1)
-    langs = [lang for lang, lang_content in obj.get('contentMap', {}).items()
-             if LANG_RE.fullmatch(lang) and lang_content == orig_content]
-
-    # truncate text. if we're including a suffix, ie original post link, link
-    # that with a facet
-    is_dm = as1.is_dm(obj, actor=actor)
-    text = Bluesky('unused').truncate(
-      full_text, original_post_text_suffix, include_link=include_link,
-      punctuation=('', ''), type='dm' if is_dm else type, weights=False,
-      lang=langs[0] if langs else None)
-    truncated = text != full_text
-    if truncated:
-      text_byte_end = len(text.split(ELLIPSIS, maxsplit=1)[0].encode())
-    else:
-      text_byte_end = len(text.encode())
-
-    facets = []
-    standalone_tags = set()
-    if (truncated and original_post_text_suffix
-        and text.endswith(original_post_text_suffix)):
-      facets.append({
-        '$type': 'app.bsky.richtext.facet',
-        'features': [{
-          '$type': 'app.bsky.richtext.facet#link',
-          'uri': url,
-        }],
-        'index': {
-          'byteStart': len(text.removesuffix(original_post_text_suffix).encode()),
-          'byteEnd': len(text.encode()),
-        }
-      })
-
-    # convert tags to facets
-    hashtag_facets = set()  # contains string displayNames, lower cased
-    for tag in tags:
-      name = tag.get('displayName', '').strip().lstrip('@#')
-      tag_type = util.get_first(tag, 'objectType')
-      if name and not tag_type:
-        tag_type = 'hashtag'
-
-      tag_url = tag.get('url') or ''
-      if not name and not tag_url:
-        continue
-
-      facet = {
-        '$type': 'app.bsky.richtext.facet',
-      }
-      try:
-        start = int(tag['startIndex']) + index_offset
-        if start and as1.is_html(obj, 'content'):
-          raise NotImplementedError('HTML content is not supported with index tags')
-        end = start + int(tag['length'])
-
-        facet['index'] = {
-          # convert indices from Unicode chars to UTF-8 encoded bytes
-          # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
-          'byteStart': len(full_text[:start].encode()),
-          'byteEnd': len(full_text[:end].encode()),
-        }
-      except (KeyError, ValueError, IndexError, TypeError):
-        pass
-
-      if tag_type == 'hashtag':
-        max_graphemes = LEXRPC.defs['app.bsky.feed.post']['record']['properties']['tags']['items']['maxGraphemes']
-        if len(name) >= max_graphemes:
-          logger.warning(f'Hashtag "{name}" longer than maxGraphemes {max_graphemes}')
-          continue
-        facet['features'] = [{
-          '$type': 'app.bsky.richtext.facet#tag',
-          'tag': name,
-        }]
-
-      elif tag_type == 'mention':
-        # extract and resolve DID
-        if tag_url.startswith('did:'):
-          user = tag_url
-        elif match := AT_URI_RE.fullmatch(tag_url):
-          user = match.group('repo')
-        elif match := BSKY_APP_URL_RE.fullmatch(tag_url):
-          user = match.group('id')
-        else:
-          user = name.lstrip('@')
-
-        did = None
-        if user.startswith('did:'):
-          did = user
-        elif client and HANDLE_RE.fullmatch(user):
-          try:
-            did = client.com.atproto.identity.resolveHandle(handle=user)['did']
-          except BaseException as e:
-            code, _ = util.interpret_http_exception(e)
-            if not code:
-              raise
-
-        if did:
-          facet['features'] = [{
-            '$type': 'app.bsky.richtext.facet#mention',
-            'did': did,
-          }]
-
-      if not facet.get('features') and tag_url:
-        if util.DOMAIN_RE.fullmatch(tag_url):
-          tag_url = f'https://{tag_url}/'
-        if util.is_url(tag_url):
-          facet['features'] = [{
-            '$type': 'app.bsky.richtext.facet#link',
-            'uri': tag_url,
-          }]
-
-      # skip or trim this facet if it's off the end of content that got truncated
-      index = facet.get('index')
-
-      if not index or index.get('byteStart', 0) >= text_byte_end:
-        max_length = LEXRPC.defs['app.bsky.feed.post']['record']['properties']['tags']['maxLength']
-        if tag_type == 'hashtag' and name.lower() not in hashtag_facets:
-          if len(standalone_tags) >= max_length:
-            logger.warning(f'More than {max_length} standalone hashtags, omitting "{name}"')
-          else:
-            standalone_tags.add(name)
-        continue
-
-      if index.get('byteEnd', 0) > text_byte_end:
-        index['byteEnd'] = text_byte_end
-
-      if facet.get('features') and facet not in facets:
-        facets.append(facet)
-        if tag_type == 'hashtag':
-          hashtag_facets.add(name.lower())
-          standalone_tags.discard(name.lower())
-
-    # if we truncated this post's text, override external embed with link to
-    # original post. (if there are images, we added a link in the text instead,
-    # and this won't get used.)
-    if (truncated or has_audio_attachment or video_missing_blob) and url:
-      external_record_embed = {
-        '$type': f'app.bsky.embed.external',
-        'external': {
-          '$type': f'app.bsky.embed.external#external',
-          'uri': url,
-          'title': original_post_embed_name,
-          'description': '',
-        },
-      }
-      external_embed = {
-        '$type': f'app.bsky.embed.external#view',
-        'external': {
-          **external_record_embed['external'],
-          '$type': f'app.bsky.embed.external#viewExternal',
-          'thumb': (images[0].get('url') or images[0].get('id')) if images else None,
-        },
-      }
-
-    # populate embeds
-    media_embed = video_embed or images_embed or external_embed
-    if record_embed and media_embed:
-      embed = {
-        '$type': 'app.bsky.embed.recordWithMedia#view',
-        'record': record_embed,
-        'media': media_embed,
-      }
-    else:
-      embed = record_embed or media_embed
-
-    media_record_embed = video_record_embed or images_record_embed or external_record_embed
-    if is_dm:
-      # chat.bsky.convo.defs#messageInput only allows record embeds
-      record_embed = record_record_embed
-      embed = record_embed
-    elif record_record_embed and media_record_embed:
-      record_embed = {
-        '$type': 'app.bsky.embed.recordWithMedia',
-        'record': record_record_embed,
-        'media' : media_record_embed
-      }
-    else:
-      record_embed = record_record_embed or media_record_embed
-
-    # in reply to
-    reply = None
-    in_reply_to = Bluesky.base_object(obj, bluesky_only=validate)
-    if in_reply_to and not is_dm:
-      parent_ref = from_as1_to_strong_ref(in_reply_to, client=client, value=True,
-                                          raise_=raise_, validate=validate)
-      root_ref = (parent_ref.pop('value', {}).get('reply', {}).get('root')
-                  or parent_ref)
-      reply = {
-        '$type': 'app.bsky.feed.post#replyRef',
-        'root': root_ref,
-        'parent': parent_ref,
-      }
-
-    # convert AS1 sensitive to "nudity" label
-    # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
-    # https://swicg.github.io/miscellany/#sensitive
-    # https://docs.joinmastodon.org/user/posting/#cw
-
-    labels = None
-    if obj.get('sensitive'):
-      label = SENSITIVE_LABEL_DEFAULT
-
-      if dynamic_sensitive_labels and summary:
-        summary_lower = summary.lower()
-        for bluesky_label, keywords in AS1_TO_BLUESKY_LABEL_MAP.items():
-          if any(s in summary_lower for s in keywords):
-            label = bluesky_label
-
-      labels = {
-        '$type' : 'com.atproto.label.defs#selfLabels',
-        'values' : [{'val' : label}],
-      }
-
-    ret = {
-      '$type': 'chat.bsky.convo.defs#messageInput' if is_dm else 'app.bsky.feed.post',
-      'text': text,
-      'createdAt': from_as1_datetime(obj.get('published')),
-      'embed': record_embed,
-      'facets': facets,
-      'reply': reply,
-      'langs': langs,
-      'labels': labels,
-      'tags': sorted(standalone_tags),
-    }
-
-    if preview_record and preview_record['text']:
-      ret.update({
-        'text': preview_record['text'],
-        'facets': preview_record.get('facets'),
-        'langs': preview_record.get('langs'),
-        'tags': preview_record.get('tags'),
-      })
-
-    if as_embed or (type == 'article' and url):
-      ret['embed'] = to_external_embed(obj, description=content or summary,
-                                       blobs=blobs)
-      if images_record_embed:
-        imgs = images_record_embed.get('images') or images_record_embed.get('items')
-        ret['embed']['external']['thumb'] = imgs[0]['image']
-
-    if original_fields_prefix:
-      ret.update({
-        f'{original_fields_prefix}OriginalText': orig_content,
-        f'{original_fields_prefix}OriginalUrl': url,
-    })
-
-    ret = as1.trim_nulls(ret, ignore=('alt', 'createdAt', 'cid', 'description',
-                                      'text', 'title', 'uri'))
-
-    spark_facets = [{
-      **facet,
-      '$type': 'so.sprk.richtext.facet',
-      'features': [{
-        **feat,
-        '$type': feat['$type'].replace('app.bsky.', 'so.sprk.'),
-      } for feat in facet['features']],
-    } for facet in ret.get('facets', [])]
-
-    # Spark reply if the parent is a Spark record. Spark replies only support text
-    # and one image; drop anything else
-    # https://github.com/sprksocial/server/blob/main/lexicons/so/sprk/feed/reply.json
-    if out_type == 'so.sprk.feed.reply' and not reply:
-      raise ValueError("Not a reply, can't convert to so.sprk.feed.reply")
-
-    if reply:
-      spark_parent = ((parent := AT_URI_RE.fullmatch(reply['parent'].get('uri', '')))
-                      and parent['collection'].startswith('so.sprk.'))
-      if out_type == 'so.sprk.feed.reply' or (spark_parent and not out_type):
-        # log anything we're dropping
-        if tags := ret.get('tags'):
-          logger.info(f"so.sprk.feed.reply doesn't support tags {tags} ; dropping")
-        if len(spark_images) > 1:
-          logger.info(f"so.sprk.feed.reply doesn't support multiple images; dropping")
-        embed_type = ret.get('embed', {}).get('$type')
-        if embed_type not in (None, 'app.bsky.embed.images', 'app.bsky.embed.gallery'):
-          logger.info(f"so.sprk.feed.reply doesn't support {embed_type} ; dropping")
-
-        ret = as1.trim_nulls({
-          **ret,
-          '$type': 'so.sprk.feed.reply',
-          'reply': {**reply, '$type': 'so.sprk.feed.reply#replyRef'},
-          'facets': spark_facets,
-          'embed': None,
-          'tags': None,
-          'media': None
-        }, ignore=('alt', 'createdAt', 'cid', 'text', 'uri'))
-
-        if spark_images:
-          ret['media'] = {**spark_images[0], '$type': 'so.sprk.media.image'}
-
-    # also Spark post for notes with images or video. Spark posts only have
-    # either images or a single video, so only generate one if that's all this
-    # post has, ie no quote, link, or other media
-    # TODO: crossposts
-    spark_media = None
-    max_images = LEXRPC.defs['so.sprk.media.images']['properties']['images']['maxLength']
-    # TODO: handle too many images, and images without blobs, consistently. right
-    # now we include all images with blobs in Bluesky posts, even if that's more
-    # than app.bsky.embed.gallery's maxLength, but skip Spark posts entirely.
-    #
-    # as2.to_as1 etc duplicate images into attachments, so ignore those
-    image_urls = [img.get('url') or img.get('id') for img in images]
-    other_atts = [att for att in attachments if util.get_url(att) not in image_urls]
-    if video_record_embed and len(other_atts) == 1 and not images:
-      spark_media = {**video_record_embed, '$type': 'so.sprk.media.video'}
-    elif (spark_images and not other_atts
-          and len(images) == len(spark_images) <= max_images):
-      spark_media = {
-        '$type': 'so.sprk.media.images',
-        'images': spark_images,
-      }
-
-    spark_ok = (spark_media and ret['$type'] == 'app.bsky.feed.post'
-                and not reply and type != 'article' and not as_embed)
-    if out_type == 'so.sprk.feed.post' and not spark_ok:
-      raise ValueError('Spark posts need just images or a single video, all with blobs, and no replies, quotes, links, or DMs')
-
-    if spark_ok and (multiple or out_type == 'so.sprk.feed.post'):
-      spark = as1.trim_nulls({
-        **ret,
-        '$type': 'so.sprk.feed.post',
-        'text': None,
-        'facets': None,
-        'embed': None,
-        'caption': {
-          'text': ret['text'],
-          'facets': spark_facets,
-        },
-        'media': spark_media,
-      }, ignore=('alt', 'createdAt'))
-
-      if multiple:
-        rets = [ret, spark]
-      else:
-        ret = spark
-
-    # also site.standard.document for articles
-    if out_type == 'site.standard.document' and not url:
-        raise ValueError("No url or id, can't convert to site.standard.document")
-
-    if (type == 'article' and url
-        and (multiple or out_type == 'site.standard.document')):
-      url_parts = urlparse(url)
-      doc = as1.trim_nulls({
-        '$type': 'site.standard.document',
-        'site': urlunparse(url_parts[:2] + ('',) * 4),
-        'path': urlunparse(('', '') + url_parts[2:]),
-        'title': obj.get('displayName') or '',
-        'description': summary,
-        'textContent': content,
-        'tags': util.uniquify(
-          tag['displayName'].removeprefix('#')
-          for tag in util.get_list(obj, 'tags') if tag.get('displayName')),
-        'publishedAt': from_as1_datetime(obj.get('published')),
-      }, ignore=('title',))
-
-      if updated := obj.get('updated'):
-        doc['updatedAt'] = from_as1_datetime(updated)
-      if images_record_embed:
-        imgs = images_record_embed.get('images') or images_record_embed.get('items')
-        doc['coverImage'] = imgs[0]['image']  # blob
-
-      if multiple:
-        rets = [ret, doc]
-      else:
-        ret = doc
-
-    if out_type in ('app.bsky.feed.defs#feedViewPost',
-                    'app.bsky.feed.defs#postView'):
-        # author
-        author = as1.get_object(obj, 'author')
-        author.setdefault('objectType', 'person')
-        author = from_as1(author, out_type='app.bsky.actor.defs#profileViewBasic',
-                          **kwargs)
-
-        ret = as1.trim_nulls({
-          '$type': 'app.bsky.feed.defs#postView',
-          'uri': obj.get('id') or url or '',
-          'cid': '',
-          'record': ret,
-          'author': author,
-          'embed': embed,
-          'replyCount': 0,
-          'repostCount': 0,
-          'likeCount': 0,
-          'indexedAt': from_as1_datetime(None),
-        }, ignore=('author', 'createdAt', 'cid', 'description', 'indexedAt',
-                   'record', 'text', 'title', 'uri'))
-
-    if out_type == 'app.bsky.feed.defs#feedViewPost':
-      ret = {
-        '$type': out_type,
-        'post': ret,
-      }
 
   elif type == 'place':
     # https://activitystrea.ms/specs/json/schema/activity-schema.html#place
@@ -1498,6 +756,895 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     truncated.append(record)
 
   return truncated if multiple else truncated[0]
+
+
+def _from_as1_actor(obj, *, out_type, multiple, summary, blobs, client,
+                    raise_, original_fields_prefix, domain):
+  """Converts an AS1 actor to Bluesky and related profile records.
+
+  Helper for :func:`from_as1`. See it for args, except:
+
+  Args:
+    obj (dict): AS1 actor object, *not* activity
+    summary (str): ``obj``'s ``summary``, converted to plain text
+
+  Returns:
+    list of dict: output records, before validation and truncation. The first
+    one is the primary record.
+  """
+  type = as1.object_type(obj)
+  rets = []
+
+  # avatar and banner. banner is featured image, if available
+  avatar = util.get_url(obj, 'image')
+  banner = None
+  for img in as1.get_objects(obj, 'image'):
+    url = util.get_url(img)
+    if as1.object_type(img) == 'featured' and url:
+      banner = url
+      break
+
+  # extract pinned post from featured collection.
+  # note that we skip pinned post ids that aren't at:// URIs!
+  pinned_post = None
+  if featured := as1.get_object(obj, 'featured'):
+    if first := (as1.get_id(featured, 'orderedItems')
+                 or as1.get_id(featured, 'items')):
+      if first.startswith('at://'):
+        pinned_post = from_as1_to_strong_ref(first, client=client, raise_=raise_)
+
+  url = as1.get_url(obj)
+  id = obj.get('id')
+  if not url and id:
+    parsed = util.parse_tag_uri(id)
+    if parsed:
+      # This is only really formatted as a URL to keep url_to_did_web below happy
+      url = f'https://{parsed[0]}'
+
+  ret = {
+    'displayName': obj.get('displayName'),
+    'description': summary,
+    'avatar': blobs.get(avatar),
+    'banner': blobs.get(banner),
+    'pinnedPost': pinned_post,
+    'website': url,
+  }
+
+  if original_fields_prefix:
+    ret.update({
+      f'{original_fields_prefix}OriginalDescription': obj.get('summary') or '',
+      f'{original_fields_prefix}OriginalUrl': url or id,
+    })
+
+  if not out_type or out_type in ATP_PROFILE_TYPES:
+    # TODO: Spark pinnedPost. needs to be a so.sprk.feed.post
+    if out_type == 'so.sprk.actor.profile':
+      ret['pinnedPost'] = None
+    ret = as1.trim_nulls({**ret, '$type': out_type or 'app.bsky.actor.profile'})
+
+  elif out_type == 'site.standard.publication':
+    if not domain:
+      raise ValueError("No domain, can't convert to site.standard.publication")
+    ret = as1.trim_nulls({
+      '$type': 'site.standard.publication',
+      'url': f'https://{domain}',
+      'name': obj.get('displayName') or '',
+      'description': summary,
+      'icon': blobs.get(avatar),
+    }, ignore=('name',))
+
+  else:
+    did_web = ''
+    if id and id.startswith('did:web:'):
+      did_web = id
+    else:
+      try:
+        did_web = url_to_did_web(url)
+      except ValueError as e:
+        logger.info(f"Couldn't generate did:web: {e}")
+
+    # handles must be hostnames
+    # https://atproto.com/specs/handle
+    username = obj.get('username')
+    parsed = urlparse(url)
+    domain = parsed.netloc
+    did_web_bare = did_web.removeprefix('did:web:')
+    handle = (username if username and HANDLE_RE.fullmatch(username)
+              else did_web_bare if ':' not in did_web_bare
+              else domain if domain
+              else '')
+
+    ret.update({
+      '$type': out_type,
+      # TODO: more specific than domain, many users will be on shared domains
+      'did': id if id and id.startswith('did:') else did_web,
+      'handle': handle,
+      'avatar': avatar,
+      'banner': banner,
+      # these collections aren't not in AS1, they're borrowed from ActivityPub:
+      # https://www.w3.org/TR/activitypub/#followers
+      'followersCount': obj.get('followers', {}).get('totalItems'),
+      'followsCount': obj.get('following', {}).get('totalItems'),
+    })
+
+  # WARNING: this includes a few fields that aren't in #profileViewBasic, eg
+  # description, followersCount, followsCount
+  # https://atproto.com/specs/lexicon#authority-and-control
+  ret = as1.trim_nulls(ret, ignore=('did', 'handle'))
+
+  # add bot label for automated account objectTypes
+  if type in as1.BOT_TYPES:
+    bsky_type = ret.get('$type')
+    if bsky_type in ATP_PROFILE_TYPES:
+      ret['labels'] = {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val': BOT_LABEL}],
+      }
+    elif bsky_type.startswith('app.bsky.actor.defs#'):
+      ret['labels'] = [{'val': BOT_LABEL}]
+
+  if ret['$type'] == 'app.bsky.actor.profile':
+    rets = [ret]
+
+    # Spark, same as Bluesky's except for pinnedPost
+    # https://github.com/sprksocial/server/blob/main/lexicons/so/sprk/actor/profile.json
+    if multiple:
+      rets.append(as1.trim_nulls({
+        **ret,
+        '$type': 'so.sprk.actor.profile',
+        'pinnedPost': None,
+      }))
+
+      # Grain, also similar to Bluesky's, but even more minimal
+      # https://tangled.org/grain.social/grain/blob/main/lexicons/social/grain/actor/profile.json
+      rets.append({**ret, '$type': 'social.grain.actor.profile'})
+
+    # Web Monetization
+    # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
+    if wallet := obj.get('monetization'):
+      if wallet.startswith('$'):
+        wallet = wallet.replace('$', 'https://', 1)
+      rets.append({
+        '$type': 'community.lexicon.payments.webMonetization',
+        'address': wallet,
+      })
+
+  # Grain profiles only have displayName, description, avatar, createdAt
+  for profile in rets or [ret]:
+    if profile['$type'] == 'social.grain.actor.profile':
+      for field in 'banner', 'labels', 'pinnedPost', 'website':
+        profile.pop(field, None)
+
+  return rets or [ret]
+
+
+def _from_as1_post(obj, *, out_type, multiple, actor, summary, blobs, aspects,
+                   client, original_fields_prefix, as_embed, raise_,
+                   dynamic_sensitive_labels, validate):
+  """Converts an AS1 post, eg note or article, to Bluesky and related records.
+
+  Helper for :func:`from_as1`. Args are the same as there, except:
+
+  Args:
+    obj (dict): AS1 object, *not* activity
+    summary (str): ``obj``'s ``summary``, converted to plain text
+
+  Returns:
+    list of dict: output records, before validation and truncation. The first
+    one is the primary record.
+  """
+  type = as1.object_type(obj)
+
+  # for nested from_as1 calls, if necessary
+  kwargs = {'original_fields_prefix': original_fields_prefix}
+
+  # images => embeds
+  images_embed = images_record_embed = None
+  spark_images = []
+  if images := as1.get_objects(obj, 'image'):
+    images_embed_items = []
+    use_gallery = len(images) > 4
+    if use_gallery:
+      images_embed = {
+        '$type': 'app.bsky.embed.gallery#view',
+        'items': images_embed_items,
+      }
+    else:
+      images_embed = {
+        '$type': 'app.bsky.embed.images#view',
+        'images': images_embed_items,
+      }
+
+    for img in images:
+      url = img.get('url') or img.get('id')
+      alt = img.get('displayName') or ''
+      view_item = {
+        '$type': ('app.bsky.embed.gallery#viewImage' if use_gallery
+                  else 'app.bsky.embed.images#viewImage'),
+        ('thumbnail' if use_gallery else 'thumb'): url,
+        'fullsize': url,
+        'alt': alt,
+      }
+      if use_gallery:
+        view_item['aspectRatio'] = DEFAULT_ASPECT_RATIO
+      images_embed_items.append(view_item)
+
+      if blob := blobs.get(url):
+        if not images_record_embed:
+          images_record_items = []
+          if use_gallery:
+            images_record_embed = {
+              '$type': 'app.bsky.embed.gallery',
+              'items': images_record_items,
+            }
+          else:
+            images_record_embed = {
+              '$type': 'app.bsky.embed.images',
+              'images': images_record_items,
+            }
+        image_record = {
+          '$type': ('app.bsky.embed.gallery#image' if use_gallery
+                    else 'app.bsky.embed.images#image'),
+          'image': blob,
+          'alt': alt,
+        }
+        spark_image = {
+          'image': blob,
+          'alt': alt,
+        }
+        if aspect := aspects.get(url) or as1.aspect_ratio(img):
+          image_record['aspectRatio'] = spark_image['aspectRatio'] = {
+            'width': aspect[0],
+            'height': aspect[1]
+          }
+        elif use_gallery:
+          image_record['aspectRatio'] = DEFAULT_ASPECT_RATIO
+        images_record_items.append(image_record)
+        spark_images.append(spark_image)
+
+  # first video => embed
+  attachments = util.get_list(obj, 'attachments')
+  has_audio_attachment = any(as1.object_type(att) == 'audio' for att in attachments)
+  video = video_embed = video_record_embed = None
+  video_missing_blob = False
+  for att in attachments:
+    url = util.get_url(att, 'stream')
+    blob = blobs.get(url)
+    if url and blob and as1.object_type(att) == 'video':
+      video = url
+      alt = att.get('displayName') or ''
+      video_embed = {
+        '$type': 'app.bsky.embed.video#view',
+        'cid': blob_cid(blob),
+        'playlist': '?',
+        'alt': alt,
+      }
+      video_record_embed = {
+        '$type': 'app.bsky.embed.video',
+        'video': blob,
+        'alt': alt,
+      }
+
+      stream = as1.get_object(att, 'stream')
+      if aspect := aspects.get(url) or as1.aspect_ratio(stream):
+        video_record_embed['aspectRatio'] = {
+          'width': aspect[0],
+          'height': aspect[1]
+        }
+      break
+    elif as1.object_type(att) == 'video':
+      video_missing_blob = True
+
+  # by default, original post link goes into an external embed. Bluesky can't
+  # do either images or video along with an external embed in the same post
+  # though, https://github.com/bluesky-social/atproto/discussions/2575 , so if
+  # the post has those, put the original post link at the end of the text
+  # instead, after truncating.
+  original_post_embed_name = original_post_text_suffix = None
+  include_link = None
+  url = as1.get_url(obj) or obj.get('id')
+  if url:
+    snippet = f'Original post on {util.domain_from_link(url)}'
+    original_post_embed_name = snippet
+    original_post_text_suffix = f'[{snippet}]'
+    if has_audio_attachment:
+      original_post_embed_name = '[Audio] ' + original_post_embed_name
+      original_post_text_suffix = '[Audio] ' + original_post_text_suffix
+    elif video_missing_blob:
+      original_post_embed_name = '[Video] ' + original_post_embed_name
+      original_post_text_suffix = '[Video] ' + original_post_text_suffix
+    original_post_text_suffix = '\n\n' + original_post_text_suffix
+
+    if images or video:
+      include_link = INCLUDE_LINK if has_audio_attachment or video_missing_blob else INCLUDE_IF_TRUNCATED
+    else:
+      include_link = OMIT_LINK  # link will be in the external embed, not text
+
+  # convert text from HTML and truncate
+  orig_content = obj.get('content', '')
+  as1.convert_html_content_to_text(obj)
+  as1.expand_tags(obj)
+
+  tags = util.get_list(obj, 'tags')
+
+  # handle summary. for articles, use instead of content. for notes, assume
+  # it's a fediverse-style content warnings, add above content.
+  # https://github.com/snarfed/bridgy-fed/issues/1001
+  full_text = content = obj.get('content') or ''
+  index_offset = 0
+  preview_record = None
+  if type == 'article' or as_embed:
+    if (preview := obj.get('preview')) and as1.object_type(preview) == 'note':
+      # we'll take text and facets from this below
+      preview_record = from_as1(preview, **kwargs)
+    else:
+      full_text = summary
+    tags = []  # tags are presumably in content, not summary
+  elif summary:
+    prefix = f'[{summary}]\n\n'
+    full_text = prefix + full_text
+    index_offset = len(prefix)
+
+  # attachments to embed(s), including quoted posts
+  record_embed = record_record_embed = external_embed = external_record_embed = None
+
+  # convert Bluesky post link at end of content to a quote
+  attachment_urls = [att['url'] for att in attachments if 'url' in att]
+  text_end = len(full_text)
+  for tag in tags:
+    # check that the link is at the end and the text is the url
+    if (as1.object_type(tag) != 'link' or tag.get('url') != tag.get('displayName') or
+        tag.get('startIndex', 0) + tag.get('length', 0) + index_offset != text_end):
+      continue
+
+    # check the link is to a bluesky post and not already in attachments
+    if ((tag['url'].startswith('at://')
+         or ((match := BSKY_APP_URL_RE.fullmatch(tag['url']))
+             and match.group('type') == 'post'))
+        and not tag['url'] in attachment_urls):
+      start_index = tag['startIndex'] + index_offset
+
+      # check link is on its own line
+      if start_index > 0 and full_text[start_index - 1] != '\n':
+        continue
+
+      # create attachment
+      attachments.append({
+        'objectType' : 'note',
+        'url' : tag['url']
+      })
+
+      # remove link
+      full_text = full_text[:start_index - 1]
+
+  for att in attachments:
+    att_id = att.get('id') or ''
+    att_url = as1.get_url(att) or ''
+    if not (as1.object_type(att) in ('article', 'link', 'note')
+            and (att_url or att_id)):
+      continue
+
+    if (att_id.startswith('at://') or att_id.startswith(Bluesky.BASE_URL) or
+        att_url.startswith('at://') or att_url.startswith(Bluesky.BASE_URL)):
+      # quoted Bluesky post
+      embed = from_as1(att, **kwargs).get('post') or {}
+      embed['value'] = embed.pop('record', None)
+      record_embed = {
+        '$type': f'app.bsky.embed.record#view',
+        'record': {
+          **embed,
+          '$type': f'app.bsky.embed.record#viewRecord',
+          # override these so that trim_nulls below will remove them
+          'likeCount': None,
+          'replyCount': None,
+          'repostCount': None,
+        },
+      }
+      record_record_embed = {
+        '$type': f'app.bsky.embed.record',
+        'record': from_as1_to_strong_ref(att, client=client, raise_=raise_),
+      }
+      full_text = QUOTE_RE_SUFFIX.sub('', full_text)
+    else:
+      # external link
+      external_record_embed = to_external_embed(att, blobs=blobs)
+      external_embed = {
+        '$type': f'app.bsky.embed.external#view',
+        'external': {
+          **external_record_embed['external'],
+          '$type': f'app.bsky.embed.external#viewExternal',
+          'thumb': util.get_first(att, 'image'),
+        },
+      }
+
+  # language(s)
+  # (we steal contentMap from AS2, it's not officially part of AS1)
+  langs = [lang for lang, lang_content in obj.get('contentMap', {}).items()
+           if LANG_RE.fullmatch(lang) and lang_content == orig_content]
+
+  # truncate text. if we're including a suffix, ie original post link, link
+  # that with a facet
+  is_dm = as1.is_dm(obj, actor=actor)
+  text = Bluesky('unused').truncate(
+    full_text, original_post_text_suffix, include_link=include_link,
+    punctuation=('', ''), type='dm' if is_dm else type, weights=False,
+    lang=langs[0] if langs else None)
+  truncated = text != full_text
+
+  facets, standalone_tags = _from_as1_facets(
+    tags, obj=obj, full_text=full_text, text=text, truncated=truncated,
+    index_offset=index_offset, url=url,
+    original_post_text_suffix=original_post_text_suffix, client=client)
+
+  # if we truncated this post's text, override external embed with link to
+  # original post. (if there are images, we added a link in the text instead,
+  # and this won't get used.)
+  if (truncated or has_audio_attachment or video_missing_blob) and url:
+    external_record_embed = {
+      '$type': f'app.bsky.embed.external',
+      'external': {
+        '$type': f'app.bsky.embed.external#external',
+        'uri': url,
+        'title': original_post_embed_name,
+        'description': '',
+      },
+    }
+    external_embed = {
+      '$type': f'app.bsky.embed.external#view',
+      'external': {
+        **external_record_embed['external'],
+        '$type': f'app.bsky.embed.external#viewExternal',
+        'thumb': (images[0].get('url') or images[0].get('id')) if images else None,
+      },
+    }
+
+  # populate embeds
+  media_embed = video_embed or images_embed or external_embed
+  if record_embed and media_embed:
+    embed = {
+      '$type': 'app.bsky.embed.recordWithMedia#view',
+      'record': record_embed,
+      'media': media_embed,
+    }
+  else:
+    embed = record_embed or media_embed
+
+  media_record_embed = video_record_embed or images_record_embed or external_record_embed
+  if is_dm:
+    # chat.bsky.convo.defs#messageInput only allows record embeds
+    record_embed = record_record_embed
+    embed = record_embed
+  elif record_record_embed and media_record_embed:
+    record_embed = {
+      '$type': 'app.bsky.embed.recordWithMedia',
+      'record': record_record_embed,
+      'media' : media_record_embed
+    }
+  else:
+    record_embed = record_record_embed or media_record_embed
+
+  # in reply to
+  reply = None
+  in_reply_to = Bluesky.base_object(obj, bluesky_only=validate)
+  if in_reply_to and not is_dm:
+    parent_ref = from_as1_to_strong_ref(in_reply_to, client=client, value=True,
+                                        raise_=raise_, validate=validate)
+    root_ref = (parent_ref.pop('value', {}).get('reply', {}).get('root')
+                or parent_ref)
+    reply = {
+      '$type': 'app.bsky.feed.post#replyRef',
+      'root': root_ref,
+      'parent': parent_ref,
+    }
+
+  # convert AS1 sensitive to "nudity" label
+  # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
+  # https://swicg.github.io/miscellany/#sensitive
+  # https://docs.joinmastodon.org/user/posting/#cw
+
+  labels = None
+  if obj.get('sensitive'):
+    label = SENSITIVE_LABEL_DEFAULT
+
+    if dynamic_sensitive_labels and summary:
+      summary_lower = summary.lower()
+      for bluesky_label, keywords in AS1_TO_BLUESKY_LABEL_MAP.items():
+        if any(s in summary_lower for s in keywords):
+          label = bluesky_label
+
+    labels = {
+      '$type' : 'com.atproto.label.defs#selfLabels',
+      'values' : [{'val' : label}],
+    }
+
+  ret = {
+    '$type': 'chat.bsky.convo.defs#messageInput' if is_dm else 'app.bsky.feed.post',
+    'text': text,
+    'createdAt': from_as1_datetime(obj.get('published')),
+    'embed': record_embed,
+    'facets': facets,
+    'reply': reply,
+    'langs': langs,
+    'labels': labels,
+    'tags': sorted(standalone_tags),
+  }
+
+  if preview_record and preview_record['text']:
+    ret.update({
+      'text': preview_record['text'],
+      'facets': preview_record.get('facets'),
+      'langs': preview_record.get('langs'),
+      'tags': preview_record.get('tags'),
+    })
+
+  if as_embed or (type == 'article' and url):
+    ret['embed'] = to_external_embed(obj, description=content or summary,
+                                     blobs=blobs)
+    if images_record_embed:
+      imgs = images_record_embed.get('images') or images_record_embed.get('items')
+      ret['embed']['external']['thumb'] = imgs[0]['image']
+
+  if original_fields_prefix:
+    ret.update({
+      f'{original_fields_prefix}OriginalText': orig_content,
+      f'{original_fields_prefix}OriginalUrl': url,
+  })
+
+  ret = as1.trim_nulls(ret, ignore=('alt', 'createdAt', 'cid', 'description',
+                                    'text', 'title', 'uri'))
+
+  spark_facets = [{
+    **facet,
+    '$type': 'so.sprk.richtext.facet',
+    'features': [{
+      **feat,
+      '$type': feat['$type'].replace('app.bsky.', 'so.sprk.'),
+    } for feat in facet['features']],
+  } for facet in ret.get('facets', [])]
+
+  # Spark reply instead, if the parent is a Spark record
+  spark_parent = (reply
+                  and (parent := AT_URI_RE.fullmatch(reply['parent'].get('uri', '')))
+                  and parent['collection'].startswith('so.sprk.'))
+  if out_type == 'so.sprk.feed.reply' or (spark_parent and not out_type):
+    if not reply:
+      raise ValueError("Not a reply, can't convert to so.sprk.feed.reply")
+    ret = _from_as1_to_spark_reply(ret, reply=reply, facets=spark_facets,
+                                   images=spark_images)
+
+  # also Spark post, if possible
+  rets = []
+  if multiple or out_type == 'so.sprk.feed.post':
+    if (ret['$type'] == 'app.bsky.feed.post' and not reply
+        and type != 'article' and not as_embed
+        and (spark := _from_as1_to_spark_post(
+          ret, images_as1=images, images=spark_images, attachments=attachments,
+          video_record_embed=video_record_embed, facets=spark_facets))):
+      if multiple:
+        rets = [ret, spark]
+      else:
+        ret = spark
+    elif out_type == 'so.sprk.feed.post':
+      raise ValueError('Spark posts need just images or a single video, all with blobs, and no replies, quotes, links, or DMs')
+
+  # also site.standard.document for articles
+  if out_type == 'site.standard.document' and not url:
+      raise ValueError("No url or id, can't convert to site.standard.document")
+
+  if (type == 'article' and url
+      and (multiple or out_type == 'site.standard.document')):
+    doc = _from_as1_to_standard_document(obj, url=url, summary=summary,
+                                      content=content,
+                                      images_record_embed=images_record_embed)
+    if multiple:
+      rets = [ret, doc]
+    else:
+      ret = doc
+
+  if out_type in ('app.bsky.feed.defs#feedViewPost',
+                  'app.bsky.feed.defs#postView'):
+      # author
+      author = as1.get_object(obj, 'author')
+      author.setdefault('objectType', 'person')
+      author = from_as1(author, out_type='app.bsky.actor.defs#profileViewBasic',
+                        **kwargs)
+
+      ret = as1.trim_nulls({
+        '$type': 'app.bsky.feed.defs#postView',
+        'uri': obj.get('id') or url or '',
+        'cid': '',
+        'record': ret,
+        'author': author,
+        'embed': embed,
+        'replyCount': 0,
+        'repostCount': 0,
+        'likeCount': 0,
+        'indexedAt': from_as1_datetime(None),
+      }, ignore=('author', 'createdAt', 'cid', 'description', 'indexedAt',
+                 'record', 'text', 'title', 'uri'))
+
+  if out_type == 'app.bsky.feed.defs#feedViewPost':
+    ret = {
+      '$type': out_type,
+      'post': ret,
+    }
+
+  return rets or [ret]
+
+
+def _from_as1_facets(tags, *, obj, full_text, text, truncated, index_offset, url,
+                     original_post_text_suffix, client):
+  """Converts AS1 tags to Bluesky facets and standalone hashtags.
+
+  Args:
+    tags (sequence of dict): AS1 tags
+    obj (dict): AS1 object
+    full_text (str): post text, before truncation
+    text (str): post text, after truncation
+    truncated (bool): whether ``text`` was truncated
+    index_offset (int): offset of ``obj``'s ``content`` in ``full_text``, eg
+      after a content warning prefix
+    url (str): original post URL, if any
+    original_post_text_suffix (str): original post link appended to
+      ``text``, if any
+    client: see :func:`from_as1`
+
+  Returns:
+    (list of dict, set of str) tuple: ``app.bsky.richtext.facet`` objects, and
+    hashtags that aren't in the (truncated) text
+  """
+  if truncated:
+    text_byte_end = len(text.split(ELLIPSIS, maxsplit=1)[0].encode())
+  else:
+    text_byte_end = len(text.encode())
+
+  facets = []
+  standalone_tags = set()
+  if (truncated and original_post_text_suffix
+      and text.endswith(original_post_text_suffix)):
+    facets.append({
+      '$type': 'app.bsky.richtext.facet',
+      'features': [{
+        '$type': 'app.bsky.richtext.facet#link',
+        'uri': url,
+      }],
+      'index': {
+        'byteStart': len(text.removesuffix(original_post_text_suffix).encode()),
+        'byteEnd': len(text.encode()),
+      }
+    })
+
+  # convert tags to facets
+  hashtag_facets = set()  # contains string displayNames, lower cased
+  for tag in tags:
+    name = tag.get('displayName', '').strip().lstrip('@#')
+    tag_type = util.get_first(tag, 'objectType')
+    if name and not tag_type:
+      tag_type = 'hashtag'
+
+    tag_url = tag.get('url') or ''
+    if not name and not tag_url:
+      continue
+
+    facet = {
+      '$type': 'app.bsky.richtext.facet',
+    }
+    try:
+      start = int(tag['startIndex']) + index_offset
+      if start and as1.is_html(obj, 'content'):
+        raise NotImplementedError('HTML content is not supported with index tags')
+      end = start + int(tag['length'])
+
+      facet['index'] = {
+        # convert indices from Unicode chars to UTF-8 encoded bytes
+        # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
+        'byteStart': len(full_text[:start].encode()),
+        'byteEnd': len(full_text[:end].encode()),
+      }
+    except (KeyError, ValueError, IndexError, TypeError):
+      pass
+
+    if tag_type == 'hashtag':
+      max_graphemes = LEXRPC.defs['app.bsky.feed.post']['record']['properties']['tags']['items']['maxGraphemes']
+      if len(name) >= max_graphemes:
+        logger.warning(f'Hashtag "{name}" longer than maxGraphemes {max_graphemes}')
+        continue
+      facet['features'] = [{
+        '$type': 'app.bsky.richtext.facet#tag',
+        'tag': name,
+      }]
+
+    elif tag_type == 'mention':
+      # extract and resolve DID
+      if tag_url.startswith('did:'):
+        user = tag_url
+      elif match := AT_URI_RE.fullmatch(tag_url):
+        user = match.group('repo')
+      elif match := BSKY_APP_URL_RE.fullmatch(tag_url):
+        user = match.group('id')
+      else:
+        user = name.lstrip('@')
+
+      did = None
+      if user.startswith('did:'):
+        did = user
+      elif client and HANDLE_RE.fullmatch(user):
+        try:
+          did = client.com.atproto.identity.resolveHandle(handle=user)['did']
+        except BaseException as e:
+          code, _ = util.interpret_http_exception(e)
+          if not code:
+            raise
+
+      if did:
+        facet['features'] = [{
+          '$type': 'app.bsky.richtext.facet#mention',
+          'did': did,
+        }]
+
+    if not facet.get('features') and tag_url:
+      if util.DOMAIN_RE.fullmatch(tag_url):
+        tag_url = f'https://{tag_url}/'
+      if util.is_url(tag_url):
+        facet['features'] = [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': tag_url,
+        }]
+
+    # skip or trim this facet if it's off the end of content that got truncated
+    index = facet.get('index')
+
+    if not index or index.get('byteStart', 0) >= text_byte_end:
+      max_length = LEXRPC.defs['app.bsky.feed.post']['record']['properties']['tags']['maxLength']
+      if tag_type == 'hashtag' and name.lower() not in hashtag_facets:
+        if len(standalone_tags) >= max_length:
+          logger.warning(f'More than {max_length} standalone hashtags, omitting "{name}"')
+        else:
+          standalone_tags.add(name)
+      continue
+
+    if index.get('byteEnd', 0) > text_byte_end:
+      index['byteEnd'] = text_byte_end
+
+    if facet.get('features') and facet not in facets:
+      facets.append(facet)
+      if tag_type == 'hashtag':
+        hashtag_facets.add(name.lower())
+        standalone_tags.discard(name.lower())
+
+  return facets, standalone_tags
+
+
+def _from_as1_to_spark_post(post, *, images_as1, images, attachments,
+                            video_record_embed, facets):
+  """Generates a Spark ``so.sprk.feed.post`` for a post with images or video.
+
+  Spark posts only have either images or a single video, so only generates one
+  if that's all this post has, ie no quote, link, or other media.
+
+  Args:
+    post (dict): ``app.bsky.feed.post`` record, not a reply
+    images_as1 (sequence of dict): AS1 image objects
+    images (list of dict): ``so.sprk.media.image`` objects
+    attachments (sequence of dict): AS1 attachment objects
+    video_record_embed (dict): ``app.bsky.embed.video``, or None
+    facets (list of dict): ``so.sprk.richtext.facet`` objects
+
+  Returns:
+    dict: ``so.sprk.feed.post`` record, or None if this post's media can't be
+    represented in one
+  """
+  # https://github.com/sprksocial/server/blob/main/lexicons/so/sprk/feed/post.json
+  media = None
+  max_images = LEXRPC.defs['so.sprk.media.images']['properties']['images']['maxLength']
+  # TODO: handle too many images, and images without blobs, consistently. right
+  # now we include all images with blobs in Bluesky posts, even if that's more
+  # than app.bsky.embed.gallery's maxLength, but skip Spark posts entirely.
+  #
+  # as2.to_as1 etc duplicate images into attachments, so ignore those
+  image_urls = [img.get('url') or img.get('id') for img in images_as1]
+  other_atts = [att for att in attachments if util.get_url(att) not in image_urls]
+  if video_record_embed and len(other_atts) == 1 and not images_as1:
+    media = {**video_record_embed, '$type': 'so.sprk.media.video'}
+  elif (images and not other_atts
+        and len(images_as1) == len(images) <= max_images):
+    media = {
+      '$type': 'so.sprk.media.images',
+      'images': images,
+    }
+
+  if media:
+    return as1.trim_nulls({
+      **post,
+      '$type': 'so.sprk.feed.post',
+      'text': None,
+      'facets': None,
+      'embed': None,
+      'caption': {
+        'text': post['text'],
+        'facets': facets,
+      },
+      'media': media,
+    }, ignore=('alt', 'createdAt'))
+
+
+def _from_as1_to_spark_reply(post, *, reply, facets, images):
+  """Converts a Bluesky reply to a Spark ``so.sprk.feed.reply``.
+
+  Spark replies only support text and one image, so this drops anything else.
+
+  Args:
+    post (dict): ``app.bsky.feed.post`` or compatible record
+      (eg ``chat.bsky.convo.defs#messageInput``)
+    reply (dict): ``app.bsky.feed.post#replyRef``
+    facets (list of dict): ``so.sprk.richtext.facet`` objects
+    images (list of dict): ``so.sprk.media.image`` objects
+
+  Returns:
+    dict: ``so.sprk.feed.reply`` record
+  """
+  # https://github.com/sprksocial/server/blob/main/lexicons/so/sprk/feed/reply.json
+  # log anything we're dropping
+  if tags := post.get('tags'):
+    logger.info(f"so.sprk.feed.reply doesn't support tags {tags} ; dropping")
+  if len(images) > 1:
+    logger.info(f"so.sprk.feed.reply doesn't support multiple images; dropping")
+  embed_type = post.get('embed', {}).get('$type')
+  if embed_type not in (None, 'app.bsky.embed.images', 'app.bsky.embed.gallery'):
+    logger.info(f"so.sprk.feed.reply doesn't support {embed_type} ; dropping")
+
+  ret = as1.trim_nulls({
+    **post,
+    '$type': 'so.sprk.feed.reply',
+    'reply': {**reply, '$type': 'so.sprk.feed.reply#replyRef'},
+    'facets': facets,
+    'embed': None,
+    'tags': None,
+    'media': None
+  }, ignore=('alt', 'createdAt', 'cid', 'text', 'uri'))
+
+  if images:
+    ret['media'] = {**images[0], '$type': 'so.sprk.media.image'}
+
+  return ret
+
+
+def _from_as1_to_standard_document(obj, *, url, summary, content,
+                                   images_record_embed):
+  """Generates a ``site.standard.document`` for an AS1 article.
+
+  Args:
+    obj (dict): AS1 article object
+    url (str): article URL
+    summary (str): article summary, converted to plain text
+    content (str): article content, converted to plain text
+    images_record_embed (dict): ``app.bsky.embed.images`` or
+      ``app.bsky.embed.gallery``, or None
+
+  Returns:
+    dict: ``site.standard.document`` record
+  """
+  url_parts = urlparse(url)
+  doc = as1.trim_nulls({
+    '$type': 'site.standard.document',
+    'site': urlunparse(url_parts[:2] + ('',) * 4),
+    'path': urlunparse(('', '') + url_parts[2:]),
+    'title': obj.get('displayName') or '',
+    'description': summary,
+    'textContent': content,
+    'tags': util.uniquify(
+      tag['displayName'].removeprefix('#')
+      for tag in util.get_list(obj, 'tags') if tag.get('displayName')),
+    'publishedAt': from_as1_datetime(obj.get('published')),
+  }, ignore=('title',))
+
+  if updated := obj.get('updated'):
+    doc['updatedAt'] = from_as1_datetime(updated)
+  if images_record_embed:
+    imgs = images_record_embed.get('images') or images_record_embed.get('items')
+    doc['coverImage'] = imgs[0]['image']  # blob
+
+  return doc
 
 
 def to_external_embed(obj, description=None, blobs=None):
