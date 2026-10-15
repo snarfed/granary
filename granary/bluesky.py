@@ -1733,114 +1733,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
               'app.bsky.actor.defs#profileViewDetailed',
               'app.bsky.feed.generator',
               ):
-    images = [{'url': obj.get('avatar')}]
-    banner = obj.get('banner')
-    if banner:
-      images.append({'url': obj.get('banner'), 'objectType': 'featured'})
-
-    handle = obj.get('handle')
-    did = obj.get('did')
-    if type in ATP_PROFILE_TYPES:
-      if not handle:
-        handle = repo_handle
-      if not did:
-        did = repo_did
-
-    # urls: bsky.app profile, did:web domain, bsky.app feed generator, links in bio
-    urls = []
-    if handle:
-      profile_type = type if type in ATP_PROFILE_TYPES else 'app.bsky.actor.profile'
-      urls.append(COLLECTION_TO_WEB_URL[profile_type].format(id=handle))
-      if not util.domain_or_parent_in(handle, [DEFAULT_PDS_DOMAIN]):
-        urls.append(f'https://{handle}/')
-
-    if did and did.startswith('did:web:'):
-      urls.append(did_web_to_url(did))
-
-    if website := obj.get('website'):
-      urls.append(website)
-
-    desc = html.escape(obj.get('description') or '')
-    summary = whitespace_to_html(util.linkify(desc, pretty=True), escape=False)
-    urls.extend(util.extract_links(summary))
-
-    if type == 'app.bsky.feed.generator':
-      if uri_bsky_url:
-        urls.insert(0, uri_bsky_url)
-      ret = {
-        'objectType': 'service',
-        'id': uri,
-        'author': repo_did,
-        'generator': did,
-      }
-    else:
-      ret = {
-        'objectType': 'person',
-        'id': uri or did,
-        'username': obj.get('handle') or repo_handle,
-      }
-
-    urls = util.dedupe_urls(urls)
-    ret.update({
-      'url': urls[0] if urls else None,
-      'urls': urls if len(urls) > 1 else None,
-      'displayName': obj.get('displayName'),
-      # TODO: for app.bsky.feed.generator, use descriptionFacets
-      'summary': summary,
-      'image': images,
-      'published': obj.get('createdAt'),
-    })
-
-    # avatar and banner are blobs in app.bsky.actor.profile; convert to URLs
-    repo_did = repo_did or did
-    if type in ATP_PROFILE_TYPES + ('app.bsky.feed.generator',):
-      if repo_did and pds:
-        for img in ret['image']:
-          img['url'] = blob_to_url(blob=img['url'], repo_did=repo_did, pds=pds)
-      else:
-        ret['image'] = []
-
-    # convert public view opt-out to unlisted AS1 audience targeting
-    # https://docs.bsky.app/docs/advanced-guides/resolving-identities#for-backend-services
-    # https://activitystrea.ms/specs/json/targeting/1.0/
-    labels = (obj.get('labels', {}).get('values', [])
-                if type in ATP_PROFILE_TYPES
-              else obj.get('labels', []))
-    for label in labels:
-      if label.get('val') == NO_UNAUTHENTICATED_LABEL and not label.get('neg'):
-        ret['to'] = [{
-          'objectType': 'group',
-          'alias': '@unlisted',
-        }]
-      if label.get('val') == BOT_LABEL and not label.get('neg'):
-        ret['objectType'] = 'service'
-
-    # follow/follower counts. convert to followers/following collections, not in AS1,
-    # borrowed from ActivityPub: https://www.w3.org/TR/activitypub/#followers
-    if followers := obj.get('followersCount'):
-      ret['followers'] = {'totalItems': followers}
-    if follows := obj.get('followsCount'):
-      ret['following'] = {'totalItems': follows}
-
-    # convert pinnedPost to featured ActivityStreams collection
-    # https://docs.joinmastodon.org/spec/activitypub/#featured
-    if pinned_post := obj.get('pinnedPost'):
-      # sometimes this is a str. not sure why, that's invalid based on the schema,
-      # pinnedPost has always been an object, but we still see it occasionally, eg
-      # https://console.cloud.google.com/errors/detail/CKevsI3gyqrAdw?project=bridgy-federated
-      if isinstance(pinned_post, dict):
-        ret['featured'] = {
-          'totalItems': 1,
-          'items': [pinned_post['uri']],
-        }
-
-    # Web Monetization wallet address, if any
-    # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
-    if client and repo_did:
-      if wallet := client.com.atproto.repo.getRecord(
-          repo=repo_did, collection='community.lexicon.payments.webMonetization',
-          rkey='self'):
-        ret['monetization'] = wallet['value']['address']
+    ret = _to_as1_actor(obj, type=type, uri=uri, repo_did=repo_did,
+                        repo_handle=repo_handle, pds=pds, client=client)
 
   elif type in ('app.bsky.feed.post',
                 'chat.bsky.convo.defs#messageInput',
@@ -1848,160 +1742,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
                 'so.sprk.feed.post',
                 'so.sprk.feed.reply',
                 ):
-    # Spark posts and replies are the same as Bluesky posts except embed is
-    # media, and in posts, text and facets are in caption
-    text_obj = (obj.get('caption') or {}) if type == 'so.sprk.feed.post' else obj
-    text = text_obj.get('text', '')
-    text_encoded = text.encode()
-
-    # convert facets to tags
-    tags = []
-    for facet in text_obj.get('facets', []):
-      tag = {}
-
-      for feat in facet.get('features', []):
-        feat_type = (feat.get('$type') or '').replace('so.sprk.', 'app.bsky.')
-        if feat_type == 'app.bsky.richtext.facet#link':
-          tag.update({
-            'objectType': 'article',
-            'url': feat.get('uri'),
-          })
-        elif feat_type == 'app.bsky.richtext.facet#mention':
-          tag.update({
-            'objectType': 'mention',
-            'url': Bluesky.user_url(feat.get('did')),
-          })
-        elif feat_type == 'app.bsky.richtext.facet#tag':
-          name = feat.get('tag')
-          tag.update({
-            'objectType': 'hashtag',
-            'displayName': name,
-            'url': f'https://bsky.app/search?q=%23{urllib.parse.quote(name)}',
-          })
-
-      index = facet.get('index', {})
-      # convert indices from UTF-8 encoded bytes to Unicode chars (code points)
-      # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
-      byte_start = index.get('byteStart')
-      byte_end = index.get('byteEnd')
-
-      try:
-        if byte_start is not None:
-          tag['startIndex'] = len(text_encoded[:byte_start].decode())
-          if byte_end is not None:
-            name = text_encoded[byte_start:byte_end].decode()
-            tag.setdefault('displayName', name)
-            tag['length'] = len(name)
-      except UnicodeDecodeError as e:
-        logger.warning(f"Couldn't apply facet {facet} to unicode text: {text}")
-
-      tags.append(tag)
-
-    # escape HTML characters: <, >, &. shuffle over facet indices to match.
-    while match := re.search(r'<|>', text):
-      # escape char
-      entity = f'&{html.entities.codepoint2name[ord(match.group(0))]};'
-      pos = match.start(0)
-      text = text[:pos] + entity + text[pos + 1:]
-      # no need to update text_encoded, we're done with it by here
-
-      # shuffle indices
-      added = len(entity) - 1
-      for tag in tags:
-        start = tag.get('startIndex', 0)
-        end = start + tag.get('length', 0)  # exclusive
-        if end <= pos:
-          continue
-        elif start <= pos:
-          tag['length'] += added
-        else:  # start > pos
-          tag['startIndex'] += added
-
-    # extra tags not in post text
-    tags.extend({
-      'objectType': 'hashtag',
-      'displayName': name,
-      'url': f'https://bsky.app/search?q=%23{urllib.parse.quote(name)}',
-    } for name in obj.get('tags', []))
-
-    in_reply_to = obj.get('reply', {}).get('parent', {}).get('uri')
-    try:
-      in_reply_to_url = at_uri_to_web_url(in_reply_to)
-    except ValueError:  # not an at:// URI
-      in_reply_to_url = in_reply_to
-
-    # convert self labels to AS1 sensitive and content warning in summary
-    # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
-    # https://swicg.github.io/miscellany/#sensitive
-    content_warnings = []
-    sensitive = None
-    for label in obj.get('labels', {}).get('values', []):
-      label_text = SENSITIVE_LABELS.get(label.get('val'))
-      if label_text and not label.get('neg'):
-        sensitive = True
-        content_warnings.append(label_text)
-
-    ret = {
-      'objectType': 'comment' if in_reply_to else 'note',
-      'id': uri,
-      'url': at_uri_to_web_url(uri),
-      'content': text,
-      # originally I used <br> as the separator here, which is supposed to work
-      # because AS2 summary supports HTML:
-      # https://www.w3.org/TR/activitystreams-vocabulary/#dfn-summary
-      # ...but Mastodon doesn't support it :(
-      # https://github.com/snarfed/bridgy-fed/issues/2509
-      # https://github.com/mastodon/mastodon/issues/34079#issuecomment-2703397374
-      'summary': '; '.join(content_warnings),
-      'inReplyTo': [{
-        'id': in_reply_to,
-        'url': in_reply_to_url,
-      }],
-      'published': obj.get('createdAt', ''),
-      'tags': tags,
-      'author': repo_did,
-      # we steal this from AS2, it's not officially part of AS1
-      'contentMap': {lang: text for lang in obj.get('langs', [])},
-      'sensitive': sensitive,
-    }
-
-    if type == 'chat.bsky.convo.defs#messageView':
-      author = obj['sender']['did']
-      if not ret['id']:
-        ret['id'] = f'at://{author}/chat.bsky.convo.defs.messageView/{obj["id"]}'
-      ret.update({
-        'author': author,
-        'published': obj.get('sentAt'),
-        'to': ['?'],  # show that it's a DM even though we don't know the recipient
-      })
-
-    # embeds
-    embed = obj.get('media' if type.startswith('so.sprk.') else 'embed') or {}
-    embed_type = embed.get('$type')
-    if embed_type in ('app.bsky.embed.images',
-                      'app.bsky.embed.gallery',
-                      'so.sprk.media.image',
-                      'so.sprk.media.images',
-                      ):
-      ret['image'] = to_as1(embed, **kwargs)
-    elif embed_type in ('app.bsky.embed.external',
-                        'app.bsky.embed.record',
-                        'app.bsky.embed.video',
-                        'so.sprk.media.video',
-                        ):
-      ret['attachments'] = [to_as1(embed, **kwargs)]
-    elif embed_type == 'app.bsky.embed.recordWithMedia':
-      ret['attachments'] = [to_as1(embed, **kwargs)]
-      # TODO: stop reaching inside and do this in the to_as1 call instead?
-      # need to make it return both the quote post attachment and the image.
-      media = embed.get('media')
-      media_type = media.get('$type')
-      if media_type in ('app.bsky.embed.external', 'app.bsky.embed.video'):
-        ret['attachments'].append(to_as1(media, **kwargs))
-      elif media_type in ('app.bsky.embed.images', 'app.bsky.embed.gallery'):
-        ret['image'] = to_as1(media, **kwargs)
-      else:
-        assert False, f'Unknown embed media type: {media_type}'
+    ret = _to_as1_post(obj, type=type, uri=uri, repo_did=repo_did,
+                       repo_handle=repo_handle, pds=pds)
 
   elif type in ('app.bsky.feed.defs#postView', 'app.bsky.embed.record#viewRecord'):
     ret = to_as1(obj.get('record') or obj.get('value'), **kwargs)
@@ -2363,6 +2105,301 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
   # ugly hack
   if isinstance(ret, dict) and ret.get('author') == {'objectType': 'person'}:
     del ret['author']
+
+  return ret
+
+
+def _to_as1_actor(obj, *, type, uri, repo_did, repo_handle, pds, client):
+  """Converts a Bluesky or related profile, profile view, or feed generator to AS1.
+
+  Helper for :func:`to_as1`. See it for args, except:
+
+  Args:
+    type (str): ``obj``'s ``$type``
+
+  Returns:
+    dict: AS1 actor or service
+  """
+  images = [{'url': obj.get('avatar')}]
+  banner = obj.get('banner')
+  if banner:
+    images.append({'url': obj.get('banner'), 'objectType': 'featured'})
+
+  handle = obj.get('handle')
+  did = obj.get('did')
+  if type in ATP_PROFILE_TYPES:
+    if not handle:
+      handle = repo_handle
+    if not did:
+      did = repo_did
+
+  # urls: bsky.app profile, did:web domain, bsky.app feed generator, links in bio
+  urls = []
+  if handle:
+    profile_type = type if type in ATP_PROFILE_TYPES else 'app.bsky.actor.profile'
+    urls.append(COLLECTION_TO_WEB_URL[profile_type].format(id=handle))
+    if not util.domain_or_parent_in(handle, [DEFAULT_PDS_DOMAIN]):
+      urls.append(f'https://{handle}/')
+
+  if did and did.startswith('did:web:'):
+    urls.append(did_web_to_url(did))
+
+  if website := obj.get('website'):
+    urls.append(website)
+
+  desc = html.escape(obj.get('description') or '')
+  summary = whitespace_to_html(util.linkify(desc, pretty=True), escape=False)
+  urls.extend(util.extract_links(summary))
+
+  if type == 'app.bsky.feed.generator':
+    if uri_web_url := at_uri_to_web_url(uri):
+      urls.insert(0, uri_web_url)
+    ret = {
+      'objectType': 'service',
+      'id': uri,
+      'author': repo_did,
+      'generator': did,
+    }
+  else:
+    ret = {
+      'objectType': 'person',
+      'id': uri or did,
+      'username': obj.get('handle') or repo_handle,
+    }
+
+  urls = util.dedupe_urls(urls)
+  ret.update({
+    'url': urls[0] if urls else None,
+    'urls': urls if len(urls) > 1 else None,
+    'displayName': obj.get('displayName'),
+    # TODO: for app.bsky.feed.generator, use descriptionFacets
+    'summary': summary,
+    'image': images,
+    'published': obj.get('createdAt'),
+  })
+
+  # avatar and banner are blobs in app.bsky.actor.profile; convert to URLs
+  repo_did = repo_did or did
+  if type in ATP_PROFILE_TYPES + ('app.bsky.feed.generator',):
+    if repo_did and pds:
+      for img in ret['image']:
+        img['url'] = blob_to_url(blob=img['url'], repo_did=repo_did, pds=pds)
+    else:
+      ret['image'] = []
+
+  # convert public view opt-out to unlisted AS1 audience targeting
+  # https://docs.bsky.app/docs/advanced-guides/resolving-identities#for-backend-services
+  # https://activitystrea.ms/specs/json/targeting/1.0/
+  labels = (obj.get('labels', {}).get('values', [])
+              if type in ATP_PROFILE_TYPES
+            else obj.get('labels', []))
+  for label in labels:
+    if label.get('val') == NO_UNAUTHENTICATED_LABEL and not label.get('neg'):
+      ret['to'] = [{
+        'objectType': 'group',
+        'alias': '@unlisted',
+      }]
+    if label.get('val') == BOT_LABEL and not label.get('neg'):
+      ret['objectType'] = 'service'
+
+  # follow/follower counts. convert to followers/following collections, not in AS1,
+  # borrowed from ActivityPub: https://www.w3.org/TR/activitypub/#followers
+  if followers := obj.get('followersCount'):
+    ret['followers'] = {'totalItems': followers}
+  if follows := obj.get('followsCount'):
+    ret['following'] = {'totalItems': follows}
+
+  # convert pinnedPost to featured ActivityStreams collection
+  # https://docs.joinmastodon.org/spec/activitypub/#featured
+  if pinned_post := obj.get('pinnedPost'):
+    # sometimes this is a str. not sure why, that's invalid based on the schema,
+    # pinnedPost has always been an object, but we still see it occasionally, eg
+    # https://console.cloud.google.com/errors/detail/CKevsI3gyqrAdw?project=bridgy-federated
+    if isinstance(pinned_post, dict):
+      ret['featured'] = {
+        'totalItems': 1,
+        'items': [pinned_post['uri']],
+      }
+
+  # Web Monetization wallet address, if any
+  # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
+  if client and repo_did:
+    if wallet := client.com.atproto.repo.getRecord(
+        repo=repo_did, collection='community.lexicon.payments.webMonetization',
+        rkey='self'):
+      ret['monetization'] = wallet['value']['address']
+
+  return ret
+
+
+def _to_as1_post(obj, *, type, uri, repo_did, repo_handle, pds):
+  """Converts a Bluesky or Spark post or reply, or a chat message, to AS1.
+
+  Helper for :func:`to_as1`. See it for args, except:
+
+  Args:
+    type (str): ``obj``'s ``$type``
+
+  Returns:
+    dict: AS1 note or comment
+  """
+  # for nested to_as1 calls, if necessary
+  kwargs = {'repo_did': repo_did, 'repo_handle': repo_handle, 'pds': pds}
+
+  # Spark posts and replies are the same as Bluesky posts except embed is
+  # media, and in posts, text and facets are in caption
+  text_obj = (obj.get('caption') or {}) if type == 'so.sprk.feed.post' else obj
+  text = text_obj.get('text', '')
+  text_encoded = text.encode()
+
+  # convert facets to tags
+  tags = []
+  for facet in text_obj.get('facets', []):
+    tag = {}
+
+    for feat in facet.get('features', []):
+      feat_type = (feat.get('$type') or '').replace('so.sprk.', 'app.bsky.')
+      if feat_type == 'app.bsky.richtext.facet#link':
+        tag.update({
+          'objectType': 'article',
+          'url': feat.get('uri'),
+        })
+      elif feat_type == 'app.bsky.richtext.facet#mention':
+        tag.update({
+          'objectType': 'mention',
+          'url': Bluesky.user_url(feat.get('did')),
+        })
+      elif feat_type == 'app.bsky.richtext.facet#tag':
+        name = feat.get('tag')
+        tag.update({
+          'objectType': 'hashtag',
+          'displayName': name,
+          'url': f'https://bsky.app/search?q=%23{urllib.parse.quote(name)}',
+        })
+
+    index = facet.get('index', {})
+    # convert indices from UTF-8 encoded bytes to Unicode chars (code points)
+    # https://github.com/snarfed/atproto/blob/5b0c2d7dd533711c17202cd61c0e101ef3a81971/lexicons/app/bsky/richtext/facet.json#L34
+    byte_start = index.get('byteStart')
+    byte_end = index.get('byteEnd')
+
+    try:
+      if byte_start is not None:
+        tag['startIndex'] = len(text_encoded[:byte_start].decode())
+        if byte_end is not None:
+          name = text_encoded[byte_start:byte_end].decode()
+          tag.setdefault('displayName', name)
+          tag['length'] = len(name)
+    except UnicodeDecodeError as e:
+      logger.warning(f"Couldn't apply facet {facet} to unicode text: {text}")
+
+    tags.append(tag)
+
+  # escape HTML characters: <, >, &. shuffle over facet indices to match.
+  while match := re.search(r'<|>', text):
+    # escape char
+    entity = f'&{html.entities.codepoint2name[ord(match.group(0))]};'
+    pos = match.start(0)
+    text = text[:pos] + entity + text[pos + 1:]
+    # no need to update text_encoded, we're done with it by here
+
+    # shuffle indices
+    added = len(entity) - 1
+    for tag in tags:
+      start = tag.get('startIndex', 0)
+      end = start + tag.get('length', 0)  # exclusive
+      if end <= pos:
+        continue
+      elif start <= pos:
+        tag['length'] += added
+      else:  # start > pos
+        tag['startIndex'] += added
+
+  # extra tags not in post text
+  tags.extend({
+    'objectType': 'hashtag',
+    'displayName': name,
+    'url': f'https://bsky.app/search?q=%23{urllib.parse.quote(name)}',
+  } for name in obj.get('tags', []))
+
+  in_reply_to = obj.get('reply', {}).get('parent', {}).get('uri')
+  try:
+    in_reply_to_url = at_uri_to_web_url(in_reply_to)
+  except ValueError:  # not an at:// URI
+    in_reply_to_url = in_reply_to
+
+  # convert self labels to AS1 sensitive and content warning in summary
+  # https://github.com/snarfed/atproto/blob/f2f8de63b333448d87c364578e023ddbb63b8b25/lexicons/com/atproto/label/defs.json#L139-L154
+  # https://swicg.github.io/miscellany/#sensitive
+  content_warnings = []
+  sensitive = None
+  for label in obj.get('labels', {}).get('values', []):
+    label_text = SENSITIVE_LABELS.get(label.get('val'))
+    if label_text and not label.get('neg'):
+      sensitive = True
+      content_warnings.append(label_text)
+
+  ret = {
+    'objectType': 'comment' if in_reply_to else 'note',
+    'id': uri,
+    'url': at_uri_to_web_url(uri),
+    'content': text,
+    # originally I used <br> as the separator here, which is supposed to work
+    # because AS2 summary supports HTML:
+    # https://www.w3.org/TR/activitystreams-vocabulary/#dfn-summary
+    # ...but Mastodon doesn't support it :(
+    # https://github.com/snarfed/bridgy-fed/issues/2509
+    # https://github.com/mastodon/mastodon/issues/34079#issuecomment-2703397374
+    'summary': '; '.join(content_warnings),
+    'inReplyTo': [{
+      'id': in_reply_to,
+      'url': in_reply_to_url,
+    }],
+    'published': obj.get('createdAt', ''),
+    'tags': tags,
+    'author': repo_did,
+    # we steal this from AS2, it's not officially part of AS1
+    'contentMap': {lang: text for lang in obj.get('langs', [])},
+    'sensitive': sensitive,
+  }
+
+  if type == 'chat.bsky.convo.defs#messageView':
+    author = obj['sender']['did']
+    if not ret['id']:
+      ret['id'] = f'at://{author}/chat.bsky.convo.defs.messageView/{obj["id"]}'
+    ret.update({
+      'author': author,
+      'published': obj.get('sentAt'),
+      'to': ['?'],  # show that it's a DM even though we don't know the recipient
+    })
+
+  # embeds
+  embed = obj.get('media' if type.startswith('so.sprk.') else 'embed') or {}
+  embed_type = embed.get('$type')
+  if embed_type in ('app.bsky.embed.images',
+                    'app.bsky.embed.gallery',
+                    'so.sprk.media.image',
+                    'so.sprk.media.images',
+                    ):
+    ret['image'] = to_as1(embed, **kwargs)
+  elif embed_type in ('app.bsky.embed.external',
+                      'app.bsky.embed.record',
+                      'app.bsky.embed.video',
+                      'so.sprk.media.video',
+                      ):
+    ret['attachments'] = [to_as1(embed, **kwargs)]
+  elif embed_type == 'app.bsky.embed.recordWithMedia':
+    ret['attachments'] = [to_as1(embed, **kwargs)]
+    # TODO: stop reaching inside and do this in the to_as1 call instead?
+    # need to make it return both the quote post attachment and the image.
+    media = embed.get('media')
+    media_type = media.get('$type')
+    if media_type in ('app.bsky.embed.external', 'app.bsky.embed.video'):
+      ret['attachments'].append(to_as1(media, **kwargs))
+    elif media_type in ('app.bsky.embed.images', 'app.bsky.embed.gallery'):
+      ret['image'] = to_as1(media, **kwargs)
+    else:
+      assert False, f'Unknown embed media type: {media_type}'
 
   return ret
 
