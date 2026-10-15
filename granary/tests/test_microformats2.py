@@ -1579,6 +1579,42 @@ foo bar
       }],
     }))
 
+  def test_hfeed_to_as1_implied_false(self):
+    parsed = {
+      'items': [{
+        'type': ['h-entry'],
+        'properties': {
+          'content': ['foo'],
+        },
+      }],
+    }
+    self.assert_equals([], microformats2.hfeed_to_as1(parsed, implied=False))
+
+    parsed['items'].append({
+      'type': ['h-feed'],
+      'children': [{
+        'type': ['h-entry'],
+        'properties': {
+          'content': ['bar'],
+        },
+      }],
+    })
+    self.assert_equals([{
+      'objectType': 'activity',
+      'verb': 'post',
+      'object': {
+        'objectType': 'note',
+        'content': 'bar',
+        'content_is_html': True,
+      },
+    }], microformats2.hfeed_to_as1(parsed, implied=False))
+
+  def test_html_hfeed_to_as1_implied_false(self):
+    self.assert_equals([], microformats2.html_hfeed_to_as1("""\
+<article class="h-entry">
+<div class="e-content">foo</div>
+</article>""", implied=False))
+
   def test_find_author(self):
     self.assert_equals({
       'objectType': 'person',

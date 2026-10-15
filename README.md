@@ -396,6 +396,7 @@ Handle list-valued AS1 `objectType` everywhere, using its first element, includi
   * `from_as1`:
     * Bug fix for precedence of attachments' `stream`s.
     * If `summary` is HTML, convert it to `{'html': ..., 'value': ...}`, and render it as `e-summary`.
+  * `hfeed_to_as1`, `html_hfeed_to_as1`: add `implied` kwarg, default True. If False, don't treat top-level items as an [implied h-feed](https://indieweb.org/h-feed#Implied_h-feed) when there's no `h-feed`.
   * `to_as1`:
     * Convert plain text and `h-adr` `location`s. Previously they were dropped.
     * Convert `p-rsvp` `interested` to `rsvp-maybe`, since AS1 doesn't have `rsvp-interested`.

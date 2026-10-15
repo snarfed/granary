@@ -694,7 +694,7 @@ json_to_object = to_as1
 """Deprecated! Use :meth:`to_as1` instead."""
 
 
-def html_hfeed_to_as1(html, url=None, actor=None, id=None):
+def html_hfeed_to_as1(html, url=None, actor=None, id=None, implied=True):
   """Converts a microformats2 HTML ``h-feed`` to ActivityStreams activities.
 
   Args:
@@ -704,30 +704,40 @@ def html_hfeed_to_as1(html, url=None, actor=None, id=None):
       from a ``rel="author"`` link.
     id (str): optional id of specific element to extract and parse. defaults
       to the whole page.
+    implied (bool): see :func:`hfeed_to_as1`
 
   Returns:
     list of dict: ActivityStreams activities
   """
-  return hfeed_to_as1(util.parse_mf2(html, url=url, id=id), actor=actor)
+  return hfeed_to_as1(util.parse_mf2(html, url=url, id=id), actor=actor,
+                      implied=implied)
 
 
 html_to_activities = html_hfeed_to_as1
 """Deprecated! Use :func:`html_hfeed_to_as1` instead."""
 
 
-def hfeed_to_as1(parsed, actor=None):
+def hfeed_to_as1(parsed, actor=None, implied=True):
   """Converts a parsed microformats2 JSON ``h-feed`` to ActivityStreams activities.
 
   Args:
     parsed (dict): parsed JSON microformats2 document
     actor (dict): optional author AS actor object for all activities. usually
       comes from a ``rel="author"`` link.
+    implied (bool): if True and there's no ``h-feed``, use the top-level items
+      as an `implied h-feed <https://indieweb.org/h-feed#Implied_h-feed>`_.
+      If False, return no activities instead.
 
   Returns:
     list of dict: ActivityStreams activities
   """
   hfeed = mf2util.find_first_entry(parsed, ['h-feed'])
-  items = hfeed.get('children', []) if hfeed else parsed.get('items', [])
+  if hfeed:
+    items = hfeed.get('children', [])
+  elif implied:
+    items = parsed.get('items', [])
+  else:
+    return []
 
   activities = []
   for item in items:
