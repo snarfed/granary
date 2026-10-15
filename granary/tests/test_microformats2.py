@@ -915,6 +915,21 @@ foo bar
       },
     }))
 
+  def test_to_as1_rsvp_normalizes(self):
+    for rsvp, verb in (
+        (' Yes ', 'rsvp-yes'),
+        ('NO', 'rsvp-no'),
+        ('Interested\n', 'rsvp-maybe'),
+    ):
+      with self.subTest(rsvp=rsvp):
+        self.assert_equals(verb, microformats2.to_as1({
+          'type': ['h-entry'],
+          'properties': {
+            'in-reply-to': ['http://example.com/event'],
+            'rsvp': [rsvp],
+          },
+        })['verb'])
+
   def test_json_to_html_rsvp_interested(self):
     self.assert_html_equals("""\
 <article class="h-entry">

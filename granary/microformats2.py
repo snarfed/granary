@@ -485,7 +485,7 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     mf2_type = mf2util.post_type_discovery(without_photo)
 
   as_type, as_verb = MF2_TO_AS_TYPE_VERB.get(mf2_type, (None, None))
-  rsvp = get_text(prop.get('rsvp'))
+  rsvp = get_text(prop.get('rsvp')).lower()
   if rsvp:
     as_verb = 'rsvp-maybe' if rsvp == 'interested' else f'rsvp-{rsvp}'
 
