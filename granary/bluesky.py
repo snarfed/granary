@@ -78,6 +78,19 @@ BSKY_APP_TYPE_TO_COLLECTION = {
   'post': 'app.bsky.feed.post',
   'lists': 'app.bsky.graph.list',
 }
+# maps AS1 RSVP verbs to community.lexicon.calendar.rsvp status tokens.
+# the lexicon has no "maybe," so we map it to interested.
+RSVP_VERB_TO_STATUS = {
+  'rsvp-yes': 'going',
+  'rsvp-no': 'notgoing',
+  'rsvp-maybe': 'interested',
+  'rsvp-interested': 'interested',
+}
+RSVP_STATUS_TO_VERB = {
+  'going': 'rsvp-yes',
+  'notgoing': 'rsvp-no',
+  'interested': 'rsvp-interested',
+}
 
 # maps AS1 objectType/verb to possible output Bluesky lexicon types.
 # used in from_as1.
@@ -136,6 +149,8 @@ FROM_AS1_TYPES = {
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#reasonRepost',
   ),
+} | {
+  verb: ('community.lexicon.calendar.rsvp',) for verb in RSVP_VERB_TO_STATUS
 }
 
 ATP_PROFILE_TYPES = (
@@ -615,6 +630,15 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         'post': from_as1(inner_obj, out_type='app.bsky.feed.defs#postView', **kwargs),
         'reason': from_as1(obj, out_type='app.bsky.feed.defs#reasonRepost', **kwargs),
       }
+
+  elif type in RSVP_VERB_TO_STATUS:
+    # https://github.com/lexicon-community/lexicon/blob/main/community/lexicon/calendar/rsvp.json
+    ret = {
+      '$type': 'community.lexicon.calendar.rsvp',
+      'subject': from_as1_to_strong_ref(inner_obj, client=client, raise_=raise_,
+                                        validate=validate),
+      'status': f'community.lexicon.calendar.rsvp#{RSVP_VERB_TO_STATUS[type]}',
+    }
 
   elif type in ('follow', 'block'):
     if not inner_obj:
@@ -1946,6 +1970,17 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         # synthetic fragment
         verb = 'liked' if is_like else 'reposted'
         ret['url'] = f'{web_url}#{verb}_by_{uri_repo}'
+
+  elif type == 'community.lexicon.calendar.rsvp':
+    # https://github.com/lexicon-community/lexicon/blob/main/community/lexicon/calendar/rsvp.json
+    status = obj['status'].removeprefix('community.lexicon.calendar.rsvp#')
+    ret = {
+      'objectType': 'activity',
+      'verb': RSVP_STATUS_TO_VERB.get(status, 'rsvp-yes'),
+      'id': uri,
+      'object': obj['subject']['uri'],
+      'actor': repo_did,
+    }
 
   elif type == 'app.bsky.feed.defs#threadViewPost':
     post = obj.get('post', {})

@@ -351,6 +351,7 @@ Handle list-valued AS1 `objectType` everywhere, using its first element, includi
   * `from_as1`, `to_as1`:
     * Convert AS1 `place`s to/from [`community.lexicon.location.*`](https://tangled.org/lexicon.community/lexicons/tree/main/community/lexicon/location).
     * Convert AS1 `event`s to/from [`community.lexicon.calendar.event`](https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/calendar/event.json), including locations.
+    * Convert AS1 `rsvp-*` activities to/from [`community.lexicon.calendar.rsvp`](https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/calendar/rsvp.json).
     * Convert AS1 objects to/from [Spark](https://sprk.so/) `so.sprk.*` records ([bridgy-fed#2736](https://github.com/snarfed/bridgy-fed/issues/2736)).
     * Convert AS1 objects to/from [Grain](https://grain.social/) `social.grain.*` records ([bridgy-fed#2739](https://github.com/snarfed/bridgy-fed/issues/2739)).
   * `web_url_to_at_uri`, `at_uri_to_web_url`: add support for `grain.social` and `sprk.so` profile and post URLs.
@@ -398,6 +399,7 @@ Handle list-valued AS1 `objectType` everywhere, using its first element, includi
   * `to_as1`:
     * Convert plain text and `h-adr` `location`s. Previously they were dropped.
     * Convert `p-rsvp` `interested` to `rsvp-maybe`, since AS1 doesn't have `rsvp-interested`.
+    * Normalize `p-rsvp` values to lower case.
     * `h-event`:
       * If `end` is missing, populate `endTime` based on `start` and `duration`.
       * If `content` is missing, fall back to `description`.

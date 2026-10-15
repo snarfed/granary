@@ -2856,6 +2856,27 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
+  def test_from_as1_rsvp(self):
+    for verb, status in (
+        ('rsvp-yes', 'going'),
+        ('rsvp-no', 'notgoing'),
+        ('rsvp-maybe', 'interested'),
+        ('rsvp-interested', 'interested'),
+    ):
+      with self.subTest(verb=verb):
+        self.assert_equals({
+          '$type': 'community.lexicon.calendar.rsvp',
+          'subject': {
+            'uri': 'at://did:al:ice/community.lexicon.calendar.event/123',
+            'cid': '',
+          },
+          'status': f'community.lexicon.calendar.rsvp#{status}',
+        }, from_as1({
+          'objectType': 'activity',
+          'verb': verb,
+          'object': 'at://did:al:ice/community.lexicon.calendar.event/123',
+        }))
+
   def test_from_as1_article_multiple(self):
     self.assert_equals([{
       '$type': 'app.bsky.feed.post',
@@ -5706,6 +5727,29 @@ class BlueskyTest(testutil.TestCase):
         'uri': 'http://the/place',
       }],
     }))
+
+  def test_to_as1_rsvp(self):
+    for status, verb in (
+        ('going', 'rsvp-yes'),
+        ('notgoing', 'rsvp-no'),
+        ('interested', 'rsvp-interested'),
+    ):
+      with self.subTest(status=status):
+        self.assert_equals({
+          'objectType': 'activity',
+          'verb': verb,
+          'id': 'at://did:bo:b/community.lexicon.calendar.rsvp/456',
+          'actor': 'did:bo:b',
+          'object': 'at://did:al:ice/community.lexicon.calendar.event/123',
+        }, to_as1({
+          '$type': 'community.lexicon.calendar.rsvp',
+          'subject': {
+            'uri': 'at://did:al:ice/community.lexicon.calendar.event/123',
+            'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+          },
+          'status': f'community.lexicon.calendar.rsvp#{status}',
+        }, uri='at://did:bo:b/community.lexicon.calendar.rsvp/456',
+           repo_did='did:bo:b'))
 
   def test_to_as1_document(self):
     self.assert_equals({
