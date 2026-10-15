@@ -397,6 +397,7 @@ Handle list-valued AS1 `objectType` everywhere, using its first element, includi
     * If `summary` is HTML, convert it to `{'html': ..., 'value': ...}`, and render it as `e-summary`.
   * `to_as1`:
     * Convert plain text and `h-adr` `location`s. Previously they were dropped.
+    * Convert `p-rsvp` `interested` to `rsvp-maybe`, since AS1 doesn't have `rsvp-interested`.
     * `h-event`:
       * If `end` is missing, populate `endTime` based on `start` and `duration`.
       * If `content` is missing, fall back to `description`.

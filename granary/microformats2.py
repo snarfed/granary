@@ -212,7 +212,7 @@ def from_as1(obj, trim_nulls=True, entry_class='h-entry',
     if context and isinstance(context, dict):
       in_reply_tos = as1.get_objects(context, 'inReplyTo')
 
-  is_rsvp = obj_type in ('rsvp-yes', 'rsvp-no', 'rsvp-maybe')
+  is_rsvp = obj_type in ('rsvp-yes', 'rsvp-no', 'rsvp-maybe', 'rsvp-interested')
   if is_rsvp or obj_type == 'react':
     in_reply_tos.extend(as1.get_objects(obj))
 
@@ -487,7 +487,7 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   as_type, as_verb = MF2_TO_AS_TYPE_VERB.get(mf2_type, (None, None))
   rsvp = get_text(prop.get('rsvp'))
   if rsvp:
-    as_verb = f'rsvp-{rsvp}'
+    as_verb = 'rsvp-maybe' if rsvp == 'interested' else f'rsvp-{rsvp}'
 
   # special case GitHub issues that are in-reply-to the repo or its issues URL
   in_reply_tos = get_string_urls(props.get('in-reply-to', []))
@@ -840,7 +840,8 @@ def _prepare_hentry(obj):
     if not props.get('name'):
       props['name'] = [{'yes': 'is attending.',
                         'no': 'is not attending.',
-                        'maybe': 'might attend.'}.get(rsvp)]
+                        'maybe': 'might attend.',
+                        'interested': 'is interested.'}.get(rsvp)]
   elif props.get('invitee') and not props.get('name'):
     props['name'] = ['invited']
 

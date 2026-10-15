@@ -883,6 +883,51 @@ foo bar
       'object': {'url': 'https://orig/post'},
     }))
 
+  def test_from_as1_rsvp_maybe(self):
+    self.assert_equals({
+      'type': ['h-entry'],
+      'properties': {
+        'in-reply-to': ['http://example.com/event'],
+        'rsvp': ['maybe'],
+      },
+    }, microformats2.from_as1({
+      'objectType': 'activity',
+      'verb': 'rsvp-maybe',
+      'object': {
+        'id': 'http://example.com/event',
+        'objectType': 'event',
+      },
+    }))
+
+  def test_to_as1_rsvp_interested(self):
+    self.assert_equals({
+      'objectType': 'activity',
+      'verb': 'rsvp-maybe',
+      'object': {
+        'id': 'http://example.com/event',
+        'objectType': 'event',
+      },
+    }, microformats2.to_as1({
+      'type': ['h-entry'],
+      'properties': {
+        'in-reply-to': ['http://example.com/event'],
+        'rsvp': ['interested'],
+      },
+    }))
+
+  def test_json_to_html_rsvp_interested(self):
+    self.assert_html_equals("""\
+<article class="h-entry">
+<span class="p-uid"></span>
+<span class="p-name"><data class="p-rsvp" value="interested">is interested.</data></span>
+<div class="">
+</div>
+</article>
+""", microformats2.json_to_html({
+      'type': ['h-entry'],
+      'properties': {'rsvp': ['interested']},
+    }))
+
   def test_from_as1_multiple_object_urls(self):
     self.assert_equals({
       'type': ['h-entry'],
