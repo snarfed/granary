@@ -2726,12 +2726,36 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(expected, from_as1(
       place, out_type='community.lexicon.location.address'))
 
+  def test_from_as1_place_string_address(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.location.address',
+      'name': 'the place',
+      'street': '123 Main St, Springfield, OR',
+      'country': '--',
+    }, from_as1({
+      'objectType': 'place',
+      'displayName': 'the place',
+      'address': '123 Main St, Springfield, OR',
+    }))
+
+  def test_from_as1_place_address_without_country(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.location.address',
+      'name': 'the place',
+      'locality': 'Springfield',
+      'country': '--',
+    }, from_as1({
+      'objectType': 'place',
+      'displayName': 'the place',
+      'address': {'locality': 'Springfield'},
+    }))
+
   def test_from_as1_place_not_enough_data(self):
     for place in (
         {'displayName': 'the place'},
         {'latitude': 38.3004},
-        {'address': {'locality': 'Springfield'}},
-        {'address': 'Springfield, OR'},
+        {'address': {}},
+        {'address': ''},
     ):
       with self.subTest(place=place), self.assertRaises(ValueError):
         from_as1({'objectType': 'place', **place})
@@ -2873,7 +2897,6 @@ class BlueskyTest(testutil.TestCase):
         'objectType': 'place',
         'displayName': 'the place',
         'url': 'http://the/place',
-        'address': {'locality': 'Springfield'},
       },
     }))
 

@@ -690,6 +690,8 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     # https://activitystrea.ms/specs/json/schema/activity-schema.html#place
     # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/location
     address = obj.get('address')
+    if isinstance(address, str) and address.strip():
+      address = {'streetAddress': address.strip()}
     lat = obj.get('latitude')
     lon = obj.get('longitude')
     if lat and lon and out_type != 'community.lexicon.location.address':
@@ -699,7 +701,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         'latitude': str(lat),
         'longitude': str(lon),
       }
-    elif (isinstance(address, dict) and address.get('country')
+    elif (isinstance(address, dict) and address
           and out_type != 'community.lexicon.location.geo'):
       ret = {
         '$type': 'community.lexicon.location.address',
@@ -708,10 +710,11 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         'locality': address.get('locality'),
         'region': address.get('region'),
         'postalCode': address.get('postalCode'),
-        'country': address['country'],
+        # country is required, minLength 2
+        'country': address.get('country') or '--',
       }
     else:
-      raise ValueError(f"place needs latitude and longitude or address with country to convert to {out_type or 'community.lexicon.location.*'}")
+      raise ValueError(f"place needs latitude and longitude or address to convert to {out_type or 'community.lexicon.location.*'}")
 
     ret = as1.trim_nulls(ret)
 
@@ -753,7 +756,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           'uri': loc_url,
         }]
       else:
-        logger.info(f"Dropping location without coordinates, address with country, or URL: {loc}")
+        logger.info(f"Dropping location without coordinates, address, or URL: {loc}")
 
     # isOnline is Mobilizon's, passed through by as2.to_as1
     online = obj.get('isOnline')
