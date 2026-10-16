@@ -341,6 +341,7 @@ Handle list-valued AS1 `objectType` everywhere, using its first element, includi
     * Handle [FEP-044f's `quote`](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md) and [Fedibird's `quoteUri`](http://fedibird.com/ns#quoteUri) quoted post fields, along with the existing `_misskey_quote` and `quoteUrl`.
     * Set quoted posts' `id`, not just `url`, so that `as1.quoted_posts` finds them.
     * Handle object-valued quote post fields.
+    * Convert `Hashtag` type to `hashtag` `objectType`.
     * For quote posts, remove inline `RE: ...` fallback links from `content` based on the [`quote-inline` class](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md), including Mastodon's leading `<p class="quote-inline">`, instead of just trailing `RE: [URL]` text.
   * `from_as1`, `render_content`: render HTML with Jinja templates in profile link `PropertyValue`s and quoted post `RE: ...` links. Only link `http` and `https` quoted post URLs ([#586](https://github.com/snarfed/granary/issues/586)).
 * `atom`:

@@ -96,7 +96,12 @@ OBJECT_TYPE_TO_TYPE = {
   'video': 'Video',
 }
 TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
-TYPE_TO_OBJECT_TYPE['Note'] = 'note'  # disambiguate
+TYPE_TO_OBJECT_TYPE.update({
+  # disambiguate
+  'Note': 'note',
+  # https://docs.joinmastodon.org/spec/activitypub/#Hashtag
+  'Hashtag': 'hashtag',
+})
 ACTOR_TYPES = {as2_type for as1_type, as2_type in OBJECT_TYPE_TO_TYPE.items()
                if as1_type in as1.ACTOR_TYPES}
 # https://www.w3.org/TR/activitystreams-vocabulary/#object-types

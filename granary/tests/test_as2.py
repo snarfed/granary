@@ -818,6 +818,23 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }), ignore=['@context'])
 
+  def test_to_as1_hashtag_type(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': '#hache',
+        'url': 'http://foo/bar',
+      }],
+    }, as2.to_as1({
+      'type': 'Note',
+      'tag': [{
+        'type': 'Hashtag',
+        'name': '#hache',
+        'href': 'http://foo/bar',
+      }],
+    }))
+
   def test_to_as1_stop_following_object_id(self):
     self.assertEqual({
       'objectType': 'activity',
