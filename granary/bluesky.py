@@ -736,33 +736,35 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       if val := obj.get(as1_field):
         ret[bsky_field] = from_as1_datetime(val)
 
-    if loc := as1.get_object(obj, 'location'):
+    locs = as1.get_objects(obj, 'location')
+    for loc in locs:
       # emit every location type we can, since apps differ in which they show
-      locations = []
+      converted = []
       for loc_type in ('community.lexicon.location.address',
                        'community.lexicon.location.geo'):
         try:
-          locations.append(
+          converted.append(
             from_as1({**loc, 'objectType': 'place'}, out_type=loc_type))
         except ValueError:
           pass
 
-      if locations:
-        ret['locations'] = locations
-      elif loc_url := as1.get_url(loc):
-        ret['locations'] = [{
+      if not converted and (loc_url := as1.get_url(loc)):
+        converted = [{
           '$type': 'community.lexicon.calendar.event#uri',
           'name': loc.get('displayName'),
           'uri': loc_url,
         }]
+
+      if converted:
+        ret.setdefault('locations', []).extend(converted)
       else:
         logger.info(f"Dropping location without coordinates, address, or URL: {loc}")
 
     # isOnline is Mobilizon's, passed through by as2.to_as1
     online = obj.get('isOnline')
-    if mode := ('hybrid' if online and loc
+    if mode := ('hybrid' if online and locs
                 else 'virtual' if online
-                else 'inperson' if loc
+                else 'inperson' if locs
                 else None):
       ret['mode'] = f'community.lexicon.calendar.event#{mode}'
 
@@ -2136,17 +2138,17 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'endTime': obj.get('endsAt'),
     }
 
-    # AS1 only supports one location, so use the first
-    if locs := obj.get('locations'):
-      loc = locs[0]
+    locs = []
+    for loc in obj.get('locations', []):
       if loc.get('$type') == 'community.lexicon.calendar.event#uri':
-        ret['location'] = {
+        locs.append({
           'objectType': 'place',
           'displayName': loc.get('name'),
           'url': loc.get('uri'),
-        }
+        })
       else:
-        ret['location'] = to_as1(loc)
+        locs.append(to_as1(loc))
+    ret['location'] = locs[0] if len(locs) == 1 else locs
 
   elif type == 'community.blacksky.assembly.conversation':
     # https://github.com/blacksky-algorithms/assembly.blacksky.community

@@ -335,6 +335,7 @@ Handle list-valued AS1 `objectType` everywhere, using its first element, includi
   * `from_as1`: add [FEP-044f's `quote`](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md) field to quote posts, along with the existing `_misskey_quote` and `quoteUrl` ([bridgy-fed#1956](https://github.com/snarfed/bridgy-fed/issues/1956)).
   * `from_as1`: convert places' ISO 6709 `position` to `latitude` and `longitude`.
   * `from_as1`, `to_as1`: preserve multiply-valued AS1 `objectType` to/from AS2 `type`. Unknown types are dropped. `verb` is still singly valued.
+  * `from_as1`, `to_as1`: handle list-valued `location`.
   * `to_as1`:
     * Improve `featured` collection (ie pinned post) fetching ([bridgy-fed#2302](https://github.com/snarfed/bridgy-fed/issues/2302)).
     * Fix bug where `Audio`/`Video` objects with a tag-based media link lost their top-level `duration`, `size`, and `url` fields.

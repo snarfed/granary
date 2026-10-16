@@ -641,6 +641,56 @@ class ActivityStreams2Test(testutil.TestCase):
         },
       })
 
+  def test_to_as1_multiple_locations(self):
+    self.assert_equals({
+      'objectType': 'event',
+      'location': [{
+        'objectType': 'place',
+        'displayName': 'the place',
+      }, {
+        'url': 'http://zoom/123',
+      }],
+    }, as2.to_as1({
+      'type': 'Event',
+      'location': [{
+        'type': 'Place',
+        'name': 'the place',
+      }, {
+        'type': 'VirtualLocation',
+        'url': 'http://zoom/123',
+      }],
+    }))
+
+  def test_to_as1_actor_string_location(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'location': 'http://place',
+    }, as2.to_as1({
+      'type': 'Person',
+      'location': 'http://place',
+    }), ignore=['displayName'])
+
+  def test_from_as1_multiple_locations(self):
+    self.assert_equals({
+      'type': 'Event',
+      'location': [{
+        'type': 'Place',
+        'name': 'the place',
+      }, {
+        'type': 'Place',
+        'url': 'http://other/place',
+      }],
+    }, as2.from_as1({
+      'objectType': 'event',
+      'location': [{
+        'objectType': 'place',
+        'displayName': 'the place',
+      }, {
+        'objectType': 'place',
+        'url': 'http://other/place',
+      }],
+    }), ignore=['@context'])
+
   def test_to_as1_postal_address(self):
     # Mobilizon
     self.assert_equals({

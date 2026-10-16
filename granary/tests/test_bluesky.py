@@ -2879,6 +2879,35 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
+  def test_from_as1_event_multiple_locations(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'mode': 'community.lexicon.calendar.event#inperson',
+      'locations': [{
+        '$type': 'community.lexicon.location.geo',
+        'name': 'the place',
+        'latitude': '38.3004',
+        'longitude': '-76.50745',
+      }, {
+        '$type': 'community.lexicon.calendar.event#uri',
+        'uri': 'http://other/place',
+      }],
+    }, from_as1({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'location': [{
+        'objectType': 'place',
+        'displayName': 'the place',
+        'latitude': 38.3004,
+        'longitude': -76.50745,
+      }, {
+        'objectType': 'place',
+        'url': 'http://other/place',
+      }],
+    }))
+
   def test_from_as1_event_url_location(self):
     self.assert_equals({
       '$type': 'community.lexicon.calendar.event',
@@ -5766,12 +5795,15 @@ class BlueskyTest(testutil.TestCase):
       'published': '2017-01-22T01:29:15.000Z',
       'startTime': '2017-07-13T00:30:00.000Z',
       'endTime': '2017-07-13T02:30:00.000Z',
-      'location': {
+      'location': [{
         'objectType': 'place',
         'displayName': 'the place',
         'latitude': 38.3004,
         'longitude': -76.50745,
-      },
+      }, {
+        'objectType': 'place',
+        'url': 'http://other/place',
+      }],
     }, to_as1({
       '$type': 'community.lexicon.calendar.event',
       'name': 'XYZ',

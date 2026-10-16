@@ -560,9 +560,7 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
     # regex match above already checked that these are valid floats
     obj['latitude'], obj['longitude'] = (float(val) for val in position.groups())
 
-  loc = obj.get('location')
-  if loc:
-    obj['location'] = from_as1(loc, type='Place', context=None)
+  obj['location'] = all_from_as1('location', type='Place', compact=True)
 
   obj = as1.trim_nulls(obj)
   if list(obj.keys()) == ['url']:
@@ -596,7 +594,8 @@ def to_as1(obj, use_type=True, get_fn=None):
         one element
     """
     converted = [to_as1(elem) for elem in util.pop_list(obj, field) if elem
-                 and not (type in ACTOR_TYPES and elem.get('type') == 'PropertyValue')]
+                 and not (type in ACTOR_TYPES and isinstance(elem, dict)
+                          and elem.get('type') == 'PropertyValue')]
     if not plural and len(converted) == 1:
       return converted[0]
     return converted
@@ -840,7 +839,7 @@ def to_as1(obj, use_type=True, get_fn=None):
     'attachments': attachments,
     'image': as1_images,
     'inReplyTo': [to_as1(orig) for orig in util.get_list(obj, 'inReplyTo')],
-    'location': to_as1(obj.get('location')),
+    'location': all_to_as1('location'),
     'object': inner_objs,
     'preview': all_to_as1('preview'),
     'tags': tags_as1,
