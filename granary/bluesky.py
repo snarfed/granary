@@ -719,56 +719,12 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     ret = as1.trim_nulls(ret)
 
   elif type == 'event':
-    # https://activitystrea.ms/specs/json/schema/activity-schema.html#event
-    # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/calendar
-    content = obj.get('content') or ''
-    if as1.is_html(obj, 'content'):
-      content = html_to_text(content)
-
-    ret = {
-      '$type': 'community.lexicon.calendar.event',
-      'name': obj.get('displayName') or '',
-      'description': content or summary,
-      'createdAt': from_as1_datetime(obj.get('published')),
-      'uris': [{'uri': url} for url in as1.object_urls(obj)],
-    }
-    for as1_field, bsky_field in ('startTime', 'startsAt'), ('endTime', 'endsAt'):
-      if val := obj.get(as1_field):
-        ret[bsky_field] = from_as1_datetime(val)
-
-    locs = as1.get_objects(obj, 'location')
-    for loc in locs:
-      # emit every location type we can, since apps differ in which they show
-      converted = []
-      for loc_type in ('community.lexicon.location.address',
-                       'community.lexicon.location.geo'):
-        try:
-          converted.append(
-            from_as1({**loc, 'objectType': 'place'}, out_type=loc_type))
-        except ValueError:
-          pass
-
-      if not converted and (loc_url := as1.get_url(loc)):
-        converted = [{
-          '$type': 'community.lexicon.calendar.event#uri',
-          'name': loc.get('displayName'),
-          'uri': loc_url,
-        }]
-
-      if converted:
-        ret.setdefault('locations', []).extend(converted)
-      else:
-        logger.info(f"Dropping location without coordinates, address, or URL: {loc}")
-
-    # isOnline is Mobilizon's, passed through by as2.to_as1
-    online = obj.get('isOnline')
-    if mode := ('hybrid' if online and locs
-                else 'virtual' if online
-                else 'inperson' if locs
-                else None):
-      ret['mode'] = f'community.lexicon.calendar.event#{mode}'
-
-    ret = as1.trim_nulls(ret, ignore=('name',))
+    ret = _from_as1_event(obj, summary=summary)
+    if multiple:
+      rets = [ret, _from_as1_event_to_post(
+        obj, actor=actor, blobs=blobs, aspects=aspects, client=client,
+        original_fields_prefix=original_fields_prefix, raise_=raise_,
+        dynamic_sensitive_labels=dynamic_sensitive_labels, validate=validate)]
 
   elif type == 'question':
     # https://activitystrea.ms/specs/json/schema/activity-schema.html#question
@@ -1720,6 +1676,150 @@ def _from_as1_to_standard_document(obj, *, url, summary, content,
     doc['coverImage'] = imgs[0]['image']  # blob
 
   return doc
+
+
+def _from_as1_event(obj, *, summary):
+  """Converts an AS1 event to a ``community.lexicon.calendar.event`` record.
+
+  Helper for :func:`from_as1`.
+
+  Args:
+    obj (dict): AS1 event object
+    summary (str): ``obj``'s ``summary``, converted to plain text
+
+  Returns:
+    dict: ``community.lexicon.calendar.event`` record
+  """
+  # https://activitystrea.ms/specs/json/schema/activity-schema.html#event
+  # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/calendar
+  content = obj.get('content') or ''
+  if as1.is_html(obj, 'content'):
+    content = html_to_text(content)
+
+  ret = {
+    '$type': 'community.lexicon.calendar.event',
+    'name': obj.get('displayName') or '',
+    'description': content or summary,
+    'createdAt': from_as1_datetime(obj.get('published')),
+    'uris': [{'uri': url} for url in as1.object_urls(obj)],
+  }
+  for as1_field, bsky_field in ('startTime', 'startsAt'), ('endTime', 'endsAt'):
+    if val := obj.get(as1_field):
+      ret[bsky_field] = from_as1_datetime(val)
+
+  locs = as1.get_objects(obj, 'location')
+  for loc in locs:
+    # emit every location type we can, since apps differ in which they show
+    converted = []
+    for loc_type in ('community.lexicon.location.address',
+                     'community.lexicon.location.geo'):
+      try:
+        converted.append(
+          from_as1({**loc, 'objectType': 'place'}, out_type=loc_type))
+      except ValueError:
+        pass
+
+    if not converted and (loc_url := as1.get_url(loc)):
+      converted = [{
+        '$type': 'community.lexicon.calendar.event#uri',
+        'name': loc.get('displayName'),
+        'uri': loc_url,
+      }]
+
+    if converted:
+      ret.setdefault('locations', []).extend(converted)
+    else:
+      logger.info(f"Dropping location without coordinates, address, or URL: {loc}")
+
+  # isOnline is Mobilizon's, passed through by as2.to_as1
+  online = obj.get('isOnline')
+  if mode := ('hybrid' if online and locs
+              else 'virtual' if online
+              else 'inperson' if locs
+              else None):
+    ret['mode'] = f'community.lexicon.calendar.event#{mode}'
+
+  return as1.trim_nulls(ret, ignore=('name',))
+
+
+def _from_as1_event_to_post(obj, **kwargs):
+  """Generates an ``app.bsky.feed.post`` for an AS1 event.
+
+  The post's text has the event's name, time, and location(s). If the event has
+  a URL, the post has a link preview card to it with the event's description and
+  image.
+
+  Helper for :func:`from_as1`. See it for args.
+
+  Args:
+    obj (dict): AS1 event object
+    kwargs: passed through to :func:`_from_as1_post`
+
+  Returns:
+    dict: ``app.bsky.feed.post`` record, before validation and truncation
+  """
+  lines = [f"Event: {obj.get('displayName') or ''}"]
+
+  times = []
+  for field in 'startTime', 'endTime':
+    try:
+      if not (val := obj.get(field)):
+        break
+      times.append(util.parse_iso8601(val))
+    except (AttributeError, TypeError, ValueError):
+      break
+
+  if times:
+    start = times[0]
+    when = start.strftime('%Y-%m-%d %H:%M')
+    if len(times) == 2:
+      end = times[1]
+      if start.tzinfo and end.tzinfo:
+        end = end.astimezone(start.tzinfo)
+      when += ' – ' + end.strftime(
+        '%H:%M' if end.date() == start.date() else '%Y-%m-%d %H:%M')
+    # fixed offset time zones render as eg UTC+02:00
+    if tz := start.strftime('%Z'):
+      when += f' {tz}'
+    lines.append(f'📅 {when}')
+
+  for loc in as1.get_objects(obj, 'location'):
+    parts = [loc.get('displayName')]
+    address = loc.get('address') or {}
+    if isinstance(address, str):
+      parts.append(address)
+    else:
+      parts.extend([address.get(field) for field in
+                    ('streetAddress', 'locality', 'region', 'postalCode', 'country')])
+    parts = util.uniquify(util.trim_nulls(parts))
+    if where := ', '.join(parts) or as1.get_url(loc):
+      lines.append(f'📍 {where}')
+
+  header = '\n'.join(lines)
+
+  content = obj.get('content') or ''
+  if as1.is_html(obj, 'content'):
+    content = html_to_text(content)
+
+  # with a URL, use article mode: header is the post text (via summary), content
+  # goes in the link card. without one, use note mode, all text in content, and
+  # no summary, since notes render it as a content warning
+  if url := as1.get_url(obj):
+    summary = header
+    as_embed = True
+  else:
+    summary = ''
+    content = '\n\n'.join(filter(None, (header, content)))
+    as_embed = False
+
+  [post] = _from_as1_post({
+    **obj,
+    'objectType': 'note',
+    'content': content,
+    'content_is_html': False,
+  }, out_type=None, multiple=False, as_embed=as_embed, summary=summary, **kwargs)
+
+  return post
 
 
 def to_external_embed(obj, description=None, blobs=None):

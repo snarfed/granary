@@ -2804,6 +2804,81 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
+  def test_from_as1_event_multiple_post(self):
+    self.assert_equals([{
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'description': 'this event is gonna be great',
+      'createdAt': '2017-01-22T01:29:15.000Z',
+      'startsAt': '2017-07-13T00:30:00.000Z',
+      'endsAt': '2017-07-13T02:30:00.000Z',
+      'mode': 'community.lexicon.calendar.event#inperson',
+      'locations': [{
+        '$type': 'community.lexicon.location.address',
+        'name': 'the place',
+        'street': '123 Main St',
+        'locality': 'Springfield',
+        'country': 'US',
+      }, {
+        '$type': 'community.lexicon.location.geo',
+        'name': 'the place',
+        'latitude': '38.3004',
+        'longitude': '-76.50745',
+      }],
+      'uris': [{'uri': 'http://example.com/event-xyz'}],
+    }, {
+      '$type': 'app.bsky.feed.post',
+      'text': 'Event: XYZ\n📅 2017-07-12 17:30 – 19:30 UTC-07:00\n📍 the place, 123 Main St, Springfield, US',
+      'createdAt': '2017-01-22T01:29:15.000Z',
+      'embed': {
+        '$type': 'app.bsky.embed.external',
+        'external': {
+          '$type': 'app.bsky.embed.external#external',
+          'uri': 'http://example.com/event-xyz',
+          'title': 'XYZ',
+          'description': 'this event is gonna be great',
+          'thumb': BLOB,
+        },
+      },
+    }], from_as1({
+      'objectType': 'event',
+      'url': 'http://example.com/event-xyz',
+      'displayName': 'XYZ',
+      'summary': "it's happening!",
+      'content': '<p>this event is gonna be great</p>',
+      'image': NEW_BLOB_URL,
+      'published': '2017-01-22T01:29:15+00:00',
+      'startTime': '2017-07-12T17:30:00-07:00',
+      'endTime': '2017-07-12T19:30:00-07:00',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'the place',
+        'latitude': 38.3004,
+        'longitude': -76.50745,
+        'address': {
+          'streetAddress': '123 Main St',
+          'locality': 'Springfield',
+          'country': 'US',
+        },
+      },
+    }, multiple=True, blobs={NEW_BLOB_URL: BLOB}))
+
+  def test_from_as1_event_multiple_post_minimal(self):
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'text': 'Event: XYZ\n📅 2017-07-13 00:30 UTC\n📍 123 Main St, Springfield\n\nit will be great',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'content': 'it will be great',
+      'startTime': '2017-07-13T00:30:00Z',
+      'location': {
+        'objectType': 'place',
+        'address': '123 Main St, Springfield',
+      },
+    }, multiple=True)[1])
+
   def test_from_as1_event_minimal(self):
     self.assert_equals({
       '$type': 'community.lexicon.calendar.event',

@@ -353,7 +353,7 @@ Handle list-valued AS1 `objectType` everywhere, using its first element, includi
 * `bluesky`:
   * `from_as1`, `to_as1`:
     * Convert AS1 `place`s to/from [`community.lexicon.location.*`](https://tangled.org/lexicon.community/lexicons/tree/main/community/lexicon/location).
-    * Convert AS1 `event`s to/from [`community.lexicon.calendar.event`](https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/calendar/event.json), including locations.
+    * Convert AS1 `event`s to/from [`community.lexicon.calendar.event`](https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/calendar/event.json), including locations. With `multiple=True`, also generates an `app.bsky.feed.post` with the event's name, time, and location, and a link preview card to its web page.
     * Convert AS1 `rsvp-*` activities to/from [`community.lexicon.calendar.rsvp`](https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/calendar/rsvp.json).
     * Convert AS1 `question`s (ie polls) to/from [Blacksky](https://blacksky.community/)'s [`community.blacksky.assembly.conversation`](https://github.com/blacksky-algorithms/assembly.blacksky.community/blob/edge/lexicons/community/blacksky/assembly/conversation.json)/[`statement`](https://github.com/blacksky-algorithms/assembly.blacksky.community/blob/edge/lexicons/community/blacksky/assembly/statement.json) ([#174](https://github.com/snarfed/granary/issues/174)).
     * Convert AS1 objects to/from [Spark](https://sprk.so/) `so.sprk.*` records ([bridgy-fed#2736](https://github.com/snarfed/bridgy-fed/issues/2736)).
