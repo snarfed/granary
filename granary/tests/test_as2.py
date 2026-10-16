@@ -641,6 +641,31 @@ class ActivityStreams2Test(testutil.TestCase):
         },
       })
 
+  def test_to_as1_postal_address(self):
+    # Mobilizon
+    self.assert_equals({
+      'objectType': 'place',
+      'displayName': 'the place',
+      'address': {
+        'streetAddress': '123 Main St',
+        'locality': 'Springfield',
+        'region': 'OR',
+        'postalCode': '97477',
+        'country': 'US',
+      },
+    }, as2.to_as1({
+      'type': 'Place',
+      'name': 'the place',
+      'address': {
+        'type': 'PostalAddress',
+        'streetAddress': '123 Main St',
+        'addressLocality': 'Springfield',
+        'addressRegion': 'OR',
+        'postalCode': '97477',
+        'addressCountry': 'US',
+      },
+    }))
+
   def test_from_as1_position_to_lat_lon(self):
     self.assertEqual({
       '@context': as2.CONTEXT,

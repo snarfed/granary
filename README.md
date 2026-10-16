@@ -342,6 +342,7 @@ Handle list-valued AS1 `objectType` everywhere, using its first element, includi
     * Set quoted posts' `id`, not just `url`, so that `as1.quoted_posts` finds them.
     * Handle object-valued quote post fields.
     * Convert `Hashtag` type to `hashtag` `objectType`.
+    * Convert [schema.org `PostalAddress`](https://schema.org/PostalAddress) addresses, eg from Mobilizon, to AS1 `address` fields.
     * For quote posts, remove inline `RE: ...` fallback links from `content` based on the [`quote-inline` class](https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md), including Mastodon's leading `<p class="quote-inline">`, instead of just trailing `RE: [URL]` text.
   * `from_as1`, `render_content`: render HTML with Jinja templates in profile link `PropertyValue`s and quoted post `RE: ...` links. Only link `http` and `https` quoted post URLs ([#586](https://github.com/snarfed/granary/issues/586)).
 * `atom`:
