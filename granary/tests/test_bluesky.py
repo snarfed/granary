@@ -2877,6 +2877,41 @@ class BlueskyTest(testutil.TestCase):
           'object': 'at://did:al:ice/community.lexicon.calendar.event/123',
         }))
 
+  def test_from_as1_question(self):
+    question = {
+      'objectType': 'question',
+      'id': 'https://inst/poll',
+      'content': '<p>which is best?</p>',
+      'published': '2022-01-02T03:04:05+00:00',
+      'endTime': '2022-05-04T21:22:04Z',
+      'options': [{
+        'objectType': 'note',
+        'displayName': 'foo',
+        'replies': {'objectType': 'collection', 'totalItems': 3},
+      }, {
+        'objectType': 'note',
+        'displayName': 'bar',
+      }],
+    }
+    conversation = {
+      '$type': 'community.blacksky.assembly.conversation',
+      'topic': 'which is best?',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }
+    self.assert_equals(conversation, from_as1(question))
+
+    self.assert_equals([conversation, {
+      '$type': 'community.blacksky.assembly.statement',
+      'conversation': {'uri': '', 'cid': ''},
+      'text': 'foo',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, {
+      '$type': 'community.blacksky.assembly.statement',
+      'conversation': {'uri': '', 'cid': ''},
+      'text': 'bar',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }], from_as1(question, multiple=True))
+
   def test_from_as1_article_multiple(self):
     self.assert_equals([{
       '$type': 'app.bsky.feed.post',
@@ -5750,6 +5785,42 @@ class BlueskyTest(testutil.TestCase):
           'status': f'community.lexicon.calendar.rsvp#{status}',
         }, uri='at://did:bo:b/community.lexicon.calendar.rsvp/456',
            repo_did='did:bo:b'))
+
+  def test_to_as1_conversation(self):
+    self.assert_equals({
+      'objectType': 'question',
+      'id': 'at://did:al:ice/community.blacksky.assembly.conversation/123',
+      'author': 'did:al:ice',
+      'content': 'which is best?',
+      'summary': 'more about it',
+      'published': '2022-01-02T03:04:05.000Z',
+    }, to_as1({
+      '$type': 'community.blacksky.assembly.conversation',
+      'topic': 'which is best?',
+      'description': 'more about it',
+      'authRequired': True,
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, uri='at://did:al:ice/community.blacksky.assembly.conversation/123',
+       repo_did='did:al:ice'))
+
+  def test_to_as1_statement(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'at://did:bo:b/community.blacksky.assembly.statement/456',
+      'author': 'did:bo:b',
+      'content': 'foo is best',
+      'inReplyTo': 'at://did:al:ice/community.blacksky.assembly.conversation/123',
+      'published': '2022-01-02T03:04:05.000Z',
+    }, to_as1({
+      '$type': 'community.blacksky.assembly.statement',
+      'conversation': {
+        'uri': 'at://did:al:ice/community.blacksky.assembly.conversation/123',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      },
+      'text': 'foo is best',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, uri='at://did:bo:b/community.blacksky.assembly.statement/456',
+       repo_did='did:bo:b'))
 
   def test_to_as1_document(self):
     self.assert_equals({

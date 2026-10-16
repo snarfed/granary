@@ -143,6 +143,9 @@ FROM_AS1_TYPES = {
     'community.lexicon.location.geo',
     'community.lexicon.location.address',
   ),
+  'question': (
+    'community.blacksky.assembly.conversation',
+  ),
   'share': (
     'app.bsky.feed.repost',
     'so.sprk.feed.repost',
@@ -744,6 +747,32 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
           logger.info(f"Dropping location without coordinates, address with country, or URL: {loc}")
 
     ret = as1.trim_nulls(ret, ignore=('name',))
+
+  elif type == 'question':
+    # https://activitystrea.ms/specs/json/schema/activity-schema.html#question
+    # https://github.com/blacksky-algorithms/assembly.blacksky.community
+    content = obj.get('content') or ''
+    if as1.is_html(obj, 'content'):
+      content = html_to_text(content)
+
+    created_at = from_as1_datetime(obj.get('published'))
+    ret = as1.trim_nulls({
+      '$type': 'community.blacksky.assembly.conversation',
+      'topic': content or obj.get('displayName') or '',
+      'description': summary,
+      'createdAt': created_at,
+    }, ignore=('topic',))
+
+    # TODO: we don't know the conversation's rkey or CID yet, so the caller has to
+    # fill in the statements' conversation strongRef after creating it
+    if multiple:
+      rets = [ret] + [{
+        '$type': 'community.blacksky.assembly.statement',
+        'conversation': from_as1_to_strong_ref(obj, client=client,
+                                               validate=validate),
+        'text': option.get('displayName') or option.get('content') or '',
+        'createdAt': created_at,
+      } for option in as1.get_objects(obj, 'options')]
 
   elif type == 'collection':
       ret = {
@@ -2098,6 +2127,27 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
         }
       else:
         ret['location'] = to_as1(loc)
+
+  elif type == 'community.blacksky.assembly.conversation':
+    # https://github.com/blacksky-algorithms/assembly.blacksky.community
+    ret = {
+      'objectType': 'question',
+      'id': uri,
+      'author': repo_did,
+      'content': obj.get('topic'),
+      'summary': obj.get('description'),
+      'published': obj.get('createdAt'),
+    }
+
+  elif type == 'community.blacksky.assembly.statement':
+    ret = {
+      'objectType': 'note',
+      'id': uri,
+      'author': repo_did,
+      'content': obj.get('text'),
+      'inReplyTo': obj.get('conversation', {}).get('uri'),
+      'published': obj.get('createdAt'),
+    }
 
   elif type == 'site.standard.document':
     ret = {
