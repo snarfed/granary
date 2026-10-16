@@ -734,17 +734,26 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         ret[bsky_field] = from_as1_datetime(val)
 
     if loc := as1.get_object(obj, 'location'):
-      try:
-        ret['locations'] = [from_as1({**loc, 'objectType': 'place'})]
-      except ValueError:
-        if loc_url := as1.get_url(loc):
-          ret['locations'] = [{
-            '$type': 'community.lexicon.calendar.event#uri',
-            'name': loc.get('displayName'),
-            'uri': loc_url,
-          }]
-        else:
-          logger.info(f"Dropping location without coordinates, address with country, or URL: {loc}")
+      # emit every location type we can, since apps differ in which they show
+      locations = []
+      for loc_type in ('community.lexicon.location.address',
+                       'community.lexicon.location.geo'):
+        try:
+          locations.append(
+            from_as1({**loc, 'objectType': 'place'}, out_type=loc_type))
+        except ValueError:
+          pass
+
+      if locations:
+        ret['locations'] = locations
+      elif loc_url := as1.get_url(loc):
+        ret['locations'] = [{
+          '$type': 'community.lexicon.calendar.event#uri',
+          'name': loc.get('displayName'),
+          'uri': loc_url,
+        }]
+      else:
+        logger.info(f"Dropping location without coordinates, address with country, or URL: {loc}")
 
     # isOnline is Mobilizon's, passed through by as2.to_as1
     online = obj.get('isOnline')

@@ -2823,6 +2823,38 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
+  def test_from_as1_event_address_and_geo_locations(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'mode': 'community.lexicon.calendar.event#inperson',
+      'locations': [{
+        '$type': 'community.lexicon.location.address',
+        'name': 'the place',
+        'locality': 'Springfield',
+        'country': 'US',
+      }, {
+        '$type': 'community.lexicon.location.geo',
+        'name': 'the place',
+        'latitude': '38.3004',
+        'longitude': '-76.50745',
+      }],
+    }, from_as1({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'location': {
+        'objectType': 'place',
+        'displayName': 'the place',
+        'latitude': 38.3004,
+        'longitude': -76.50745,
+        'address': {
+          'locality': 'Springfield',
+          'country': 'US',
+        },
+      },
+    }))
+
   def test_from_as1_event_url_location(self):
     self.assert_equals({
       '$type': 'community.lexicon.calendar.event',
