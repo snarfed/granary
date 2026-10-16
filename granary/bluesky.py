@@ -746,6 +746,14 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         else:
           logger.info(f"Dropping location without coordinates, address with country, or URL: {loc}")
 
+    # isOnline is Mobilizon's, passed through by as2.to_as1
+    online = obj.get('isOnline')
+    if mode := ('hybrid' if online and loc
+                else 'virtual' if online
+                else 'inperson' if loc
+                else None):
+      ret['mode'] = f'community.lexicon.calendar.event#{mode}'
+
     ret = as1.trim_nulls(ret, ignore=('name',))
 
   elif type == 'question':

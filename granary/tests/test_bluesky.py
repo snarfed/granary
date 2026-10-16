@@ -2750,6 +2750,7 @@ class BlueskyTest(testutil.TestCase):
       'createdAt': '2017-01-22T01:29:15.000Z',
       'startsAt': '2017-07-13T00:30:00.000Z',
       'endsAt': '2017-07-13T02:30:00.000Z',
+      'mode': 'community.lexicon.calendar.event#inperson',
       'locations': [{
         '$type': 'community.lexicon.location.geo',
         'name': 'the place',
@@ -2795,6 +2796,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'community.lexicon.calendar.event',
       'name': 'XYZ',
       'createdAt': '2022-01-02T03:04:05.000Z',
+      'mode': 'community.lexicon.calendar.event#inperson',
       'locations': [{
         '$type': 'community.lexicon.location.address',
         'name': 'the place',
@@ -2826,6 +2828,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'community.lexicon.calendar.event',
       'name': 'XYZ',
       'createdAt': '2022-01-02T03:04:05.000Z',
+      'mode': 'community.lexicon.calendar.event#inperson',
       'locations': [{
         '$type': 'community.lexicon.calendar.event#uri',
         'name': 'the place',
@@ -2847,12 +2850,47 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'community.lexicon.calendar.event',
       'name': 'XYZ',
       'createdAt': '2022-01-02T03:04:05.000Z',
+      'mode': 'community.lexicon.calendar.event#inperson',
     }, from_as1({
       'objectType': 'event',
       'displayName': 'XYZ',
       'location': {
         'objectType': 'place',
         'displayName': 'the place',
+      },
+    }))
+
+  def test_from_as1_event_online(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'mode': 'community.lexicon.calendar.event#virtual',
+    }, from_as1({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'isOnline': True,
+    }))
+
+  def test_from_as1_event_online_with_location(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'mode': 'community.lexicon.calendar.event#hybrid',
+      'locations': [{
+        '$type': 'community.lexicon.location.geo',
+        'latitude': '38.3004',
+        'longitude': '-76.50745',
+      }],
+    }, from_as1({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'isOnline': True,
+      'location': {
+        'objectType': 'place',
+        'latitude': 38.3004,
+        'longitude': -76.50745,
       },
     }))
 
