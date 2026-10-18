@@ -293,14 +293,20 @@ Here are the commands we currently use to copy and compile them:
 
 .. code:: sh
 
-   cd ~/src/granary
-   source local/bin/activate.csh
-   python -m pip install grpcio-tools
+   cd ~/src/granary/granary/proto/farcaster
+   cp -f ~/src/snapchain/proto/definitions/{rpc,blocks,hub_event,message,onchain_event,request_response,username_proof}.proto .
 
-   cd granary/proto/farcaster
-   cp ~/src/snapchain/src/proto/{rpc,blocks,hub_event,message,onchain_event,request_response,username_proof}.proto .
+   # use a separate venv since we need to generate code with Python and grpc* at the
+   # lowest versions we support in pyproject.toml, eg 3.9 and 1.56.0, for compatibility
+   cd /tmp/
+   uv venv
+   source .venv/bin/activate.csh
+   uv pip install --no-sources --resolution=lowest-direct ~/src/granary'[app,tests]'
+   uv pip install grpcio-tools
 
    cd ../../generated/farcaster
+   source /tmp/.venv/bin/activate.csh
+   uv pip install 'setuptools<=81.0.0'
    python -m grpc_tools.protoc -I ../../proto/farcaster --python_out=. --pyi_out=. --grpc_python_out=. ../../proto/farcaster/*.proto
 
    # post-process the generated code to make the imports package-relative
@@ -319,7 +325,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     ``sh  git checkout main  git pull``
 
 2.  Run the unit tests.
-    ``sh  source .venv/bin/activate.csh gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null & sleep 5 python -m unittest discover kill %1``
+    ``sh  source .venv/bin/activate.csh  gcloud emulators firestore start --host-port=:8089 --database-mode=datastore-mode < /dev/null >& /dev/null &  sleep 5  python -m unittest discover  python -m unittest granary/tests/hypothesis/*.py  kill %1``
 
 3.  Bump the version number in ``pyproject.toml`` and ``docs/conf.py``.
     ``git grep`` the old version number to make sure it only appears in
@@ -342,40 +348,24 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     ``sh  uv build  twine upload -r pypitest dist/granary-$ver.tar.gz dist/granary-$ver-py3-none-any.whl``
 
 7.  Install from test.pypi.org.
-    ``sh  cd /tmp  python -m venv .venv  source .venv/bin/activate.csh pip uninstall granary # make sure we force Pip to use the uploaded version pip install mf2py==1.1.2 pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver``
+    ``sh  cd /tmp  rm -rf .venv  python -m venv .venv  source .venv/bin/activate.csh  pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver``
 
 8.  Smoke test that the code trivially loads and runs.
+    ``sh  python  # run test code below`` Test code to paste into the
+    interpreter: \`py import json from granary import github
+    github.\__file\_\_ # check that it’s in the virtualenv
 
-    .. code:: sh
+    g = github.GitHub(‘XXX’) # insert a GitHub personal OAuth access
+    token a = g.get_activities() print(json.dumps(a, indent=2))
 
-       python
-       # run test code below
-
-    Test code to paste into the interpreter:
-
-    .. code:: py
-
-       import json
-       from granary import github
-       github.__file__  # check that it's in the virtualenv
-
-       g = github.GitHub('XXX')  # insert a GitHub personal OAuth access token
-       a = g.get_activities()
-       print(json.dumps(a, indent=2))
-
-       from granary import atom
-       print(atom.activities_to_atom(a, {}))
+    from granary import atom print(atom.activities_to_atom(a, {})) \``\`
 
 9.  Tag the release in git. In the tag message editor, delete the
     generated comments at bottom, leave the first line blank (to omit
     the release “title” in github), put ``### Notable changes`` on the
     second line, then copy and paste this version’s changelog contents
     below it.
-
-    .. code:: sh
-
-       git tag -a v$ver --cleanup=verbatim
-       git push && git push --tags
+    ``sh  git tag -a v$ver --cleanup=verbatim  git push && git push --tags``
 
 10. `Click here to draft a new release on
     GitHub. <https://github.com/snarfed/granary/releases/new>`__ Enter
@@ -384,10 +374,7 @@ too <https://github.com/snarfed/oauth-dropins#release-instructions>`__.)
     description text box.
 
 11. Upload to `pypi.org <https://pypi.org/>`__!
-
-    .. code:: sh
-
-       twine upload dist/granary-$ver.tar.gz dist/granary-$ver-py3-none-any.whl
+    ``sh  twine upload dist/granary-$ver.tar.gz dist/granary-$ver-py3-none-any.whl``
 
 12. `Build the docs on Read the
     Docs <https://readthedocs.org/projects/granary/builds/>`__: first
@@ -456,6 +443,281 @@ Facebook and Twitter’s raw HTML.
 
 Changelog
 ---------
+
+12.0 - unreleased
+~~~~~~~~~~~~~~~~~
+
+*Breaking changes:*
+
+- ``microformats2``:
+
+  - Remove ``author_display_name``, ``img``, and ``maybe_linked_name``.
+  - Only link ``http`` and ``https`` URLs in ``href``\ s and ``src``\ s.
+    Other URLs, eg ``javascript:`` and ``nostr:``, are rendered as plain
+    text or omitted.
+  - ``object_to_html``, ``json_to_html``, ``activities_to_html``,
+    ``hcard_to_html``: add new ``sanitize`` kwarg, default True, for
+    sanitizing HTML values, eg ``content`` and ``summary``, with
+    `nh3 <https://nh3.readthedocs.io/>`__.
+
+*Non-breaking changes:*
+
+Add new ``micropub.Micropub`` source class that implements the
+`Micropub <https://micropub.spec.indieweb.org/>`__ API.
+
+Handle list-valued AS1 ``objectType`` everywhere, using its first
+element, including in ``as1.object_type``.
+
+- ``as1``:
+
+  - Add new ``snippet`` function that generates a short, human-readable,
+    plain text summary of an object or activity, eg
+    ``replied to http://x: hello`` or ``followed http://x``
+    (`#450 <https://github.com/snarfed/granary/issues/450>`__).
+  - ``get_rsvps_from_event``: handle when actor is compacted string id.
+  - ``quoted_posts``: fall back to quoted posts’ ``url`` when they have
+    no ``id``.
+  - Rename ``is_content_html`` to ``is_html``, and add a required
+    ``field`` argument so that it can check fields other than
+    ``content``, eg ``summary``
+    (`bridgy-fed#2675 <https://github.com/snarfed/bridgy-fed/issues/2675>`__).
+    ``is_content_html`` is kept for backward compatibility, and
+    deprecated.
+
+- ``as2``:
+
+  - Add new ``maybe_hydrate_collection`` function that hydrates a
+    collection field in place inside an object.
+  - ``from_as1``: keep ``contentMap`` even when all of its values are
+    empty, so that objects with no content don’t lose their languages.
+  - ``from_as1``: add `FEP-044f’s
+    ``quote <https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md>`__
+    field to quote posts, along with the existing ``_misskey_quote`` and
+    ``quoteUrl``
+    (`bridgy-fed#1956 <https://github.com/snarfed/bridgy-fed/issues/1956>`__).
+  - ``from_as1``: convert places’ ISO 6709 ``position`` to ``latitude``
+    and ``longitude``.
+  - ``from_as1``, ``to_as1``: preserve multiply-valued AS1
+    ``objectType`` to/from AS2 ``type``. Unknown types are dropped.
+    ``verb`` is still singly valued.
+  - ``from_as1``, ``to_as1``: handle list-valued ``location``.
+  - ``to_as1``:
+
+    - Improve ``featured`` collection (ie pinned post) fetching
+      (`bridgy-fed#2302 <https://github.com/snarfed/bridgy-fed/issues/2302>`__).
+    - Fix bug where ``Audio``/``Video`` objects with a tag-based media
+      link lost their top-level ``duration``, ``size``, and ``url``
+      fields.
+    - Handle `FEP-044f’s
+      ``quote <https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md>`__
+      and `Fedibird’s ``quoteUri <http://fedibird.com/ns#quoteUri>`__
+      quoted post fields, along with the existing ``_misskey_quote`` and
+      ``quoteUrl``.
+    - Set quoted posts’ ``id``, not just ``url``, so that
+      ``as1.quoted_posts`` finds them.
+    - Handle object-valued quote post fields.
+    - Convert ``Hashtag`` type to ``hashtag`` ``objectType``.
+    - Convert `schema.org
+      ``PostalAddress <https://schema.org/PostalAddress>`__ addresses,
+      eg from Mobilizon, to AS1 ``address`` fields.
+    - For quote posts, remove inline ``RE: ...`` fallback links from
+      ``content`` based on the `quote-inline``
+      class <https://codeberg.org/fediverse/fep/src/branch/main/fep/044f/fep-044f.md>`__,
+      including Mastodon’s leading ``<p class="quote-inline">``, instead
+      of just trailing ``RE: [URL]`` text.
+
+  - ``from_as1``, ``render_content``: render HTML with Jinja templates
+    in profile link ``PropertyValue``\ s and quoted post ``RE: ...``
+    links. Only link ``http`` and ``https`` quoted post URLs
+    (`#586 <https://github.com/snarfed/granary/issues/586>`__).
+
+- ``atom``:
+
+  - ``to_as1``: read ``<link rel=self>``\ ’s ``href``, not text value.
+  - ``to_as1``: convert
+    `<category> <https://datatracker.ietf.org/doc/html/rfc4287#section-4.2.2>`__
+    elements to hashtag tags, using ``label`` if it’s provided,
+    otherwise ``term``.
+  - ``from_as1``: fix XSS: escape ``]]>`` in content so that it can’t
+    end the ``<content>`` CDATA section early and inject XML elements,
+    eg ``<script>``.
+
+- ``bluesky``:
+
+  - ``from_as1``, ``to_as1``:
+
+    - Convert AS1 ``place``\ s to/from
+      `community.lexicon.location.* <https://tangled.org/lexicon.community/lexicons/tree/main/community/lexicon/location>`__.
+    - Convert AS1 ``event``\ s to/from
+      `community.lexicon.calendar.event <https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/calendar/event.json>`__,
+      including locations. With ``multiple=True``, also generates an
+      ``app.bsky.feed.post`` with the event’s name, time, and location,
+      and a link preview card to its web page.
+    - Convert AS1 ``rsvp-*`` activities to/from
+      `community.lexicon.calendar.rsvp <https://tangled.org/lexicon.community/lexicons/blob/main/community/lexicon/calendar/rsvp.json>`__.
+    - Convert AS1 ``question``\ s (ie polls) to/from
+      `Blacksky <https://blacksky.community/>`__\ ’s
+      `community.blacksky.assembly.conversation <https://github.com/blacksky-algorithms/assembly.blacksky.community/blob/edge/lexicons/community/blacksky/assembly/conversation.json>`__/```statement`` <https://github.com/blacksky-algorithms/assembly.blacksky.community/blob/edge/lexicons/community/blacksky/assembly/statement.json>`__
+      (`#174 <https://github.com/snarfed/granary/issues/174>`__).
+    - Convert AS1 objects to/from `Spark <https://sprk.so/>`__
+      ``so.sprk.*`` records
+      (`bridgy-fed#2736 <https://github.com/snarfed/bridgy-fed/issues/2736>`__).
+    - Convert AS1 objects to/from `Grain <https://grain.social/>`__
+      ``social.grain.*`` records
+      (`bridgy-fed#2739 <https://github.com/snarfed/bridgy-fed/issues/2739>`__).
+
+  - ``web_url_to_at_uri``, ``at_uri_to_web_url``: add support for
+    ``grain.social`` and ``sprk.so`` profile and post URLs.
+  - ``from_as1``:
+
+    - Add ``validate`` kwarg to allow generating invalid records, eg
+      replies to, likes of, and reposts of non-Bluesky objects.
+    - Populate image and video ``aspectRatio`` from AS1 ``width`` and
+      ``height`` if they’re not in ``aspects``.
+    - Fix bug where converting a post with more than four images to
+      ``app.bsky.embed.gallery`` failed validation due to missing
+      ``aspectRatio`` field.
+    - Fix bug with quote posts with attached media and
+      ``postView``/``feedViewPost`` output.
+    - Handle blank ``published``/``updated`` values, eg whitespace.
+
+  - ``to_as1``:
+
+    - Handle invalid replies, likes, and reposts of non-Bluesky objects,
+      ie with non-``at://`` URIs in their strong refs.
+    - For videos, add ``image``, falling back to the `Bluesky video
+      CDN <https://video.bsky.app/>`__\ ’s thumbnail URL.
+    - Keep language keys in ``contentMap`` even if their value is empty.
+    - For profiles, convert newlines and line-leading spaces in
+      ``description`` to HTML in ``summary``
+      (`bridgy-fed#2675 <https://github.com/snarfed/bridgy-fed/issues/2675>`__).
+
+  - ``url_to_did_web``:
+
+    - Strip trailing dots from fully qualified hostnames. They
+      previously produced ``did:web:``\ s that ``did_web_to_url``
+      rejected as invalid.
+    - Don’t log a spurious “contained a port” warning for URLs with
+      upper case hostnames.
+
+  - ``Bluesky``:
+
+    - ``create``/``preview_create``: add support for blocks.
+    - ``create``/``preview_create``: allow posts with videos but no
+      text.
+    - ``create``, ``upload_media``: add ``blobs`` kwarg for images and
+      videos that have already been uploaded.
+    - ``create``: upload images in ``article``, ``link``, and ``note``
+      attachments as thumbnails in their external embeds (link
+      previews).
+      (`#1195 <https://github.com/snarfed/granary/issues/1195>`__)
+    - ``upload_media``: add ``max_size`` kwarg.
+    - ``create``, ``update``: add ``validate`` kwarg. If False, allows
+      replies to, likes of, reposts of, follows of, and blocks of
+      non-Bluesky objects and users, and passes ``validate: false`` to
+      ``createRecord``/``putRecord``.
+    - Add ``update``/``preview_update``.
+
+- ``farcaster``:
+
+  - ``from_as1``/``to_as1``: update timestamps to use `Farcaster’s
+    custom
+    epoch <https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps>`__,
+    2026-01-01.
+  - ``from_as1``:
+
+    - Add ``username`` kwarg to override the username in the input AS1
+      actor.
+    - For actors, set ``USER_DATA_ADD`` message timestamps to now, not
+      ``published``, since these represent the current profile state,
+      not when the actor was originally created.
+    - Strip @-mention text out of output cast text.
+
+  - ``to_as1``:
+
+    - More heuristics for detecting image and video embeds, eg
+      Cloudflare Images CDN URLs and HLS/DASH streaming manifests
+      (``.m3u8``, ``.mpd``).
+    - Add mentions to ``content`` as plain text ``@``-mentions.
+    - Add ``client`` kwarg, a ``Farcaster`` instance, used to resolve
+      mentioned users’ usernames. If it’s not provided, mentions use
+      their numeric FIDs.
+
+  - ``Farcaster`` constructor: add ``log_requests_responses`` kwarg.
+
+- ``mastodon``:
+
+  - Add ``from_as1``, which converts an AS1 actor or post to a Mastodon
+    API ``Account`` or ``Status``.
+
+- ``microformats2``:
+
+  - Convert location addresses between AS1 ``address`` and mf2
+    ``street-address``, ``locality``, ``region``, ``postal-code``, and
+    ``country-name``.
+  - Normalize ``start``/``startTime`` and ``end``/``endTime`` to ISO
+    8601, like ``published`` and ``updated``.
+  - ``from_as1``:
+
+    - Bug fix for precedence of attachments’ ``stream``\ s.
+    - If ``summary`` is HTML, convert it to
+      ``{'html': ..., 'value': ...}``, and render it as ``e-summary``.
+
+  - ``hfeed_to_as1``, ``html_hfeed_to_as1``: add ``implied`` kwarg,
+    default True. If False, don’t treat top-level items as an `implied
+    h-feed <https://indieweb.org/h-feed#Implied_h-feed>`__ when there’s
+    no ``h-feed``.
+  - ``to_as1``:
+
+    - Convert plain text and ``h-adr`` ``location``\ s. Previously they
+      were dropped.
+    - Convert ``p-rsvp`` ``interested`` to ``rsvp-maybe``, since AS1
+      doesn’t have ``rsvp-interested``.
+    - Normalize ``p-rsvp`` values to lower case.
+    - ``h-event``:
+
+      - If ``end`` is missing, populate ``endTime`` based on ``start``
+        and ``duration``.
+      - If ``content`` is missing, fall back to ``description``.
+
+  - ``object_to_html``, ``json_to_html``: link ``dt-published`` to the
+    post’s URL. If the post has no name, this link is now its ``u-url``,
+    instead of a separate link with the URL as text.
+  - Render HTML with Jinja templates instead of Python strings. Only mf2
+    ``{'html': ...}`` values and AS1 ``content`` are rendered as raw
+    HTML. (`#586 <https://github.com/snarfed/granary/issues/586>`__)
+  - Whitespace in rendered HTML has changed.
+
+- ``nostr``:
+
+  - ``bech32_decode``: return the input unchanged, as documented,
+    instead of raising ``AssertionError`` or ``ValueError``, when the
+    input has a valid checksum but malformed TLV contents.
+  - ``from_as1``:
+
+    - Handle converting repost/share when inner object has more fields
+      than just ``id``.
+    - Support repost of object without author.
+
+  - ``Nostr.create``: fix bug where the final signed event’s ``id`` and
+    ``sig`` didn’t match its final ``content``.
+
+- ``rss``:
+
+  - ``from_as1``: don’t read image enclosure length from object’s
+    ``length`` field.
+
+- ``source``:
+
+  - Add new ``whitespace_to_html`` function that HTML-escapes plain
+    text, converts newlines to ``<br>``, and converts line-leading
+    spaces to ``&nbsp;``
+    (`bridgy-fed#2675 <https://github.com/snarfed/bridgy-fed/issues/2675>`__).
+  - ``Source``: add ``update``/``preview_update`` methods, for updating
+    existing objects.
+  - ``Source.create``, ``Source.update``: add ``validate`` kwarg. If
+    False, subclasses may create objects that aren’t valid in their
+    native protocol.
 
 11.0 - 2026-07-02
 ~~~~~~~~~~~~~~~~~

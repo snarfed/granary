@@ -254,7 +254,7 @@ Here's how to package, test, and ship a new release. (Note that this is [largely
     rm -rf .venv
     python -m venv .venv
     source .venv/bin/activate.csh
-    pip install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
+    'pip' install -i https://test.pypi.org/simple --extra-index-url https://pypi.org/simple granary==$ver
    ```
 1. Smoke test that the code trivially loads and runs.
     ```sh
@@ -309,7 +309,7 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 12.0 - unreleased
+### 12.0 - 2026-10-18
 
 _Breaking changes:_
 
