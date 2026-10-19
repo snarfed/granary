@@ -1744,7 +1744,8 @@ def _from_as1_event(obj, *, summary, blobs, aspects):
   # media isn't in the lexicon yet, but Smoke Signal, atmo.rsvp, etc use it
   # https://discourse.atmosphere.community/t/kicking-off-a-dedicated-space-for-discussion-for-calendar-events-rsvp/684/5
   for img in as1.get_objects(obj, 'image'):
-    if blob := blobs.get(util.get_url(img)):
+    url = util.get_url(img)
+    if blob := blobs.get(url):
       media = {
         'role': 'header' if as1.object_type(img) == 'featured' else 'thumbnail',
         'content': blob,
