@@ -719,7 +719,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     ret = as1.trim_nulls(ret)
 
   elif type == 'event':
-    ret = _from_as1_event(obj, summary=summary)
+    ret = _from_as1_event(obj, summary=summary, blobs=blobs, aspects=aspects)
     if multiple:
       rets = [ret, _from_as1_event_to_post(
         obj, actor=actor, blobs=blobs, aspects=aspects, client=client,
@@ -1678,7 +1678,7 @@ def _from_as1_to_standard_document(obj, *, url, summary, content,
   return doc
 
 
-def _from_as1_event(obj, *, summary):
+def _from_as1_event(obj, *, summary, blobs, aspects):
   """Converts an AS1 event to a ``community.lexicon.calendar.event`` record.
 
   Helper for :func:`from_as1`.
@@ -1686,6 +1686,8 @@ def _from_as1_event(obj, *, summary):
   Args:
     obj (dict): AS1 event object
     summary (str): ``obj``'s ``summary``, converted to plain text
+    blobs (dict): see :func:`from_as1`
+    aspects (dict): see :func:`from_as1`
 
   Returns:
     dict: ``community.lexicon.calendar.event`` record
@@ -1738,6 +1740,19 @@ def _from_as1_event(obj, *, summary):
               else 'inperson' if locs
               else None):
     ret['mode'] = f'community.lexicon.calendar.event#{mode}'
+
+  # media isn't in the lexicon yet, but Smoke Signal, atmo.rsvp, etc use it
+  # https://discourse.atmosphere.community/t/kicking-off-a-dedicated-space-for-discussion-for-calendar-events-rsvp/684/5
+  for img in as1.get_objects(obj, 'image'):
+    if blob := blobs.get(util.get_url(img)):
+      media = {
+        'role': 'header' if as1.object_type(img) == 'featured' else 'thumbnail',
+        'content': blob,
+        'alt': img.get('displayName'),
+      }
+      if aspect := aspects.get(url) or as1.aspect_ratio(img):
+        media['aspect_ratio'] = {'width': aspect[0], 'height': aspect[1]}
+      ret.setdefault('media', []).append(media)
 
   return as1.trim_nulls(ret, ignore=('name',))
 
@@ -2249,6 +2264,19 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       else:
         locs.append(to_as1(loc))
     ret['location'] = locs[0] if len(locs) == 1 else locs
+
+    # media isn't in the lexicon yet, but Smoke Signal, atmo.rsvp, etc use it
+    # https://discourse.atmosphere.community/t/kicking-off-a-dedicated-space-for-discussion-for-calendar-events-rsvp/684/5
+    if repo_did and pds:
+      ret['image'] = []
+      for media in obj.get('media', []):
+        if content := media.get('content'):
+          ret['image'].append({
+            'objectType': 'featured' if media.get('role') == 'header' else None,
+            'url': blob_to_url(blob=content, repo_did=repo_did, pds=pds),
+            'displayName': media.get('alt'),
+            **media.get('aspect_ratio', {}),
+          })
 
   elif type == 'community.blacksky.assembly.conversation':
     # https://github.com/blacksky-algorithms/assembly.blacksky.community

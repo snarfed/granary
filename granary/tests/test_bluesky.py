@@ -3053,6 +3053,34 @@ class BlueskyTest(testutil.TestCase):
       },
     }))
 
+  def test_from_as1_event_media(self):
+    self.assert_equals({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'media': [{
+        'role': 'thumbnail',
+        'content': NEW_BLOB,
+        'alt': 'a thumb',
+        'aspect_ratio': {'width': 800, 'height': 600},
+      }, {
+        'role': 'header',
+        'content': BLOB,
+      }],
+    }, from_as1({
+      'objectType': 'event',
+      'displayName': 'XYZ',
+      'image': [{
+        'url': NEW_BLOB_URL,
+        'displayName': 'a thumb',
+        'width': 800,
+        'height': 600,
+      }, {
+        'objectType': 'featured',
+        'url': 'http://pic/header',
+      }, 'http://pic/no-blob'],
+    }, blobs={NEW_BLOB_URL: NEW_BLOB, 'http://pic/header': BLOB}))
+
   def test_from_as1_rsvp(self):
     for verb, status in (
         ('rsvp-yes', 'going'),
@@ -5962,6 +5990,36 @@ class BlueskyTest(testutil.TestCase):
         'uri': 'http://the/place',
       }],
     }))
+
+  def test_to_as1_event_media(self):
+    self.assert_equals({
+      'objectType': 'event',
+      'author': 'did:plc:foo',
+      'displayName': 'XYZ',
+      'image': [{
+        'url': NEW_BLOB_URL,
+        'displayName': 'a thumb',
+        'width': 800,
+        'height': 600,
+      }, {
+        'objectType': 'featured',
+        'url': OLD_BLOB_URL,
+      }],
+    }, to_as1({
+      '$type': 'community.lexicon.calendar.event',
+      'name': 'XYZ',
+      'media': [{
+        'role': 'thumbnail',
+        'content': NEW_BLOB,
+        'alt': 'a thumb',
+        'aspect_ratio': {'width': 800, 'height': 600},
+      }, {
+        'role': 'header',
+        'content': OLD_BLOB,
+      }, {
+        'role': 'thumbnail',
+      }],
+    }, repo_did='did:plc:foo'))
 
   def test_to_as1_rsvp(self):
     for status, verb in (

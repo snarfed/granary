@@ -309,6 +309,11 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
+### 12.1 - unreleased
+
+* `bluesky`:
+  * `from_as1`, `to_as1`: convert AS1 event `image`s to/from the non-standard `media` field in `community.lexicon.calendar.event` records that Smoke Signal, atmo.rsvp, and others use. `featured` images map to the `header` role, others to `thumbnail`.
+
 ### 12.0 - 2026-10-18
 
 _Breaking changes:_
