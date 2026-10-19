@@ -15,6 +15,7 @@ import string
 import urllib.parse
 from urllib.parse import urlparse, urlunparse
 
+from arroba.did import resolve_handle
 from bs4 import BeautifulSoup
 from io import BytesIO
 from lexrpc import Client
@@ -554,7 +555,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       ``verb`` fields are missing or unsupported
   """
   if isinstance(client, Bluesky):
-    client = client._client
+    client = client.client
 
   activity = obj
   inner_obj = as1.get_object(activity)
@@ -2749,15 +2750,13 @@ class Bluesky(Source):
 
     self.handle = handle
     self.did = did
+    self._pds_url = pds_url
+    self._access_token = access_token
+    self._refresh_token = refresh_token
     self._app_password = app_password
-
-    headers = {'User-Agent': util.user_agent}
-    self._client = Client(pds_url, access_token=access_token,
-                          refresh_token=refresh_token, auth=auth, headers=headers,
-                          session_callback=session_callback, validate=True,
-                          requests_session=util.session, **requests_kwargs)
-    self._appview = Client(DEFAULT_APPVIEW, headers=headers, validate=True,
-                           requests_session=util.session, **requests_kwargs)
+    self._auth = auth
+    self._session_callback = session_callback
+    self._requests_kwargs = requests_kwargs
 
   @classmethod
   def from_auth(cls, auth_entity, client_metadata=None, **kwargs):
@@ -2798,6 +2797,24 @@ class Bluesky(Source):
 
   @property
   def client(self):
+    if not self._client:
+      # initialize
+      if not self._pds_url:
+        if self.handle and not self.did:
+          self.did = resolve_handle(self.handle, get_fn=util.session.get)
+        if self.did:
+          self._pds_url = oauth_bluesky.pds_for_did(self.did)
+
+
+      headers = {'User-Agent': util.user_agent}
+      self._client = Client(self._pds_url, access_token=self._access_token,
+                            refresh_token=self._refresh_token, auth=self._auth,
+                            headers=headers, session_callback=self._session_callback,
+                            validate=True, requests_session=util.session,
+                            **self._requests_kwargs)
+      self._appview = Client(DEFAULT_APPVIEW, headers=headers, validate=True,
+                             requests_session=util.session, **self._requests_kwargs)
+
     if not self._client.session and self._app_password:
       # log in
       resp = self._client.com.atproto.server.createSession({
@@ -2808,6 +2825,11 @@ class Bluesky(Source):
       self.did = resp['did']
 
     return self._client
+
+  @property
+  def appview(self):
+    self.client  # generate _appview
+    return self._appview
 
   @classmethod
   def user_url(cls, handle):
@@ -3156,8 +3178,8 @@ class Bluesky(Source):
 
     while True:
       max = LEXRPC.defs[method]['parameters']['properties']['limit']['maximum']
-      resp = self._appview.call(method, {}, actor=(user_id or self.did),
-                                cursor=cursor, limit=max)
+      resp = self.appview.call(method, {}, actor=(user_id or self.did),
+                               cursor=cursor, limit=max)
       follows.extend(self.to_as1_actor(f, type='app.bsky.actor.defs#profileView')
                      for f in (resp.get('follows') or resp.get('followers') or []))
       cursor = resp.get('cursor')

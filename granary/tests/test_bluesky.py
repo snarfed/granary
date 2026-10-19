@@ -9,6 +9,8 @@ from unittest import skip
 from unittest.mock import ANY, MagicMock, patch
 from urllib.parse import urljoin
 
+import arroba.did
+from dns.exception import DNSException
 from lexrpc.base import AT_URI_RE
 from multiformats import CID
 from oauth_dropins.bluesky import BlueskyAuth
@@ -699,7 +701,21 @@ class BlueskyTest(testutil.TestCase):
 
   def setUp(self):
     super().setUp()
-    self.bs = Bluesky(handle='handull', did='did:dy:d', access_token='towkin')
+
+    # arroba env vars
+    os.environ.update({
+      'APPVIEW_HOST': 'appview.local',
+      'BGS_HOST': 'bgs.local',
+      'PDS_HOST': 'pds.local',
+      'PLC_HOST': 'plc.local',
+    })
+
+    arroba.did.resolve_handle.cache.clear()
+    arroba.did.resolve_plc.cache.clear()
+    arroba.did.resolve_web.cache.clear()
+
+    self.bs = Bluesky(handle='handull', did='did:dy:d', pds_url=bluesky.DEFAULT_PDS,
+                      access_token='towkin')
     util.now = lambda **kwargs: testutil.NOW
 
   def assert_equals(self, expected, actual, **kwargs):
@@ -807,7 +823,7 @@ class BlueskyTest(testutil.TestCase):
     }, Bluesky.to_as1_actor({
       '$type': 'app.bsky.actor.profile',
       'displayName': 'Alice',
-    }, client=self.bs._client, repo_did='did:plc:foo'))
+    }, client=self.bs.client, repo_did='did:plc:foo'))
 
     self.assert_call(
       mock_get,
@@ -942,7 +958,7 @@ class BlueskyTest(testutil.TestCase):
 
     self.assertEqual(ref, from_as1_to_strong_ref({
       'url': 'https://bsky.app/profile/did:fo:o/post/bar',
-    }, client=self.bs._client, value=False))
+    }, client=self.bs.client, value=False))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -959,7 +975,7 @@ class BlueskyTest(testutil.TestCase):
 
     self.assertEqual(record, from_as1_to_strong_ref({
       'url': 'https://bsky.app/profile/did:fo:o/post/bar',
-    }, client=self.bs._client, value=True))
+    }, client=self.bs.client, value=True))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -984,7 +1000,7 @@ class BlueskyTest(testutil.TestCase):
     }, from_as1_to_strong_ref({
       'url': 'https://bsky.app/profile/foo.com/post/bar',
       'cid': 'sydddddd',
-    }, client=self.bs._client))
+    }, client=self.bs.client))
 
     self.assert_call(mock_get, 'com.atproto.identity.resolveHandle?handle=foo.com')
     self.assert_call(mock_get,
@@ -1003,18 +1019,18 @@ class BlueskyTest(testutil.TestCase):
         self.assertEqual(expected, from_as1_to_strong_ref(obj, validate=False))
 
     self.assertEqual({'uri': 'https://foo/bar'}, from_as1_to_strong_ref(
-      'https://foo/bar', client=self.bs._client, validate=False))
+      'https://foo/bar', client=self.bs.client, validate=False))
     mock_get.assert_not_called()
 
   @patch.object(util.session, 'get', return_value=requests_response(status=404))
   def test_from_as1_to_strong_ref_raise(self, mock_get):
     with self.assertRaises(ValueError):
       from_as1_to_strong_ref({'id': 'ftp://foo/bar'},
-                             client=self.bs._client, raise_=True)
+                             client=self.bs.client, raise_=True)
 
     with self.assertRaises(ValueError):
       from_as1_to_strong_ref({'id': 'at://did:fo:o/x.y.z/a'},
-                             client=self.bs._client, raise_=True)
+                             client=self.bs.client, raise_=True)
 
   def test_from_as1_missing_objectType_or_verb(self):
     for obj in [
@@ -3601,7 +3617,7 @@ class BlueskyTest(testutil.TestCase):
           'objectType': 'activity',
           'verb': verb,
           'object': 'https://mas.to/post',
-        }, client=self.bs._client, raise_=True, validate=False))
+        }, client=self.bs.client, raise_=True, validate=False))
 
     mock_get.assert_not_called()
 
@@ -3672,7 +3688,7 @@ class BlueskyTest(testutil.TestCase):
 
     expected = copy.deepcopy(REPOST_BSKY)
     expected['subject']['cid'] = 'sydddddd'
-    self.assert_equals(expected, self.from_as1(REPOST_AS, client=self.bs._client))
+    self.assert_equals(expected, self.from_as1(REPOST_AS, client=self.bs.client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -3681,7 +3697,7 @@ class BlueskyTest(testutil.TestCase):
   @patch.object(util.session, 'get', side_effect=requests.ConnectionError())
   def test_from_as1_repost_raise_object_not_found(self, mock_get):
     with self.assertRaises(ValueError):
-      self.from_as1(REPOST_AS, client=self.bs._client, raise_=True)
+      self.from_as1(REPOST_AS, client=self.bs.client, raise_=True)
 
   def test_from_as1_reply(self):
     self.assert_equals(REPLY_BSKY_NO_CIDS, self.from_as1(REPLY_AS))
@@ -3723,7 +3739,7 @@ class BlueskyTest(testutil.TestCase):
     expected = copy.deepcopy(REPLY_BSKY)
     expected['reply']['root']['cid'] = expected['reply']['parent']['cid'] = 'sydddddd'
     self.assert_equals(expected, self.from_as1(REPLY_AS['object'],
-                                               client=self.bs._client))
+                                               client=self.bs.client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -3761,7 +3777,7 @@ class BlueskyTest(testutil.TestCase):
           'cid': 'my+root+syd',
         },
       },
-    }, self.from_as1(REPLY_AS['object'], client=self.bs._client))
+    }, self.from_as1(REPLY_AS['object'], client=self.bs.client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -3834,7 +3850,7 @@ class BlueskyTest(testutil.TestCase):
     }, self.from_as1({
       **REPLY_AS['object'],
       'inReplyTo': 'at://did:al:ice/so.sprk.feed.reply/parent-tid',
-    }, client=self.bs._client))
+    }, client=self.bs.client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -3939,7 +3955,7 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'comment',
       'id': 'https://social.atiusamy.com/notes/9vdetlseu2g408ox',
       'inReplyTo': ['https://social.atiusamy.com/notes/9vder4g1u2g408ov'],
-    }, validate=False, client=self.bs._client, raise_=True))
+    }, validate=False, client=self.bs.client, raise_=True))
 
     mock_get.assert_not_called()
 
@@ -3952,7 +3968,7 @@ class BlueskyTest(testutil.TestCase):
     expected = copy.deepcopy(REPLY_BSKY)
     expected['reply']['root']['cid'] = expected['reply']['parent']['cid'] = 'sydddddd'
     self.assert_equals(expected, self.from_as1(
-      REPLY_AS['object'], client=self.bs._client, raise_=True, validate=False))
+      REPLY_AS['object'], client=self.bs.client, raise_=True, validate=False))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -3961,7 +3977,7 @@ class BlueskyTest(testutil.TestCase):
   @patch.object(util.session, 'get', return_value=requests_response(status=404))
   def test_from_as1_reply_client_fetch_fails_raise_validate_false(self, _):
     with self.assertRaises(ValueError):
-      self.from_as1(REPLY_AS['object'], client=self.bs._client, raise_=True,
+      self.from_as1(REPLY_AS['object'], client=self.bs.client, raise_=True,
                     validate=False)
 
   def test_from_as1_reply_to_website_validate_false(self):
@@ -3996,7 +4012,7 @@ class BlueskyTest(testutil.TestCase):
       'value': {},
     })
 
-    self.assert_equals(LIKE_BSKY, self.from_as1(LIKE_AS, client=self.bs._client))
+    self.assert_equals(LIKE_BSKY, self.from_as1(LIKE_AS, client=self.bs.client))
 
     self.assert_call(mock_get,
                      'com.atproto.repo.getRecord'
@@ -4115,7 +4131,7 @@ class BlueskyTest(testutil.TestCase):
           'content': 'Please take a look at this user and their posts',
           # note that this is the user being reported
           'to': 'did:bo:b',
-        }, client=self.bs._client))
+        }, client=self.bs.client))
 
     # DID (repo) object
     self.assert_equals({
@@ -4130,7 +4146,7 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'activity',
       'verb': 'flag',
       'object': 'did:al:ice',
-    }, client=self.bs._client))
+    }, client=self.bs.client))
 
     # no object
     with self.assertRaises(ValueError):
@@ -4213,7 +4229,7 @@ class BlueskyTest(testutil.TestCase):
         'objectType': 'image',
         'url': NEW_BLOB_URL,
       }],
-    }, client=self.bs._client, blobs={NEW_BLOB_URL: NEW_BLOB}),
+    }, client=self.bs.client, blobs={NEW_BLOB_URL: NEW_BLOB}),
     ignore=['fooOriginalText'])
 
     self.assert_call(
@@ -4235,7 +4251,7 @@ class BlueskyTest(testutil.TestCase):
       }],
       'image': [NEW_BLOB_URL],
     }
-    kwargs = {'client': self.bs._client, 'blobs': {NEW_BLOB_URL: NEW_BLOB}}
+    kwargs = {'client': self.bs.client, 'blobs': {NEW_BLOB_URL: NEW_BLOB}}
 
     self.assert_equals([{
       '$type': 'app.bsky.feed.post',
@@ -4313,7 +4329,7 @@ class BlueskyTest(testutil.TestCase):
         'objectType': 'image',
         'url': NEW_BLOB_URL,
       }],
-    }, client=self.bs._client, blobs={NEW_BLOB_URL: NEW_BLOB},
+    }, client=self.bs.client, blobs={NEW_BLOB_URL: NEW_BLOB},
        out_type='app.bsky.feed.defs#postView')
 
     self.assertEqual({
@@ -4363,7 +4379,7 @@ class BlueskyTest(testutil.TestCase):
         'url': 'https://social.atiusamy.com/notes/1234567890123456',
         'id': 'at://did:x:y/app.bsky.feed.post/ab',
       }],
-    }, client=self.bs._client), ignore=['fooOriginalText', 'fooOriginalUrl'])
+    }, client=self.bs.client), ignore=['fooOriginalText', 'fooOriginalUrl'])
 
     self.assert_call(
       mock_get,
@@ -4396,7 +4412,7 @@ class BlueskyTest(testutil.TestCase):
     }, self.from_as1({
       'objectType': 'note',
       'content': '<p>Because I just randomly enabled bridging at some point, my first bluesky post is the middle of a project with no context. 😆</p><p><a href="https://bsky.app/profile/charlie.daft.games/post/3kzrdhahdcbc2"><span class="invisible">https://</span><span class="ellipsis">bsky.app/profile/charlie.daft.</span><span class="invisible">games/post/3kzrdhahdcbc2</span></a></p>',
-    }, client=self.bs._client), ignore=['fooOriginalText', 'fooOriginalUrl'])
+    }, client=self.bs.client), ignore=['fooOriginalText', 'fooOriginalUrl'])
 
     self.assert_call(
       mock_get,
@@ -4418,7 +4434,7 @@ class BlueskyTest(testutil.TestCase):
     }, self.from_as1({
       'objectType': 'note',
       'content': '<a href="https://bsky.app/profile/alice.bsky.social">https://bsky.app/profile/alice.bsky.social</a>',
-    }, client=self.bs._client, raise_=True), ignore=['fooOriginalText', 'fooOriginalUrl'])
+    }, client=self.bs.client, raise_=True), ignore=['fooOriginalText', 'fooOriginalUrl'])
 
   def test_from_as1_sensitive_default(self):
     self.assert_equals({
@@ -4532,7 +4548,7 @@ class BlueskyTest(testutil.TestCase):
         'url': 'https://example.com/post',
         'id': 'at://did:x:y/app.bsky.feed.post/ab',
       }],
-    }, client=self.bs._client))
+    }, client=self.bs.client))
 
   def test_from_as1_dm_no_external_embed(self):
     self.assert_equals({
@@ -6178,14 +6194,14 @@ class BlueskyTest(testutil.TestCase):
         'uri': 'at://did:plc:foo/app.bsky.feed.post/abc123',
         'cid': 'sydddddd',
       },
-    }, client=self.bs._client))
+    }, client=self.bs.client))
 
     self.assert_call(
       mock_get,
       'com.atproto.repo.getRecord?repo=did%3Aplc%3Afoo&collection=app.bsky.feed.post&rkey=abc123')
 
   def test_constructor_access_token(self):
-    bs = Bluesky('handull', access_token='towkin')
+    bs = Bluesky('handull', pds_url=bluesky.DEFAULT_PDS, access_token='towkin')
     self.assertEqual({
       'accessJwt': 'towkin',
       'refreshJwt': None,
@@ -6201,7 +6217,7 @@ class BlueskyTest(testutil.TestCase):
     }
     mock_post.return_value = requests_response(session)
 
-    bs = Bluesky('handull', app_password='pazzwurd')
+    bs = Bluesky('handull', pds_url=bluesky.DEFAULT_PDS, app_password='pazzwurd')
     bs.client  # trigger login
     self.assertEqual('real.han.dull', bs.handle)
     self.assertEqual('did:plc:me', bs.did)
@@ -6220,7 +6236,7 @@ class BlueskyTest(testutil.TestCase):
   @patch.object(util.session, 'get', return_value=requests_response({'feed': []}))
   def test_constructor_auth(self, mock_get):
     auth = HTTPBasicAuth('user', 'pwd')
-    bs = Bluesky('handull', auth=auth)
+    bs = Bluesky('handull', pds_url=bluesky.DEFAULT_PDS, auth=auth)
 
     bs.get_activities()
     self.assert_call(mock_get, 'app.bsky.feed.getTimeline', auth=auth, headers={
@@ -6239,7 +6255,7 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual('did:plc:alice', bs.did)
     self.assertEqual({'accessJwt': 'towkin', 'refreshJwt': 'reephrush'},
                      bs.client.session)
-    self.assertIsNotNone(bs._client.session_callback)
+    self.assertIsNotNone(bs.client.session_callback)
 
   @patch('oauth_dropins.bluesky.oauth_client_for_pds',
          return_value=OAuth2Client(token_endpoint='https://un/used',
@@ -6260,8 +6276,8 @@ class BlueskyTest(testutil.TestCase):
     mock_ocp.assert_called_once_with(metadata, 'http://pds.com')
     self.assertEqual('alice.bsky.social', bs.handle)
     self.assertEqual('did:plc:alice', bs.did)
-    self.assertIsInstance(bs._client.requests_kwargs['auth'], OAuth2AccessTokenAuth)
-    self.assertIsNotNone(bs._client.session_callback)
+    self.assertIsInstance(bs.client.requests_kwargs['auth'], OAuth2AccessTokenAuth)
+    self.assertIsNotNone(bs.client.session_callback)
 
   @patch.object(util.session, 'get', return_value=requests_response({
     'did': 'did:plc:a',
@@ -6275,9 +6291,48 @@ class BlueskyTest(testutil.TestCase):
       ('http://my.pds/xrpc/app.bsky.actor.getProfile?actor=did%3Aplc%3Aalice',),
       mock_get.call_args[0])
 
+  @patch.object(util.session, 'get', return_value=requests_response({
+    # DID doc
+    'id': 'did:plc:alice',
+    'service': [{
+        'id': '#atproto_pds',
+        'serviceEndpoint': 'https://pds.example',
+    }],
+  }))
+  def test_constructor_did(self, mock_get):
+    bs = Bluesky('al.ice', did='did:plc:alice')
+    bs.client  # connect
+    self.assertEqual('https://pds.example', bs.client.address)
+
+    mock_get.assert_called_once_with(
+      'https://plc.local/did:plc:alice',
+      headers={'User-Agent': util.user_agent}, timeout=HTTP_TIMEOUT, stream=True)
+
+  # DNS handle resolution (fails)
+  @patch('dns.resolver.resolve')
+  @patch.object(util.session, 'get', side_effect=[
+    requests_response('did:plc:alice'),  # HTTPS handle resolution
+    requests_response({  # DID doc
+      'id': 'did:plc:alice',
+      'service': [{
+        'id': '#atproto_pds',
+        'serviceEndpoint': 'https://pds.example',
+      }],
+    })])
+  def test_constructor_handle(self, mock_get, mock_resolve):
+    mock_resolve.side_effect = DNSException('nope')
+    bs = Bluesky('al.ice')
+    bs.client  # connect
+    self.assertEqual('https://pds.example', bs.client.address)
+
+    mock_get.assert_any_call('https://al.ice/.well-known/atproto-did')
+    mock_get.assert_any_call(
+      'https://plc.local/did:plc:alice',
+      headers={'User-Agent': util.user_agent}, timeout=HTTP_TIMEOUT, stream=True)
+
   @patch.object(util.session, 'get')
   def test_get_activities_friends(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.return_value = requests_response({
       'cursor': 'timestamp::cid',
       'feed': [POST_FEED_VIEW_BSKY, REPOST_BSKY_FEED_VIEW_POST],
@@ -6292,7 +6347,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_activities_activity_id(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.return_value = requests_response({
       'thread': THREAD_BSKY,
     })
@@ -6307,7 +6362,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_activities_self_user_id(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.return_value = requests_response({
       'cursor': 'timestamp::cid',
       'feed': [{'post': POST_AUTHOR_BSKY}],
@@ -6319,7 +6374,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_activities_prefers_did(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.return_value = requests_response({
       'feed': [],
     })
@@ -6330,7 +6385,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_activities_with_likes(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.side_effect = [
       requests_response({
         'cursor': 'timestamp::cid',
@@ -6355,7 +6410,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_activities_with_reposts(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.side_effect = [
       requests_response({
         'cursor': 'timestamp::cid',
@@ -6380,7 +6435,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_activities_include_shares(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.return_value = requests_response({
       'cursor': 'timestamp::cid',
       'feed': [POST_FEED_VIEW_BSKY, REPOST_BSKY_FEED_VIEW_POST],
@@ -6393,7 +6448,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_activities_with_replies(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.side_effect = [
       requests_response({
         'cursor': 'timestamp::cid',
@@ -6414,7 +6469,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_activities_replies_starter_pack_view_basic(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.side_effect = [
       requests_response({
         'cursor': 'timestamp::cid',
@@ -6455,7 +6510,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_activities_replies_not_found_blocked(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.side_effect = [
       requests_response({
         # 'cursor': 'timestamp::cid',
@@ -6494,7 +6549,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_activities_skip_unknown_type(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.side_effect = [
       requests_response({
         'cursor': 'timestamp::cid',
@@ -6508,7 +6563,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_actor(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.return_value = requests_response({
       **ACTOR_PROFILE_VIEW_BSKY,
       '$type': 'app.bsky.actor.defs#profileViewDetailed',
@@ -6524,7 +6579,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_actor_default(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.return_value = requests_response({
       **ACTOR_PROFILE_VIEW_BSKY,
       '$type': 'app.bsky.actor.defs#profileViewDetailed',
@@ -6540,7 +6595,7 @@ class BlueskyTest(testutil.TestCase):
 
   @patch.object(util.session, 'get')
   def test_get_comment(self, mock_get):
-    self.bs._client._validate = False
+    self.bs.client._validate = False
     mock_get.return_value = requests_response({
       'thread': THREAD_BSKY,
     })
@@ -6550,10 +6605,12 @@ class BlueskyTest(testutil.TestCase):
     self.assert_call(mock_get, 'app.bsky.feed.getPostThread?uri=at%3A%2F%2Fi.d&depth=1')
 
   def test_get_follows(self):
-    self._test_get_follows_or_followers(self.bs.get_follows, 'app.bsky.graph.getFollows')
+    self._test_get_follows_or_followers(self.bs.get_follows,
+                                        'app.bsky.graph.getFollows')
 
   def test_get_followers(self):
-    self._test_get_follows_or_followers(self.bs.get_followers, 'app.bsky.graph.getFollowers')
+    self._test_get_follows_or_followers(self.bs.get_followers,
+                                        'app.bsky.graph.getFollowers')
 
   @patch('granary.bluesky.MAX_FOLLOWS', new=3)
   @patch.object(util.session, 'get')
@@ -6569,7 +6626,7 @@ class BlueskyTest(testutil.TestCase):
       }),
     ]
 
-    self.bs._appview._validate = False
+    self.bs.appview._validate = False
     self.assert_equals([
       {'objectType': 'person', 'id': 'did:alice'},
       {'objectType': 'person', 'id': 'did:bob'},
@@ -6591,7 +6648,7 @@ class BlueskyTest(testutil.TestCase):
     }),
   ])
   def test_get_follows_to_end(self, mock_get):
-    self.bs._appview._validate = False
+    self.bs.appview._validate = False
     self.assert_equals([
       {'objectType': 'person', 'id': 'did:alice'},
     ], self.bs.get_follows())
