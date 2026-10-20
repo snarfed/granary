@@ -1775,7 +1775,7 @@ def _from_as1_event_to_post(obj, **kwargs):
   Returns:
     dict: ``app.bsky.feed.post`` record, before validation and truncation
   """
-  lines = [f"Event: {obj.get('displayName') or ''}"]
+  lines = [f"[Event] {obj.get('displayName') or ''}\n"]
 
   times = []
   for field in 'startTime', 'endTime':

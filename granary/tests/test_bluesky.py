@@ -2844,7 +2844,7 @@ class BlueskyTest(testutil.TestCase):
       'uris': [{'uri': 'http://example.com/event-xyz'}],
     }, {
       '$type': 'app.bsky.feed.post',
-      'text': 'Event: XYZ\n📅 2017-07-12 17:30 – 19:30 UTC-07:00\n📍 the place, 123 Main St, Springfield, US',
+      'text': '[Event] XYZ\n\n📅 2017-07-12 17:30 – 19:30 UTC-07:00\n📍 the place, 123 Main St, Springfield, US',
       'createdAt': '2017-01-22T01:29:15.000Z',
       'embed': {
         '$type': 'app.bsky.embed.external',
@@ -2882,7 +2882,7 @@ class BlueskyTest(testutil.TestCase):
   def test_from_as1_event_multiple_post_minimal(self):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
-      'text': 'Event: XYZ\n📅 2017-07-13 00:30 UTC\n📍 123 Main St, Springfield\n\nit will be great',
+      'text': '[Event] XYZ\n\n📅 2017-07-13 00:30 UTC\n📍 123 Main St, Springfield\n\nit will be great',
       'createdAt': '2022-01-02T03:04:05.000Z',
     }, from_as1({
       'objectType': 'event',
