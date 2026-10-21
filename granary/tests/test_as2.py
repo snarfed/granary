@@ -176,7 +176,7 @@ class ActivityStreams2Test(testutil.TestCase):
       'name': 'Answer 1',
       'to': ['https://social.example/actors/1'],
     }, as2.from_as1({
-      'objectType': 'comment',
+      'objectType': 'vote',
       'id': 'https://social.example/votes/1',
       'author': 'https://social.example/actors/2',
       'inReplyTo': 'https://social.example/polls/1',
@@ -365,14 +365,7 @@ class ActivityStreams2Test(testutil.TestCase):
 
   # https://codeberg.org/fediverse/fep/src/branch/main/fep/9967/fep-9967.md#vote-object
   def test_to_as1_poll_vote(self):
-    self.assertEqual({
-      'objectType': 'comment',
-      'id': 'https://social.example/votes/1',
-      'author': {'id': 'https://social.example/actors/2'},
-      'inReplyTo': ['https://social.example/polls/1'],
-      'displayName': 'Answer 1',
-      'to': [{'id': 'https://social.example/actors/1'}],
-    }, as2.to_as1({
+    vote = {
       '@context': 'https://www.w3.org/ns/activitystreams',
       'id': 'https://social.example/votes/1',
       'type': 'Note',
@@ -380,7 +373,18 @@ class ActivityStreams2Test(testutil.TestCase):
       'inReplyTo': 'https://social.example/polls/1',
       'name': 'Answer 1',
       'to': 'https://social.example/actors/1',
-    }))
+    }
+    self.assertEqual({
+      'objectType': 'vote',
+      'id': 'https://social.example/votes/1',
+      'author': {'id': 'https://social.example/actors/2'},
+      'inReplyTo': ['https://social.example/polls/1'],
+      'displayName': 'Answer 1',
+      'to': [{'id': 'https://social.example/actors/1'}],
+    }, as2.to_as1(vote))
+
+    # with content, it's a reply, not a vote
+    self.assertEqual('comment', as2.to_as1({**vote, 'content': 'hi'})['objectType'])
 
   def test_to_as1_image_attachment(self):
     """This is what Mastodon images look like."""

@@ -151,6 +151,9 @@ FROM_AS1_TYPES = {
   'question': (
     'community.blacksky.assembly.conversation',
   ),
+  'vote': (
+    'community.blacksky.assembly.vote',
+  ),
   'share': (
     'app.bsky.feed.repost',
     'so.sprk.feed.repost',
@@ -611,27 +614,12 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       original_fields_prefix=original_fields_prefix)
 
   elif verb in ('post', 'update') and type in POST_TYPES:
-    parent = AT_URI_RE.fullmatch(as1.get_object(obj, 'inReplyTo').get('id') or '')
-    if parent and parent['collection'] == 'community.blacksky.assembly.conversation':
-      # FEP-9967 poll vote
-      # https://codeberg.org/fediverse/fep/src/branch/main/fep/9967/fep-9967.md#vote-object
-      # https://github.com/blacksky-algorithms/assembly.blacksky.community/blob/edge/lexicons/community/blacksky/assembly/vote.json
-      #
-      # we can't find the statement for this option ourselves, so the caller
-      # has to fill in the subject strongRef
-      ret = {
-        '$type': 'community.blacksky.assembly.vote',
-        'subject': {'uri': '', 'cid': ''},
-        'value': -1,  # agree (surprisingly yes -1! not a bug)
-        'createdAt': from_as1_datetime(obj.get('published')),
-      }
-    else:
-      rets = _from_as1_post(
-        obj, multiple=multiple, actor=actor, summary=summary,
-        out_type=out_type, blobs=blobs, aspects=aspects, client=client,
-        original_fields_prefix=original_fields_prefix, as_embed=as_embed,
-        raise_=raise_, dynamic_sensitive_labels=dynamic_sensitive_labels,
-        validate=validate)
+    rets = _from_as1_post(
+      obj, multiple=multiple, actor=actor, summary=summary,
+      out_type=out_type, blobs=blobs, aspects=aspects, client=client,
+      original_fields_prefix=original_fields_prefix, as_embed=as_embed,
+      raise_=raise_, dynamic_sensitive_labels=dynamic_sensitive_labels,
+      validate=validate)
 
   elif type in ('like', 'share') and out_type not in (
       'app.bsky.feed.defs#reasonRepost', 'app.bsky.feed.defs#feedViewPost'):
@@ -791,6 +779,22 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
         'text': option.get('displayName') or option.get('content') or '',
         'createdAt': created_at,
       } for option in as1.get_objects(obj, 'options')]
+
+  elif type == 'vote':
+    # a vote in a poll. right now we only handle community.blacksky.assembly.vote
+    # https://github.com/blacksky-algorithms/assembly.blacksky.community/blob/edge/lexicons/community/blacksky/assembly/vote.json
+    parent = AT_URI_RE.fullmatch(as1.get_object(obj, 'inReplyTo').get('id') or '')
+    if not parent or parent['collection'] != 'community.blacksky.assembly.conversation':
+      raise ValueError("Can only convert votes on community.blacksky.assembly.conversation polls")
+
+    # we can't find the statement for this option ourselves, so the caller
+    # has to fill in the subject strongRef
+    ret = {
+      '$type': 'community.blacksky.assembly.vote',
+      'subject': {'uri': '', 'cid': ''},
+      'value': -1,  # agree (surprisingly yes -1! not a bug)
+      'createdAt': from_as1_datetime(obj.get('published')),
+    }
 
   elif type == 'collection':
       ret = {
@@ -2363,7 +2367,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       return None
 
     ret = {
-      'objectType': 'comment',
+      'objectType': 'vote',
       'id': uri,
       'author': repo_did,
       'inReplyTo': statement.get('conversation', {}).get('uri'),
@@ -2517,7 +2521,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'objectType': 'note',
       'id': uri,
       'author': repo_did,
-      'content': obj.get('text'),
+      'displayName': obj.get('text'),
       'inReplyTo': obj.get('conversation', {}).get('uri'),
       'published': obj.get('createdAt'),
     }

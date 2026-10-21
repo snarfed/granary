@@ -3240,19 +3240,24 @@ class BlueskyTest(testutil.TestCase):
 
   # https://codeberg.org/fediverse/fep/src/branch/main/fep/9967/fep-9967.md#vote-object
   def test_from_as1_poll_vote(self):
-    self.assert_equals({
-      '$type': 'community.blacksky.assembly.vote',
-      'subject': {'uri': '', 'cid': ''},
-      'value': -1,
-      'createdAt': '2022-01-02T03:04:05.000Z',
-    }, from_as1({
-      'objectType': 'comment',
+    vote = {
+      'objectType': 'vote',
       'id': 'https://inst/votes/1',
       'author': 'https://inst/bob',
       'inReplyTo': [{'id': 'at://did:al:ice/community.blacksky.assembly.conversation/123'}],
       'displayName': 'foo is best',
       'published': '2022-01-02T03:04:05+00:00',
-    }))
+    }
+    self.assert_equals({
+      '$type': 'community.blacksky.assembly.vote',
+      'subject': {'uri': '', 'cid': ''},
+      'value': -1,
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1(vote))
+
+    # not on a Blacksky conversation
+    with self.assertRaises(ValueError):
+      from_as1({**vote, 'inReplyTo': 'https://inst/poll'})
 
   def test_from_as1_question(self):
     question = {
@@ -6390,7 +6395,7 @@ class BlueskyTest(testutil.TestCase):
       'createdAt': '2022-01-02T03:04:05.000Z',
     }
     self.assert_equals({
-      'objectType': 'comment',
+      'objectType': 'vote',
       'id': 'at://did:bo:b/community.blacksky.assembly.vote/456',
       'author': 'did:bo:b',
       'inReplyTo': 'at://did:al:ice/community.blacksky.assembly.conversation/789',
@@ -6453,7 +6458,7 @@ class BlueskyTest(testutil.TestCase):
       'objectType': 'note',
       'id': 'at://did:bo:b/community.blacksky.assembly.statement/456',
       'author': 'did:bo:b',
-      'content': 'foo is best',
+      'displayName': 'foo is best',
       'inReplyTo': 'at://did:al:ice/community.blacksky.assembly.conversation/123',
       'published': '2022-01-02T03:04:05.000Z',
     }, to_as1({

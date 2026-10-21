@@ -94,6 +94,8 @@ OBJECT_TYPE_TO_TYPE = {
   'question': 'Question',
   'service': 'Service',
   'video': 'Video',
+  # poll vote; not in AS1 spec
+  'vote': 'Note',
 }
 TYPE_TO_OBJECT_TYPE = _invert(OBJECT_TYPE_TO_TYPE)
 TYPE_TO_OBJECT_TYPE.update({
@@ -640,7 +642,13 @@ def to_as1(obj, use_type=True, get_fn=None):
   if use_type:
     obj_types = [TYPE_TO_OBJECT_TYPE[t] for t in known if t in TYPE_TO_OBJECT_TYPE]
     if obj.get('inReplyTo'):
-      obj_types = ['comment' if t in ('note', 'article') else t for t in obj_types]
+      # FEP-9967 poll votes are Notes with name and inReplyTo but no content
+      # https://codeberg.org/fediverse/fep/src/branch/main/fep/9967/fep-9967.md#vote-object
+      is_vote = obj.get('name') and not (obj.get('content') or obj.get('contentMap'))
+      obj_types = ['vote' if is_vote and t == 'note'
+                   else 'comment' if t in ('note', 'article')
+                   else t
+                   for t in obj_types]
     obj_types = util.uniquify(obj_types)
     obj['objectType'] = obj_types[0] if len(obj_types) == 1 else obj_types
     obj['verb'] = next((TYPE_TO_VERB[t] for t in known if t in TYPE_TO_VERB), None)
