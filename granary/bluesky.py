@@ -71,6 +71,7 @@ COLLECTION_TO_WEB_URL = {
   'so.sprk.actor.profile': 'https://sprk.so/profile/{id}',
   'so.sprk.feed.post': 'https://sprk.so/post/{did}/{rkey}',
   'social.grain.actor.profile': 'https://grain.social/profile/{id}',
+  'social.grain.gallery': 'https://grain.social/profile/{id}/gallery/{rkey}',
 }
 # Maps path elements in bsky.app URLs to AT Protocol NSID collections.
 # Used in web_url_to_at_uri.
@@ -113,6 +114,7 @@ FROM_AS1_TYPES = {
     'app.bsky.feed.post',
     'so.sprk.feed.post',
     'so.sprk.feed.reply',
+    'social.grain.gallery',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#postView',
   ) for type in POST_TYPES
@@ -510,6 +512,11 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   If a string value in an output Bluesky object is longer than its
   ``maxGraphemes`` or ``maxLength`` in its lexicon, it's truncated with an ``…``
   ellipsis character at the end in order to fit.
+
+  Some at-uri and strongRef fields within returned records will be left blank, eg
+  ``social.grain.gallery.item`` and ``community.blacksky.assembly.statement``. They
+  point to other returned records, but those records don't yet have rkeys. Callers
+  should fill in those fields once they've generated and assigned rkeys.
 
   TODO: drop ``aspects`` in favor of ``width``/``height`` fields in ``image``
     objects themselves
@@ -1359,6 +1366,19 @@ def _from_as1_post(obj, *, out_type, multiple, actor, summary, blobs, aspects,
     elif out_type == 'so.sprk.feed.post':
       raise ValueError('Spark posts need just images or a single video, all with blobs, and no replies, quotes, links, or DMs')
 
+  # also Grain gallery, photos, and gallery items, if possible
+  if multiple or out_type == 'social.grain.gallery':
+    if (ret['$type'] == 'app.bsky.feed.post' and not reply
+        and type != 'article' and not as_embed
+        and (grain := _from_as1_to_grain_gallery(
+          ret, obj=obj, blobs=blobs, aspects=aspects))):
+      if multiple:
+        rets = (rets or [ret]) + grain
+      else:
+        ret = grain[0]
+    elif out_type == 'social.grain.gallery':
+      raise ValueError('Grain galleries need just images, all with blobs, and no replies, quotes, links, video, or DMs')
+
   # also site.standard.document for articles
   if out_type == 'site.standard.document' and not url:
       raise ValueError("No url or id, can't convert to site.standard.document")
@@ -1639,6 +1659,71 @@ def _from_as1_to_spark_reply(post, *, reply, facets, images):
     ret['media'] = {**images[0], '$type': 'so.sprk.media.image'}
 
   return ret
+
+
+def _from_as1_to_grain_gallery(post, *, obj, blobs, aspects):
+  """Generates Grain records for a post with images.
+
+  Grain galleries only have images, so only generates them if that's all this
+  post has, ie no quote, link, video, or other media.
+
+  Doesn't populate the ``social.grain.gallery.item`` records' ``gallery`` and
+  ``item`` at-URIs, since we don't know the other records' rkeys yet. The caller
+  should populate them. Importantly, each item's ``position`` is the index of its
+  ``social.grain.photo`` in the returned photos.
+
+  Args:
+    post (dict): ``app.bsky.feed.post`` record, not a reply
+    obj (dict): AS1 object
+    blobs (dict): see :func:`from_as1`
+    aspects (dict): see :func:`from_as1`
+
+  Returns:
+    list of dict: ``social.grain.gallery`` record, then
+    ``social.grain.photo`` records, then ``social.grain.gallery.item``
+    records, or None if this post's media can't be represented in them
+  """
+  # https://tangled.org/grain.social/grain/tree/main/lexicons/social/grain
+  #
+  # as2.to_as1 etc duplicate images into attachments, so ignore those
+  images = as1.get_objects(obj, 'image')
+  image_urls = [img.get('url') or img.get('id') for img in images]
+  other_atts = [att for att in util.get_list(obj, 'attachments')
+                if util.get_url(att) not in image_urls]
+  if not images or other_atts or not all(blobs.get(url) for url in image_urls):
+    return None
+
+  created_at = post['createdAt']
+  gallery = as1.trim_nulls({
+    **post,
+    '$type': 'social.grain.gallery',
+    'title': obj.get('displayName') or '',
+    'description': post['text'],
+    'text': None,
+    'embed': None,
+    'langs': None,
+    'tags': None,
+  }, ignore=('createdAt', 'title'))
+
+  photos = []
+  for img, url in zip(images, image_urls):
+    aspect = aspects.get(url) or as1.aspect_ratio(img)
+    photos.append({
+      '$type': 'social.grain.photo',
+      'photo': blobs[url],
+      'alt': img.get('displayName') or '',
+      'aspectRatio': ({'width': aspect[0], 'height': aspect[1]} if aspect
+                      else DEFAULT_ASPECT_RATIO),
+      'createdAt': created_at,
+    })
+
+  items = [{
+    '$type': 'social.grain.gallery.item',
+    'position': i,
+    'createdAt': created_at,
+  } for i in range(len(photos))]
+
+  return [gallery] + photos + items
 
 
 def _from_as1_to_standard_document(obj, *, url, summary, content,

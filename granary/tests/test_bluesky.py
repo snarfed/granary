@@ -420,6 +420,27 @@ POST_SPARK_VIDEO = {
   },
 }
 
+GRAIN_GALLERY = {
+  '$type': 'social.grain.gallery',
+  'title': '',
+  'description': 'My original post',
+  'fooOriginalText': 'My original post',
+  'fooOriginalUrl': 'https://bsky.app/profile/did:al:ice/post/tid',
+  'createdAt': '2007-07-07T03:04:05.000Z',
+}
+GRAIN_PHOTO = {
+  '$type': 'social.grain.photo',
+  'photo': NEW_BLOB,
+  'alt': 'my alt text',
+  'aspectRatio': bluesky.DEFAULT_ASPECT_RATIO,
+  'createdAt': '2007-07-07T03:04:05.000Z',
+}
+GRAIN_ITEM = {
+  '$type': 'social.grain.gallery.item',
+  'position': 0,
+  'createdAt': '2007-07-07T03:04:05.000Z',
+}
+
 POST_VIEW_BSKY_VIDEO = copy.deepcopy(POST_VIEW_BSKY)
 POST_VIEW_BSKY_VIDEO['record']['embed'] = EMBED_VIDEO
 POST_VIEW_BSKY_VIDEO['embed'] = {
@@ -873,6 +894,10 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual(
       'https://grain.social/profile/snarfed.org',
       at_uri_to_web_url('at://did:plc:asdf/social.grain.actor.profile/self',
+                        handle='snarfed.org'))
+    self.assertEqual(
+      'https://grain.social/profile/snarfed.org/gallery/123',
+      at_uri_to_web_url('at://did:plc:asdf/social.grain.gallery/123',
                         handle='snarfed.org'))
 
     with self.assertRaises(ValueError):
@@ -2077,9 +2102,14 @@ class BlueskyTest(testutil.TestCase):
     blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
     self.assert_equals(expected, self.from_as1(obj, blobs=blobs))
 
-  def test_from_as1_post_with_image_blobs_multiple_spark(self):
-    self.assert_equals([POST_BSKY_IMAGES, POST_SPARK_IMAGES], self.from_as1(
-      POST_AS_IMAGES, blobs={NEW_BLOB_URL: NEW_BLOB}, multiple=True))
+  def test_from_as1_post_with_image_blobs_multiple_spark_grain(self):
+    self.assert_equals([
+      POST_BSKY_IMAGES,
+      POST_SPARK_IMAGES,
+      GRAIN_GALLERY,
+      GRAIN_PHOTO,
+      GRAIN_ITEM,
+    ], self.from_as1(POST_AS_IMAGES, blobs={NEW_BLOB_URL: NEW_BLOB}, multiple=True))
 
   def test_from_as1_post_with_image_also_in_attachments_multiple_spark(self):
     # eg from as2.to_as1
@@ -2088,15 +2118,20 @@ class BlueskyTest(testutil.TestCase):
       **obj['object']['image'][0],
       'objectType': 'image',
     }]
-    self.assert_equals([POST_BSKY_IMAGES, POST_SPARK_IMAGES], self.from_as1(
-      obj, blobs={NEW_BLOB_URL: NEW_BLOB}, multiple=True))
+    self.assert_equals([
+      POST_BSKY_IMAGES,
+      POST_SPARK_IMAGES,
+      GRAIN_GALLERY,
+      GRAIN_PHOTO,
+      GRAIN_ITEM,
+    ], self.from_as1(obj, blobs={NEW_BLOB_URL: NEW_BLOB}, multiple=True))
 
   def test_from_as1_post_with_video_blobs_multiple_spark(self):
     blobs = {NEW_BLOB_URL: {**NEW_BLOB, 'mimeType': 'video/mp4'}}
     self.assert_equals([POST_BSKY_VIDEO, POST_SPARK_VIDEO], self.from_as1(
       POST_AS_VIDEO, blobs=blobs, multiple=True))
 
-  def test_from_as1_post_with_gallery_blobs_multiple_spark(self):
+  def test_from_as1_post_with_gallery_blobs_multiple_spark_grain(self):
     blobs = {url: NEW_BLOB for url in GALLERY_URLS}
     self.assert_equals([POST_BSKY_GALLERY, {
       **POST_SPARK,
@@ -2108,7 +2143,81 @@ class BlueskyTest(testutil.TestCase):
           'aspectRatio': {'width': 1, 'height': 1},
         } for _ in GALLERY_URLS],
       },
-    }], self.from_as1(POST_AS_GALLERY, blobs=blobs, multiple=True))
+    }, GRAIN_GALLERY] + [
+      {**GRAIN_PHOTO, 'alt': ''} for _ in GALLERY_URLS
+    ] + [
+      {**GRAIN_ITEM, 'position': i} for i in range(len(GALLERY_URLS))
+    ], self.from_as1(POST_AS_GALLERY, blobs=blobs, multiple=True))
+
+  def test_from_as1_post_to_grain_gallery(self):
+    self.assert_equals({
+      '$type': 'social.grain.gallery',
+      'title': 'My title',
+      'description': 'foo #bar',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#tag',
+          'tag': 'bar',
+        }],
+        'index': {
+          'byteStart': 4,
+          'byteEnd': 8,
+        },
+      }],
+      'labels': {
+        '$type': 'com.atproto.label.defs#selfLabels',
+        'values': [{'val': 'graphic-media'}],
+      },
+      'createdAt': '2007-07-07T03:04:05.000Z',
+      'fooOriginalText': 'foo #bar',
+    }, self.from_as1({
+      'objectType': 'note',
+      'displayName': 'My title',
+      'content': 'foo #bar',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': '#bar',
+        'startIndex': 4,
+        'length': 4,
+      }],
+      'image': [{
+        'url': NEW_BLOB_URL,
+        'displayName': 'my alt text',
+        'width': 3,
+        'height': 4,
+      }],
+      'sensitive': True,
+      'published': '2007-07-07T03:04:05.000Z',
+    }, out_type='social.grain.gallery', blobs={NEW_BLOB_URL: NEW_BLOB}))
+
+  def test_from_as1_post_multiple_grain_gallery_multiple_photos(self):
+    self.assert_equals([
+      GRAIN_GALLERY,
+      {**GRAIN_PHOTO, 'aspectRatio': {'width': 3, 'height': 4}},
+      {**GRAIN_PHOTO, 'alt': 'other alt', 'photo': OLD_BLOB},
+      GRAIN_ITEM,
+      {**GRAIN_ITEM, 'position': 1},
+    ], self.from_as1({
+      **POST_AS['object'],
+      'image': [{
+        'url': NEW_BLOB_URL,
+        'displayName': 'my alt text',
+        'width': 3,
+        'height': 4,
+      }, {
+        'url': 'http://other/pic',
+        'displayName': 'other alt',
+      }],
+    }, multiple=True, blobs={
+      NEW_BLOB_URL: NEW_BLOB,
+      'http://other/pic': OLD_BLOB,
+    })[2:])
+
+  def test_from_as1_post_to_grain_gallery_no_media(self):
+    for obj in POST_AS, POST_AS_IMAGES, POST_AS_VIDEO:
+      with self.assertRaises(ValueError):
+        self.from_as1(obj, out_type='social.grain.gallery')
 
   def test_from_as1_post_to_spark(self):
     self.assert_equals({
@@ -2176,7 +2285,6 @@ class BlueskyTest(testutil.TestCase):
     for name, obj in (
         ('image and video', {'image': [NEW_BLOB_URL], 'attachments': [video]}),
         ('image without blob', {'image': [NEW_BLOB_URL, 'http://no/blob']}),
-        ('too many images', {'image': [f'http://pic/{i}' for i in range(13)]}),
         ('link', {'image': [NEW_BLOB_URL], 'attachments': [{
           'objectType': 'link',
           'url': 'http://a/link',
@@ -2195,6 +2303,17 @@ class BlueskyTest(testutil.TestCase):
         got = self.from_as1({'objectType': 'note', 'content': 'foo', **obj},
                             blobs=blobs, multiple=True)
         self.assertEqual(['app.bsky.feed.post'], [rec['$type'] for rec in got])
+
+    # Grain galleries have no image limit
+    got = self.from_as1({
+      'objectType': 'note',
+      'content': 'foo',
+      'image': [f'http://pic/{i}' for i in range(13)],
+    }, blobs=blobs, multiple=True)
+    self.assertEqual(
+      ['app.bsky.feed.post', 'social.grain.gallery']
+        + ['social.grain.photo'] * 13 + ['social.grain.gallery.item'] * 13,
+      [rec['$type'] for rec in got])
 
   def test_from_as1_post_to_spark_no_media(self):
     for obj in POST_AS, POST_AS_IMAGES:
