@@ -165,6 +165,25 @@ class ActivityStreams2Test(testutil.TestCase):
       'object': 'http://event',
     }))
 
+  # https://codeberg.org/fediverse/fep/src/branch/main/fep/9967/fep-9967.md#vote-object
+  def test_from_as1_poll_vote(self):
+    self.assertEqual({
+      '@context': as2.CONTEXT,
+      'type': 'Note',
+      'id': 'https://social.example/votes/1',
+      'attributedTo': 'https://social.example/actors/2',
+      'inReplyTo': 'https://social.example/polls/1',
+      'name': 'Answer 1',
+      'to': ['https://social.example/actors/1'],
+    }, as2.from_as1({
+      'objectType': 'comment',
+      'id': 'https://social.example/votes/1',
+      'author': 'https://social.example/actors/2',
+      'inReplyTo': 'https://social.example/polls/1',
+      'displayName': 'Answer 1',
+      'to': [{'id': 'https://social.example/actors/1'}],
+    }))
+
   # https://docs.joinmastodon.org/spec/activitypub/#Flag
   def test_from_as1_flag(self):
     self.assertEqual({
@@ -343,6 +362,25 @@ class ActivityStreams2Test(testutil.TestCase):
       'inReplyTo': in_reply_to,
     })
     self.assertEqual(['http://x.y/z'], as1['inReplyTo'])
+
+  # https://codeberg.org/fediverse/fep/src/branch/main/fep/9967/fep-9967.md#vote-object
+  def test_to_as1_poll_vote(self):
+    self.assertEqual({
+      'objectType': 'comment',
+      'id': 'https://social.example/votes/1',
+      'author': {'id': 'https://social.example/actors/2'},
+      'inReplyTo': ['https://social.example/polls/1'],
+      'displayName': 'Answer 1',
+      'to': [{'id': 'https://social.example/actors/1'}],
+    }, as2.to_as1({
+      '@context': 'https://www.w3.org/ns/activitystreams',
+      'id': 'https://social.example/votes/1',
+      'type': 'Note',
+      'attributedTo': 'https://social.example/actors/2',
+      'inReplyTo': 'https://social.example/polls/1',
+      'name': 'Answer 1',
+      'to': 'https://social.example/actors/1',
+    }))
 
   def test_to_as1_image_attachment(self):
     """This is what Mastodon images look like."""
