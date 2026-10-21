@@ -11,6 +11,7 @@ from urllib.parse import urljoin
 
 import arroba.did
 from dns.exception import DNSException
+from lexrpc import Client
 from lexrpc.base import AT_URI_RE
 from multiformats import CID
 from oauth_dropins.bluesky import BlueskyAuth
@@ -6416,6 +6417,19 @@ class BlueskyTest(testutil.TestCase):
       'value': -1,
       'createdAt': '2022-01-02T03:04:05.000Z',
     }))
+
+  @patch.object(util.session, 'get', return_value=requests_response({}))
+  def test_to_as1_poll_vote_statement_not_found(self, mock_get):
+    self.assertIsNone(to_as1({
+      '$type': 'community.blacksky.assembly.vote',
+      'subject': {
+        'uri': 'at://did:al:ice/community.blacksky.assembly.statement/123',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      },
+      'value': -1,
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, client=Client(validate=False, requests_session=util.session)))
+    mock_get.assert_called_once()
 
   def test_to_as1_conversation(self):
     self.assert_equals({

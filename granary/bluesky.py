@@ -1146,6 +1146,7 @@ def _from_as1_post(obj, *, out_type, multiple, actor, summary, blobs, aspects,
   preview_record = None
   if type == 'article' or as_embed:
     if (preview := obj.get('preview')) and as1.object_type(preview) == 'note':
+      # link preview: https://fediverse.codeberg.page/fep/fep/8967/
       # we'll take text and facets from this below
       preview_record = from_as1(preview, **kwargs)
     else:
@@ -2054,6 +2055,12 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
            pds=DEFAULT_PDS, client=None):
   """Converts a Bluesky object to an AS1 object.
 
+  Note that some returned AS1 objects will be incomplete! Notably polls, ie
+  ``question``s converted from ``community.blacksky.assembly.conversation``,
+  won't have poll options (in ``anyOf`` or ``oneOf``) or votes, since those
+  stored as separate ATProto records. Callers will need to populate those
+  themselves.
+
   Args:
     obj (dict): ``app.bsky.*`` object
     type (str): optional ``$type`` to parse with, only used if ``obj['$type']``
@@ -2346,9 +2353,13 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       return None
 
     try:
-      statement = client.com.atproto.repo.getRecord(**parsed.groupdict())['value']
+      record = client.com.atproto.repo.getRecord(**parsed.groupdict())
     except requests.RequestException as e:
       logger.info(f"Couldn't fetch vote's statement {statement_uri}: {e}")
+      return None
+
+    if not (statement := record.get('value')):
+      logger.info(f"Couldn't fetch vote's statement {statement_uri}")
       return None
 
     ret = {
