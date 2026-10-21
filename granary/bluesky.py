@@ -518,9 +518,10 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   ellipsis character at the end in order to fit.
 
   Some at-uri and strongRef fields within returned records will be left blank, eg
-  ``social.grain.gallery.item`` and ``community.blacksky.assembly.statement``. They
-  point to other returned records, but those records don't yet have rkeys. Callers
-  should fill in those fields once they've generated and assigned rkeys.
+  ``social.grain.gallery.item``, ``community.blacksky.assembly.statement``,
+  ``community.blacksky.assembly.vote`` They point to other returned records, but
+  those records don't yet have rkeys. Callers should fill in those fields once
+  they've generated and assigned rkeys.
 
   TODO: drop ``aspects`` in favor of ``width``/``height`` fields in ``image``
     objects themselves
@@ -610,12 +611,27 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       original_fields_prefix=original_fields_prefix)
 
   elif verb in ('post', 'update') and type in POST_TYPES:
-    rets = _from_as1_post(
-      obj, multiple=multiple, actor=actor, summary=summary,
-      out_type=out_type, blobs=blobs, aspects=aspects, client=client,
-      original_fields_prefix=original_fields_prefix, as_embed=as_embed,
-      raise_=raise_, dynamic_sensitive_labels=dynamic_sensitive_labels,
-      validate=validate)
+    parent = AT_URI_RE.fullmatch(as1.get_object(obj, 'inReplyTo').get('id') or '')
+    if parent and parent['collection'] == 'community.blacksky.assembly.conversation':
+      # FEP-9967 poll vote
+      # https://codeberg.org/fediverse/fep/src/branch/main/fep/9967/fep-9967.md#vote-object
+      # https://github.com/blacksky-algorithms/assembly.blacksky.community/blob/edge/lexicons/community/blacksky/assembly/vote.json
+      #
+      # we can't find the statement for this option ourselves, so the caller
+      # has to fill in the subject strongRef
+      ret = {
+        '$type': 'community.blacksky.assembly.vote',
+        'subject': {'uri': '', 'cid': ''},
+        'value': -1,  # agree (surprisingly yes -1! not a bug)
+        'createdAt': from_as1_datetime(obj.get('published')),
+      }
+    else:
+      rets = _from_as1_post(
+        obj, multiple=multiple, actor=actor, summary=summary,
+        out_type=out_type, blobs=blobs, aspects=aspects, client=client,
+        original_fields_prefix=original_fields_prefix, as_embed=as_embed,
+        raise_=raise_, dynamic_sensitive_labels=dynamic_sensitive_labels,
+        validate=validate)
 
   elif type in ('like', 'share') and out_type not in (
       'app.bsky.feed.defs#reasonRepost', 'app.bsky.feed.defs#feedViewPost'):
@@ -2313,6 +2329,35 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'id': uri,
       'object': obj['subject']['uri'],
       'actor': repo_did,
+    }
+
+  elif type == 'community.blacksky.assembly.vote':
+    # converts to an FEP-9967 poll vote, which only supports agree (-1)
+    # https://github.com/blacksky-algorithms/assembly.blacksky.community/blob/edge/lexicons/community/blacksky/assembly/vote.json
+    # https://codeberg.org/fediverse/fep/src/branch/main/fep/9967/fep-9967.md#vote-object
+    if obj.get('value') != -1:
+      logger.info(f"Can't convert non-agree vote {obj.get('value')} to AS1")
+      return None
+
+    statement_uri = obj.get('subject', {}).get('uri') or ''
+    parsed = AT_URI_RE.fullmatch(statement_uri)
+    if not client or not parsed:
+      logger.info(f"Can't convert vote without fetching its statement {statement_uri}")
+      return None
+
+    try:
+      statement = client.com.atproto.repo.getRecord(**parsed.groupdict())['value']
+    except requests.RequestException as e:
+      logger.info(f"Couldn't fetch vote's statement {statement_uri}: {e}")
+      return None
+
+    ret = {
+      'objectType': 'comment',
+      'id': uri,
+      'author': repo_did,
+      'inReplyTo': statement.get('conversation', {}).get('uri'),
+      'displayName': statement.get('text'),
+      'published': obj.get('createdAt'),
     }
 
   elif type == 'app.bsky.feed.defs#threadViewPost':

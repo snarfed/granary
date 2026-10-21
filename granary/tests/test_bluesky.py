@@ -3237,6 +3237,22 @@ class BlueskyTest(testutil.TestCase):
           'object': 'at://did:al:ice/community.lexicon.calendar.event/123',
         }))
 
+  # https://codeberg.org/fediverse/fep/src/branch/main/fep/9967/fep-9967.md#vote-object
+  def test_from_as1_poll_vote(self):
+    self.assert_equals({
+      '$type': 'community.blacksky.assembly.vote',
+      'subject': {'uri': '', 'cid': ''},
+      'value': -1,
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1({
+      'objectType': 'comment',
+      'id': 'https://inst/votes/1',
+      'author': 'https://inst/bob',
+      'inReplyTo': [{'id': 'at://did:al:ice/community.blacksky.assembly.conversation/123'}],
+      'displayName': 'foo is best',
+      'published': '2022-01-02T03:04:05+00:00',
+    }))
+
   def test_from_as1_question(self):
     question = {
       'objectType': 'question',
@@ -6347,6 +6363,59 @@ class BlueskyTest(testutil.TestCase):
           'status': f'community.lexicon.calendar.rsvp#{status}',
         }, uri='at://did:bo:b/community.lexicon.calendar.rsvp/456',
            repo_did='did:bo:b'))
+
+  # https://codeberg.org/fediverse/fep/src/branch/main/fep/9967/fep-9967.md#vote-object
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'uri': 'at://did:al:ice/community.blacksky.assembly.statement/123',
+    'cid': 'sydddddd',
+    'value': {
+      '$type': 'community.blacksky.assembly.statement',
+      'conversation': {
+        'uri': 'at://did:al:ice/community.blacksky.assembly.conversation/789',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      },
+      'text': 'foo is best',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    },
+  }))
+  def test_to_as1_poll_vote(self, mock_get):
+    vote = {
+      '$type': 'community.blacksky.assembly.vote',
+      'subject': {
+        'uri': 'at://did:al:ice/community.blacksky.assembly.statement/123',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      },
+      'value': -1,
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }
+    self.assert_equals({
+      'objectType': 'comment',
+      'id': 'at://did:bo:b/community.blacksky.assembly.vote/456',
+      'author': 'did:bo:b',
+      'inReplyTo': 'at://did:al:ice/community.blacksky.assembly.conversation/789',
+      'displayName': 'foo is best',
+      'published': '2022-01-02T03:04:05.000Z',
+    }, to_as1(vote, uri='at://did:bo:b/community.blacksky.assembly.vote/456',
+              repo_did='did:bo:b', client=self.bs.client))
+
+    self.assert_call(
+      mock_get,
+      'com.atproto.repo.getRecord?repo=did%3Aal%3Aice&collection=community.blacksky.assembly.statement&rkey=123')
+
+    for value in 0, 1:
+      with self.subTest(value=value):
+        self.assertIsNone(to_as1({**vote, 'value': value}, client=self.bs.client))
+
+  def test_to_as1_poll_vote_no_client(self):
+    self.assertIsNone(to_as1({
+      '$type': 'community.blacksky.assembly.vote',
+      'subject': {
+        'uri': 'at://did:al:ice/community.blacksky.assembly.statement/123',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      },
+      'value': -1,
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }))
 
   def test_to_as1_conversation(self):
     self.assert_equals({
