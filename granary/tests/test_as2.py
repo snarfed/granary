@@ -152,6 +152,19 @@ class ActivityStreams2Test(testutil.TestCase):
       'object': 'http://bob',
     }))
 
+  def test_from_as1_rsvp_interested(self):
+    self.assertEqual({
+      '@context': as2.CONTEXT,
+      'type': 'TentativeAccept',
+      'actor': 'http://alice',
+      'object': 'http://event',
+    }, as2.from_as1({
+      'objectType': 'activity',
+      'verb': 'rsvp-interested',
+      'actor': 'http://alice',
+      'object': 'http://event',
+    }))
+
   # https://docs.joinmastodon.org/spec/activitypub/#Flag
   def test_from_as1_flag(self):
     self.assertEqual({

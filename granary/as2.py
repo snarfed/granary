@@ -131,6 +131,7 @@ VERB_TO_TYPE = {
   'move': 'Move',
   'post': 'Create',
   'rsvp-maybe': 'TentativeAccept',
+  'rsvp-interested': 'TentativeAccept',
   'remove': 'Remove',
   'reject': 'Reject',
   'rsvp-no': 'Reject',
@@ -149,6 +150,7 @@ TYPE_TO_VERB.update({
   'Add': 'add',
   'Like': 'like',
   'Reject': 'reject',
+  'TentativeAccept': 'rsvp-maybe',
 })
 TYPES_WITH_OBJECT = {VERB_TO_TYPE[v] for v in as1.VERBS_WITH_OBJECT
                      if v in VERB_TO_TYPE}
