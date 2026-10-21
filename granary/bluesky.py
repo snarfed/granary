@@ -142,6 +142,7 @@ FROM_AS1_TYPES = {
   'like': (
     'app.bsky.feed.like',
     'so.sprk.feed.like',
+    'social.grain.favorite',
   ),
   'place': (
     'community.lexicon.location.geo',
@@ -169,6 +170,8 @@ ATP_POST_TYPES = (
   'app.bsky.feed.post',
   'so.sprk.feed.post',
   'so.sprk.feed.reply',
+  'social.grain.comment',
+  'social.grain.gallery',
 )
 
 AUTHORITY_CHARS = 'a-zA-Z0-9-.:'
@@ -621,13 +624,25 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
     subject = from_as1_to_strong_ref(inner_obj, client=client, raise_=raise_,
                                      validate=validate)
     match = AT_URI_RE.fullmatch(subject.get('uri', ''))
-    nsid = ('so.sprk' if match and match['collection'].startswith('so.sprk.')
-            else 'app.bsky')
-    ret = {
-      '$type': out_type or f'{nsid}.feed.{"like" if type == "like" else "repost"}',
-      'subject': subject,
-      'createdAt': from_as1_datetime(obj.get('published')),
-    }
+    collection = match['collection'] if match else ''
+    created_at = from_as1_datetime(obj.get('published'))
+
+    if out_type == 'social.grain.favorite' or (
+        type == 'like' and not out_type and collection.startswith('social.grain.')):
+      # https://tangled.org/grain.social/grain/blob/main/lexicons/social/grain/favorite/favorite.json
+      # Grain favorites' subjects are at-URIs, not strongRefs
+      ret = {
+        '$type': 'social.grain.favorite',
+        'subject': subject.get('uri'),
+        'createdAt': created_at,
+      }
+    else:
+      nsid = 'so.sprk' if collection.startswith('so.sprk.') else 'app.bsky'
+      ret = {
+        '$type': out_type or f'{nsid}.feed.{"like" if type == "like" else "repost"}',
+        'subject': subject,
+        'createdAt': created_at,
+      }
 
   elif type == 'share':
     if out_type == 'app.bsky.feed.defs#reasonRepost':
@@ -2267,12 +2282,16 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     }
 
   elif type in ('app.bsky.feed.like', 'app.bsky.feed.repost',
-                'so.sprk.feed.like', 'so.sprk.feed.repost'):
-    is_like = type.endswith('.like')
-    subject = obj.get('subject', {}).get('uri')
+                'so.sprk.feed.like', 'so.sprk.feed.repost',
+                'social.grain.favorite'):
+    is_repost = type.endswith('.repost')
+    # Grain favorites' subjects are at-URIs, not strongRefs
+    subject = obj.get('subject')
+    if isinstance(subject, dict):
+      subject = subject.get('uri')
     ret = {
       'objectType': 'activity',
-      'verb': 'like' if is_like else 'share',
+      'verb': 'share' if is_repost else 'like',
       'id': uri,
       'object': subject,
       'actor': repo_did,
@@ -2282,7 +2301,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
     if subject and subject.startswith('at://') and uri_repo:
       if web_url := at_uri_to_web_url(subject):
         # synthetic fragment
-        verb = 'liked' if is_like else 'reposted'
+        verb = 'reposted' if is_repost else 'liked'
         ret['url'] = f'{web_url}#{verb}_by_{uri_repo}'
 
   elif type == 'community.lexicon.calendar.rsvp':

@@ -3761,6 +3761,20 @@ class BlueskyTest(testutil.TestCase):
             'object': object,
           }))
 
+  def test_from_as1_like_of_grain_gallery(self):
+    expected = {
+      '$type': 'social.grain.favorite',
+      'subject': 'at://did:al:ice/social.grain.gallery/tid',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }
+    like = {
+      'objectType': 'activity',
+      'verb': 'like',
+      'object': 'at://did:al:ice/social.grain.gallery/tid',
+    }
+    self.assert_equals(expected, self.from_as1(like))
+    self.assert_equals(expected, self.from_as1(like, out_type='social.grain.favorite'))
+
   def test_from_as1_like_and_repost_out_type_overrides_inferred(self):
     for verb, bsky, spark in (
         ('like', 'app.bsky.feed.like', 'so.sprk.feed.like'),
@@ -5573,6 +5587,20 @@ class BlueskyTest(testutil.TestCase):
           },
           'createdAt': '2022-01-02T03:04:05.000Z',
         }, uri=f'at://alice.com/{type}/123'))
+
+  def test_to_as1_grain_favorite(self):
+    self.assert_equals({
+      'objectType': 'activity',
+      'verb': 'like',
+      'id': 'at://alice.com/social.grain.favorite/123',
+      'url': 'https://grain.social/profile/did:al:ice/gallery/tid#liked_by_alice.com',
+      'object': 'at://did:al:ice/social.grain.gallery/tid',
+      'published': '2022-01-02T03:04:05.000Z',
+    }, to_as1({
+      '$type': 'social.grain.favorite',
+      'subject': 'at://did:al:ice/social.grain.gallery/tid',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, uri='at://alice.com/social.grain.favorite/123'))
 
   def test_to_as1_listView(self):
     self.assert_equals({
