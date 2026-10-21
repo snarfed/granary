@@ -114,6 +114,7 @@ FROM_AS1_TYPES = {
     'app.bsky.feed.post',
     'so.sprk.feed.post',
     'so.sprk.feed.reply',
+    'social.grain.comment',
     'social.grain.gallery',
     'app.bsky.feed.defs#feedViewPost',
     'app.bsky.feed.defs#postView',
@@ -1264,12 +1265,13 @@ def _from_as1_post(obj, *, out_type, multiple, actor, summary, blobs, aspects,
 
   # in reply to
   reply = None
+  parent_record = {}
   in_reply_to = Bluesky.base_object(obj, bluesky_only=validate)
   if in_reply_to and not is_dm:
     parent_ref = from_as1_to_strong_ref(in_reply_to, client=client, value=True,
                                         raise_=raise_, validate=validate)
-    root_ref = (parent_ref.pop('value', {}).get('reply', {}).get('root')
-                or parent_ref)
+    parent_record = parent_ref.pop('value', {})
+    root_ref = parent_record.get('reply', {}).get('root') or parent_ref
     reply = {
       '$type': 'app.bsky.feed.post#replyRef',
       'root': root_ref,
@@ -1350,6 +1352,15 @@ def _from_as1_post(obj, *, out_type, multiple, actor, summary, blobs, aspects,
       raise ValueError("Not a reply, can't convert to so.sprk.feed.reply")
     ret = _from_as1_to_spark_reply(ret, reply=reply, facets=spark_facets,
                                    images=spark_images)
+
+  # Grain comment instead, if the parent is a Grain record
+  parent_uri = reply['parent'].get('uri', '') if reply else ''
+  grain_parent = ((parsed := AT_URI_RE.fullmatch(parent_uri))
+                  and parsed['collection'].startswith('social.grain.'))
+  if out_type == 'social.grain.comment' or (grain_parent and not out_type):
+    if not reply:
+      raise ValueError("Not a reply, can't convert to social.grain.comment")
+    ret = _from_as1_to_grain_comment(ret, parent=parent_record)
 
   # also Spark post, if possible
   rets = []
@@ -1726,6 +1737,55 @@ def _from_as1_to_grain_gallery(post, *, obj, blobs, aspects):
   return [gallery] + photos + items
 
 
+def _from_as1_to_grain_comment(post, *, parent):
+  """Converts a Bluesky reply to a Grain ``social.grain.comment``.
+
+  Grain comments only support text and facets, so this drops anything else.
+
+  Args:
+    post (dict): ``app.bsky.feed.post`` reply record. Its parent should be a
+      ``social.grain.gallery`` or ``social.grain.comment``.
+    parent (dict): parent record, if available
+
+  Returns:
+    dict: ``social.grain.comment`` record
+
+  Raises:
+    ValueError: if the parent isn't a Grain gallery or comment, or it's a
+      comment and we don't have its record, so we don't know its gallery
+  """
+  # https://tangled.org/grain.social/grain/blob/main/lexicons/social/grain/comment/comment.json
+  parent_uri = post['reply']['parent']['uri']
+  collection = AT_URI_RE.fullmatch(parent_uri)['collection']
+  if collection == 'social.grain.gallery':
+    subject = parent_uri
+    reply_to = None
+  elif collection == 'social.grain.comment':
+    subject = parent.get('subject')
+    if not subject:
+      raise ValueError(f"Couldn't determine gallery for Grain comment {parent_uri}")
+    reply_to = parent_uri
+  else:
+    raise ValueError(f"Can't reply to {collection} with social.grain.comment")
+
+  # log anything we're dropping
+  for field in 'embed', 'tags', 'langs', 'labels':
+    if val := post.get(field):
+      logger.info(f"social.grain.comment doesn't support {field} {val} ; dropping")
+
+  return as1.trim_nulls({
+    **post,
+    '$type': 'social.grain.comment',
+    'subject': subject,
+    'replyTo': reply_to,
+    'reply': None,
+    'embed': None,
+    'tags': None,
+    'langs': None,
+    'labels': None,
+  }, ignore=('createdAt', 'text'))
+
+
 def _from_as1_to_standard_document(obj, *, url, summary, content,
                                    images_record_embed):
   """Generates a ``site.standard.document`` for an AS1 article.
@@ -2018,6 +2078,7 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
                 'chat.bsky.convo.defs#messageView',
                 'so.sprk.feed.post',
                 'so.sprk.feed.reply',
+                'social.grain.comment',
                 ):
     ret = _to_as1_post(obj, type=type, uri=uri, repo_did=repo_did,
                        repo_handle=repo_handle, pds=pds)
@@ -2555,7 +2616,7 @@ def _to_as1_actor(obj, *, type, uri, repo_did, repo_handle, pds, client):
 
 
 def _to_as1_post(obj, *, type, uri, repo_did, repo_handle, pds):
-  """Converts a Bluesky or Spark post or reply, or a chat message, to AS1.
+  """Converts a Bluesky/Spark/Grain post/reply, or chat message, to AS1.
 
   Helper for :func:`to_as1`. See it for args, except:
 
@@ -2644,7 +2705,10 @@ def _to_as1_post(obj, *, type, uri, repo_did, repo_handle, pds):
     'url': f'https://bsky.app/search?q=%23{urllib.parse.quote(name)}',
   } for name in obj.get('tags', []))
 
-  in_reply_to = obj.get('reply', {}).get('parent', {}).get('uri')
+  if type == 'social.grain.comment':
+    in_reply_to = obj.get('replyTo') or obj.get('subject')
+  else:
+    in_reply_to = obj.get('reply', {}).get('parent', {}).get('uri')
   try:
     in_reply_to_url = at_uri_to_web_url(in_reply_to)
   except ValueError:  # not an at:// URI

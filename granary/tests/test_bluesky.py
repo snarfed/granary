@@ -3975,6 +3975,95 @@ class BlueskyTest(testutil.TestCase):
                      'com.atproto.repo.getRecord'
                      '?repo=did%3Aal%3Aice&collection=so.sprk.feed.reply&rkey=parent-tid')
 
+  def test_from_as1_reply_to_grain_gallery(self):
+    expected = {
+      '$type': 'social.grain.comment',
+      'text': 'I hereby reply to this',
+      'subject': 'at://did:al:ice/social.grain.gallery/gallery-tid',
+      'fooOriginalText': 'I hereby reply to this',
+      'fooOriginalUrl': 'https://bsky.app/profile/did:dy:d/post/tid',
+      'createdAt': '2008-08-08T03:04:05.000Z',
+    }
+    reply = {
+      **REPLY_AS['object'],
+      'inReplyTo': 'at://did:al:ice/social.grain.gallery/gallery-tid',
+    }
+    self.assert_equals(expected, self.from_as1(reply))
+    self.assert_equals([expected], self.from_as1(reply, multiple=True))
+
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'uri': 'at://did:bo:b/social.grain.comment/parent-tid',
+    'cid': 'my+parent+syd',
+    'value': {
+      '$type': 'social.grain.comment',
+      'text': 'foo',
+      'subject': 'at://did:al:ice/social.grain.gallery/gallery-tid',
+      'createdAt': '2007-07-07T03:04:05.000Z',
+    },
+  }))
+  def test_from_as1_reply_to_grain_comment(self, mock_get):
+    self.assert_equals({
+      '$type': 'social.grain.comment',
+      'text': 'I hereby reply to this',
+      'subject': 'at://did:al:ice/social.grain.gallery/gallery-tid',
+      'replyTo': 'at://did:bo:b/social.grain.comment/parent-tid',
+      'fooOriginalText': 'I hereby reply to this',
+      'fooOriginalUrl': 'https://bsky.app/profile/did:dy:d/post/tid',
+      'createdAt': '2008-08-08T03:04:05.000Z',
+    }, self.from_as1({
+      **REPLY_AS['object'],
+      'inReplyTo': 'at://did:bo:b/social.grain.comment/parent-tid',
+    }, client=self.bs.client))
+
+  def test_from_as1_reply_to_grain_comment_no_client(self):
+    with self.assertRaises(ValueError):
+      self.from_as1({
+        **REPLY_AS['object'],
+        'inReplyTo': 'at://did:bo:b/social.grain.comment/parent-tid',
+      })
+
+  def test_from_as1_reply_to_grain_gallery_drops_unsupported(self):
+    self.assert_equals({
+      '$type': 'social.grain.comment',
+      'text': 'foo #bar',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#tag',
+          'tag': 'bar',
+        }],
+        'index': {
+          'byteStart': 4,
+          'byteEnd': 8,
+        },
+      }],
+      'subject': 'at://did:al:ice/social.grain.gallery/gallery-tid',
+      'fooOriginalText': 'foo #bar',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, self.from_as1({
+      'objectType': 'comment',
+      'content': 'foo #bar',
+      'contentMap': {'en': 'foo #bar'},
+      'inReplyTo': 'at://did:al:ice/social.grain.gallery/gallery-tid',
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': '#bar',
+        'startIndex': 4,
+        'length': 4,
+      }, {
+        'objectType': 'hashtag',
+        'displayName': '#baz',
+      }],
+      'image': [{'url': NEW_BLOB_URL, 'displayName': 'first'}],
+      'sensitive': True,
+      'published': '2022-01-02T03:04:05.000Z',
+    }, blobs={NEW_BLOB_URL: NEW_BLOB}))
+
+  def test_from_as1_to_grain_comment_not_reply_to_grain(self):
+    for obj in POST_AS, REPLY_AS:
+      with self.subTest(obj=obj), self.assertRaises(ValueError):
+        self.from_as1(obj, out_type='social.grain.comment')
+
   def test_from_as1_reply_to_spark_post_drops_unsupported(self):
     self.assert_equals({
       '$type': 'so.sprk.feed.reply',
@@ -5220,6 +5309,58 @@ class BlueskyTest(testutil.TestCase):
         'alt': 'my alt text',
       },
     }, repo_did='did:plc:foo', uri='at://did:plc:foo/so.sprk.feed.reply/tid'))
+
+  def test_to_as1_grain_comment(self):
+    self.assert_equals({
+      'objectType': 'comment',
+      'id': 'at://did:plc:alice/social.grain.comment/123',
+      'author': 'did:plc:alice',
+      'content': 'foo #bar',
+      'inReplyTo': [{
+        'id': 'at://did:bo:b/social.grain.gallery/gallery-tid',
+        'url': 'https://grain.social/profile/did:bo:b/gallery/gallery-tid',
+      }],
+      'tags': [{
+        'objectType': 'hashtag',
+        'displayName': 'bar',
+        'url': 'https://bsky.app/search?q=%23bar',
+        'startIndex': 4,
+        'length': 4,
+      }],
+      'published': '2007-07-07T03:04:05.000Z',
+    }, to_as1({
+      '$type': 'social.grain.comment',
+      'text': 'foo #bar',
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#tag',
+          'tag': 'bar',
+        }],
+        'index': {
+          'byteStart': 4,
+          'byteEnd': 8,
+        },
+      }],
+      'subject': 'at://did:bo:b/social.grain.gallery/gallery-tid',
+      'createdAt': '2007-07-07T03:04:05.000Z',
+    }, uri='at://did:plc:alice/social.grain.comment/123', repo_did='did:plc:alice'))
+
+  def test_to_as1_grain_comment_reply_to_comment(self):
+    self.assert_equals({
+      'objectType': 'comment',
+      'id': 'at://did:plc:alice/social.grain.comment/123',
+      'author': 'did:plc:alice',
+      'content': 'foo',
+      'inReplyTo': [{'id': 'at://did:bo:b/social.grain.comment/parent-tid'}],
+      'published': '2007-07-07T03:04:05.000Z',
+    }, to_as1({
+      '$type': 'social.grain.comment',
+      'text': 'foo',
+      'subject': 'at://did:bo:b/social.grain.gallery/gallery-tid',
+      'replyTo': 'at://did:bo:b/social.grain.comment/parent-tid',
+      'createdAt': '2007-07-07T03:04:05.000Z',
+    }, uri='at://did:plc:alice/social.grain.comment/123', repo_did='did:plc:alice'))
 
   def test_to_as1_spark_post_with_images(self):
     self.assert_equals({
