@@ -2660,6 +2660,7 @@ class BlueskyTest(testutil.TestCase):
       'website': 'https://alice.com/',
       'fooOriginalDescription': 'hi there',
       'fooOriginalUrl': 'https://alice.com/',
+      'links': [{'uri': '', 'cid': ''}],
     }, {
       '$type': 'so.sprk.actor.profile',
       'displayName': 'Alice',
@@ -2673,6 +2674,10 @@ class BlueskyTest(testutil.TestCase):
       'description': 'hi there',
       'fooOriginalDescription': 'hi there',
       'fooOriginalUrl': 'https://alice.com/',
+    }, {
+      '$type': 'app.bsky.actor.link',
+      'url': 'https://alice.com/',
+      'createdAt': '2022-01-02T03:04:05.000Z',
     }], self.from_as1(ACTOR_AS, multiple=True))
 
   def test_from_as1_actor_to_spark_profile(self):
@@ -2721,6 +2726,7 @@ class BlueskyTest(testutil.TestCase):
         '$type': 'com.atproto.label.defs#selfLabels',
         'values': [{'val': BOT_LABEL}],
       },
+      'links': [{'uri': '', 'cid': ''}],
     }, {
       '$type': 'so.sprk.actor.profile',
       'displayName': 'Alice',
@@ -2741,6 +2747,10 @@ class BlueskyTest(testutil.TestCase):
       'avatar': NEW_BLOB,
       'fooOriginalDescription': 'hi there',
       'fooOriginalUrl': 'https://alice.com/',
+    }, {
+      '$type': 'app.bsky.actor.link',
+      'url': 'https://alice.com/',
+      'createdAt': '2022-01-02T03:04:05.000Z',
     }], self.from_as1({
       **ACTOR_AS,
       'objectType': 'service',
@@ -2765,6 +2775,7 @@ class BlueskyTest(testutil.TestCase):
       'website': 'https://alice.com/',
       'fooOriginalDescription': 'hi there',
       'fooOriginalUrl': 'https://alice.com/',
+      'links': [{'uri': '', 'cid': ''}],
     }, {
       '$type': 'so.sprk.actor.profile',
       'displayName': 'Alice',
@@ -2779,10 +2790,65 @@ class BlueskyTest(testutil.TestCase):
       'fooOriginalDescription': 'hi there',
       'fooOriginalUrl': 'https://alice.com/',
     }, {
+      '$type': 'app.bsky.actor.link',
+      'url': 'https://alice.com/',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, {
       '$type': 'community.lexicon.payments.webMonetization',
       'address': 'https://wallet.example.com/alice',
     },]
     self.assert_equals(expected, self.from_as1(actor_with_wallet, multiple=True))
+
+  def test_from_as1_actor_multiple_links(self):
+    self.assert_equals([{
+      '$type': 'app.bsky.actor.profile',
+      'website': 'https://alice.com/',
+      'fooOriginalUrl': 'https://alice.com/',
+      'links': [
+        {'uri': '', 'cid': ''},
+        {'uri': '', 'cid': ''},
+      ],
+    }, {
+      '$type': 'so.sprk.actor.profile',
+      'website': 'https://alice.com/',
+      'fooOriginalUrl': 'https://alice.com/',
+    }, {
+      '$type': 'social.grain.actor.profile',
+      'fooOriginalUrl': 'https://alice.com/',
+    }, {
+      '$type': 'app.bsky.actor.link',
+      'url': 'https://alice.com/',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, {
+      '$type': 'app.bsky.actor.link',
+      'url': 'https://alice.blog/',
+      'title': 'My blog',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }], self.from_as1({
+      'objectType': 'person',
+      'url': 'https://alice.com/',
+      'urls': [
+        'https://alice.com/',
+        {'displayName': 'My blog', 'value': 'https://alice.blog/'},
+        'acct:alice@alice.com',
+      ],
+    }, multiple=True))
+
+    # assert_equals ignores None values, but lexicon validation doesn't allow them
+    got = self.from_as1({'objectType': 'person', 'url': 'https://alice.com/'},
+                        multiple=True)
+    self.assertNotIn('title', got[3])
+
+  def test_from_as1_actor_links_not_multiple(self):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+      'website': 'https://alice.com/',
+      'fooOriginalUrl': 'https://alice.com/',
+    }, self.from_as1({
+      'objectType': 'person',
+      'url': 'https://alice.com/',
+      'urls': [{'displayName': 'My blog', 'value': 'https://alice.blog/'}],
+    }))
 
   def test_from_as1_post_multiple(self):
     self.assert_equals([{
@@ -4898,6 +4964,204 @@ class BlueskyTest(testutil.TestCase):
       'description': 'one http://li.nk/foo two x.li.nk three https://www.li.nk/',
     }))
 
+  @patch.object(util.session, 'get', side_effect=[
+    requests_response({
+      'uri': 'at://did:plc:foo/app.bsky.actor.link/123',
+      'value': {
+        '$type': 'app.bsky.actor.link',
+        'url': 'https://alice.blog/',
+        'title': 'My blog',
+        'createdAt': '2022-01-02T03:04:05.000Z',
+      },
+    }),
+    requests_response(status=404),
+    requests_response({
+      'uri': 'at://did:plc:foo/app.bsky.actor.link/789',
+      'value': {
+        '$type': 'app.bsky.actor.link',
+        'url': 'https://alice.shop/',
+        'createdAt': '2022-01-02T03:04:05.000Z',
+      },
+    }),
+  ])
+  def test_to_as1_profile_links(self, mock_get):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'at://did:plc:foo/app.bsky.actor.profile/self',
+      'url': 'https://alice.com/',
+      'urls': [
+        'https://alice.com/',
+        {
+          'objectType': 'link',
+          'id': 'at://did:plc:foo/app.bsky.actor.link/123',
+          'author': 'did:plc:foo',
+          'value': 'https://alice.blog/',
+          'displayName': 'My blog',
+          'published': '2022-01-02T03:04:05.000Z',
+        },
+        {
+          'objectType': 'link',
+          'id': 'at://did:plc:foo/app.bsky.actor.link/789',
+          'author': 'did:plc:foo',
+          'value': 'https://alice.shop/',
+          'published': '2022-01-02T03:04:05.000Z',
+        },
+      ],
+    }, to_as1({
+      '$type': 'app.bsky.actor.profile',
+      'website': 'https://alice.com/',
+      'links': [{
+        'uri': 'at://did:plc:foo/app.bsky.actor.link/123',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      }, {
+        'uri': 'at://did:plc:foo/app.bsky.actor.link/456',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      }, {
+        'uri': 'at://did:plc:foo/app.bsky.actor.link/789',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      }],
+    }, uri='at://did:plc:foo/app.bsky.actor.profile/self', client=self.bs.client))
+
+    self.assert_call(mock_get, 'com.atproto.repo.getRecord?repo=did%3Aplc%3Afoo&collection=app.bsky.actor.link&rkey=123')
+
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'uri': 'at://did:plc:foo/app.bsky.actor.link/123',
+    'value': {'$type': 'foo.bar.baz'},
+  }))
+  def test_to_as1_profile_links_unknown_record_type(self, _):
+    for validate in True, False:
+      with self.subTest(validate=validate):
+        self.bs.client._validate = validate
+        self.assert_equals({
+          'objectType': 'person',
+          'id': 'at://did:plc:foo/app.bsky.actor.profile/self',
+        }, to_as1({
+          '$type': 'app.bsky.actor.profile',
+          'links': [{
+            'uri': 'at://did:plc:foo/app.bsky.actor.link/123',
+            'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+          }],
+        }, uri='at://did:plc:foo/app.bsky.actor.profile/self',
+           client=self.bs.client))
+
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'uri': 'at://did:plc:foo/app.bsky.actor.link/123',
+    'value': {
+      '$type': 'app.bsky.actor.link',
+      'url': 'https://alice.blog/',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    },
+  }))
+  def test_to_as1_profile_links_only_own_repo(self, mock_get):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'at://did:plc:foo/app.bsky.actor.profile/self',
+      'url': 'https://alice.blog/',
+      'urls': [{
+        'objectType': 'link',
+        'id': 'at://did:plc:foo/app.bsky.actor.link/123',
+        'author': 'did:plc:foo',
+        'value': 'https://alice.blog/',
+        'published': '2022-01-02T03:04:05.000Z',
+      }],
+    }, to_as1({
+      '$type': 'app.bsky.actor.profile',
+      'links': [{
+        'uri': 'at://did:plc:other/app.bsky.actor.link/123',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      }, {
+        'uri': 'at://did:plc:foo/app.bsky.feed.post/123',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      }, {
+        'uri': 'at://did:plc:foo/app.bsky.actor.link/123',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      }],
+    }, uri='at://did:plc:foo/app.bsky.actor.profile/self', client=self.bs.client))
+
+    mock_get.assert_called_once()
+    self.assert_call(mock_get, 'com.atproto.repo.getRecord?repo=did%3Aplc%3Afoo&collection=app.bsky.actor.link&rkey=123')
+
+  def test_to_as1_profile_links_no_client(self):
+    self.assert_equals({
+      'objectType': 'person',
+    }, to_as1({
+      '$type': 'app.bsky.actor.profile',
+      'links': [{
+        'uri': 'at://did:plc:foo/app.bsky.actor.link/123',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+      }],
+    }))
+
+  def test_to_as1_profileViewDetailed_links(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'did:web:alice.com',
+      'username': 'alice.com',
+      'displayName': 'Alice',
+      'summary': 'hi there',
+      'image': [{'url': 'https://alice.com/alice.jpg'}],
+      'url': 'https://bsky.app/profile/alice.com',
+      'urls': [
+        'https://bsky.app/profile/alice.com',
+        {
+          'objectType': 'link',
+          'id': 'at://did:web:alice.com/app.bsky.actor.link/456',
+          'author': 'did:web:alice.com',
+          'value': 'https://alice.com',
+          'displayName': 'Home',
+        },
+        {
+          'objectType': 'link',
+          'id': 'at://did:web:alice.com/app.bsky.actor.link/123',
+          'author': 'did:web:alice.com',
+          'value': 'https://alice.blog/',
+          'displayName': 'My blog',
+          'image': 'https://alice.blog/favicon.png',
+        },
+      ],
+      'followers': {'totalItems': 456},
+      'following': {'totalItems': 123},
+    }, to_as1({
+      **ACTOR_PROFILE_VIEW_DETAILED_BSKY,
+      'links': [{
+        'uri': 'at://did:web:alice.com/app.bsky.actor.link/123',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+        'url': 'https://alice.blog/',
+        'title': 'My blog',
+        'icon': 'https://alice.blog/favicon.png',
+      }, {
+        'uri': 'at://did:web:alice.com/app.bsky.actor.link/456',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+        'url': 'https://alice.com',
+        'title': 'Home',
+      }],
+    }))
+
+  def test_to_as1_profileViewDetailed_single_link(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'did:plc:foo',
+      'username': 'alice.bsky.social',
+      'url': 'https://bsky.app/profile/alice.bsky.social',
+      'urls': [{
+        'objectType': 'link',
+        'id': 'at://did:plc:foo/app.bsky.actor.link/123',
+        'author': 'did:plc:foo',
+        'value': 'https://bsky.app/profile/alice.bsky.social',
+        'displayName': 'Me',
+      }],
+    }, to_as1({
+      '$type': 'app.bsky.actor.defs#profileViewDetailed',
+      'did': 'did:plc:foo',
+      'handle': 'alice.bsky.social',
+      'links': [{
+        'uri': 'at://did:plc:foo/app.bsky.actor.link/123',
+        'cid': 'bafyreie5737gdxlw5i64vzichcalba3z2v5n6icifvx5xytvske7mr3hpm',
+        'url': 'https://bsky.app/profile/alice.bsky.social',
+        'title': 'Me',
+      }],
+    }))
+
   def test_to_as1_profile_escape_html_chars(self):
     self.assert_equals({
       'objectType': 'person',
@@ -6162,6 +6426,23 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'community.lexicon.payments.webMonetization',
       'address': 'http://wal/let',
     }))
+
+  def test_to_as1_link(self):
+    self.assert_equals({
+      'objectType': 'link',
+      'id': 'at://did:plc:foo/app.bsky.actor.link/123',
+      'author': 'did:plc:foo',
+      'value': 'https://alice.blog/',
+      'displayName': 'My blog',
+      'image': NEW_BLOB_URL,
+      'published': '2022-01-02T03:04:05.000Z',
+    }, to_as1({
+      '$type': 'app.bsky.actor.link',
+      'url': 'https://alice.blog/',
+      'title': 'My blog',
+      'icon': NEW_BLOB,
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, uri='at://did:plc:foo/app.bsky.actor.link/123', repo_did='did:plc:foo'))
 
   def test_to_as1_location_geo(self):
     self.assert_equals({

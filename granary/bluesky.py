@@ -521,10 +521,10 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
   ellipsis character at the end in order to fit.
 
   Some at-uri and strongRef fields within returned records will be left blank, eg
-  ``social.grain.gallery.item``, ``community.blacksky.assembly.statement``,
-  ``community.blacksky.assembly.vote`` They point to other returned records, but
-  those records don't yet have rkeys. Callers should fill in those fields once
-  they've generated and assigned rkeys.
+  ``app.bsky.actor.profile``, ``social.grain.gallery.item``,
+  ``community.blacksky.assembly.statement``, ``community.blacksky.assembly.vote``.
+  They point to other returned records, but those records don't yet have rkeys.
+  Callers should fill in those fields once they've generated and assigned rkeys.
 
   TODO: drop ``aspects`` in favor of ``width``/``height`` fields in ``image``
     objects themselves
@@ -973,6 +973,26 @@ def _from_as1_actor(obj, *, out_type, multiple, summary, blobs, client,
       # Grain, also similar to Bluesky's, but even more minimal
       # https://tangled.org/grain.social/grain/blob/main/lexicons/social/grain/actor/profile.json
       rets.append({**ret, '$type': 'social.grain.actor.profile'})
+
+      # profile links. we don't know the link records' rkeys or CIDs yet, so the
+      # caller has to fill in the profile's links strongRefs
+      # https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/actor/link.json
+      created_at = from_as1_datetime(None)  # now
+      links = util.get_list(obj, 'urls') or util.get_list(obj, 'url')
+      max_links = LEXRPC.defs['app.bsky.actor.profile']['record']['properties']['links']['maxLength']
+      for link in links[:max_links]:
+        if not isinstance(link, dict):
+          link = {'value': link}
+        url = link.get('value')
+        if not util.is_web(url):
+          continue
+        ret.setdefault('links', []).append({'uri': '', 'cid': ''})
+        rets.append(as1.trim_nulls({
+          '$type': 'app.bsky.actor.link',
+          'url': url,
+          'title': link.get('displayName'),
+          'createdAt': created_at,
+        }))
 
     # Web Monetization
     # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
@@ -2434,6 +2454,28 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'published': obj.get('createdAt'),
     }
 
+  elif type in ('app.bsky.actor.link', 'app.bsky.actor.defs#profileLinkView'):
+    # profile link. destination goes in value, not url, so that this object can
+    # go directly into an actor's urls field
+    # https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/actor/link.json
+    repo = repo_did or uri_repo
+
+    icon = None
+    if type == 'app.bsky.actor.link' and repo and pds:
+      icon = blob_to_url(blob=obj.get('icon'), repo_did=repo, pds=pds)
+    elif type == 'app.bsky.actor.defs#profileLinkView':
+      icon = obj.get('icon')
+
+    ret = {
+      'objectType': 'link',
+      'id': uri,
+      'author': repo,
+      'value': obj.get('url'),
+      'displayName': obj.get('title'),
+      'image': icon,
+      'published': obj.get('createdAt'),
+    }
+
   elif type == 'community.lexicon.payments.webMonetization':
     # not a real AS1 object, just a stub so that we minimally support these records
     # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
@@ -2609,6 +2651,32 @@ def _to_as1_actor(obj, *, type, uri, repo_did, repo_handle, pds, client):
   if website := obj.get('website'):
     urls.append(website)
 
+  # profile links. profile views include them inline, profile records have
+  # strongRefs to app.bsky.actor.link records that we have to fetch
+  owner = did
+  if not owner and (parsed := AT_URI_RE.fullmatch(uri or '')):
+    owner = parsed['repo']
+
+  links = []
+  for link in obj.get('links', []):
+    link_uri = link.get('uri') or ''
+    link_as1 = None
+    if type == 'app.bsky.actor.defs#profileViewDetailed':
+      link_as1 = to_as1(link, type='app.bsky.actor.defs#profileLinkView',
+                        uri=link_uri, pds=pds)
+    elif (client and (parsed := AT_URI_RE.fullmatch(link_uri))
+          and parsed['repo'] == owner
+          and parsed['collection'] == 'app.bsky.actor.link'):
+      try:
+        record = client.com.atproto.repo.getRecord(**parsed.groupdict())
+        link_as1 = to_as1(record.get('value'), uri=link_uri, pds=pds)
+      except (requests.RequestException, NotImplementedError, ValueError) as e:
+        logger.info(f"Couldn't fetch profile link {link_uri} : {e}")
+
+    if link_as1 and (url := link_as1.get('value')):
+      links.append(link_as1)
+      urls.append(url)
+
   desc = html.escape(obj.get('description') or '')
   summary = whitespace_to_html(util.linkify(desc, pretty=True), escape=False)
   urls.extend(util.extract_links(summary))
@@ -2629,16 +2697,21 @@ def _to_as1_actor(obj, *, type, uri, repo_did, repo_handle, pds, client):
       'username': obj.get('handle') or repo_handle,
     }
 
-  urls = util.dedupe_urls(urls)
   ret.update({
-    'url': urls[0] if urls else None,
-    'urls': urls if len(urls) > 1 else None,
     'displayName': obj.get('displayName'),
     # TODO: for app.bsky.feed.generator, use descriptionFacets
     'summary': summary,
     'image': images,
     'published': obj.get('createdAt'),
   })
+
+  # urls
+  if urls:
+    urls = util.dedupe_urls(urls)
+    ret['url'] = urls[0]
+    if len(urls) > 1 or links:
+      links_by_url = {util.normalize_url(link['value']): link for link in links}
+      ret['urls'] = [links_by_url.get(url, url) for url in urls]
 
   # avatar and banner are blobs in app.bsky.actor.profile; convert to URLs
   repo_did = repo_did or did
