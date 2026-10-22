@@ -476,6 +476,83 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_person_propertyvalue_links_in_urls(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': '@alice@in.st',
+      'url': {'displayName': 'Home', 'value': 'https://in.st/@alice'},
+      'urls': [
+        {'displayName': 'Home', 'value': 'https://in.st/@alice'},
+        {'displayName': 'Blog', 'value': 'https://alice.blog/'},
+      ],
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': 'https://in.st/@alice',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Blog',
+        'value': '<a href="https://alice.blog/" rel="me">alice.blog</a>',
+      }, {
+        'type': 'PropertyValue',
+        'name': 'Pronouns',
+        'value': 'they/them',
+      }, {
+        # same as url, so it names that url instead of adding a new one
+        'type': 'PropertyValue',
+        'name': 'Home',
+        'value': '<a href="https://in.st/@alice">in.st/@alice</a>',
+      }, {
+        'type': 'PropertyValue',
+        'name': 'Partner',
+        'value': '<span class="h-card"><a href="https://in.st/@bob" class="u-url mention">@<span>bob</span></a></span>',
+      }, {
+        'type': 'PropertyValue',
+        'name': 'Interests',
+        'value': '<a href="https://in.st/tags/cats" class="mention hashtag" rel="tag">#<span>cats</span></a>',
+      }],
+    }))
+
+  def test_to_as1_person_propertyvalue_duplicate_links(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': '@alice@in.st',
+      'url': 'https://in.st/@alice',
+      'urls': [
+        'https://in.st/@alice',
+        {'displayName': 'Website', 'value': 'https://alice.blog/'},
+      ],
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': 'https://in.st/@alice',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Website',
+        'value': '<a href="https://alice.blog/">alice.blog</a>',
+      }, {
+        'type': 'PropertyValue',
+        'name': 'Blog',
+        'value': '<a href="https://alice.blog">alice.blog</a>',
+      }],
+    }))
+
+  def test_to_as1_person_propertyvalue_link_no_url(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'id': 'https://in.st/users/alice',
+      'displayName': 'alice',
+      'username': 'alice',
+      'urls': [{'displayName': 'Blog', 'value': 'https://alice.blog/'}],
+    }, as2.to_as1({
+      'type': 'Person',
+      'id': 'https://in.st/users/alice',
+      'preferredUsername': 'alice',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Blog',
+        'value': '<a href="https://alice.blog/">alice.blog</a>',
+      }],
+    }))
+
   def test_to_as1_person_plain_text_propertyvalue_attachment(self):
     self.assertEqual({
       'objectType': 'person',

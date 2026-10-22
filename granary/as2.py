@@ -677,10 +677,11 @@ def to_as1(obj, use_type=True, get_fn=None):
   # attachments: Mastodon profile metadata fields, with type PropertyValue.
   # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue
   #
-  # populate into corresponding URL in url/urls fields. have to do this one one
-  # level up, in the parent's object, because its data goes into the parent's
-  # url/urls fields
+  # populate into corresponding URL in url/urls fields, or add new URLs. have to
+  # do this one one level up, in the parent's object, because its data goes into
+  # the parent's url/urls fields
   names = {}
+  field_urls = []
   attachments = [att for att in as1.get_objects(obj, 'attachment') if att]
   for att in attachments:
     name = att.get('name')
@@ -691,11 +692,22 @@ def to_as1(obj, use_type=True, get_fn=None):
         # expensive, and these fields are often plain text
         and '<a' in value.lower()):
       a = util.parse_html(value).find('a')
-      if a and a.get('href'):
-        names[a['href']] = name
+      if a and (href := a.get('href')):
+        names[href] = name
+        # @-mentions and hashtags aren't this actor's own URLs
+        classes = a.get('class') or []
+        if 'mention' not in classes and 'hashtag' not in classes:
+          field_urls.append(href)
 
+  obj_urls = get_urls(obj)
   urls = [{'displayName': names[url], 'value': url} if url in names else url
-          for url in get_urls(obj)]
+          for url in obj_urls]
+  seen = set(obj_urls)
+  for url in field_urls:
+    normalized = util.normalize_url(url)
+    if util.is_web(url) and normalized not in seen:
+      seen.add(normalized)
+      urls.append({'displayName': names[url], 'value': url})
 
   # media links. more for them is populated below!
   if type in ('Audio', 'Video'):
@@ -858,8 +870,10 @@ def to_as1(obj, use_type=True, get_fn=None):
     # question (poll) responses
     'options': all_to_as1('anyOf', plural=True) + all_to_as1('oneOf', plural=True),
     'replies': collection_to_as1('replies'),
-    'url': urls[0] if urls else None,
-    'urls': urls if len(urls) > 1 else None,
+    # profile field links only go in urls, not url, so they don't become the
+    # actor's primary URL
+    'url': urls[0] if obj_urls else None,
+    'urls': urls if len(urls) > 1 or len(urls) > len(obj_urls) else None,
   })
 
   # enforce that lat/lon are float. (Pixelfed currently returns them as strings)

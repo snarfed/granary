@@ -313,6 +313,7 @@ Changelog
 
 * `as2`:
   * `from_as1`: convert `rsvp-interested` to `TentativeAccept`. Previously it had no `type`.
+  * `to_as1`: add links from `PropertyValue` `attachments` to `urls` along with `url`.
 * `bluesky`:
   * Convert AS1 event `image`s to/from the non-standard `media` field in `community.lexicon.calendar.event` records that Smoke Signal, atmo.rsvp, and others use.
   * Convert to/from [Grain](https://grain.social/) `social.grain.*` records ([bridgy-fed#2739](https://github.com/snarfed/bridgy-fed/issues/2739)).
