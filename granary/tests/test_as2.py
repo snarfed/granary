@@ -519,12 +519,16 @@ class ActivityStreams2Test(testutil.TestCase):
       'url': 'https://in.st/@alice',
       'urls': [
         'https://in.st/@alice',
-        {'displayName': 'Website', 'value': 'https://alice.blog/'},
+        {'displayName': 'Blog', 'value': 'https://alice.blog/'},
       ],
     }, as2.to_as1({
       'type': 'Person',
       'url': 'https://in.st/@alice',
       'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Old',
+        'value': '<a href="http://alice.blog/">alice.blog</a>',
+      }, {
         'type': 'PropertyValue',
         'name': 'Website',
         'value': '<a href="https://alice.blog/">alice.blog</a>',
@@ -532,6 +536,51 @@ class ActivityStreams2Test(testutil.TestCase):
         'type': 'PropertyValue',
         'name': 'Blog',
         'value': '<a href="https://alice.blog">alice.blog</a>',
+      }],
+    }))
+
+  def test_to_as1_person_propertyvalue_non_web_and_bad_links(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': '@alice@in.st',
+      'url': 'https://in.st/@alice',
+      'urls': [
+        'https://in.st/@alice',
+        {'displayName': 'Blog', 'value': 'https://alice.blog/'},
+      ],
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': 'https://in.st/@alice',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Email',
+        'value': '<a href="mailto:alice@in.st">alice@in.st</a>',
+      }, {
+        'type': 'PropertyValue',
+        'name': 'About',
+        'value': '<a href="/about">about</a>',
+      }, {
+        'type': 'PropertyValue',
+        'name': 'Bad',
+        'value': '<a href="https://[bad">bad</a>',
+      }, {
+        'type': 'PropertyValue',
+        'name': 'Blog',
+        'value': '<a href="https://alice.blog/">alice.blog</a>',
+      }],
+    }))
+
+  def test_to_as1_person_propertyvalue_names_url_without_trailing_slash(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'url': {'displayName': 'Home', 'value': 'https://alice.com/'},
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': 'https://alice.com/',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Home',
+        'value': '<a href="https://alice.com">alice.com</a>',
       }],
     }))
 

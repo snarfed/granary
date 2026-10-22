@@ -693,7 +693,11 @@ def to_as1(obj, use_type=True, get_fn=None):
         and '<a' in value.lower()):
       a = util.parse_html(value).find('a')
       if a and (href := a.get('href')):
-        names[href] = name
+        try:
+          names[util.normalize_url(href)] = name
+        except ValueError:
+          logger.info(f"Couldn't parse PropertyValue link {href}")
+          continue
         # @-mentions and hashtags aren't this actor's own URLs
         classes = a.get('class') or []
         if 'mention' not in classes and 'hashtag' not in classes:
@@ -702,11 +706,8 @@ def to_as1(obj, use_type=True, get_fn=None):
   obj_urls = get_urls(obj)
   urls = [{'displayName': names[url], 'value': url} if url in names else url
           for url in obj_urls]
-  seen = set(obj_urls)
-  for url in field_urls:
-    normalized = util.normalize_url(url)
-    if util.is_web(url) and normalized not in seen:
-      seen.add(normalized)
+  for url in util.dedupe_urls(field_urls):
+    if util.is_web(url) and url not in obj_urls:
       urls.append({'displayName': names[url], 'value': url})
 
   # media links. more for them is populated below!
