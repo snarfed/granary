@@ -12,7 +12,7 @@ from urllib.parse import urljoin
 import arroba.did
 from dns.exception import DNSException
 from lexrpc import Client
-from lexrpc.base import AT_URI_RE
+from lexrpc.base import AT_URI_RE, ValidationError
 from multiformats import CID
 from oauth_dropins.bluesky import BlueskyAuth
 import requests
@@ -2838,6 +2838,21 @@ class BlueskyTest(testutil.TestCase):
     got = self.from_as1({'objectType': 'person', 'url': 'https://alice.com/'},
                         multiple=True)
     self.assertNotIn('title', got[3])
+
+
+  def test_from_as1_validate_true(self):
+    link = {
+      'objectType': 'link',
+      'value': 'https://exa mple.com/',
+    }
+    self.assertEqual({
+      '$type': 'app.bsky.actor.link',
+      'url': 'https://exa mple.com/',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }, from_as1(link, out_type='app.bsky.actor.link'))
+
+    with self.assertRaises(ValidationError):
+      from_as1(link, out_type='app.bsky.actor.link', validate=True)
 
   def test_from_as1_actor_links_not_multiple(self):
     self.assert_equals({

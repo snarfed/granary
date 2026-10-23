@@ -19,7 +19,7 @@ from arroba.did import resolve_handle
 from bs4 import BeautifulSoup
 from io import BytesIO
 from lexrpc import Client
-from lexrpc.base import AT_URI_RE, Base, LANG_RE
+from lexrpc.base import AT_URI_RE, Base, LANG_RE, ValidationError
 from multiformats import CID
 from oauth_dropins import bluesky as oauth_bluesky
 from pymediainfo import MediaInfo
@@ -242,6 +242,8 @@ SENSITIVE_LABEL_DEFAULT = 'graphic-media'
 
 # TODO: bring back validate? or remove?
 LEXRPC = Base(truncate=True, validate=False)
+# for from_as1(validate=True)
+LEXRPC_VALIDATE = Base(truncate=True, validate=True)
 
 ELLIPSIS = ' […]'
 
@@ -437,7 +439,7 @@ def from_as1_to_strong_ref(obj, client=None, value=False, raise_=False,
     at_uri = Bluesky.post_id(id) or ''
     match = AT_URI_RE.fullmatch(at_uri)
 
-  if not match and id and not validate:
+  if not match and id and validate is False:
     return {'uri': id}
 
   if not match or not client:
@@ -507,7 +509,7 @@ def from_as1_datetime(val):
 def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
              original_fields_prefix=None, as_embed=False, raise_=False,
              dynamic_sensitive_labels=False, multiple=False, domain=None,
-             validate=True):
+             validate=None):
   """Converts an AS1 object to a Bluesky object.
 
   Converts to ``record`` types by default, eg ``app.bsky.actor.profile`` or
@@ -558,7 +560,10 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       ``community.lexicon.payments.webMonetization``. Default False.
     domain (str): optional. A DNS domain for the actor. Only used with
       ``out_type='site.standard.publication'``, and required then.
-    validate (bool): if False, allows generating invalid records. Currently
+    validate (bool or None): if True, validates output records against their
+      lexicons and raises :class:`lexrpc.ValidationError` if they're invalid.
+      If None, the default, doesn't validate output records, but still requires
+      valid strong refs. If False, allows generating invalid records. Currently
       only allows replies to non-Bluesky objects, with their ids in the reply
       refs' ``uri`` and no ``cid``.
 
@@ -827,7 +832,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       else:
         nsid = method
         type = 'input'
-      record = LEXRPC.validate(nsid, type, record)
+      record = (LEXRPC_VALIDATE if validate else LEXRPC).validate(nsid, type, record)
     truncated.append(record)
 
   return truncated if multiple else truncated[0]
@@ -1322,7 +1327,7 @@ def _from_as1_post(obj, *, out_type, multiple, actor, summary, blobs, aspects,
   # in reply to
   reply = None
   parent_record = {}
-  in_reply_to = Bluesky.base_object(obj, bluesky_only=validate)
+  in_reply_to = Bluesky.base_object(obj, bluesky_only=validate is not False)
   if in_reply_to and not is_dm:
     parent_ref = from_as1_to_strong_ref(in_reply_to, client=client, value=True,
                                         raise_=raise_, validate=validate)
@@ -3488,16 +3493,16 @@ class Bluesky(Source):
         return follows[:MAX_FOLLOWS]
 
   def create(self, obj, include_link=OMIT_LINK, ignore_formatting=False,
-             validate=True, blobs=None, **kwargs):
+             validate=None, blobs=None, **kwargs):
     """Creates a post, reply, repost, or like.
 
     Args:
       obj (dict): ActivityStreams object
       include_link (str)
       ignore_formatting (bool)
-      validate (bool): if False, allows creating invalid records, eg replies
-        to non-Bluesky posts, and passes ``validate: false`` to
-        ``createRecord``. See :func:`from_as1`.
+      validate (bool or None): passed through to :func:`from_as1`. If False,
+        allows creating invalid records, eg replies to non-Bluesky posts, and
+        passes ``validate: false`` to ``createRecord``.
       blobs (dict): optional mapping from str image or video URL in ``obj`` to
         ``$type: blob`` dict for blobs that have already been uploaded to the
         user's PDS. These URLs aren't fetched or uploaded again.
@@ -3526,7 +3531,7 @@ class Bluesky(Source):
                         ignore_formatting=ignore_formatting)
 
   def update(self, obj, include_link=OMIT_LINK, ignore_formatting=False,
-             validate=True, **kwargs):
+             validate=None, **kwargs):
     """Updates an existing post, reply, like, repost, follow, or block.
 
     ``obj['id']`` must be the at:// URI of the existing record to update.
@@ -3589,14 +3594,14 @@ class Bluesky(Source):
       return self.client.com.atproto.repo.createRecord(input)
 
   def _create(self, obj, preview=None, update=False, include_link=OMIT_LINK,
-              ignore_formatting=False, validate=True, blobs=None):
+              ignore_formatting=False, validate=None, blobs=None):
     assert preview in (False, True)
     assert self.did
     type = util.get_first(obj, 'objectType')
     verb = obj.get('verb')
 
     try:
-      base_obj = self.base_object(obj, bluesky_only=validate)
+      base_obj = self.base_object(obj, bluesky_only=validate is not False)
     except ValueError as e:
       e_str = str(e)
       return creation_result(abort=True, error_plain=e_str,
@@ -3604,7 +3609,7 @@ class Bluesky(Source):
 
     base_id = base_obj.get('id')
     base_url = base_obj.get('url')
-    non_bluesky_base = (not validate and base_obj
+    non_bluesky_base = (validate is False and base_obj
                         and not (base_id or '').startswith(('at://', 'did:')))
     if non_bluesky_base:
       base_id = base_url = base_id or base_url
@@ -3777,7 +3782,8 @@ class Bluesky(Source):
               },
             })
 
-        result = self.write_record(post_atp, rkey=rkey, validate=validate)
+        result = self.write_record(post_atp, rkey=rkey,
+                                   validate=validate is not False)
         return creation_result({
           'id': result['uri'],
           'url': at_uri_to_web_url(result['uri'], handle=self.handle),
@@ -3790,7 +3796,7 @@ class Bluesky(Source):
         error_html=f'Cannot publish type={type}, verb={verb} to Bluesky')
 
     result = self.write_record(from_as1(obj, client=self, validate=validate),
-                                rkey=rkey, validate=validate)
+                                rkey=rkey, validate=validate is not False)
     return creation_result({
       'id': result['uri'],
       'url': result_url,

@@ -309,7 +309,14 @@ On the open source side, there are many related projects. [php-mf2-shim](https:/
 Changelog
 ---
 
-### 12.1 - unreleased
+### 13.0 - unreleased
+
+_Breaking changes:_
+
+* `bluesky`:
+  * `from_as1`, `Bluesky.create`, `Bluesky.update`: `validate` is now trinary. The new default, `None`, behaves like the old default `True`: no lexicon validation of output records, but strong refs must be valid. `True` now also validates output records against their lexicons and raises `lexrpc.ValidationError` if they're invalid. `False` is unchanged.
+
+_Non-breaking changes:_
 
 * `as2`:
   * `from_as1`: convert `rsvp-interested` to `TentativeAccept`. Previously it had no `type`.
