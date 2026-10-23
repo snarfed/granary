@@ -2677,7 +2677,7 @@ class BlueskyTest(testutil.TestCase):
     }, {
       '$type': 'app.bsky.actor.link',
       'url': 'https://alice.com/',
-      'createdAt': '2022-01-02T03:04:05.000Z',
+      'createdAt': '1970-01-01T00:00:00.000Z',
     }], self.from_as1(ACTOR_AS, multiple=True))
 
   def test_from_as1_actor_to_spark_profile(self):
@@ -2750,7 +2750,7 @@ class BlueskyTest(testutil.TestCase):
     }, {
       '$type': 'app.bsky.actor.link',
       'url': 'https://alice.com/',
-      'createdAt': '2022-01-02T03:04:05.000Z',
+      'createdAt': '1970-01-01T00:00:00.000Z',
     }], self.from_as1({
       **ACTOR_AS,
       'objectType': 'service',
@@ -2792,7 +2792,7 @@ class BlueskyTest(testutil.TestCase):
     }, {
       '$type': 'app.bsky.actor.link',
       'url': 'https://alice.com/',
-      'createdAt': '2022-01-02T03:04:05.000Z',
+      'createdAt': '1970-01-01T00:00:00.000Z',
     }, {
       '$type': 'community.lexicon.payments.webMonetization',
       'address': 'https://wallet.example.com/alice',
@@ -2818,12 +2818,12 @@ class BlueskyTest(testutil.TestCase):
     }, {
       '$type': 'app.bsky.actor.link',
       'url': 'https://alice.com/',
-      'createdAt': '2022-01-02T03:04:05.000Z',
+      'createdAt': '1970-01-01T00:00:00.000Z',
     }, {
       '$type': 'app.bsky.actor.link',
       'url': 'https://alice.blog/',
       'title': 'My blog',
-      'createdAt': '2022-01-02T03:04:05.000Z',
+      'createdAt': '1970-01-01T00:00:00.000Z',
     }], self.from_as1({
       'objectType': 'person',
       'url': 'https://alice.com/',
@@ -2856,7 +2856,7 @@ class BlueskyTest(testutil.TestCase):
       '$type': 'app.bsky.actor.link',
       'url': 'https://alice.com/',
       'title': 'x' * 39 + '…',
-      'createdAt': '2022-01-02T03:04:05.000Z',
+      'createdAt': '1970-01-01T00:00:00.000Z',
     }], self.from_as1({
       'objectType': 'person',
       'url': 'https://alice.com/',
@@ -2894,7 +2894,7 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual({
       '$type': 'app.bsky.actor.link',
       'url': 'https://exa mple.com/',
-      'createdAt': '2022-01-02T03:04:05.000Z',
+      'createdAt': '1970-01-01T00:00:00.000Z',
     }, from_as1(link, out_type='app.bsky.actor.link'))
 
     with self.assertRaises(ValidationError):

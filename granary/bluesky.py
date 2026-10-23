@@ -622,13 +622,15 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       original_fields_prefix=original_fields_prefix)
 
   elif type == 'link':
-    # profile link. destination is in value, like in actors' urls field
+    # profile link. destination is in value, like in actors' urls field.
+    # default createdAt to a constant, not now, so that unchanged links convert
+    # to identical records
     # https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/actor/link.json
     ret = as1.trim_nulls({
       '$type': 'app.bsky.actor.link',
       'url': obj.get('value'),
       'title': obj.get('displayName'),
-      'createdAt': from_as1_datetime(obj.get('published')),
+      'createdAt': from_as1_datetime(obj.get('published') or util.EPOCH_ISO),
     })
 
   elif verb in ('post', 'update') and type in POST_TYPES:
