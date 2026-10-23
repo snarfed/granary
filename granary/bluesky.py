@@ -132,6 +132,7 @@ FROM_AS1_TYPES = {
   'block': (
     'app.bsky.graph.block',
     'app.bsky.graph.listblock',
+    'so.sprk.graph.block',
   ),
   'event': (
     'community.lexicon.calendar.event',
@@ -141,6 +142,7 @@ FROM_AS1_TYPES = {
   ),
   'follow': (
     'app.bsky.graph.follow',
+    'so.sprk.graph.follow',
   ),
   'like': (
     'app.bsky.feed.like',
@@ -696,7 +698,7 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       raise ValueError('follow activity requires actor and object')
 
     obj_id = inner_obj.get('id')
-    lexicon = f'app.bsky.graph.{type}'
+    lexicon = out_type or f'app.bsky.graph.{type}'
     if match := AT_URI_RE.fullmatch(obj_id):
       if match.group('collection') == 'app.bsky.graph.list':
         lexicon = 'app.bsky.graph.listblock'
@@ -706,6 +708,10 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       'subject': obj_id,  # DID or list at:// URI
       'createdAt': from_as1_datetime(obj.get('published')),
     }
+
+    if multiple and not out_type and lexicon != 'app.bsky.graph.listblock':
+      # so.sprk follows and blocks have the same schemas as app.bsky's
+      rets = [ret, {**ret, '$type': f'so.sprk.graph.{type}'}]
 
   elif type == 'flag':
     # use the first object that we can get an ATProto DID or URI/CID for
@@ -2327,10 +2333,12 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
   elif type in ('app.bsky.graph.follow',
                 'app.bsky.graph.block',
-                'app.bsky.graph.listblock'):
+                'app.bsky.graph.listblock',
+                'so.sprk.graph.follow',
+                'so.sprk.graph.block'):
     ret = {
       'objectType': 'activity',
-      'verb': 'follow' if type == 'app.bsky.graph.follow' else 'block',
+      'verb': 'follow' if type.endswith('.graph.follow') else 'block',
       'id': uri,
       'url': at_uri_to_web_url(uri),
       'object': obj.get('subject'),

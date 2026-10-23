@@ -4453,6 +4453,50 @@ class BlueskyTest(testutil.TestCase):
       'object': 'https://bsky.app/profile/did:ev:e',
     }))
 
+  def test_from_as1_spark_follow_and_block(self):
+    for verb in 'follow', 'block':
+      with self.subTest(verb=verb):
+        self.assert_equals({
+          '$type': f'so.sprk.graph.{verb}',
+          'subject': 'did:bo:b',
+          'createdAt': '2022-01-02T03:04:05.000Z',
+        }, self.from_as1({
+          'objectType': 'activity',
+          'verb': verb,
+          'actor': 'did:al:ice',
+          'object': 'did:bo:b',
+        }, out_type=f'so.sprk.graph.{verb}', validate=True))
+
+  def test_from_as1_follow_and_block_multiple(self):
+    for verb in 'follow', 'block':
+      with self.subTest(verb=verb):
+        self.assert_equals([{
+          '$type': f'app.bsky.graph.{verb}',
+          'subject': 'did:bo:b',
+          'createdAt': '2022-01-02T03:04:05.000Z',
+        }, {
+          '$type': f'so.sprk.graph.{verb}',
+          'subject': 'did:bo:b',
+          'createdAt': '2022-01-02T03:04:05.000Z',
+        }], self.from_as1({
+          'objectType': 'activity',
+          'verb': verb,
+          'actor': 'did:al:ice',
+          'object': 'did:bo:b',
+        }, multiple=True))
+
+  def test_from_as1_listblock_multiple(self):
+    self.assert_equals([{
+      '$type': 'app.bsky.graph.listblock',
+      'subject': 'at://did:us:er/app.bsky.graph.list/123',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }], self.from_as1({
+      'objectType': 'activity',
+      'verb': 'block',
+      'actor': 'http://alice',
+      'object': 'at://did:us:er/app.bsky.graph.list/123',
+    }, multiple=True))
+
   def test_from_as1_listblock(self):
     self.assert_equals({
       '$type': 'app.bsky.graph.listblock',
@@ -6252,6 +6296,21 @@ class BlueskyTest(testutil.TestCase):
       'subject': 'did:ev:e',
       'createdAt': '2022-01-02T03:04:05.000Z',
     }))
+
+  def test_to_as1_spark_follow_and_block(self):
+    for verb in 'follow', 'block':
+      with self.subTest(verb=verb):
+        self.assert_equals({
+          'objectType': 'activity',
+          'verb': verb,
+          'id': f'at://did:al:ice/so.sprk.graph.{verb}/123',
+          'object': 'did:bo:b',
+          'actor': 'did:al:ice',
+        }, to_as1({
+          '$type': f'so.sprk.graph.{verb}',
+          'subject': 'did:bo:b',
+          'createdAt': '2022-01-02T03:04:05.000Z',
+        }, uri=f'at://did:al:ice/so.sprk.graph.{verb}/123', repo_did='did:al:ice'))
 
   def test_to_as1_listblock(self):
     self.assert_equals({

@@ -327,6 +327,7 @@ _Non-breaking changes:_
 * `bluesky`:
   * Convert AS1 event `image`s to/from the non-standard `media` field in `community.lexicon.calendar.event` records that Smoke Signal, atmo.rsvp, and others use.
   * Convert to/from [Grain](https://grain.social/) `social.grain.*` records ([bridgy-fed#2739](https://github.com/snarfed/bridgy-fed/issues/2739)).
+  * Convert to/from [Spark](https://sprk.so/) `so.sprk.graph.follow` and `so.sprk.graph.block` records.
   * Convert actor `url`/`urls` to/from [Bluesky profile links](https://bsky.social/about/blog/10-22-2026-introducing-profile-links), ie [`app.bsky.actor.link`](https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/actor/link.json) records and `app.bsky.actor.profile`'s `links` field.
   * `at_uri_to_web_url`: add `grain.social` gallery URLs.
 
