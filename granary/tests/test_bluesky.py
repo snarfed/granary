@@ -2839,6 +2839,52 @@ class BlueskyTest(testutil.TestCase):
                         multiple=True)
     self.assertNotIn('title', got[3])
 
+  def test_from_as1_actor_multiple_links_invalid(self):
+    self.assert_equals([{
+      '$type': 'app.bsky.actor.profile',
+      'website': 'https://alice.com/',
+      'fooOriginalUrl': 'https://alice.com/',
+      'links': [{'uri': '', 'cid': ''}],
+    }, {
+      '$type': 'so.sprk.actor.profile',
+      'website': 'https://alice.com/',
+      'fooOriginalUrl': 'https://alice.com/',
+    }, {
+      '$type': 'social.grain.actor.profile',
+      'fooOriginalUrl': 'https://alice.com/',
+    }, {
+      '$type': 'app.bsky.actor.link',
+      'url': 'https://alice.com/',
+      'title': 'x' * 39 + '…',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }], self.from_as1({
+      'objectType': 'person',
+      'url': 'https://alice.com/',
+      'urls': [
+        {'displayName': 'x' * 50, 'value': 'https://alice.com/'},
+        'https://exa mple.com/',
+        'https://alice.com/' + 'x' * 9000,
+      ],
+    }, multiple=True))
+
+  def test_from_as1_link(self):
+    link = {
+      'objectType': 'link',
+      'value': 'https://alice.blog/',
+      'displayName': 'My blog',
+      'published': '2022-01-02T03:04:05.000Z',
+    }
+    expected = {
+      '$type': 'app.bsky.actor.link',
+      'url': 'https://alice.blog/',
+      'title': 'My blog',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+    }
+    self.assertEqual(expected, from_as1(link))
+    self.assertEqual(expected, from_as1(link, out_type='app.bsky.actor.link'))
+
+    with self.assertRaises(ValueError):
+      from_as1(link, out_type='app.bsky.feed.post')
 
   def test_from_as1_validate_true(self):
     link = {

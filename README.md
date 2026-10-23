@@ -313,7 +313,10 @@ Changelog
 
 _Breaking changes:_
 
+* `as1`:
+  * Remove `link` from `POST_TYPES`.
 * `bluesky`:
+  * `from_as1`: convert `link` objects to `app.bsky.actor.link` records, not posts.
   * `from_as1`, `Bluesky.create`, `Bluesky.update`: `validate` is now trinary. The new default, `None`, behaves like the old default `True`: no lexicon validation of output records, but strong refs must be valid. `True` now also validates output records against their lexicons and raises `lexrpc.ValidationError` if they're invalid. `False` is unchanged.
 
 _Non-breaking changes:_

@@ -73,7 +73,6 @@ BOT_TYPES = frozenset((
 POST_TYPES = frozenset((
   'article',
   'comment',
-  'link',
   'mention',
   'note',
 ))

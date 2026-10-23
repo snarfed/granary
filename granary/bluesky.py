@@ -120,6 +120,9 @@ FROM_AS1_TYPES = {
     'app.bsky.feed.defs#postView',
   ) for type in POST_TYPES
 } | {
+  'link': (
+    'app.bsky.actor.link',
+  ),
   'article': (
     'site.standard.document',
     'app.bsky.feed.post',
@@ -618,6 +621,16 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
       blobs=blobs, client=client, raise_=raise_, domain=domain,
       original_fields_prefix=original_fields_prefix)
 
+  elif type == 'link':
+    # profile link. destination is in value, like in actors' urls field
+    # https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/actor/link.json
+    ret = as1.trim_nulls({
+      '$type': 'app.bsky.actor.link',
+      'url': obj.get('value'),
+      'title': obj.get('displayName'),
+      'createdAt': from_as1_datetime(obj.get('published')),
+    })
+
   elif verb in ('post', 'update') and type in POST_TYPES:
     rets = _from_as1_post(
       obj, multiple=multiple, actor=actor, summary=summary,
@@ -982,7 +995,6 @@ def _from_as1_actor(obj, *, out_type, multiple, summary, blobs, client,
       # profile links. we don't know the link records' rkeys or CIDs yet, so the
       # caller has to fill in the profile's links strongRefs
       # https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/actor/link.json
-      created_at = from_as1_datetime(None)  # now
       links = util.get_list(obj, 'urls') or util.get_list(obj, 'url')
       max_links = LEXRPC.defs['app.bsky.actor.profile']['record']['properties']['links']['maxLength']
       for link in links[:max_links]:
@@ -991,13 +1003,16 @@ def _from_as1_actor(obj, *, out_type, multiple, summary, blobs, client,
         url = link.get('value')
         if not util.is_web(url):
           continue
+        # skip invalid links, eg URLs with spaces, so that they don't make the
+        # whole profile commit fail
+        try:
+          record = from_as1({**link, 'objectType': 'link'},
+                            out_type='app.bsky.actor.link', validate=True)
+        except ValidationError as e:
+          logger.info(f'Skipping invalid profile link {url} : {e}')
+          continue
         ret.setdefault('links', []).append({'uri': '', 'cid': ''})
-        rets.append(as1.trim_nulls({
-          '$type': 'app.bsky.actor.link',
-          'url': url,
-          'title': link.get('displayName'),
-          'createdAt': created_at,
-        }))
+        rets.append(record)
 
     # Web Monetization
     # https://github.com/lexicon-community/lexicon/tree/main/community/lexicon/payments
