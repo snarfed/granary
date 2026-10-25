@@ -737,6 +737,29 @@ class As1Test(testutil.TestCase):
     ):
       self.assertEqual(expected, as1.object_urls(actor))
 
+  def test_merge_urls(self):
+    home = {'displayName': 'Home', 'value': 'https://alice.com'}
+    blog = {'displayName': 'Blog', 'value': 'https://alice.blog/'}
+
+    for expected, urls, new in (
+        ([], [], []),
+        (['http://foo'], ['http://foo'], []),
+        ([blog], [], [blog]),
+        # replaces matching URLs, ignoring trailing slash, keeps order, appends
+        # new ones
+        (['https://bsky.app/profile/alice.com', home, blog],
+         ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
+         [home, blog]),
+        # replaces matching dicts too
+        ([home], [{'value': 'https://alice.com/'}], [home]),
+        # skips URLs it can't parse
+        (['https://[bad', blog], ['https://[bad'], [blog, 'https://[bad2']),
+    ):
+      with self.subTest(urls=urls, new=new):
+        orig_urls = copy.deepcopy(urls)
+        self.assertEqual(expected, as1.merge_urls(urls, new))
+        self.assertEqual(orig_urls, urls)
+
   def test_get_ids(self):
     for expected, obj in (
         ([], {}),

@@ -269,6 +269,40 @@ def merge_by_id(obj, field, new):
   obj[field] = sorted(merged.values(), key=itemgetter('id'))
 
 
+def merge_urls(urls, new):
+  """Merges new URLs into a list of AS1 ``url``/``urls`` values.
+
+  Each new URL replaces the existing one that it matches, after normalizing, if
+  any. Otherwise, it's appended. Preserves order. Skips new URLs that can't be
+  parsed.
+
+  Args:
+    urls (sequence of str or dict): existing URLs, eg an object's ``urls``.
+      Dict values should have the URL in ``value``.
+    new (sequence of str or dict): URLs to merge in
+
+  Returns:
+    list of str or dict: merged URLs. Doesn't modify ``urls``.
+  """
+  def normalize(url):
+    try:
+      return util.normalize_url(url.get('value') if isinstance(url, dict) else url)
+    except (AttributeError, TypeError, ValueError):
+      return None
+
+  merged = list(urls)
+  normalized = [normalize(url) for url in merged]
+  for url in new:
+    if norm := normalize(url):
+      if norm in normalized:
+        merged[normalized.index(norm)] = url
+      else:
+        merged.append(url)
+        normalized.append(norm)
+
+  return merged
+
+
 def trim_nulls(value, ignore=()):
   """Wraps :func:`webutil.util.trim_nulls`, keeps empty values in ``contentMap``."""
   return util.trim_nulls(value, ignore=ignore, keep_empty_values_in=('contentMap',))

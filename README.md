@@ -321,6 +321,8 @@ _Breaking changes:_
 
 _Non-breaking changes:_
 
+* `as1`:
+  * Add new `merge_urls` function that merges new URLs into a list of `url`/`urls` values, replacing matching URLs and appending new ones.
 * `as2`:
   * `from_as1`: convert `rsvp-interested` to `TentativeAccept`. Previously it had no `type`.
   * `to_as1`: add links from `PropertyValue` `attachments` to `urls` along with `url`.

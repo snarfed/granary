@@ -2740,8 +2740,7 @@ def _to_as1_actor(obj, *, type, uri, repo_did, repo_handle, pds, client):
     urls = util.dedupe_urls(urls)
     ret['url'] = urls[0]
     if len(urls) > 1 or links:
-      links_by_url = {util.normalize_url(link['value']): link for link in links}
-      ret['urls'] = [links_by_url.get(url, url) for url in urls]
+      ret['urls'] = as1.merge_urls(urls, links)
 
   # avatar and banner are blobs in app.bsky.actor.profile; convert to URLs
   repo_did = repo_did or did
