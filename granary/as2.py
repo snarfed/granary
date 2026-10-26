@@ -59,6 +59,10 @@ DISCOVERABLE_INDEXABLE_CONTEXT = {
   'discoverable': 'http://joinmastodon.org/ns#discoverable',
   'indexable': 'http://joinmastodon.org/ns#indexable',
 }
+# https://misskey-hub.net/ns#_misskey_requiresignintoviewcontents
+MISSKEY_REQUIRE_SIGNIN_CONTEXT = {
+  '_misskey_requireSigninToViewContents': 'https://misskey-hub.net/ns#_misskey_requireSigninToViewContents',
+}
 
 PUBLIC_AUDIENCE = 'https://www.w3.org/ns/activitystreams#Public'
 # All known Public values, cargo culted from:
@@ -429,6 +433,12 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
     obj.setdefault('discoverable', True)
     obj.setdefault('indexable', True)
     util.add(obj['@context'], DISCOVERABLE_INDEXABLE_CONTEXT)
+
+    # eg Bluesky's !no-unauthenticated label
+    # https://github.com/snarfed/bridgy-fed/issues/1746
+    if '@unlisted' in to_aliases and '@public' not in to_aliases:
+      obj['_misskey_requireSigninToViewContents'] = True
+      util.add(obj['@context'], MISSKEY_REQUIRE_SIGNIN_CONTEXT)
 
     # Mastodon profile metadata fields into attachments
     # https://docs.joinmastodon.org/spec/activitypub/#PropertyValue

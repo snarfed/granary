@@ -325,7 +325,9 @@ _Non-breaking changes:_
   * Add new `merge_urls` function that merges new URLs into a list of `url`/`urls` values, replacing matching URLs and appending new ones.
   * `snippet`: add `event` support.
 * `as2`:
-  * `from_as1`: convert `rsvp-interested` to `TentativeAccept`. Previously it had no `type`.
+  * `from_as1`:
+    * Convert `rsvp-interested` to `TentativeAccept`. Previously it had no `type`.
+    * Add [`_misskey_requireSigninToViewContents`](https://misskey-hub.net/ns#_misskey_requiresignintoviewcontents) to actors with the `@unlisted` audience target, eg from Bluesky's `!no-unauthenticated` label ([bridgy-fed#1746](https://github.com/snarfed/bridgy-fed/issues/1746)).
   * `to_as1`: add links from `PropertyValue` `attachments` to `urls` along with `url`.
 * `bluesky`:
   * Convert AS1 event `image`s to/from the non-standard `media` field in `community.lexicon.calendar.event` records that Smoke Signal, atmo.rsvp, and others use.

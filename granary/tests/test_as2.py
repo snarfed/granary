@@ -1039,6 +1039,42 @@ class ActivityStreams2Test(testutil.TestCase):
       'url': 'https://example.com/?a="><b>',
     })['attachment'])
 
+  def test_from_as1_person_unlisted_require_signin(self):
+    self.assert_equals({
+      '@context': as2.CONTEXT + [
+        {
+          'discoverable': 'http://joinmastodon.org/ns#discoverable',
+          'indexable': 'http://joinmastodon.org/ns#indexable',
+        }, {
+          '_misskey_requireSigninToViewContents': 'https://misskey-hub.net/ns#_misskey_requireSigninToViewContents',
+        },
+      ],
+      'type': 'Person',
+      'id': 'https://al/ice',
+      'cc': [as2.PUBLIC_AUDIENCE],
+      'discoverable': True,
+      'indexable': True,
+      '_misskey_requireSigninToViewContents': True,
+    }, as2.from_as1({
+      'objectType' : 'person',
+      'id': 'https://al/ice',
+      'to': [{'objectType': 'group', 'alias': '@unlisted'}],
+    }))
+
+  def test_from_as1_person_public_and_unlisted_no_require_signin(self):
+    self.assert_equals({
+      'type': 'Person',
+      'id': 'https://al/ice',
+      'to': [as2.PUBLIC_AUDIENCE],
+    }, as2.from_as1({
+      'objectType' : 'person',
+      'id': 'https://al/ice',
+      'to': [
+        {'objectType': 'group', 'alias': '@public'},
+        {'objectType': 'group', 'alias': '@unlisted'},
+      ],
+    }), ignore=['@context', 'discoverable', 'indexable'])
+
   def test_from_as1_person_monetization(self):
     self.assert_equals({
       'type': 'Person',
