@@ -837,7 +837,7 @@ def snippet(obj):
 
   Doesn't include the actor or author. Examples: ``hello``,
   ``replied to http://x: hello``, ``quoted http://x: hello``,
-  ``liked http://x``, ``followed http://x``.
+  ``liked http://x``, ``followed http://x``. Events return their name.
 
   https://github.com/snarfed/granary/issues/450
 
@@ -857,13 +857,15 @@ def snippet(obj):
     target = url(get_object(obj))
     return f'{phrase} {target}' if target else phrase
 
-  if object_type(obj) not in POST_TYPES:
-    return ''
+  name = obj.get('displayName')
+
+  summary = obj.get('summary') or ''
+  if is_html(obj, 'summary'):
+    summary = source.html_to_text(summary)
 
   content = obj.get('content') or ''
   if is_html(obj, 'content'):
     content = source.html_to_text(content)
-  content = content or obj.get('displayName') or ''
 
   context = []
   if replied_to := [u for o in get_objects(obj, 'inReplyTo') if (u := url(o))]:
@@ -872,8 +874,16 @@ def snippet(obj):
                 if object_type(a) == 'note' and (u := url(a))]:
     context.append(f'quoted {quoted[0]}')
 
+  type = object_type(obj)
+  if type in ('article', 'event'):
+    text = name or summary or content
+  elif type in POST_TYPES:
+    text = content or name
+  else:
+    return ''
+
   context = ', '.join(context)
-  return f'{context} : {content}' if context and content else context or content
+  return f'{context} : {text}' if context and text else context or text
 
 
 def is_html(obj, field):

@@ -1051,7 +1051,37 @@ class As1Test(testutil.TestCase):
         ('hello', {'objectType': 'note', 'content': 'hello'}),
         ('hello', {'objectType': 'note', 'content': '<p>hello</p>'}),
         ('hello', {'objectType': ['note', 'place'], 'content': 'hello'}),
+        ('hello', {
+          'objectType': 'note',
+          'summary': 'a content warning',
+          'content': 'hello',
+        }),
+        ('a name', {'objectType': 'note', 'displayName': 'a name'}),
         ('a title', {'objectType': 'article', 'displayName': 'a title'}),
+        ('a title', {
+          'objectType': 'article',
+          'displayName': 'a title',
+          'content': 'hello',
+        }),
+        ('a summary', {
+          'objectType': 'article',
+          'summary': '<p>a summary</p>',
+          'content': 'hello',
+        }),
+        ('replied to http://x : a title', {
+          'objectType': 'article',
+          'displayName': 'a title',
+          'inReplyTo': {'url': 'http://x'},
+        }),
+        ('Party', {
+          'objectType': 'event',
+          'displayName': 'Party',
+          'content': 'come one, come all',
+        }),
+        ('come one, come all', {
+          'objectType': 'event',
+          'content': 'come one, come all',
+        }),
         ('hello', {
           'objectType': 'activity',
           'verb': 'post',
