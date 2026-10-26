@@ -5055,7 +5055,6 @@ class BlueskyTest(testutil.TestCase):
         'url': OLD_BLOB_URL,
       }],
       'url': 'https://bsky.app/profile/han.dull',
-      'urls': ['https://bsky.app/profile/han.dull', 'https://han.dull/'],
     }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo', repo_handle='han.dull'))
 
   def test_to_as1_profile_links_in_bio(self):
@@ -5287,12 +5286,13 @@ class BlueskyTest(testutil.TestCase):
       'description': 'one http://li.nk/foo\n  two\n\nthree',
     }))
 
-  def test_to_as1_profile_bsky_social_handle_is_not_url(self):
+  def test_to_as1_profile_handle_is_not_url(self):
+    # https://github.com/snarfed/bridgy-fed/issues/2677
     self.assert_equals({
       'objectType': 'person',
-      'username': 'alice.bsky.social',
-      'url': 'https://bsky.app/profile/alice.bsky.social',
-    }, to_as1({'$type': 'app.bsky.actor.profile'}, repo_handle='alice.bsky.social'))
+      'username': 'alice.com',
+      'url': 'https://bsky.app/profile/alice.com',
+    }, to_as1({'$type': 'app.bsky.actor.profile'}, repo_handle='alice.com'))
 
   def test_to_as1_profile_uri(self):
     self.assert_equals({
@@ -5397,7 +5397,6 @@ class BlueskyTest(testutil.TestCase):
       'id': 'did:plc:foo',
       'username': 'alice.com',
       'url': 'https://sprk.so/profile/alice.com',
-      'urls': ['https://sprk.so/profile/alice.com', 'https://alice.com/'],
       'displayName': 'Alice',
       'summary': 'hi there',
       'image': [
@@ -5424,7 +5423,6 @@ class BlueskyTest(testutil.TestCase):
       'id': 'did:plc:foo',
       'username': 'alice.com',
       'url': 'https://grain.social/profile/alice.com',
-      'urls': ['https://grain.social/profile/alice.com', 'https://alice.com/'],
       'displayName': 'Alice',
       'summary': 'hi there',
       'image': [{'url': NEW_BLOB_URL}],
@@ -6005,7 +6003,6 @@ class BlueskyTest(testutil.TestCase):
         'objectType': 'person',
         'id': 'did:al:ice',
         'url': 'https://bsky.app/profile/alice.com',
-        'urls': ['https://bsky.app/profile/alice.com', 'https://alice.com/'],
         'username': 'alice.com',
         'image': [{'url': 'https://cdn.bsky.app/alice@jpeg'}]
       }

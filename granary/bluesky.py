@@ -2672,8 +2672,6 @@ def _to_as1_actor(obj, *, type, uri, repo_did, repo_handle, pds, client):
   if handle:
     profile_type = type if type in ATP_PROFILE_TYPES else 'app.bsky.actor.profile'
     urls.append(COLLECTION_TO_WEB_URL[profile_type].format(id=handle))
-    if not util.domain_or_parent_in(handle, [DEFAULT_PDS_DOMAIN]):
-      urls.append(f'https://{handle}/')
 
   if did and did.startswith('did:web:'):
     urls.append(did_web_to_url(did))
