@@ -422,7 +422,22 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
       quotes.append(quote)
 
     else:  # not a quote
-      attachments.append(from_as1(att, context=None, top_level=False))
+      att_as2 = from_as1(att, context=None, top_level=False)
+
+      # link preview. AS2 Links support name but not summary or image, so those
+      # only go in preview, per FEP-8967.
+      # https://codeberg.org/fediverse/fep/src/branch/main/fep/8967/fep-8967.md
+      # https://www.w3.org/TR/activitystreams-core/#link
+      if att_as2.get('type') == 'Link':
+        preview = util.trim_nulls({
+          'name': att_as2.get('name'),
+          'summary': att_as2.pop('summary', None),
+          'image': att_as2.pop('image', None),
+        })
+        if preview:
+          att_as2['preview'] = {'type': 'Article', **preview}
+
+      attachments.append(att_as2)
 
   tags.extend(quotes)
 
@@ -801,6 +816,22 @@ def to_as1(obj, use_type=True, get_fn=None):
 
   # attachments, tags
   attachments = all_to_as1('attachment', plural=True)
+
+  # link attachments, optionally with link previews. type is optional.
+  # https://codeberg.org/fediverse/fep/src/branch/main/fep/8967/fep-8967.md
+  for att in attachments:
+    if (isinstance(att, dict) and att.get('href')
+        and att.get('objectType') in (None, 'link')):
+      preview = as1.get_object(att, 'preview')
+      att.pop('preview', None)
+      att.update({
+        'objectType': 'link',
+        'url': att.pop('href'),
+      })
+      for field in 'displayName', 'summary', 'image':
+        if not att.get(field) and preview.get(field):
+          att[field] = preview[field]
+
   tags_as1 = []
   quote_urls = []
   for tag in util.pop_list(obj, 'tag'):

@@ -240,6 +240,34 @@ class ActivityStreams2Test(testutil.TestCase):
       }]
     }))
 
+  def test_from_as1_link_attachment_preview(self):
+    self.assert_equals({
+      'type': 'Note',
+      'attachment': [{
+        'type': 'Link',
+        'href': 'http://a/link',
+        'name': 'A Title',
+        'preview': {
+          'type': 'Article',
+          'name': 'A Title',
+          'summary': 'A description',
+          'image': {
+            'type': 'Image',
+            'url': 'http://a/img.jpg',
+          },
+        },
+      }],
+    }, as2.from_as1({
+      'objectType': 'note',
+      'attachments': [{
+        'objectType': 'link',
+        'url': 'http://a/link',
+        'displayName': 'A Title',
+        'summary': 'A description',
+        'image': 'http://a/img.jpg',
+      }]
+    }), ignore=['@context'])
+
   def test_from_as1_quote_post_separate_id_and_url(self):
     # https://github.com/snarfed/bridgy-fed/issues/461#issuecomment-2176620836
     self.assert_equals({
@@ -326,7 +354,11 @@ class ActivityStreams2Test(testutil.TestCase):
         'type': 'Link',
         'href': 'http://a/link',
         'name': 'a title',
-        'summary': 'a description',
+        'preview': {
+          'type': 'Article',
+          'name': 'a title',
+          'summary': 'a description',
+        },
       }],
     }, as2.from_as1({
       'objectType': 'note',
@@ -641,6 +673,74 @@ class ActivityStreams2Test(testutil.TestCase):
         'type': 'Link',
         'url': 'http://a/link',
       }],
+    }))
+
+  def test_to_as1_link_attachment_href(self):
+    for att in (
+        {'href': 'http://a/link'},
+        {'type': 'Link', 'href': 'http://a/link'},
+    ):
+      with self.subTest(att=att):
+        self.assertEqual({
+          'objectType': 'note',
+          'attachments': [{
+            'objectType': 'link',
+            'url': 'http://a/link',
+          }],
+        }, as2.to_as1({
+          'type': 'Note',
+          'attachment': [att],
+        }))
+
+  def test_to_as1_link_attachment_preview(self):
+    self.assertEqual({
+      'objectType': 'note',
+      'attachments': [{
+        'objectType': 'link',
+        'url': 'http://a/link',
+        'displayName': 'A Title',
+        'summary': 'A description',
+        'image': [{'url': 'http://a/img.jpg'}],
+      }],
+    }, as2.to_as1({
+      'type': 'Note',
+      'attachment': {
+        'href': 'http://a/link',
+        'preview': {
+          'type': 'Article',
+          'name': 'A Title',
+          'summary': 'A description',
+          'image': {
+            'url': {
+              'href': 'http://a/img.jpg',
+              'mediaType': 'image/jpg',
+            },
+          },
+        },
+      },
+    }))
+
+  def test_to_as1_link_attachment_name_overrides_preview(self):
+    self.assertEqual({
+      'objectType': 'note',
+      'attachments': [{
+        'objectType': 'link',
+        'url': 'http://a/link',
+        'displayName': 'Link name',
+        'summary': 'A description',
+      }],
+    }, as2.to_as1({
+      'type': 'Note',
+      'attachment': {
+        'type': 'Link',
+        'href': 'http://a/link',
+        'name': 'Link name',
+        'preview': {
+          'type': 'Article',
+          'name': 'Preview name',
+          'summary': 'A description',
+        },
+      },
     }))
 
   def test_to_as1_quote_post_fields(self):
