@@ -6873,6 +6873,8 @@ class BlueskyTest(testutil.TestCase):
   def test_to_as1_document(self):
     self.assert_equals({
       'objectType': 'article',
+      'id': 'at://did:al:ice/site.standard.document/123',
+      'author': 'did:al:ice',
       'url': 'https://example.com/post',
       'displayName': 'My Article',
       'summary': 'A brief description',
@@ -6896,7 +6898,7 @@ class BlueskyTest(testutil.TestCase):
       'publishedAt': '2022-01-02T03:04:05.000Z',
       'updatedAt': '2022-01-03T04:05:06.000Z',
       'tags': ['python', 'web'],
-    }))
+    }, uri='at://did:al:ice/site.standard.document/123', repo_did='did:al:ice'))
 
   def test_to_as1_document_minimal(self):
     self.assert_equals({

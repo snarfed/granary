@@ -2601,6 +2601,8 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
   elif type == 'site.standard.document':
     ret = {
       'objectType': 'article',
+      'id': uri,
+      'author': repo_did,
       'displayName': obj.get('title'),
       'summary': obj.get('description'),
       'content': obj.get('textContent'),

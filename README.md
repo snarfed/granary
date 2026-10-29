@@ -336,6 +336,7 @@ _Non-breaking changes:_
   * Convert actor `url`/`urls` to/from [Bluesky profile links](https://bsky.social/about/blog/10-22-2026-introducing-profile-links), ie [`app.bsky.actor.link`](https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/actor/link.json) records and `app.bsky.actor.profile`'s `links` field.
   * `at_uri_to_web_url`: add `grain.social` gallery URLs.
   * `to_as1`: stop adding `https://[handle]/` to actor `urls`, since handle domains aren't always web sites ([bridgy-fed#2677](https://github.com/snarfed/bridgy-fed/issues/2677)).
+  * `to_as1`: populate `id` and `author` for `site.standard.document` records.
 
 ### 12.0 - 2026-10-18
 
