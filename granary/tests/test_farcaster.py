@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey,
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from google.protobuf import text_format
 import grpc
+import requests
 from webutil import testutil, util
 
 from ..farcaster import (
@@ -998,6 +999,54 @@ cast_add_body { text: "Hello!" }
 
     with self.assertRaises(ValueError):
       web_url_to_farcaster_uri('https://example.com/foo')
+
+  @patch.object(util.session, 'get', return_value=testutil.requests_response({
+    'result': {
+      'casts': [{
+        'hash': '0xef70f02104406ae17c7b310bff3137382140bbc7',
+        'author': {'fid': 5818},
+      }],
+    },
+  }))
+  def test_web_url_to_farcaster_uri_remote(self, mock_get):
+    self.assertEqual(
+      'farcaster://5818/0xef70f02104406ae17c7b310bff3137382140bbc7',
+      web_url_to_farcaster_uri('https://farcaster.xyz/adrienne/0xef70f021',
+                               remote=True))
+    self.assertEqual(
+      'https://client.farcaster.xyz/v2/user-thread-casts?castHashPrefix=0xef70f021&username=adrienne&limit=1',
+      mock_get.call_args.args[0])
+
+  @patch.object(util.session, 'get')
+  def test_web_url_to_farcaster_uri_remote_no_fetch(self, mock_get):
+    for url, expected in [
+        ('https://farcaster.xyz/~/profiles/123', 'farcaster://123'),
+        ('https://farcaster.xyz/~/conversations/0xabcd', None),
+        ('https://farcaster.xyz/adrienne', 'farcaster://@adrienne'),
+        ('https://farcaster.xyz/adrienne/0xef70f02104406ae17c7b310bff3137382140bbc7',
+         'farcaster://@adrienne/0xef70f02104406ae17c7b310bff3137382140bbc7'),
+    ]:
+      with self.subTest(url=url):
+        self.assertEqual(expected, web_url_to_farcaster_uri(url, remote=True))
+
+    mock_get.assert_not_called()
+
+  @patch.object(util.session, 'get', side_effect=[
+    testutil.requests_response(status=500),
+    testutil.requests_response({'result': {'casts': []}}),
+    testutil.requests_response({'result': {'casts': [{
+      'hash': '0x1234',
+      'author': {'fid': 5818},
+    }]}}),
+    testutil.requests_response('not json'),
+    requests.ConnectionError('foo'),
+  ])
+  def test_web_url_to_farcaster_uri_remote_fails(self, _):
+    for _ in range(5):
+      self.assertEqual(
+        'farcaster://@adrienne/0xef70f021',
+        web_url_to_farcaster_uri('https://farcaster.xyz/adrienne/0xef70f021',
+                                 remote=True))
 
 
 @patch('granary.farcaster.rpc_pb2_grpc.HubServiceStub')

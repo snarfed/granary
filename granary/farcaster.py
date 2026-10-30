@@ -33,6 +33,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
 )
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 import grpc
+import requests
 from webutil import util
 
 from . import as1, source
@@ -79,6 +80,10 @@ USER_DATA_TYPE_TO_AS1 = {
 
 DEFAULT_SNAPCHAIN_HOST = 'crackle.farcaster.xyz'
 DEFAULT_SNAPCHAIN_PORT = 3383
+
+# farcaster.xyz's unofficial client API. Only used in web_url_to_farcaster_uri to
+# resolve the shortened cast hashes in farcaster.xyz URLs, which hubs can't.
+CLIENT_API_BASE = 'https://client.farcaster.xyz/v2/'
 
 # Farcaster message timestamps are seconds since this custom epoch, not the
 # Unix epoch: https://docs.farcaster.xyz/learn/what-is-farcaster/messages#timestamps
@@ -214,7 +219,7 @@ def farcaster_uri_to_web_url(uri):
   return Farcaster.user_url(fid)
 
 
-def web_url_to_farcaster_uri(url):
+def web_url_to_farcaster_uri(url, remote=False):
   """Converts a ``https://farcaster.xyz`` URL to a ``farcaster://`` URI.
 
   Supports tilde URLs:
@@ -225,19 +230,28 @@ def web_url_to_farcaster_uri(url):
   And pretty URLs:
 
   * ``https://farcaster.xyz/[username]``
-  * ``https://farcaster.xyz/[username]/0x[hash]``
+  * ``https://farcaster.xyz/[username]/0x[short hash]``
+  * ``https://farcaster.xyz/[username]/0x[full hash]``
 
   Query strings and fragments are stripped before conversion. Tilde
   conversation URLs return None since they contain no username or FID.
+
+  farcaster.xyz cast URLs only include a prefix of the cast's hash, eg
+  ``0xef70f021``, which hubs can't look up. If ``remote`` is True, resolves
+  pretty cast URLs with shortened hashes to their FIDs and full hashes via
+  farcaster.xyz's unofficial client API. If that fails, falls back to the
+  non-remote result.
 
   https://docs.farcaster.xyz/reference/farcaster/intent-urls#resource-urls
   https://github.com/farcasterxyz/protocol/discussions/123
 
   Args:
     url (str): ``farcaster.xyz`` URL
+    remote (bool): whether to resolve cast URLs over the network
 
   Returns:
-    str: ``farcaster://`` URI, or None for tilde conversation URLs
+    str: ``farcaster://`` URI, or None if we can't convert the URL, eg it's
+      a tilde conversation URL
 
   Raises:
     ValueError: if ``url`` can't be parsed as a ``farcaster.xyz`` URL
@@ -256,9 +270,36 @@ def web_url_to_farcaster_uri(url):
   if match := WEB_URL_RE.fullmatch(url):
     username = match['username']
     hash = match['hash']
-    if hash:
-      return f'farcaster://@{username}/{hash}'
-    return f'farcaster://@{username}'
+    if not hash:
+      # TODO: resolve username to FID if remote
+      return f'farcaster://@{username}'
+
+    full_hash_len = 2 + BLAKE3_HASH_LENGTH_BYTES * 2
+    if remote and len(hash) < full_hash_len:
+      # short hash. use an undocumented reference client API :( to resolve it to a
+      # full length hash. (the hub gRPC API doesn't have a way)
+      api_url = util.add_query_params(f'{CLIENT_API_BASE}user-thread-casts', {
+        'castHashPrefix': hash,
+        'username': username,
+        'limit': 1,
+      })
+      try:
+        resp = util.requests_get(api_url)
+        resp.raise_for_status()
+        casts = resp.json()['result']['casts']
+      except (requests.RequestException, ValueError, KeyError, TypeError) as e:
+        logger.info(f"Couldn't resolve {url} : {e}")
+        casts = []
+
+      if (casts and (full_hash := casts[0].get('hash'))
+          and len(full_hash) == full_hash_len
+          and full_hash.startswith(hash)
+          and (fid := (casts[0].get('author') or {}).get('fid'))):
+        return f'farcaster://{fid}/{full_hash}'
+
+      logger.info(f"Couldn't resolve {url} to a full hash")
+
+    return f'farcaster://@{username}/{hash}'
 
   raise ValueError(f"{url} doesn't look like a farcaster.xyz URL")
 
