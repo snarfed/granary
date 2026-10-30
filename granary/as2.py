@@ -194,6 +194,9 @@ SERVER_ACTOR_PREFIXES = (
 # a basic, incomplete pattern for fediverse URLs and AP ids
 URL_RE = re.compile(r'https?://(?P<server>[^/]+)(/[^/]+)*?/(users/|profile/|@)(?P<username>[^/?]+)')
 
+# https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md
+PROXY_LINK_RELS = ('canonical', 'alternate')
+
 
 def get_urls(obj, key='url'):
   """Returns ``link['href']`` or ``link``, for each ``link`` in ``obj[key]``."""
@@ -728,12 +731,31 @@ def to_as1(obj, use_type=True, get_fn=None):
         if 'mention' not in classes and 'hashtag' not in classes:
           field_urls.append(href)
 
-  obj_urls = get_urls(obj)
+  # FEP-fffd proxy links go last, in urls, so that they don't become the primary
+  # URL if there's a non-proxy URL. keep their raw hrefs since they may not be web
+  # URLs.
+  proxy_links = {}
+  other_links = []
+  for link in util.get_list(obj, 'url'):
+    rels = util.get_list(link, 'rel') if isinstance(link, dict) else []
+    rel = next((rel for rel in PROXY_LINK_RELS if rel in rels), None)
+    if rel and link.get('href'):
+      proxy_links[link['href']] = util.trim_nulls({
+        'value': link['href'],
+        'rel': rel,
+        'mimeType': link.get('mediaType'),
+      })
+    else:
+      other_links.append(link)
+
+  obj_urls = [url for url in get_urls({'url': other_links})
+              if url not in proxy_links]
   urls = [{'displayName': names[url], 'value': url} if url in names else url
           for url in obj_urls]
   for url in util.dedupe_urls(field_urls):
     if util.is_web(url) and url not in obj_urls:
       urls.append({'displayName': names[url], 'value': url})
+  urls.extend(proxy_links.values())
 
   # media links. more for them is populated below!
   if type in ('Audio', 'Video'):
@@ -914,7 +936,7 @@ def to_as1(obj, use_type=True, get_fn=None):
     'replies': collection_to_as1('replies'),
     # profile field links only go in urls, not url, so they don't become the
     # actor's primary URL
-    'url': urls[0] if obj_urls else None,
+    'url': urls[0] if obj_urls else next(iter(proxy_links.values()), None),
     'urls': urls if len(urls) > 1 or len(urls) > len(obj_urls) else None,
   })
 

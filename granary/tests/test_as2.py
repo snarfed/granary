@@ -660,6 +660,94 @@ class ActivityStreams2Test(testutil.TestCase):
       'attachment': [None],
     }))
 
+  def test_to_as1_proxy_links(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': '@alice@in.st',
+      'url': 'https://in.st/@alice',
+      'urls': [
+        'https://in.st/@alice',
+        {'value': 'at://did:plc:alice', 'rel': 'alternate'},
+        {'value': 'did:plc:alice', 'rel': 'alternate'},
+        {'value': 'nostr:npub1alice', 'rel': 'alternate'},
+        {
+          'value': 'https://other.bridge/alice',
+          'rel': 'canonical',
+          'mimeType': 'application/activity+json',
+        },
+      ],
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': [{
+        'type': 'Link',
+        'rel': 'alternate',
+        'href': 'at://did:plc:alice',
+      }, {
+        'type': 'Link',
+        'rel': 'alternate',
+        'href': 'did:plc:alice',
+      }, 'https://in.st/@alice', {
+        'type': 'Link',
+        'rel': ['alternate'],
+        'href': 'nostr:npub1alice',
+      }, {
+        'type': 'Link',
+        'rel': 'canonical',
+        'href': 'https://other.bridge/alice',
+        'mediaType': 'application/activity+json',
+      }],
+    }))
+
+  def test_to_as1_only_proxy_link(self):
+    link = {'value': 'https://twitter.com/jack/status/20', 'rel': 'canonical'}
+    self.assertEqual({
+      'objectType': 'note',
+      'url': link,
+      'urls': [link],
+    }, as2.to_as1({
+      'type': 'Note',
+      'url': {
+        'type': 'Link',
+        'rel': 'canonical',
+        'href': 'https://twitter.com/jack/status/20',
+      },
+    }))
+
+  def test_to_as1_url_also_proxy_link(self):
+    link = {'value': 'https://in.st/@alice', 'rel': 'canonical'}
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': '@alice@in.st',
+      'url': link,
+      'urls': [link],
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': ['https://in.st/@alice', {
+        'type': 'Link',
+        'rel': 'canonical',
+        'href': 'https://in.st/@alice',
+      }],
+    }))
+
+  def test_to_as1_non_proxy_link_rel_and_media_type(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'url': 'https://in.st/@alice',
+      'urls': ['https://in.st/@alice', 'https://in.st/alice.json'],
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': [{
+        'type': 'Link',
+        'mediaType': 'text/html',
+        'href': 'https://in.st/@alice',
+      }, {
+        'type': 'Link',
+        'rel': ['metadata'],
+        'mediaType': 'application/json',
+        'href': 'https://in.st/alice.json',
+      }],
+    }))
+
   def test_to_as1_link_attachment(self):
     self.assertEqual({
       'objectType': 'note',

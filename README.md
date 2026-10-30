@@ -328,7 +328,9 @@ _Non-breaking changes:_
   * `from_as1`:
     * Convert `rsvp-interested` to `TentativeAccept`. Previously it had no `type`.
     * Add [`_misskey_requireSigninToViewContents`](https://misskey-hub.net/ns#_misskey_requiresignintoviewcontents) to actors with the `@unlisted` audience target, eg from Bluesky's `!no-unauthenticated` label ([bridgy-fed#1746](https://github.com/snarfed/bridgy-fed/issues/1746)).
-  * `to_as1`: add links from `PropertyValue` `attachments` to `urls` along with `url`.
+  * `to_as1`:
+    * Add links from `PropertyValue` `attachments` to `urls` along with `url`.
+    * Preserve `rel` in `url`/`urls` and convert `mediaType` to `mimeType` (eg for [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links). Only use proxy links in `url` if there are no other URLs. ([bridgy-fed#800](https://github.com/snarfed/bridgy-fed/issues/800))
   * Convert AS1 `link` attachments to/from [FEP-8967](https://codeberg.org/fediverse/fep/src/branch/main/fep/8967/fep-8967.md) `Link` attachments with `preview` ([bridgy-fed#2286](https://github.com/snarfed/bridgy-fed/issues/2286)).
 * `bluesky`:
   * Convert AS1 event `image`s to/from the non-standard `media` field in `community.lexicon.calendar.event` records that Smoke Signal, atmo.rsvp, and others use.
