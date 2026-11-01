@@ -194,9 +194,6 @@ SERVER_ACTOR_PREFIXES = (
 # a basic, incomplete pattern for fediverse URLs and AP ids
 URL_RE = re.compile(r'https?://(?P<server>[^/]+)(/[^/]+)*?/(users/|profile/|@)(?P<username>[^/?]+)')
 
-# https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md
-PROXY_LINK_RELS = ('canonical', 'alternate')
-
 
 def get_urls(obj, key='url'):
   """Returns ``link['href']`` or ``link``, for each ``link`` in ``obj[key]``."""
@@ -738,7 +735,7 @@ def to_as1(obj, use_type=True, get_fn=None):
   other_links = []
   for link in util.get_list(obj, 'url'):
     rels = util.get_list(link, 'rel') if isinstance(link, dict) else []
-    rel = next((rel for rel in PROXY_LINK_RELS if rel in rels), None)
+    rel = next((rel for rel in as1.PROXY_LINK_RELS if rel in rels), None)
     if rel and link.get('href'):
       proxy_links[link['href']] = util.trim_nulls({
         'value': link['href'],

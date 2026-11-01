@@ -77,6 +77,10 @@ POST_TYPES = frozenset((
   'note',
 ))
 
+# https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md
+# in priority order
+PROXY_LINK_RELS = ('canonical', 'alternate')
+
 # verb => human-readable phrase, used in snippet
 SNIPPET_PHRASES = {
   'accept': 'accepted',
@@ -218,6 +222,30 @@ def get_url(obj):
   return (urls[0] if isinstance(urls, (list, tuple))
           else urls if isinstance(urls, str)
           else '')
+
+
+def get_rel_links(obj, rels=PROXY_LINK_RELS):
+  """Returns an object's ``url`` and ``urls`` links with one of the given ``rel``s.
+
+  ``rel`` is non-standard in AS1. :func:`as2.to_as1` preserves it, eg for
+  `FEP-fffd proxy links <https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md>`_.
+
+  Args:
+    obj (dict): decoded JSON ActivityStreams object
+    rels (sequence of str): ``rel`` values to include
+
+  Returns:
+    list of dict: links, without duplicates
+  """
+  if not obj:
+    return []
+
+  links = []
+  for link in util.get_list(obj, 'url') + util.get_list(obj, 'urls'):
+    if isinstance(link, dict) and link.get('rel') in rels and link not in links:
+      links.append(link)
+
+  return links
 
 
 def get_ids(obj, field):

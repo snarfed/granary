@@ -931,6 +931,38 @@ class As1Test(testutil.TestCase):
       with self.subTest(expected=expected, obj=obj):
         self.assertCountEqual(expected, as1.targets(obj))
 
+  def test_get_rel_links(self):
+    alternate = {'value': 'at://did:plc:alice', 'rel': 'alternate'}
+    canonical = {'value': 'nostr:npub1alice', 'rel': 'canonical', 'mimeType': 'x/y'}
+
+    for obj, expected in (
+        (None, []),
+        ({}, []),
+        ({'url': 'http://foo'}, []),
+        ({'urls': ['http://foo', {'value': 'http://bar'}]}, []),
+        ({'url': alternate}, [alternate]),
+        ({'url': alternate, 'urls': [alternate, 'http://foo', canonical]},
+         [alternate, canonical]),
+    ):
+      with self.subTest(obj=obj):
+        self.assertEqual(expected, as1.get_rel_links(obj))
+
+  def test_get_rel_links_filter(self):
+    alternate = {'value': 'at://did:plc:alice', 'rel': 'alternate'}
+    canonical = {'value': 'nostr:npub1alice', 'rel': 'canonical'}
+
+    self.assertEqual([canonical], as1.get_rel_links({
+      'urls': [alternate, canonical],
+    }, rels=('canonical',)))
+
+  def test_get_rel_links_other_rel(self):
+    me = {'value': 'http://foo', 'rel': 'me'}
+    alternate = {'value': 'at://did:plc:alice', 'rel': 'alternate'}
+
+    self.assertEqual([alternate], as1.get_rel_links({'urls': [me, alternate]}))
+    self.assertEqual([me], as1.get_rel_links({'urls': [me, alternate]},
+                                             rels=('me',)))
+
   def test_get_url(self):
     for obj, expected in (
         (None, ''),

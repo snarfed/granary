@@ -323,6 +323,7 @@ _Non-breaking changes:_
 
 * `as1`:
   * Add new `merge_urls` function that merges new URLs into a list of `url`/`urls` values, replacing matching URLs and appending new ones.
+  * Add new `get_rel_links` function that returns an object's `url`/`urls` links with `rel`s, eg [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links ([bridgy-fed#800](https://github.com/snarfed/bridgy-fed/issues/800)).
   * `snippet`: add `event` support.
 * `as2`:
   * `from_as1`:
