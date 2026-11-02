@@ -963,6 +963,45 @@ class As1Test(testutil.TestCase):
     self.assertEqual([me], as1.get_rel_links({'urls': [me, alternate]},
                                              rels=('me',)))
 
+  def test_get_rel_links_no_value(self):
+    alternate = {'value': 'at://did:plc:alice', 'rel': 'alternate'}
+
+    self.assertEqual([alternate], as1.get_rel_links({
+      'urls': [{'rel': 'alternate'}, {'value': '', 'rel': 'canonical'}, alternate],
+    }))
+
+  def test_get_rel_links_url_prefixes_mime_types(self):
+    at = {'value': 'at://did:plc:alice', 'rel': 'alternate'}
+    nostr = {'value': 'nostr:npub1alice', 'rel': 'canonical'}
+    ap = {
+      'value': 'http://inst/alice',
+      'rel': 'alternate',
+      'mimeType': 'application/activity+json',
+    }
+    obj = {'urls': [at, nostr, ap]}
+
+    for kwargs, expected in (
+        ({}, [at, nostr, ap]),
+        ({'url_prefixes': ('at://', 'did:')}, [at]),
+        ({'mime_types': ('application/activity+json',)}, [ap]),
+        ({'url_prefixes': ('nostr:',), 'mime_types': ('application/activity+json',)},
+         [nostr, ap]),
+        ({'url_prefixes': ('at://',), 'mime_types': ()}, [at]),
+        ({'url_prefixes': (), 'mime_types': ('application/activity+json',)}, [ap]),
+        ({'url_prefixes': ()}, []),
+        ({'mime_types': ()}, []),
+        ({'url_prefixes': (), 'mime_types': ()}, []),
+        ({'url_prefixes': ('foo:',), 'mime_types': ('x/y',)}, []),
+    ):
+      with self.subTest(kwargs=kwargs):
+        self.assertEqual(expected, as1.get_rel_links(obj, **kwargs))
+
+  def test_get_rel_links_url_prefixes_rels(self):
+    nostr = {'value': 'nostr:npub1alice', 'rel': 'canonical'}
+
+    self.assertEqual([], as1.get_rel_links(
+      {'urls': [nostr]}, rels=('alternate',), url_prefixes=('nostr:',)))
+
   def test_get_url(self):
     for obj, expected in (
         (None, ''),

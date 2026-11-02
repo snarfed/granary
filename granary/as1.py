@@ -224,25 +224,42 @@ def get_url(obj):
           else '')
 
 
-def get_rel_links(obj, rels=PROXY_LINK_RELS):
+def get_rel_links(obj, rels=PROXY_LINK_RELS, url_prefixes=None, mime_types=None):
   """Returns an object's ``url`` and ``urls`` links with one of the given ``rel``s.
 
   ``rel`` is non-standard in AS1. :func:`as2.to_as1` preserves it, eg for
   `FEP-fffd proxy links <https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md>`_.
 
+  If ``url_prefixes`` and/or ``mime_types`` are provided, links must match at least
+  one of them. Empty sequences match nothing.
+
   Args:
     obj (dict): decoded JSON ActivityStreams object
     rels (sequence of str): ``rel`` values to include
+    url_prefixes (sequence of str): optional, ``value`` prefixes to include
+    mime_types (sequence of str): optional, ``mimeType`` values to include
 
   Returns:
-    list of dict: links, without duplicates
+    list of dict: links with non-empty ``value``, without duplicates
   """
   if not obj:
     return []
 
+  unfiltered = url_prefixes is None and mime_types is None
+  if not url_prefixes:
+    url_prefixes = ()
+  if not mime_types:
+    mime_types = ()
+
   links = []
   for link in util.get_list(obj, 'url') + util.get_list(obj, 'urls'):
-    if isinstance(link, dict) and link.get('rel') in rels and link not in links:
+    if (isinstance(link, dict)
+        and link not in links
+        and link.get('rel') in rels
+        and (value := link.get('value'))
+        and (value.startswith(url_prefixes)
+             or link.get('mimeType') in mime_types
+             or unfiltered)):
       links.append(link)
 
   return links
