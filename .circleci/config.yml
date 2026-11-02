@@ -85,7 +85,7 @@ jobs:
       #       fi
 
       - save_cache:
-          key: venv-10-{{ .Branch }}-<< parameters.deps >>
+          key: venv-11-{{ .Branch }}-<< parameters.python >>-<< parameters.deps >>
           paths:
             - /home/circleci/.pyenv
 
