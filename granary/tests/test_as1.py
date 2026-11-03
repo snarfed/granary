@@ -636,7 +636,7 @@ class As1Test(testutil.TestCase):
         # local
         'http://localhost',
         'http://other/link',
-        'http://y.local/path'
+        'http://y.example/path'
         # reserved
         'https://x.test/',
         # not http
@@ -655,7 +655,7 @@ class As1Test(testutil.TestCase):
   @testutil.head_returns_200
   def test_original_post_discovery_exclude_hosts(self):
     obj = {
-      'content': 'http://other/link https://x.test/ http://y.local/path',
+      'content': 'http://other/link https://x.test/ http://y.example/path',
       'upstreamDuplicates': ['http://localhost', 'http://sho.rt/post'],
     }
     self.check_original_post_discovery(

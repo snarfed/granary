@@ -726,10 +726,10 @@ class BlueskyTest(testutil.TestCase):
 
     # arroba env vars
     os.environ.update({
-      'APPVIEW_HOST': 'appview.local',
-      'BGS_HOST': 'bgs.local',
-      'PDS_HOST': 'pds.local',
-      'PLC_HOST': 'plc.local',
+      'APPVIEW_HOST': 'appview.invalid',
+      'BGS_HOST': 'bgs.invalid',
+      'PDS_HOST': 'pds.invalid',
+      'PLC_HOST': 'plc.invalid',
     })
 
     arroba.did.resolve_handle.cache.clear()
@@ -7081,7 +7081,7 @@ class BlueskyTest(testutil.TestCase):
     self.assertEqual('https://pds.example', bs.client.address)
 
     mock_get.assert_called_once_with(
-      'https://plc.local/did:plc:alice',
+      'https://plc.invalid/did:plc:alice',
       headers={'User-Agent': util.user_agent}, timeout=HTTP_TIMEOUT, stream=True)
 
   # DNS handle resolution (fails)
@@ -7103,7 +7103,7 @@ class BlueskyTest(testutil.TestCase):
 
     mock_get.assert_any_call('https://al.ice/.well-known/atproto-did')
     mock_get.assert_any_call(
-      'https://plc.local/did:plc:alice',
+      'https://plc.invalid/did:plc:alice',
       headers={'User-Agent': util.user_agent}, timeout=HTTP_TIMEOUT, stream=True)
 
   @patch.object(util.session, 'get')
