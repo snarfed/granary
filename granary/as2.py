@@ -441,6 +441,11 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
 
   tags.extend(quotes)
 
+  # FEP-fffd proxy links
+  # https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md
+  proxy_links = as1.get_rel_links(obj)
+  proxy_urls = [link['value'] for link in proxy_links]
+
   if obj_type in as1.ACTOR_TYPES and top_level:
     # default discoverable and indexable on for actors
     # https://codeberg.org/fediverse/fep/src/branch/main/fep/5feb/fep-5feb.md#specifying-search-indexing-consent-at-the-actor-level
@@ -467,7 +472,7 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
     for link in as1.get_objects(obj, 'url') + as1.get_objects(obj, 'urls'):
       url = link.get('value') or link.get('id')
       name = link.get('displayName')
-      if util.is_web(url):
+      if util.is_web(url) and url not in proxy_urls:
         parsed = urlparse(url)
         if parsed.path == '/':
           url = url.removesuffix('/')
@@ -487,7 +492,14 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
       feat['orderedItems'] = feat.pop('items', None)
 
   # urls
-  urls = as1.object_urls(obj)
+  urls = [url for url in as1.object_urls(obj) if url not in proxy_urls]
+  for link in proxy_links:
+    urls.append(util.trim_nulls({
+      'type': 'Link',
+      'rel': link['rel'],
+      'href': link['value'],
+      'mediaType': link.get('mimeType'),
+    }))
   if len(urls) == 1:
     urls = urls[0]
 

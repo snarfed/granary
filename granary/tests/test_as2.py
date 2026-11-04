@@ -1217,6 +1217,97 @@ class ActivityStreams2Test(testutil.TestCase):
       'url': 'https://example.com/',
     }))
 
+  def test_from_as1_person_proxy_links(self):
+    self.assert_equals({
+      '@context': as2.CONTEXT + [
+        {
+          'PropertyValue': 'http://schema.org#PropertyValue',
+          'value': 'http://schema.org#value',
+        }, {
+          'discoverable': 'http://joinmastodon.org/ns#discoverable',
+          'indexable': 'http://joinmastodon.org/ns#indexable',
+        },
+      ],
+      'type': 'Person',
+      'url': ['https://in.st/@alice', {
+        'type': 'Link',
+        'rel': 'alternate',
+        'href': 'at://did:plc:alice',
+      }, {
+        'type': 'Link',
+        'rel': 'alternate',
+        'href': 'nostr:npub1alice',
+      }, {
+        'type': 'Link',
+        'rel': 'canonical',
+        'href': 'https://other.bridge/alice',
+        'mediaType': 'application/activity+json',
+      }],
+      'discoverable': True,
+      'indexable': True,
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Link',
+        'value': '<a rel="me" href="https://in.st/@alice"><span class="invisible">https://</span>in.st/@alice</a>',
+      }],
+    }, as2.from_as1({
+      'objectType': 'person',
+      'url': 'https://in.st/@alice',
+      'urls': [
+        'https://in.st/@alice',
+        {'value': 'at://did:plc:alice', 'rel': 'alternate'},
+        {'value': 'nostr:npub1alice', 'rel': 'alternate'},
+        {
+          'value': 'https://other.bridge/alice',
+          'rel': 'canonical',
+          'mimeType': 'application/activity+json',
+        },
+      ],
+    }))
+
+  def test_from_as1_only_proxy_link(self):
+    self.assert_equals({
+      'type': 'Note',
+      'url': {
+        'type': 'Link',
+        'rel': 'canonical',
+        'href': 'https://twitter.com/jack/status/20',
+      },
+    }, as2.from_as1({
+      'objectType': 'note',
+      'url': {'value': 'https://twitter.com/jack/status/20', 'rel': 'canonical'},
+    }), ignore=['@context'])
+
+  def test_from_as1_url_also_proxy_link(self):
+    self.assert_equals({
+      'type': 'Note',
+      'url': {
+        'type': 'Link',
+        'rel': 'canonical',
+        'href': 'https://in.st/post',
+      },
+    }, as2.from_as1({
+      'objectType': 'note',
+      'url': 'https://in.st/post',
+      'urls': [{'value': 'https://in.st/post', 'rel': 'canonical'}],
+    }), ignore=['@context'])
+
+  def test_from_as1_to_as1_proxy_links_round_trip(self):
+    as1_obj = {
+      'objectType': 'note',
+      'url': 'https://in.st/post',
+      'urls': [
+        'https://in.st/post',
+        {'value': 'at://did:plc:alice/app.bsky.feed.post/123', 'rel': 'alternate'},
+        {
+          'value': 'https://other.bridge/post',
+          'rel': 'canonical',
+          'mimeType': 'application/activity+json',
+        },
+      ],
+    }
+    self.assert_equals(as1_obj, as2.to_as1(as2.from_as1(as1_obj)))
+
   def test_from_as1_person_propertyvalue_attachment_escapes_url(self):
     self.assert_equals([{
       'type': 'PropertyValue',
