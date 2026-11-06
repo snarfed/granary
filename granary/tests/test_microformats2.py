@@ -1516,6 +1516,76 @@ foo bar
       },
     }))
 
+  def test_to_as1_rel_urls_proxy_links(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'url': 'http://post',
+      'urls': [{
+        'value': 'http://post',
+      }, {
+        'value': 'http://inst/note',
+        'rel': 'alternate',
+        'mimeType': 'application/activity+json',
+      }, {
+        'value': 'at://did:plc:123/app.bsky.feed.post/456',
+        'rel': 'canonical',
+      }, {
+        'value': 'nostr:nevent123',
+        'rel': 'alternate',
+      }],
+    }, microformats2.to_as1({
+      'type': ['h-entry'],
+      'properties': {
+        'url': ['http://post'],
+      },
+    }, rel_urls={
+      'http://inst/note': {
+        'rels': ['alternate'],
+        'type': 'application/activity+json',
+      },
+      'at://did:plc:123/app.bsky.feed.post/456': {
+        'rels': ['canonical'],
+      },
+      'nostr:nevent123': {
+        'rels': ['alternate'],
+      },
+      # not proxy links
+      'http://post/feed.xml': {
+        'rels': ['alternate'],
+        'type': 'application/rss+xml',
+      },
+      'http://other/post': {
+        'rels': ['canonical'],
+      },
+      'http://post/schema.jsonld': {
+        'rels': ['alternate'],
+        'type': 'application/ld+json',
+      },
+      'at://did:plc:123': {
+        'rels': ['me'],
+      },
+      'http://inst/other': {
+        'rels': ['webmention'],
+        'type': 'application/activity+json',
+      },
+    }))
+
+  def test_to_as1_rel_urls_proxy_link_no_u_url(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'urls': [{
+        'value': 'at://did:plc:123/app.bsky.feed.post/456',
+        'rel': 'canonical',
+      }],
+    }, microformats2.to_as1({
+      'type': ['h-entry'],
+      'properties': {},
+    }, rel_urls={
+      'at://did:plc:123/app.bsky.feed.post/456': {
+        'rels': ['canonical'],
+      },
+    }))
+
   def test_to_as1_bad_timestamps(self):
     for bad in ('*', '1735561920000', 'foo'):
       self.assert_equals({

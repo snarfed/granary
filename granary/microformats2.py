@@ -77,6 +77,22 @@ AS_TO_MF2_ADDRESS_FIELDS = {
   'country': 'country-name',
 }
 
+# rel-urls with these URI prefixes or MIME types are converted to FEP-fffd proxy
+# links. can't use as2.CONTENT_TYPES due to circular import, and we want to
+# exclude plain application/ld+json anyway since eg schema.org uses it.
+# https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md
+PROXY_LINK_URI_PREFIXES = (
+  'at://',
+  'did:plc:',
+  'did:web:',
+  'farcaster://',
+  'nostr:',
+)
+PROXY_LINK_MIME_TYPES = (
+  'application/activity+json',
+  'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+)
+
 # ISO 6709 location string. http://en.wikipedia.org/wiki/ISO_6709
 ISO_6709_RE = re.compile(r'([-+][0-9.]+)([-+][0-9.]+).*/')
 
@@ -166,9 +182,13 @@ def _activity_or_object(activity):
   return activity
 
 
-def from_as1(obj, trim_nulls=True, entry_class='h-entry',
-             default_object_type=None, synthesize_content=True, multiple=False):
+def from_as1(obj, trim_nulls=True, entry_class='h-entry', default_object_type=None,
+             synthesize_content=True, multiple=False):
   """Converts an ActivityStreams object to microformats2 JSON.
+
+  TODO: convert FEP-fffd style proxy links to rel=alternate and rel=canonical links
+  and include them somehow. (Not easy because the return value is a single mf2
+  object, not a parse tree.)
 
   Args:
     obj (dict): a decoded JSON ActivityStreams object or activity
@@ -450,6 +470,8 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   mf2 = copy.copy(mf2)
   props = mf2.setdefault('properties', {})
   prop = first_props(props)
+  if not rel_urls:
+    rel_urls = {}
 
   # convert author
   mf2_author = prop.get('author')
@@ -505,11 +527,20 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     if not util.is_url(u):
       logger.debug(f'ignoring bad u-url {u}')
       continue
-    rel = rel_urls.get(u, {}) if rel_urls else {}
+    rel = rel_urls.get(u, {})
     urls.append({
       'value': u,
       'displayName': (rel.get('text') or rel.get('title') or '').strip(),
     })
+
+  # FEP-fffd proxy links
+  proxy_links = []
+  for u, rel in rel_urls.items():
+    rels = [r for r in as1.PROXY_LINK_RELS if r in rel.get('rels', [])]
+    type = rel.get('type')
+    if rels and (u.startswith(PROXY_LINK_URI_PREFIXES)
+                 or type in PROXY_LINK_MIME_TYPES):
+      proxy_links.append({'value': u, 'rel': rels[0], 'mimeType': type})
 
   # quotations: https://indieweb.org/quotation#How_to_markup
   # u-quotation-of items must have objectType 'note' so that as2.from_as1
@@ -581,7 +612,7 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
     # https://microformats.org/wiki/h-event#Properties
     'content': get_html(prop.get('content') or prop.get('description')),
     'url': urls[0]['value'] if urls else None,
-    'urls': urls if len(urls) > 1 or rel_urls else None,
+    'urls': urls + proxy_links if len(urls) > 1 or rel_urls else None,
     # image is special cased below, to handle alt
     'stream': [stream],
     'location': json_to_object(prop.get('location')),

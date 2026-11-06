@@ -341,8 +341,11 @@ _Non-breaking changes:_
   * `at_uri_to_web_url`: add `grain.social` gallery URLs.
   * `to_as1`: stop adding `https://[handle]/` to actor `urls`, since handle domains aren't always web sites ([bridgy-fed#2677](https://github.com/snarfed/bridgy-fed/issues/2677)).
   * `to_as1`: populate `id` and `author` for `site.standard.document` records.
+* `microformats2`:
+  * `to_as1`:
+    * Convert `rel_urls` with `rel` `alternate` or `canonical` and known types to [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links in `urls` ([bridgy-fed#800](https://github.com/snarfed/bridgy-fed/issues/800)).
 * `nostr`:
-  * Convert [NIP-48](https://nips.nostr.com/48) `proxy` tags to/from AS1 `canonical` [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links in `urls`, with `mimeType` from the tag's protocol. ([bridgy-fed#800](https://github.com/snarfed/bridgy-fed/issues/800))
+  * Convert [NIP-48](https://nips.nostr.com/48) `proxy` tags to/from AS1 `canonical` [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links in `urls`, with `mimeType` from the tag's protocol ([bridgy-fed#800](https://github.com/snarfed/bridgy-fed/issues/800)).
 * `farcaster`:
   * `web_url_to_farcaster_uri`: add `remote` kwarg that resolves `farcaster.xyz` cast URLs' shortened hashes to full hashes and FIDs via farcaster.xyz's unofficial client API.
 
