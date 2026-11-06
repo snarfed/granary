@@ -1020,6 +1020,120 @@ class NostrTest(testutil.TestCase):
       'id': 'at://did:plc:123/app.bsky.feed.post/456',
     }, proxy_tag=('proxy-id', 'proxy-proto')), ignore=['id', 'sig'])
 
+  def test_to_as1_proxy_tag(self):
+    for protocol, id, mime_type in (
+        ('activitypub', 'https://inst/note', 'application/activity+json'),
+        ('atproto', 'at://did:plc:123/app.bsky.feed.post/456', None),
+        ('rss', 'https://site/feed.xml#post', 'application/rss+xml'),
+        ('web', 'https://site/post', 'text/html'),
+        ('farcaster', 'farcaster://123/0xabc', None),
+        ('other', 'other:post', None),
+    ):
+      with self.subTest(protocol=protocol):
+        self.assert_equals({
+          **NOTE_AS1,
+          'urls': [NOTE_AS1['url'], util.trim_nulls({
+            'value': id,
+            'rel': 'canonical',
+            'mimeType': mime_type,
+          })],
+        }, to_as1({
+          **NOTE_NOSTR,
+          'tags': [['proxy', id, protocol]],
+        }))
+
+  def test_to_as1_profile_proxy_tag(self):
+    profile = {
+      'kind': KIND_PROFILE,
+      'id': ID,
+      'pubkey': PUBKEY,
+      'content': json_dumps({'name': 'Alice'}),
+      'tags': [],
+    }
+    expected = to_as1(profile)
+    expected['urls'].append({
+      'value': 'https://inst/alice',
+      'rel': 'canonical',
+      'mimeType': 'application/activity+json',
+    })
+    self.assert_equals(expected, to_as1({
+      **profile,
+      'tags': [['proxy', 'https://inst/alice', 'activitypub']],
+    }))
+
+  def test_from_as1_canonical_link_to_proxy_tag(self):
+    for link, proxy_tag in (
+        ({'value': 'https://inst/note', 'rel': 'canonical',
+          'mimeType': 'application/activity+json'},
+         ['proxy', 'https://inst/note', 'activitypub']),
+        ({'value': 'at://did:plc:123/app.bsky.feed.post/456', 'rel': 'canonical'},
+         ['proxy', 'at://did:plc:123/app.bsky.feed.post/456', 'atproto']),
+        ({'value': 'https://site/post', 'rel': 'canonical', 'mimeType': 'text/html'},
+         ['proxy', 'https://site/post', 'web']),
+        ({'value': 'farcaster://123/0xabc', 'rel': 'canonical'},
+         ['proxy', 'farcaster://123/0xabc', 'farcaster']),
+    ):
+      with self.subTest(link=link):
+        self.assert_equals({
+          **NOTE_NOSTR,
+          'tags': [proxy_tag],
+        }, from_as1({
+          **NOTE_AS1,
+          'urls': [NOTE_AS1['url'], link],
+        }), ignore=['id', 'sig'])
+
+  def test_from_as1_multiple_canonical_links_to_proxy_tags(self):
+    self.assert_equals({
+      **NOTE_NOSTR,
+      'tags': [
+        ['proxy', 'https://inst/note', 'activitypub'],
+        ['proxy', 'https://inst/@alice/123', 'web'],
+      ],
+    }, from_as1({
+      **NOTE_AS1,
+      'urls': [NOTE_AS1['url'], {
+        'value': 'https://inst/note',
+        'rel': 'canonical',
+        'mimeType': 'application/activity+json',
+      }, {
+        'value': 'other:post',
+        'rel': 'canonical',
+      }, {
+        'value': 'https://inst/@alice/123',
+        'rel': 'canonical',
+        'mimeType': 'text/html',
+      }],
+    }), ignore=['id', 'sig'])
+
+  def test_from_as1_canonical_link_unknown_protocol_no_proxy_tag(self):
+    self.assert_equals(NOTE_NOSTR, from_as1({
+      **NOTE_AS1,
+      'urls': [NOTE_AS1['url'], {'value': 'other:post', 'rel': 'canonical'}],
+    }), ignore=['id', 'sig'])
+
+  def test_from_as1_alternate_link_no_proxy_tag(self):
+    self.assert_equals(NOTE_NOSTR, from_as1({
+      **NOTE_AS1,
+      'urls': [NOTE_AS1['url'], {
+        'value': 'https://inst/note',
+        'rel': 'alternate',
+        'mimeType': 'application/activity+json',
+      }],
+    }), ignore=['id', 'sig'])
+
+  def test_from_as1_proxy_tag_kwarg_overrides_canonical_link(self):
+    self.assert_equals({
+      **NOTE_NOSTR,
+      'tags': [['proxy', 'proxy-id', 'proxy-proto']],
+    }, from_as1({
+      **NOTE_AS1,
+      'urls': [NOTE_AS1['url'], {
+        'value': 'https://inst/note',
+        'rel': 'canonical',
+        'mimeType': 'application/activity+json',
+      }],
+    }, proxy_tag=('proxy-id', 'proxy-proto')), ignore=['id', 'sig'])
+
   def test_to_from_as1_reply(self):
     reply = {
       'objectType': 'note',

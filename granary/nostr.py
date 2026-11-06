@@ -73,6 +73,18 @@ from .source import (
 
 logger = logging.getLogger(__name__)
 
+# NIP-48 proxy tag protocols, and their FEP-fffd proxy link MIME types and/or
+# URI prefixes. (farcaster is non-standard-ish, it's not explicitly in NIP-48.)
+# https://nips.nostr.com/48
+# https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md
+PROXY_TAG_PROTOCOLS = {
+  'activitypub': ('application/activity+json', None),
+  'atproto': (None, 'at://'),
+  'farcaster': (None, 'farcaster://'),
+  'rss': ('application/rss+xml', None),
+  'web': ('text/html', None),
+}
+
 # NIP-19
 BECH32_PREFIXES = (
   'naddr',
@@ -474,6 +486,16 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None, multiple=False)
   if proxy_tag:
     assert len(proxy_tag) == 2, proxy_tag
     event['tags'].append(['proxy'] + list(proxy_tag))
+  else:
+    # NIP-48 is explicitly only for original/source objects when Nostr
+    # is the bridged copy, so we only include canonical links here
+    for link in as1.get_rel_links(obj, rels=('canonical',)):
+      value = link['value']
+      for protocol, (mime_type, prefix) in PROXY_TAG_PROTOCOLS.items():
+        if ((mime_type and link.get('mimeType') == mime_type)
+            or (prefix and value.startswith(prefix))):
+          event['tags'].append(['proxy', value, protocol])
+          break
 
   # types
   if type in as1.ACTOR_TYPES:
@@ -909,6 +931,21 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
   if created_at := event.get('created_at'):
     published = datetime.fromtimestamp(created_at, tz=timezone.utc).isoformat()
     obj.setdefault('published', published)
+
+  # NIP-48 proxy tags to FEP-fffd proxy links. proxies are bridged copies, so the
+  # original is canonical.
+  proxy_links = []
+  for tag in event.get('tags', []):
+    if len(tag) >= 3 and tag[0] == 'proxy' and tag[1]:
+      proxy_links.append(util.trim_nulls({
+        'value': tag[1],
+        'rel': 'canonical',
+        'mimeType': PROXY_TAG_PROTOCOLS.get(tag[2], (None, None))[0],
+      }))
+
+  if proxy_links:
+    obj.setdefault('urls', util.get_list(obj, 'url'))
+    obj['urls'] += proxy_links
 
   if isinstance(obj.get('object'), list) and len(obj['object']) == 1:
     obj['object'] = obj['object'][0]
