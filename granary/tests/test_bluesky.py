@@ -1083,6 +1083,60 @@ class BlueskyTest(testutil.TestCase):
     expected['record']['fooOriginalUrl'] = 'https://bsky.app/profile/did:al:ice/post/tid'
     self.assert_equals(expected, got)
 
+  def test_from_as1_post_proxy_links(self):
+    self.assert_equals({
+      **POST_BSKY,
+      'community.lexicon.meta.links': {
+        '$type': 'community.lexicon.meta.links',
+        'links': [{
+          'href': 'https://inst/note',
+          'rel': 'canonical',
+          'mediaType': 'application/activity+json',
+        }, {
+          'href': 'nostr:nevent123',
+          'rel': 'alternate',
+        }],
+      },
+    }, self.from_as1({
+      **POST_AS,
+      'object': {
+        **POST_AS['object'],
+        'url': [POST_AS['object']['url'], {
+          'value': 'https://inst/note',
+          'rel': 'canonical',
+          'mimeType': 'application/activity+json',
+        }, {
+          'value': 'nostr:nevent123',
+          'rel': 'alternate',
+        }],
+      },
+    }))
+
+  def test_from_as1_actor_proxy_links(self):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+      'community.lexicon.meta.links': {
+        '$type': 'community.lexicon.meta.links',
+        'links': [{
+          'href': 'https://inst/alice',
+          'rel': 'canonical',
+          'mediaType': 'application/activity+json',
+        }],
+      },
+    }, self.from_as1({
+      **ACTOR_AS,
+      'url': ['https://alice.com/', {
+        'value': 'https://inst/alice',
+        'rel': 'canonical',
+        'mimeType': 'application/activity+json',
+      }],
+    }))
+
   def test_to_as1_post_feed_view(self):
     self.assert_equals(POST_AUTHOR_PROFILE_AS['object'], to_as1(POST_FEED_VIEW_BSKY))
 
@@ -2112,6 +2166,26 @@ class BlueskyTest(testutil.TestCase):
       GRAIN_ITEM,
     ], self.from_as1(POST_AS_IMAGES, blobs={NEW_BLOB_URL: NEW_BLOB}, multiple=True))
 
+  def test_from_as1_post_with_image_blobs_multiple_spark_grain_proxy_links(self):
+    obj = copy.deepcopy(POST_AS_IMAGES)
+    obj['object']['url'] = [obj['object']['url'], {
+      'value': 'nostr:nevent123',
+      'rel': 'canonical',
+    }]
+    meta_links = {
+      'community.lexicon.meta.links': {
+        '$type': 'community.lexicon.meta.links',
+        'links': [{'href': 'nostr:nevent123', 'rel': 'canonical'}],
+      },
+    }
+    self.assert_equals([
+      {**POST_BSKY_IMAGES, **meta_links},
+      {**POST_SPARK_IMAGES, **meta_links},
+      {**GRAIN_GALLERY, **meta_links},
+      GRAIN_PHOTO,
+      GRAIN_ITEM,
+    ], self.from_as1(obj, blobs={NEW_BLOB_URL: NEW_BLOB}, multiple=True))
+
   def test_from_as1_post_with_image_also_in_attachments_multiple_spark(self):
     # eg from as2.to_as1
     obj = copy.deepcopy(POST_AS_IMAGES)
@@ -2651,6 +2725,46 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'so.sprk.actor.profile',
     }, self.from_as1(actor, client=self.bs, out_type='so.sprk.actor.profile'))
+
+  def test_from_as1_actor_multiple_proxy_links(self):
+    meta_links = {
+      'community.lexicon.meta.links': {
+        '$type': 'community.lexicon.meta.links',
+        'links': [{'href': 'nostr:npub123', 'rel': 'canonical'}],
+      },
+    }
+    self.assert_equals([{
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+      'links': [{'uri': '', 'cid': ''}],
+      **meta_links,
+    }, {
+      '$type': 'so.sprk.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+      **meta_links,
+    }, {
+      '$type': 'social.grain.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+      **meta_links,
+    }, {
+      '$type': 'app.bsky.actor.link',
+      'url': 'https://alice.com/',
+      'createdAt': '1970-01-01T00:00:00.000Z',
+    }], self.from_as1({
+      **ACTOR_AS,
+      'url': ['https://alice.com/', {'value': 'nostr:npub123', 'rel': 'canonical'}],
+    }, multiple=True))
 
   def test_from_as1_actor_multiple_without_monetization(self):
     self.assert_equals([{
@@ -5056,6 +5170,97 @@ class BlueskyTest(testutil.TestCase):
       }],
       'url': 'https://bsky.app/profile/han.dull',
     }, to_as1(ACTOR_PROFILE_BSKY, repo_did='did:plc:foo', repo_handle='han.dull'))
+
+  def test_to_as1_post_proxy_links(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'id': 'at://alice.com/app.bsky.feed.post/123',
+      'url': 'https://bsky.app/profile/alice.com/post/123',
+      'urls': ['https://bsky.app/profile/alice.com/post/123', {
+        'value': 'https://inst/note',
+        'rel': 'canonical',
+        'mimeType': 'application/activity+json',
+      }, {
+        'value': 'nostr:nevent123',
+        'rel': 'alternate',
+      }, {
+        'value': 'https://wafrn/fediverse/post/123',
+        'rel': 'alternate',
+        'mimeType': 'application/activity+json',
+      }],
+      'content': 'My original post',
+      'published': '2007-07-07T03:04:05.000Z',
+    }, to_as1({
+      **POST_BSKY,
+      'community.lexicon.meta.links': {
+        '$type': 'community.lexicon.meta.links',
+        'links': [{
+          'href': 'https://inst/note',
+          'rel': 'canonical',
+          'mediaType': 'application/activity+json',
+        }, {
+          'href': 'nostr:nevent123',
+          'rel': 'alternate',
+        }, {
+          # not proxy links
+          'href': 'https://inst/alice',
+          'rel': 'author',
+        }, {
+          'rel': 'alternate',
+        }],
+      },
+      'fediverseId': 'https://wafrn/fediverse/post/123',
+    }, uri='at://alice.com/app.bsky.feed.post/123'), ignore=['fooOriginalText', 'fooOriginalUrl'])
+
+  def test_to_as1_post_fediverse_id_duplicates_meta_link(self):
+    self.assert_equals({
+      'objectType': 'note',
+      'urls': [{
+        'value': 'https://wafrn/fediverse/post/123',
+        'rel': 'canonical',
+        'mimeType': 'application/activity+json',
+      }],
+      'content': 'My original post',
+      'published': '2007-07-07T03:04:05.000Z',
+    }, to_as1({
+      **POST_BSKY,
+      'community.lexicon.meta.links': {
+        '$type': 'community.lexicon.meta.links',
+        'links': [{
+          'href': 'https://wafrn/fediverse/post/123',
+          'rel': 'canonical',
+          'mediaType': 'application/activity+json',
+        }],
+      },
+      'fediverseId': 'https://wafrn/fediverse/post/123',
+    }), ignore=['fooOriginalText', 'fooOriginalUrl'])
+
+  def test_to_as1_profile_proxy_links(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'id': 'did:plc:foo',
+      'username': 'han.dull',
+      'displayName': 'Alice',
+      'summary': 'hi there',
+      'url': 'https://bsky.app/profile/han.dull',
+      'urls': ['https://bsky.app/profile/han.dull', {
+        'value': 'https://inst/alice',
+        'rel': 'canonical',
+        'mimeType': 'application/activity+json',
+      }],
+    }, to_as1({
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'community.lexicon.meta.links': {
+        '$type': 'community.lexicon.meta.links',
+        'links': [{
+          'href': 'https://inst/alice',
+          'rel': 'canonical',
+          'mediaType': 'application/activity+json',
+        }],
+      },
+    }, repo_did='did:plc:foo', repo_handle='han.dull'))
 
   def test_to_as1_profile_links_in_bio(self):
     self.assert_equals({

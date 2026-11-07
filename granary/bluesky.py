@@ -28,7 +28,7 @@ from requests_oauth2client import OAuth2AccessTokenAuth, TokenSerializer
 from webutil import util
 
 from . import as1
-from .as2 import QUOTE_RE_SUFFIX
+from .as2 import CONTENT_TYPE, QUOTE_RE_SUFFIX
 from .source import (
   creation_result,
   FRIENDS,
@@ -244,6 +244,22 @@ AS1_TO_BLUESKY_LABEL_MAP = {
 }
 
 SENSITIVE_LABEL_DEFAULT = 'graphic-media'
+
+# from_as1 output types that get community.lexicon.meta.links (proxy links)
+META_LINK_TYPES = (
+  'app.bsky.actor.profile',
+  'app.bsky.feed.post',
+  'community.lexicon.calendar.event',
+  'site.standard.document',
+  'so.sprk.actor.profile',
+  'so.sprk.feed.post',
+  'so.sprk.feed.reply',
+  'so.sprk.graph.block',
+  'so.sprk.graph.follow',
+  'social.grain.actor.profile',
+  'social.grain.comment',
+  'social.grain.gallery',
+)
 
 # TODO: bring back validate? or remove?
 LEXRPC = Base(truncate=True, validate=False)
@@ -842,6 +858,19 @@ def from_as1(obj, out_type=None, blobs=None, aspects=None, client=None,
 
   else:
     raise ValueError(f'AS1 object has unknown objectType {type} verb {verb}')
+
+  # FEP-fffd proxy links
+  if links := as1.get_rel_links(obj):
+    for record in rets or [ret]:
+      if record.get('$type') in META_LINK_TYPES:
+        record['community.lexicon.meta.links'] = {
+          '$type': 'community.lexicon.meta.links',
+          'links': [as1.trim_nulls({
+            'href': link['value'],
+            'rel': link['rel'],
+            'mediaType': link.get('mimeType'),
+          }) for link in links],
+        }
 
   # validate against lexicon schema, truncate for character limits, etc
   truncated = []
@@ -2635,6 +2664,33 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
 
   else:
     raise ValueError(f'Bluesky object has unknown $type: {type}')
+
+  # FEP-fffd proxy links from community.lexicon.meta.links and wafrn's fediverseId
+  # https://tangled.org/essentialrandom.bsky.social/lexicon-community-lexicons/blob/add-proxy-links/community/lexicon/meta/README.md
+  # https://github.com/snarfed/bridgy-fed/issues/800#issuecomment-6694473048
+  proxy_links = []
+  seen_urls = []
+  meta_links = obj.get('community.lexicon.meta.links')
+  if isinstance(meta_links, dict):
+    for link in meta_links.get('links', []):
+        if ((url := link.get('href')) and url not in seen_urls
+            and link.get('rel') in as1.PROXY_LINK_RELS):
+          proxy_links.append({
+            'value': url,
+            'rel': link['rel'],
+            'mimeType': link.get('mediaType'),
+          })
+          seen_urls.append(url)
+
+  if (fediverse_id := obj.get('fediverseId')) and fediverse_id not in seen_urls:
+    proxy_links.append({
+      'value': fediverse_id,
+      'rel': 'alternate',
+      'mimeType': CONTENT_TYPE,
+    })
+
+  if proxy_links and isinstance(ret, dict):
+    ret['urls'] = (util.get_list(ret, 'urls') or util.get_list(ret, 'url')) + proxy_links
 
   ret = as1.trim_nulls(ret)
 
