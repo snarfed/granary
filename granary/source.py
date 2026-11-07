@@ -13,6 +13,7 @@ import copy
 import functools
 import html
 from html import escape, unescape
+import itertools
 import logging
 import re
 import textwrap
@@ -75,6 +76,24 @@ OMIT_LINK = 'omit'
 INCLUDE_LINK = 'include'
 INCLUDE_IF_TRUNCATED = 'if truncated'
 HTML_ENTITY_RE = re.compile(r'&#?[a-zA-Z0-9]+;')
+
+# protocols' id URI prefixes and MIME types, eg for FEP-fffd proxy links.
+# excludes plain application/ld+json since eg schema.org uses it.
+# https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md
+PROTOCOL_URI_PREFIXES = {
+  'atproto': ('at://', 'did:plc:', 'did:web:'),
+  'farcaster': ('farcaster://',),
+  'nostr': ('nostr:',),
+}
+URI_PREFIXES = tuple(itertools.chain(*PROTOCOL_URI_PREFIXES.values()))
+PROTOCOL_MIME_TYPES = {
+  'activitypub': (
+    'application/activity+json',
+    'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+  ),
+  'rss': ('application/rss+xml',),
+  'web': ('text/html',),
+}
 
 # maps lower case string short name to Source subclass. populated by SourceMeta.
 sources = {}

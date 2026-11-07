@@ -77,22 +77,6 @@ AS_TO_MF2_ADDRESS_FIELDS = {
   'country': 'country-name',
 }
 
-# rel-urls with these URI prefixes or MIME types are converted to FEP-fffd proxy
-# links. can't use as2.CONTENT_TYPES due to circular import, and we want to
-# exclude plain application/ld+json anyway since eg schema.org uses it.
-# https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md
-PROXY_LINK_URI_PREFIXES = (
-  'at://',
-  'did:plc:',
-  'did:web:',
-  'farcaster://',
-  'nostr:',
-)
-PROXY_LINK_MIME_TYPES = (
-  'application/activity+json',
-  'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-)
-
 # ISO 6709 location string. http://en.wikipedia.org/wiki/ISO_6709
 ISO_6709_RE = re.compile(r'([-+][0-9.]+)([-+][0-9.]+).*/')
 
@@ -538,8 +522,8 @@ def to_as1(mf2, actor=None, fetch_mf2=False, rel_urls=None):
   for u, rel in rel_urls.items():
     rels = [r for r in as1.PROXY_LINK_RELS if r in rel.get('rels', [])]
     type = rel.get('type')
-    if rels and (u.startswith(PROXY_LINK_URI_PREFIXES)
-                 or type in PROXY_LINK_MIME_TYPES):
+    if rels and (u.startswith(source.URI_PREFIXES)
+                 or type in source.PROTOCOL_MIME_TYPES['activitypub']):
       proxy_links.append({'value': u, 'rel': rels[0], 'mimeType': type})
 
   # quotations: https://indieweb.org/quotation#How_to_markup

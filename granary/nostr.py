@@ -68,22 +68,16 @@ from .source import (
   html_to_text,
   INCLUDE_LINK,
   OMIT_LINK,
+  PROTOCOL_MIME_TYPES,
+  PROTOCOL_URI_PREFIXES,
   Source,
 )
 
 logger = logging.getLogger(__name__)
 
-# NIP-48 proxy tag protocols, and their FEP-fffd proxy link MIME types and/or
-# URI prefixes. (farcaster is non-standard-ish, it's not explicitly in NIP-48.)
-# https://nips.nostr.com/48
-# https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md
-PROXY_TAG_PROTOCOLS = {
-  'activitypub': ('application/activity+json', None),
-  'atproto': (None, 'at://'),
-  'farcaster': (None, 'farcaster://'),
-  'rss': ('application/rss+xml', None),
-  'web': ('text/html', None),
-}
+# NIP-48 proxy tag protocols. (farcaster is non-standard-ish, it's not explicitly
+# in NIP-48.) https://nips.nostr.com/48
+PROXY_TAG_PROTOCOLS = ('activitypub', 'atproto', 'farcaster', 'rss', 'web')
 
 # NIP-19
 BECH32_PREFIXES = (
@@ -491,9 +485,9 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None, multiple=False)
     # is the bridged copy, so we only include canonical links here
     for link in as1.get_rel_links(obj, rels=('canonical',)):
       value = link['value']
-      for protocol, (mime_type, prefix) in PROXY_TAG_PROTOCOLS.items():
-        if ((mime_type and link.get('mimeType') == mime_type)
-            or (prefix and value.startswith(prefix))):
+      for protocol in PROXY_TAG_PROTOCOLS:
+        if (link.get('mimeType') in PROTOCOL_MIME_TYPES.get(protocol, ())
+            or value.startswith(PROTOCOL_URI_PREFIXES.get(protocol, ()))):
           event['tags'].append(['proxy', value, protocol])
           break
 
@@ -940,7 +934,7 @@ def to_as1(event, id_format='hex', nostr_uri_ids=True):
       proxy_links.append(util.trim_nulls({
         'value': tag[1],
         'rel': 'canonical',
-        'mimeType': PROXY_TAG_PROTOCOLS.get(tag[2], (None, None))[0],
+        'mimeType': next(iter(PROTOCOL_MIME_TYPES.get(tag[2], ())), None),
       }))
 
   if proxy_links:

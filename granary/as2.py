@@ -22,15 +22,21 @@ from webutil import util
 from webutil.util import json_dumps, json_loads
 
 from . import as1, microformats2
-from .source import html_to_text, jinja_macros, Source, whitespace_to_html
+from .source import (
+  html_to_text,
+  jinja_macros,
+  PROTOCOL_MIME_TYPES,
+  Source,
+  URI_PREFIXES,
+  whitespace_to_html,
+)
 
 logger = logging.getLogger(__name__)
 
 # ActivityPub Content-Type details:
 # https://www.w3.org/TR/activitypub/#retrieving-objects
-CONTENT_TYPE = 'application/activity+json'
+CONTENT_TYPE, CONTENT_TYPE_LD_PROFILE = PROTOCOL_MIME_TYPES['activitypub']
 CONTENT_TYPE_LD = 'application/ld+json'
-CONTENT_TYPE_LD_PROFILE = 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
 CONTENT_TYPES = (CONTENT_TYPE, CONTENT_TYPE_LD, CONTENT_TYPE_LD_PROFILE)
 # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept
 CONNEG_HEADERS = {
@@ -760,7 +766,7 @@ def to_as1(obj, use_type=True, get_fn=None):
   # https://github.com/snarfed/bridgy-fed/issues/800#issuecomment-6694473048
   for uri in [obj.get('blueskyUri')] + util.get_list(obj, 'alsoKnownAs'):
     if (isinstance(uri, str)
-        and uri.startswith(microformats2.PROXY_LINK_URI_PREFIXES)
+        and uri.startswith(URI_PREFIXES)
         and uri not in proxy_links):
       proxy_links[uri] = {'value': uri, 'rel': 'alternate'}
 
