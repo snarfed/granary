@@ -740,10 +740,9 @@ def to_as1(obj, use_type=True, get_fn=None):
         if 'mention' not in classes and 'hashtag' not in classes:
           field_urls.append(href)
 
-  # FEP-fffd proxy links go last, in urls, so that they don't become the primary
-  # URL if there's a non-proxy URL. keep their raw hrefs since they may not be web
-  # URLs.
-  proxy_links = {}
+  # FEP-fffd proxy links go last, in urls, so they don't become the primary URL if
+  # there's a non-proxy URL. keep their raw hrefs since they may not be web URLs.
+  proxy_links = {}  # maps string URL to proxy link object
   other_links = []
   for link in util.get_list(obj, 'url'):
     rels = util.get_list(link, 'rel') if isinstance(link, dict) else []
@@ -756,6 +755,14 @@ def to_as1(obj, use_type=True, get_fn=None):
       })
     else:
       other_links.append(link)
+
+  # proxy links in other AS2 fields: alsoKnownAs, wafrn's custom blueskyUri
+  # https://github.com/snarfed/bridgy-fed/issues/800#issuecomment-6694473048
+  for uri in [obj.get('blueskyUri')] + util.get_list(obj, 'alsoKnownAs'):
+    if (isinstance(uri, str)
+        and uri.startswith(microformats2.PROXY_LINK_URI_PREFIXES)
+        and uri not in proxy_links):
+      proxy_links[uri] = {'value': uri, 'rel': 'alternate'}
 
   obj_urls = [url for url in get_urls({'url': other_links})
               if url not in proxy_links]

@@ -698,6 +698,71 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_bluesky_uri(self):
+    self.assertEqual({
+      'objectType': 'note',
+      'url': 'https://wafrn/post/123',
+      'urls': [
+        'https://wafrn/post/123',
+        {'value': 'at://did:plc:alice/app.bsky.feed.post/123', 'rel': 'alternate'},
+      ],
+      'blueskyUri': 'at://did:plc:alice/app.bsky.feed.post/123',
+    }, as2.to_as1({
+      'type': 'Note',
+      'url': 'https://wafrn/post/123',
+      'blueskyUri': 'at://did:plc:alice/app.bsky.feed.post/123',
+    }))
+
+  def test_to_as1_bluesky_uri_duplicates_proxy_link(self):
+    self.assertEqual({
+      'objectType': 'note',
+      'url': 'https://wafrn/post/123',
+      'urls': [
+        'https://wafrn/post/123',
+        {'value': 'at://did:plc:alice/app.bsky.feed.post/123', 'rel': 'canonical'},
+      ],
+      'blueskyUri': 'at://did:plc:alice/app.bsky.feed.post/123',
+    }, as2.to_as1({
+      'type': 'Note',
+      'url': ['https://wafrn/post/123', {
+        'type': 'Link',
+        'rel': 'canonical',
+        'href': 'at://did:plc:alice/app.bsky.feed.post/123',
+      }],
+      'blueskyUri': 'at://did:plc:alice/app.bsky.feed.post/123',
+    }))
+
+  def test_to_as1_actor_also_known_as_proxy_links(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': '@alice@in.st',
+      'url': 'https://in.st/@alice',
+      'urls': [
+        'https://in.st/@alice',
+        {'value': 'at://did:plc:alice', 'rel': 'alternate'},
+        {'value': 'did:plc:alice', 'rel': 'alternate'},
+        {'value': 'nostr:npub1alice', 'rel': 'alternate'},
+        {'value': 'farcaster://123', 'rel': 'alternate'},
+      ],
+      'alsoKnownAs': [
+        'https://old.inst/users/alice',
+        'at://did:plc:alice',
+        'did:plc:alice',
+        'nostr:npub1alice',
+        'farcaster://123',
+      ],
+    }, as2.to_as1({
+      'type': 'Person',
+      'url': 'https://in.st/@alice',
+      'alsoKnownAs': [
+        'https://old.inst/users/alice',
+        'at://did:plc:alice',
+        'did:plc:alice',
+        'nostr:npub1alice',
+        'farcaster://123',
+      ],
+    }))
+
   def test_to_as1_only_proxy_link(self):
     link = {'value': 'https://twitter.com/jack/status/20', 'rel': 'canonical'}
     self.assertEqual({
