@@ -1037,6 +1037,11 @@ def _from_as1_actor(obj, *, out_type, multiple, summary, blobs, client,
       for link in links[:max_links]:
         if not isinstance(link, dict):
           link = {'value': link}
+        # FEP-fffd proxy links are about the account's identity elsewhere, not
+        # links the user chose to show, and their URLs, eg AP actor ids, often
+        # aren't human-browsable
+        if link.get('rel') in as1.PROXY_LINK_RELS:
+          continue
         url = link.get('value')
         if not util.is_web(url):
           continue

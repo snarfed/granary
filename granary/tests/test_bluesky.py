@@ -2730,7 +2730,11 @@ class BlueskyTest(testutil.TestCase):
     meta_links = {
       'community.lexicon.meta.links': {
         '$type': 'community.lexicon.meta.links',
-        'links': [{'href': 'nostr:npub123', 'rel': 'canonical'}],
+        'links': [{
+          'href': 'https://inst/alice',
+          'rel': 'alternate',
+          'mediaType': 'application/activity+json',
+        }],
       },
     }
     self.assert_equals([{
@@ -2763,7 +2767,11 @@ class BlueskyTest(testutil.TestCase):
       'createdAt': '1970-01-01T00:00:00.000Z',
     }], self.from_as1({
       **ACTOR_AS,
-      'url': ['https://alice.com/', {'value': 'nostr:npub123', 'rel': 'canonical'}],
+      'url': ['https://alice.com/', {
+        'value': 'https://inst/alice',
+        'rel': 'alternate',
+        'mimeType': 'application/activity+json',
+      }],
     }, multiple=True))
 
   def test_from_as1_actor_multiple_without_monetization(self):
