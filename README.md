@@ -339,8 +339,10 @@ _Non-breaking changes:_
   * Convert to/from [Spark](https://sprk.so/) `so.sprk.graph.follow` and `so.sprk.graph.block` records.
   * Convert actor `url`/`urls` to/from [Bluesky profile links](https://bsky.social/about/blog/10-22-2026-introducing-profile-links), ie [`app.bsky.actor.link`](https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/actor/link.json) records and `app.bsky.actor.profile`'s `links` field.
   * `at_uri_to_web_url`: add `grain.social` gallery URLs.
-  * `to_as1`: stop adding `https://[handle]/` to actor `urls`, since handle domains aren't always web sites ([bridgy-fed#2677](https://github.com/snarfed/bridgy-fed/issues/2677)).
-  * `to_as1`: populate `id` and `author` for `site.standard.document` records.
+  * `to_as1`:
+    * Stop adding `https://[handle]/` to actor `urls`, since handle domains aren't always web sites ([bridgy-fed#2677](https://github.com/snarfed/bridgy-fed/issues/2677)).
+    * Populate `id` and `author` for `site.standard.document` records.
+    * Handle `site.standard.document` records whose `site` is an `at://` URI ([bridgy-fed#2768](https://github.com/snarfed/bridgy-fed/issues/2768)).
   * Convert [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links to/from the upcoming [`community.lexicon.meta.links`](https://tangled.org/essentialrandom.bsky.social/lexicon-community-lexicons/blob/add-proxy-links/community/lexicon/meta/README.md) field in records. `to_as1` also converts [wafrn](https://wafrn.net/)'s `fediverseId` field ([bridgy-fed#800](https://github.com/snarfed/bridgy-fed/issues/800)).
 * `microformats2`:
   * `to_as1`:

@@ -2645,8 +2645,20 @@ def to_as1(obj, type=None, uri=None, repo_did=None, repo_handle=None,
       'tags': [{'objectType': 'hashtag', 'displayName': tag}
                for tag in obj.get('tags', [])],
     }
-    if site := obj.get('site'):
-      ret['url'] = urllib.parse.urljoin(site, obj.get('path'))
+    site = obj.get('site')
+    if site and (parsed := AT_URI_RE.fullmatch(site)):
+      # site is a site.standard.publication record. fetch it to get its URL
+      site = None
+      if client and parsed.lastgroup == 'rkey':
+        if record := client.com.atproto.repo.getRecord(**parsed.groupdict()):
+          site = record.get('value', {}).get('url')
+
+    if site:
+      if path := obj.get('path'):
+        # not urljoin because site may or may not have a trailing /
+        ret['url'] = site.rstrip('/') + '/' + path.lstrip('/')
+      else:
+        ret['url'] = site
 
     if client and (post_uri := obj.get('bskyPostRef', {}).get('uri')):
       if (parsed := AT_URI_RE.fullmatch(post_uri)) and parsed.lastgroup == 'rkey':

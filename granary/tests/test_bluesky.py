@@ -7126,6 +7126,24 @@ class BlueskyTest(testutil.TestCase):
       'publishedAt': '2022-01-02T03:04:05.000Z',
     }))
 
+  def test_to_as1_document_site_with_path(self):
+    for site, path in (
+        ('https://example.com/blog', '/post'),
+        ('https://example.com/blog/', '/post'),
+        ('https://example.com/blog', 'post'),
+    ):
+      with self.subTest(site=site, path=path):
+        self.assert_equals({
+          'objectType': 'article',
+          'url': 'https://example.com/blog/post',
+          'displayName': 'My Article',
+        }, to_as1({
+          '$type': 'site.standard.document',
+          'site': site,
+          'path': path,
+          'title': 'My Article',
+        }))
+
   def test_to_as1_document_no_site(self):
     self.assert_equals({
       'objectType': 'article',
@@ -7136,6 +7154,42 @@ class BlueskyTest(testutil.TestCase):
       'description': '',
       'title': 'Foo',
     }))
+
+  def test_to_as1_document_site_at_uri_no_client(self):
+    self.assert_equals({
+      'objectType': 'article',
+      'displayName': 'My Article',
+    }, to_as1({
+      '$type': 'site.standard.document',
+      'site': 'at://did:plc:foo/site.standard.publication/abc123',
+      'path': '/post',
+      'title': 'My Article',
+    }))
+
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'uri': 'at://did:plc:foo/site.standard.publication/abc123',
+    'cid': 'sydddddd',
+    'value': {
+      '$type': 'site.standard.publication',
+      'url': 'https://example.com',
+      'name': 'My Blog',
+    },
+  }))
+  def test_to_as1_document_site_at_uri(self, mock_get):
+    self.assert_equals({
+      'objectType': 'article',
+      'url': 'https://example.com/post',
+      'displayName': 'My Article',
+    }, to_as1({
+      '$type': 'site.standard.document',
+      'site': 'at://did:plc:foo/site.standard.publication/abc123',
+      'path': '/post',
+      'title': 'My Article',
+    }, client=self.bs.client))
+
+    self.assert_call(
+      mock_get,
+      'com.atproto.repo.getRecord?repo=did%3Aplc%3Afoo&collection=site.standard.publication&rkey=abc123')
 
   def test_to_as1_publication(self):
     self.assert_equals({
