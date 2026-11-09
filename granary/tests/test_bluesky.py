@@ -1137,6 +1137,47 @@ class BlueskyTest(testutil.TestCase):
       }],
     }))
 
+  def test_from_as1_actor_proxy_link_isnt_website(self):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'did:web:alice.com',
+      'community.lexicon.meta.links': {
+        '$type': 'community.lexicon.meta.links',
+        'links': [{'href': 'https://inst/alice', 'rel': 'canonical'}],
+      },
+    }, self.from_as1({
+      **ACTOR_AS,
+      'url': {'value': 'https://inst/alice', 'rel': 'canonical'},
+    }))
+
+  def test_from_as1_actor_html_proxy_link_is_website(self):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+      'community.lexicon.meta.links': {
+        '$type': 'community.lexicon.meta.links',
+        'links': [{
+          'href': 'https://alice.com/',
+          'rel': 'canonical',
+          'mediaType': 'text/html',
+        }],
+      },
+    }, self.from_as1({
+      **ACTOR_AS,
+      'url': {
+        'value': 'https://alice.com/',
+        'rel': 'canonical',
+        'mimeType': 'text/html',
+      },
+    }))
+
   def test_to_as1_post_feed_view(self):
     self.assert_equals(POST_AUTHOR_PROFILE_AS['object'], to_as1(POST_FEED_VIEW_BSKY))
 

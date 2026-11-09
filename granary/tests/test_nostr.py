@@ -715,6 +715,25 @@ class NostrTest(testutil.TestCase):
     }
     self.assert_equals(expected, from_as1(profile), ignore=['id', 'sig'])
 
+  def test_from_as1_profile_proxy_link_isnt_website(self):
+    profile = {
+      'objectType': 'person',
+      'id': NPUB,
+      'displayName': 'Alice',
+      'urls': [
+        {'value': 'https://inst/alice', 'rel': 'canonical'},
+        'http://ali/ce',
+      ],
+    }
+    expected = {
+      'kind': KIND_PROFILE,
+      'pubkey': PUBKEY,
+      'content': '{"name":"Alice","website":"http://ali/ce"}',
+      'created_at': NOW_TS,
+      'tags': [],
+    }
+    self.assert_equals(expected, from_as1(profile), ignore=['id', 'sig'])
+
   def test_from_as1_reply_plain_hex_in_reply_to(self):
     id = ID
     reply = {

@@ -315,6 +315,7 @@ _Breaking changes:_
 
 * `as1`:
   * Remove `link` from `POST_TYPES`.
+  * `object_urls`, `get_url`: omit [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links unless they're web pages, ie web URLs with `mimeType` `text/html`.
 * `bluesky`:
   * `from_as1`: convert `link` objects to `app.bsky.actor.link` records, not posts.
   * `from_as1`, `Bluesky.create`, `Bluesky.update`: `validate` is now trinary. The new default, `None`, behaves like the old default `True`: no lexicon validation of output records, but strong refs must be valid. `True` now also validates output records against their lexicons and raises `lexrpc.ValidationError` if they're invalid. `False` is unchanged.
@@ -349,6 +350,7 @@ _Non-breaking changes:_
     * Convert `rel_urls` with `rel` `alternate` or `canonical` and known types to [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links in `urls` ([bridgy-fed#800](https://github.com/snarfed/bridgy-fed/issues/800)).
 * `nostr`:
   * Convert [NIP-48](https://nips.nostr.com/48) `proxy` tags to/from AS1 `canonical` [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links in `urls`, with `mimeType` from the tag's protocol ([bridgy-fed#800](https://github.com/snarfed/bridgy-fed/issues/800)).
+  * `from_as1`: profile `website` is now always a string URL, never a link object.
 * `farcaster`:
   * `web_url_to_farcaster_uri`: add `remote` kwarg that resolves `farcaster.xyz` cast URLs' shortened hashes to full hashes and FIDs via farcaster.xyz's unofficial client API.
 

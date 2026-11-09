@@ -960,6 +960,27 @@ foo bar
       ],
     }))
 
+  def test_from_as1_proxy_links_arent_urls(self):
+    self.assert_equals({
+      'type': ['h-entry'],
+      'properties': {
+        'content': ['hi'],
+        'url': ['http://foo'],
+      },
+    }, microformats2.from_as1({
+      'objectType': 'note',
+      'content': 'hi',
+      'urls': [
+        'http://foo',
+        {'value': 'at://did:plc:alice/app.bsky.feed.post/123', 'rel': 'canonical'},
+        {
+          'value': 'https://inst/note',
+          'rel': 'alternate',
+          'mimeType': 'application/activity+json',
+        },
+      ],
+    }))
+
   def test_from_as1_not_dict(self):
     """This can happen if we get a dict instead of a list, e.g. with AS 2.0.
 

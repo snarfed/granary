@@ -729,6 +729,21 @@ class As1Test(testutil.TestCase):
             'alt': "Jamie Tanna's profile image",
           },
         }),
+        # FEP-fffd proxy links only count if they're web pages
+        (['http://foo', 'https://bar'], {
+          'url': 'http://foo',
+          'urls': [
+            {'value': 'at://did:plc:alice', 'rel': 'alternate'},
+            {'value': 'nostr:npub123', 'rel': 'canonical'},
+            {'value': 'https://inst/alice', 'rel': 'canonical'},
+            {
+              'value': 'https://inst/users/alice',
+              'rel': 'alternate',
+              'mimeType': 'application/activity+json',
+            },
+            {'value': 'https://bar', 'rel': 'canonical', 'mimeType': 'text/html'},
+          ],
+        }),
         # url field is list, invalid AS1, but we can be forgiving
         (['http://one', 'http://two', 'http://three'], {
           'url': ['http://one', 'http://two'],
@@ -1019,6 +1034,11 @@ class As1Test(testutil.TestCase):
         ({'url': 'foo'}, 'foo'),
         ({'url': ['foo', 'bar']}, 'foo'),
         ({'url': {'value': 'foo'}}, 'foo'),
+        ({'url': {'value': 'at://did:plc:alice', 'rel': 'canonical'}}, ''),
+        ({'urls': [
+          {'value': 'https://inst/users/alice', 'rel': 'canonical'},
+          'http://foo',
+        ]}, 'http://foo'),
     ):
       with self.subTest(expected=expected, obj=obj):
         self.assertEqual(expected, as1.get_url(obj))

@@ -496,7 +496,7 @@ def from_as1(obj, privkey=None, remote_relay='', proxy_tag=None, multiple=False)
     content = {
       'name': obj.get('displayName'),
       'about': obj.get('summary'),
-      'website': obj.get('url') or util.get_first(obj, 'urls'),
+      'website': as1.get_url(obj),
     }
 
     if username := obj.get('username'):

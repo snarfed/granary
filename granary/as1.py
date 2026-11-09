@@ -208,8 +208,9 @@ def get_owner(obj):
 
 
 def get_url(obj):
-  """Returns the url field's first text value, or ``''``.
+  """Returns the first of :func:`object_urls`, or ``''``.
 
+  Omits FEP-fffd proxy links unless they're web pages, like :func:`object_urls`.
   Somewhat duplicates :func:`microformats2.get_text`.
   """
   if not obj:
@@ -764,16 +765,29 @@ def prefix_urls(activity, field, prefix):
 
 
 def object_urls(obj):
-  """Returns an object's unique URLs, preserving order."""
+  """Returns an object's unique URLs, preserving order.
+
+  Omits `FEP-fffd proxy links <https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md>`_
+  unless they're web pages, ie web URLs with ``mimeType`` ``text/html``. Use
+  :func:`get_rel_links` to get those.
+  """
   if isinstance(obj, str):
     return [obj]
 
-  def value(obj):
-    got = obj.get('value') if isinstance(obj, dict) else obj
-    return got.strip() if got else None
+  urls = []
+  for url in util.get_list(obj, 'url') + util.get_list(obj, 'urls'):
+    if isinstance(url, dict):
+      val = url.get('value')
+      if (url.get('rel') in PROXY_LINK_RELS
+          and not (util.is_web(val) and url.get('mimeType') == 'text/html')):
+        continue
+    else:
+      val = url
 
-  return util.uniquify(util.trim_nulls(
-    value(u) for u in util.get_list(obj, 'url') + util.get_list(obj, 'urls')))
+    if val and (val := val.strip()):
+      urls.append(val)
+
+  return util.uniquify(urls)
 
 
 def aspect_ratio(obj):
