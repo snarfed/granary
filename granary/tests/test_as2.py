@@ -1330,6 +1330,30 @@ class ActivityStreams2Test(testutil.TestCase):
       ],
     }))
 
+  def test_from_as1_person_html_proxy_link_is_property_value(self):
+    self.assert_equals({
+      'type': 'Person',
+      'url': {
+        'type': 'Link',
+        'rel': 'canonical',
+        'href': 'https://alice.com/',
+        'mediaType': 'text/html',
+      },
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Link',
+        'value': '<a rel="me" href="https://alice.com"><span class="invisible">https://</span>alice.com</a>',
+      }],
+    }, as2.from_as1({
+      'objectType': 'person',
+      'url': 'https://alice.com/',
+      'urls': [{
+        'value': 'https://alice.com/',
+        'rel': 'canonical',
+        'mimeType': 'text/html',
+      }],
+    }), ignore=['@context', 'discoverable', 'indexable'])
+
   def test_from_as1_only_proxy_link(self):
     self.assert_equals({
       'type': 'Note',

@@ -475,10 +475,11 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
     # so that the visible URL people see matches the actual link.
     # https://github.com/snarfed/bridgy-fed/issues/560
     links = {}
+    page_urls = as1.object_urls(obj)
     for link in as1.get_objects(obj, 'url') + as1.get_objects(obj, 'urls'):
       url = link.get('value') or link.get('id')
       name = link.get('displayName')
-      if util.is_web(url) and url not in proxy_urls:
+      if util.is_web(url) and url in page_urls:
         parsed = urlparse(url)
         if parsed.path == '/':
           url = url.removesuffix('/')
