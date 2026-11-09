@@ -970,6 +970,15 @@ class As1Test(testutil.TestCase):
       'urls': [{'rel': 'alternate'}, {'value': '', 'rel': 'canonical'}, alternate],
     }))
 
+  def test_get_rel_links_includes_self(self):
+    self_link = {'value': 'http://foo', 'rel': 'canonical'}
+    alternate = {'value': 'at://did:plc:alice', 'rel': 'alternate'}
+
+    self.assertEqual([self_link, alternate], as1.get_rel_links({
+      'id': 'http://foo',
+      'urls': [self_link, alternate],
+    }))
+
   def test_get_rel_links_url_prefixes_mime_types(self):
     at = {'value': 'at://did:plc:alice', 'rel': 'alternate'}
     nostr = {'value': 'nostr:npub1alice', 'rel': 'canonical'}
