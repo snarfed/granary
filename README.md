@@ -35,6 +35,7 @@ Granary is a library and REST API that fetches and converts between a wide varie
 Here's how to get started:
 
 * Granary is [available on PyPi.](https://pypi.python.org/pypi/granary/) Install with `pip install granary`.
+  * Some modules need extra dependencies. Install them with eg `pip install granary[bluesky,nostr]`. Extras: `bluesky`, `farcaster`, `flickr`, `nostr`, `reddit`, `rss`, `twitter`.
 * [Getting started docs.](#using)
 * [Reference docs.](https://granary.readthedocs.io/en/latest/source/granary.html)
 * REST API and demo app at [granary.io](https://granary.io/).
@@ -313,6 +314,8 @@ Changelog
 
 _Breaking changes:_
 
+* Move module-specific dependencies into new extras: `bluesky`, `farcaster`, `flickr`, `nostr`, `reddit`, `rss`, `twitter`. Notably, `secp256k1`, `blake3`, `lexrpc`, `praw`, `lxml` (via `feedgen`), and `oauthlib` (via `oauth-dropins`) are no longer core dependencies.
+* Depend on `pywebutil[html]` instead of `pywebutil[google-cloud,html]`.
 * `as1`:
   * Remove `link` from `POST_TYPES`.
   * `object_urls`, `get_url`: omit [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links unless they're web pages, ie web URLs with `mimeType` `text/html`.

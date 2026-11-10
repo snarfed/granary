@@ -35,42 +35,63 @@ classifiers = [
 ]
 
 dependencies = [
-    'blake3>=0.4.0',
     'beautifulsoup4>=4.8',
-    'bech32>=1.2.0',
     'brevity>=0.2.17',
-    'cachetools>=5.2.0',
-    'cryptography>=41.0.0',
-    'feedgen>=0.9',
-    'feedparser>=6.0.0',
-    'grpcio>=1.59.0',
     'html2text>=2019.8.11',
     'humanfriendly>=4.18',
     'jinja2>=3.0.0',
-    'lexrpc>=3.0',
     'mf2util>=0.5.0',
-    'multiformats>=0.3.1',
     'nh3>=0.3',
-    'oauth-dropins>=8.1',
-    'praw>=7.3.0',
-    'prawcore>=2.1',
-    'protobuf>=6.31.1',
-    'pymediainfo>=6.0.0',
+    'oauth-dropins>=9.0',
     'python-dateutil>=2.8.1',
-    'pywebutil[google-cloud,html]>=3.0',
+    'pywebutil[html]>=3.0',
     'requests>=2.22',
-    'requests-oauth2client>=1.8.0',
-    'secp256k1>=0.14.0',
-    'websockets>=11.0',
 ]
 
 [project.optional-dependencies]
+bluesky = [
+    'lexrpc>=3.0',
+    'multiformats>=0.3.1',
+    'oauth-dropins[bluesky]>=8.1',
+    'pymediainfo>=6.0.0',
+    'requests-oauth2client>=1.8.0',
+]
+farcaster = [
+    'blake3>=0.4.0',
+    'cachetools>=5.2.0',
+    'cryptography>=41.0.0',
+    'grpcio>=1.59.0',
+    'protobuf>=6.31.1',
+]
+flickr = [
+    'oauth-dropins[flickr]>=8.1',
+]
+nostr = [
+    'bech32>=1.2.0',
+    'secp256k1>=0.14.0',
+    'websockets>=11.0',
+]
+reddit = [
+    'cachetools>=5.2.0',
+    'oauth-dropins[reddit]>=8.1',
+    'praw>=7.3.0',
+    'prawcore>=2.1',
+]
+rss = [
+    'feedgen>=0.9',
+    'feedparser>=6.0.0',
+]
+twitter = [
+    'oauth-dropins[twitter]>=8.1',
+]
 app = [
     'flask>=3.0.0',
     'flask-caching>=1.10.0',
     'flask-gae-static>=1.0',
     'google-cloud-ndb>=1.10.1',
+    'granary[bluesky,farcaster,flickr,nostr,reddit,rss,twitter]',
     'gunicorn>=20.1.0',
+    'pywebutil[google-cloud]>=3.0',
     'ujson>=5.7.0',
     'werkzeug>=3.0.0',
 ]
