@@ -46,10 +46,10 @@ jobs:
                 uv pip install --system --no-sources '.[tests]'
                 ;;
               lowest-direct)
-                # resolve third-party packages at lowest-direct floors
-                uv pip install --system --no-sources --resolution=lowest-direct '.[app,tests]'
-                # reinstall own packages at head, overriding PyPI floor versions
-                grep 'git+' requirements.txt | xargs uv pip install --system --no-sources
+                # resolve third-party packages at lowest-direct floors and our own
+                # packages at head, from the git refs in requirements.txt, so that
+                # we can depend on unreleased versions of them
+                grep 'git+' requirements.txt | xargs uv pip install --system --no-sources --resolution=lowest-direct '.[app,tests]'
                 ;;
             esac
 

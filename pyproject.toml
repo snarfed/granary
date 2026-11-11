@@ -52,7 +52,7 @@ dependencies = [
 bluesky = [
     'lexrpc>=3.0',
     'multiformats>=0.3.1',
-    'oauth-dropins[bluesky]>=8.1',
+    'oauth-dropins[bluesky]>=9.0',
     'pymediainfo>=6.0.0',
     'requests-oauth2client>=1.8.0',
 ]
@@ -64,7 +64,7 @@ farcaster = [
     'protobuf>=6.31.1',
 ]
 flickr = [
-    'oauth-dropins[flickr]>=8.1',
+    'oauth-dropins[flickr]>=9.0',
 ]
 nostr = [
     'bech32>=1.2.0',
@@ -73,7 +73,7 @@ nostr = [
 ]
 reddit = [
     'cachetools>=5.2.0',
-    'oauth-dropins[reddit]>=8.1',
+    'oauth-dropins[reddit]>=9.0',
     'praw>=7.3.0',
     'prawcore>=2.1',
 ]
@@ -82,7 +82,7 @@ rss = [
     'feedparser>=6.0.0',
 ]
 twitter = [
-    'oauth-dropins[twitter]>=8.1',
+    'oauth-dropins[twitter]>=9.0',
 ]
 app = [
     'flask>=3.0.0',
