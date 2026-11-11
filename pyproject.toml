@@ -50,6 +50,7 @@ dependencies = [
 
 [project.optional-dependencies]
 bluesky = [
+    'arroba>=0.4',
     'lexrpc>=3.0',
     'multiformats>=0.3.1',
     'oauth-dropins[bluesky]>=9.0',
