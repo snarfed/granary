@@ -508,6 +508,39 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_person_pronouns_language_map(self):
+    # https://ns.pancakes.gay/as#pronouns, eg Iceshrimp.NET
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': 'Alice',
+      'pronouns': 'she/her',
+    }, as2.to_as1({
+      'type': 'Person',
+      'name': 'Alice',
+      'pronouns': {'en': 'she/her'},
+    }))
+
+  def test_to_as1_person_pronouns_string(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': 'Alice',
+      'pronouns': 'she/her',
+    }, as2.to_as1({
+      'type': 'Person',
+      'name': 'Alice',
+      'pronouns': 'she/her',
+    }))
+
+  def test_to_as1_person_pronouns_empty_language_map(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': 'Alice',
+    }, as2.to_as1({
+      'type': 'Person',
+      'name': 'Alice',
+      'pronouns': {},
+    }))
+
   def test_to_as1_person_url_in_propertyvalue_attachment(self):
     self.assertEqual({
       'objectType': 'person',
@@ -1296,6 +1329,22 @@ class ActivityStreams2Test(testutil.TestCase):
       'objectType' : 'person',
       'id': 'tag:example.com,2011:martin',
       'pronouns': 'she & they',
+    }))
+
+  def test_from_as1_person_pronouns_not_string(self):
+    self.assert_equals({
+      '@context': as2.CONTEXT + [{
+        'discoverable': 'http://joinmastodon.org/ns#discoverable',
+        'indexable': 'http://joinmastodon.org/ns#indexable',
+      }],
+      'type': 'Person',
+      'id': 'tag:example.com,2011:martin',
+      'discoverable': True,
+      'indexable': True,
+    }, as2.from_as1({
+      'objectType' : 'person',
+      'id': 'tag:example.com,2011:martin',
+      'pronouns': {'en': 'she/her'},
     }))
 
   def test_from_as1_person_propertyvalue_attachment_strips_home_page_slash(self):

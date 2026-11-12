@@ -493,7 +493,7 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
     attachments.extend(links.values())
 
     # https://github.com/snarfed/bridgy-fed/issues/2773
-    if pronouns := obj.pop('pronouns', None):
+    if (pronouns := obj.pop('pronouns', None)) and isinstance(pronouns, str):
       attachments.append({
         'type': 'PropertyValue',
         'name': 'Pronouns',
@@ -735,12 +735,21 @@ def to_as1(obj, use_type=True, get_fn=None):
   # the parent's url/urls fields
   names = {}
   field_urls = []
-  pronouns = None
+
+  # https://ns.pancakes.gay/as#pronouns, eg Iceshrimp.NET. JSON-LD language map
+  # https://github.com/snarfed/bridgy-fed/issues/2773
+  pronouns = obj.pop('pronouns', None)
+  if isinstance(pronouns, dict):
+    pronouns = next((val for val in pronouns.values()
+                     if val and isinstance(val, str)), None)
+  elif not isinstance(pronouns, str):
+    pronouns = None
+
   attachments = [att for att in as1.get_objects(obj, 'attachment') if att]
   for att in attachments:
     name = att.get('name')
     value = att.get('value')
-    if (type in ACTOR_TYPES and att.get('type') == 'PropertyValue'
+    if (type in ACTOR_TYPES and not pronouns and att.get('type') == 'PropertyValue'
         and isinstance(name, str) and name.strip().lower() == 'pronouns'
         and value and isinstance(value, str)):
       # https://github.com/snarfed/bridgy-fed/issues/2773
