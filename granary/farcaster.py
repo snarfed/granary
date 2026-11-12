@@ -281,7 +281,6 @@ def web_url_to_farcaster_uri(url, remote=False):
       api_url = util.add_query_params(f'{CLIENT_API_BASE}user-thread-casts', {
         'castHashPrefix': hash,
         'username': username,
-        'limit': 1,
       })
       try:
         resp = util.requests_get(api_url)
@@ -291,11 +290,12 @@ def web_url_to_farcaster_uri(url, remote=False):
         logger.info(f"Couldn't resolve {url} : {e}")
         casts = []
 
-      if (casts and (full_hash := casts[0].get('hash'))
-          and len(full_hash) == full_hash_len
-          and full_hash.startswith(hash)
-          and (fid := (casts[0].get('author') or {}).get('fid'))):
-        return f'farcaster://{fid}/{full_hash}'
+      # this returns the user's casts in the whole thread, eg the root first
+      for cast in casts:
+        full_hash = cast.get('hash') or ''
+        if (len(full_hash) == full_hash_len and full_hash.startswith(hash)
+            and (fid := (cast.get('author') or {}).get('fid'))):
+          return f'farcaster://{fid}/{full_hash}'
 
       logger.info(f"Couldn't resolve {url} to a full hash")
 

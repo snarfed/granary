@@ -1014,8 +1014,25 @@ cast_add_body { text: "Hello!" }
       web_url_to_farcaster_uri('https://farcaster.xyz/adrienne/0xef70f021',
                                remote=True))
     self.assertEqual(
-      'https://client.farcaster.xyz/v2/user-thread-casts?castHashPrefix=0xef70f021&username=adrienne&limit=1',
+      'https://client.farcaster.xyz/v2/user-thread-casts?castHashPrefix=0xef70f021&username=adrienne',
       mock_get.call_args.args[0])
+
+  @patch.object(util.session, 'get', return_value=testutil.requests_response({
+    'result': {
+      'casts': [{
+        'hash': '0xaaaaaaaa00000000000000000000000000000000',
+        'author': {'fid': 123},
+      }, {
+        'hash': '0xbbbbbbbb00000000000000000000000000000000',
+        'author': {'fid': 123},
+      }],
+    },
+  }))
+  def test_web_url_to_farcaster_uri_remote_thread_reply(self, _):
+    self.assertEqual(
+      'farcaster://123/0xbbbbbbbb00000000000000000000000000000000',
+      web_url_to_farcaster_uri('https://farcaster.xyz/alice/0xbbbbbbbb',
+                               remote=True))
 
   @patch.object(util.session, 'get')
   def test_web_url_to_farcaster_uri_remote_no_fetch(self, mock_get):
