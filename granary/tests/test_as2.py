@@ -493,6 +493,21 @@ class ActivityStreams2Test(testutil.TestCase):
       }],
     }))
 
+  def test_to_as1_person_pronouns_propertyvalue_attachment(self):
+    self.assertEqual({
+      'objectType': 'person',
+      'displayName': 'Alice',
+      'pronouns': 'she & they',
+    }, as2.to_as1({
+      'type': 'Person',
+      'name': 'Alice',
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'pronouns',
+        'value': '<p>she &amp; they</p>',
+      }],
+    }))
+
   def test_to_as1_person_url_in_propertyvalue_attachment(self):
     self.assertEqual({
       'objectType': 'person',
@@ -517,6 +532,7 @@ class ActivityStreams2Test(testutil.TestCase):
         {'displayName': 'Home', 'value': 'https://in.st/@alice'},
         {'displayName': 'Blog', 'value': 'https://alice.blog/'},
       ],
+      'pronouns': 'they/them',
     }, as2.to_as1({
       'type': 'Person',
       'url': 'https://in.st/@alice',
@@ -639,6 +655,7 @@ class ActivityStreams2Test(testutil.TestCase):
       'objectType': 'person',
       'displayName': '@giflian@techhub.social',
       'url': 'https://techhub.social/@giflian',
+      'pronouns': 'they/them',
     }, as2.to_as1({
       'type': 'Person',
       'url': 'https://techhub.social/@giflian',
@@ -1254,6 +1271,32 @@ class ActivityStreams2Test(testutil.TestCase):
       'id': 'https://mastodon.xyz/users/alice',
       'preview': [{'url': 'https://banner/'}],
     }), ignore=['displayName'])
+
+  def test_from_as1_person_pronouns(self):
+    self.assert_equals({
+      '@context': as2.CONTEXT + [
+        {
+          'PropertyValue': 'http://schema.org#PropertyValue',
+          'value': 'http://schema.org#value',
+        }, {
+          'discoverable': 'http://joinmastodon.org/ns#discoverable',
+          'indexable': 'http://joinmastodon.org/ns#indexable',
+        },
+      ],
+      'type': 'Person',
+      'id': 'tag:example.com,2011:martin',
+      'discoverable': True,
+      'indexable': True,
+      'attachment': [{
+        'type': 'PropertyValue',
+        'name': 'Pronouns',
+        'value': 'she &amp; they',
+      }],
+    }, as2.from_as1({
+      'objectType' : 'person',
+      'id': 'tag:example.com,2011:martin',
+      'pronouns': 'she & they',
+    }))
 
   def test_from_as1_person_propertyvalue_attachment_strips_home_page_slash(self):
     self.assert_equals({

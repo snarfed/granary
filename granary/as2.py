@@ -492,6 +492,15 @@ def from_as1(obj, type=None, context=tuple(CONTEXT), top_level=True, multiple=Fa
 
     attachments.extend(links.values())
 
+    # https://github.com/snarfed/bridgy-fed/issues/2773
+    if pronouns := obj.pop('pronouns', None):
+      attachments.append({
+        'type': 'PropertyValue',
+        'name': 'Pronouns',
+        'value': html.escape(pronouns, quote=False),
+      })
+      util.add(obj['@context'], PROPERTY_VALUE_CONTEXT)
+
     # pinned posts
     # https://docs.joinmastodon.org/spec/activitypub/#featured
     if feat := as1.get_object(obj, 'featured'):
@@ -726,11 +735,17 @@ def to_as1(obj, use_type=True, get_fn=None):
   # the parent's url/urls fields
   names = {}
   field_urls = []
+  pronouns = None
   attachments = [att for att in as1.get_objects(obj, 'attachment') if att]
   for att in attachments:
     name = att.get('name')
     value = att.get('value')
-    if (att.get('type') == 'PropertyValue' and name and name != 'Link'
+    if (type in ACTOR_TYPES and att.get('type') == 'PropertyValue'
+        and isinstance(name, str) and name.strip().lower() == 'pronouns'
+        and value and isinstance(value, str)):
+      # https://github.com/snarfed/bridgy-fed/issues/2773
+      pronouns = util.parse_html(value).get_text().strip()
+    elif (att.get('type') == 'PropertyValue' and name and name != 'Link'
         and value and isinstance(value, str)
         # bail out before parsing HTML if there's obviously no link. parsing is
         # expensive, and these fields are often plain text
@@ -961,6 +976,8 @@ def to_as1(obj, use_type=True, get_fn=None):
     # actor's primary URL
     'url': urls[0] if obj_urls else next(iter(proxy_links.values()), None),
     'urls': urls if len(urls) > 1 or len(urls) > len(obj_urls) else None,
+    # pronouns aren't officially in AS1
+    'pronouns': pronouns,
   })
 
   # enforce that lat/lon are float. (Pixelfed currently returns them as strings)

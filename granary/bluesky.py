@@ -934,6 +934,7 @@ def _from_as1_actor(obj, *, out_type, multiple, summary, blobs, client,
   ret = {
     'displayName': obj.get('displayName'),
     'description': summary,
+    'pronouns': obj.get('pronouns'),
     'avatar': blobs.get(avatar),
     'banner': blobs.get(banner),
     'pinnedPost': pinned_post,
@@ -949,7 +950,7 @@ def _from_as1_actor(obj, *, out_type, multiple, summary, blobs, client,
   if not out_type or out_type in ATP_PROFILE_TYPES:
     # TODO: Spark pinnedPost. needs to be a so.sprk.feed.post
     if out_type == 'so.sprk.actor.profile':
-      ret['pinnedPost'] = None
+      ret['pinnedPost'] = ret['pronouns'] = None
     ret = as1.trim_nulls({**ret, '$type': out_type or 'app.bsky.actor.profile'})
 
   elif out_type == 'site.standard.publication':
@@ -1016,13 +1017,14 @@ def _from_as1_actor(obj, *, out_type, multiple, summary, blobs, client,
   if ret['$type'] == 'app.bsky.actor.profile':
     rets = [ret]
 
-    # Spark, same as Bluesky's except for pinnedPost
+    # Spark, same as Bluesky's except for pinnedPost and pronouns
     # https://github.com/sprksocial/server/blob/main/lexicons/so/sprk/actor/profile.json
     if multiple:
       rets.append(as1.trim_nulls({
         **ret,
         '$type': 'so.sprk.actor.profile',
         'pinnedPost': None,
+        'pronouns': None,
       }))
 
       # Grain, also similar to Bluesky's, but even more minimal
@@ -1069,7 +1071,7 @@ def _from_as1_actor(obj, *, out_type, multiple, summary, blobs, client,
   # Grain profiles only have displayName, description, avatar, createdAt
   for profile in rets or [ret]:
     if profile['$type'] == 'social.grain.actor.profile':
-      for field in 'banner', 'labels', 'pinnedPost', 'website':
+      for field in 'banner', 'labels', 'pinnedPost', 'pronouns', 'website':
         profile.pop(field, None)
 
   return rets or [ret]
@@ -2804,6 +2806,7 @@ def _to_as1_actor(obj, *, type, uri, repo_did, repo_handle, pds, client):
     'displayName': obj.get('displayName'),
     # TODO: for app.bsky.feed.generator, use descriptionFacets
     'summary': summary,
+    'pronouns': obj.get('pronouns'),
     'image': images,
     'published': obj.get('createdAt'),
   })

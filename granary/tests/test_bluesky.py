@@ -2518,6 +2518,17 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals(expected, self.from_as1(
       ACTOR_AS, out_type='app.bsky.actor.profile'))
 
+  def test_from_as1_actor_pronouns(self):
+    self.assert_equals({
+      '$type': 'app.bsky.actor.profile',
+      'displayName': 'Alice',
+      'description': 'hi there',
+      'pronouns': 'she/her',
+      'website': 'https://alice.com/',
+      'fooOriginalDescription': 'hi there',
+      'fooOriginalUrl': 'https://alice.com/',
+    }, self.from_as1({**ACTOR_AS, 'pronouns': 'she/her'}))
+
   def test_from_as1_actor_blobs(self):
     self.assert_equals({
       '$type': 'app.bsky.actor.profile',
@@ -2852,7 +2863,8 @@ class BlueskyTest(testutil.TestCase):
       'website': 'https://alice.com/',
       'fooOriginalDescription': 'hi there',
       'fooOriginalUrl': 'https://alice.com/',
-    }, self.from_as1(ACTOR_AS, out_type='so.sprk.actor.profile',
+    }, self.from_as1({**ACTOR_AS, 'pronouns': 'she/her'},
+                     out_type='so.sprk.actor.profile',
                      blobs={'https://alice.com/alice.jpg': NEW_BLOB}))
 
   def test_from_as1_actor_to_grain_profile(self):
@@ -2866,6 +2878,7 @@ class BlueskyTest(testutil.TestCase):
     }, self.from_as1({
       **ACTOR_AS,
       'objectType': 'service',
+      'pronouns': 'she/her',
       'image': [
         {'url': 'https://alice.com/alice.jpg'},
         {'url': 'https://alice.com/banner.jpg', 'objectType': 'featured'},
@@ -5538,6 +5551,15 @@ class BlueskyTest(testutil.TestCase):
     }, to_as1({
       '$type': 'app.bsky.actor.profile',
       'description': 'one http://li.nk/foo\n  two\n\nthree',
+    }))
+
+  def test_to_as1_profile_pronouns(self):
+    self.assert_equals({
+      'objectType': 'person',
+      'pronouns': 'she/her',
+    }, to_as1({
+      '$type': 'app.bsky.actor.profile',
+      'pronouns': 'she/her',
     }))
 
   def test_to_as1_profile_handle_is_not_url(self):

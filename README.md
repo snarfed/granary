@@ -337,7 +337,9 @@ _Non-breaking changes:_
     * Add links from `PropertyValue` `attachments` to `urls` along with `url`.
   * Convert [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links, ie `url` `Link`s with `rel` `alternate` or `canonical`, to/from AS1.
   * Convert AS1 `link` attachments to/from [FEP-8967](https://codeberg.org/fediverse/fep/src/branch/main/fep/8967/fep-8967.md) `Link` attachments with `preview` ([bridgy-fed#2286](https://github.com/snarfed/bridgy-fed/issues/2286)).
+  * Convert actors' non-standard AS1 `pronouns` field to/from `PropertyValue` attachments named `Pronouns` ([bridgy-fed#2773](https://github.com/snarfed/bridgy-fed/issues/2773)).
 * `bluesky`:
+  * Convert actors' non-standard AS1 `pronouns` field to/from the `pronouns` field in `app.bsky.actor.profile` records ([bridgy-fed#2773](https://github.com/snarfed/bridgy-fed/issues/2773)).
   * Convert AS1 event `image`s to/from the non-standard `media` field in `community.lexicon.calendar.event` records that Smoke Signal, atmo.rsvp, and others use.
   * Convert to/from [Grain](https://grain.social/) `social.grain.*` records ([bridgy-fed#2739](https://github.com/snarfed/bridgy-fed/issues/2739)).
   * Convert to/from [Spark](https://sprk.so/) `so.sprk.graph.follow` and `so.sprk.graph.block` records.
