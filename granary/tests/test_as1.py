@@ -1242,6 +1242,29 @@ class As1Test(testutil.TestCase):
       'length': 8,
     }], obj.get('tags'))
 
+  def test_expand_tags_plain_text_adjacent_mentions(self):
+    obj = {
+      'objectType': 'note',
+      'content': '@alice\n@bob.example @eve',
+    }
+    as1.expand_tags(obj)
+    self.assertEqual([{
+      'objectType': 'mention',
+      'displayName': '@alice',
+      'startIndex': 0,
+      'length': 6,
+    }, {
+      'objectType': 'mention',
+      'displayName': '@bob.example',
+      'startIndex': 7,
+      'length': 12,
+    }, {
+      'objectType': 'mention',
+      'displayName': '@eve',
+      'startIndex': 20,
+      'length': 4,
+    }], obj.get('tags'))
+
   def test_expand_tags_plain_text_hashtag(self):
     obj = {
       'objectType': 'note',

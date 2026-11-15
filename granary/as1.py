@@ -105,7 +105,7 @@ _PERMASHORTCITATION_RE = re.compile(r'\(([^:\s)]+\.[^\s)]{2,})[ /]([^\s)]+)\)$')
 HASHTAG_RE = re.compile(r'(^|\s)[#＃](\w+)\b', re.UNICODE)
 
 
-AT_MENTION_RE = re.compile(r'(?:^|\W)(@[\w._-]+)(?:$|\W)')
+AT_MENTION_RE = re.compile(r'(?<!\w)(@[\w._-]+)(?=$|\W)')
 
 
 def object_type(obj):
@@ -978,7 +978,7 @@ def expand_tags(obj):
 
   If ``obj.content`` is plain text, detects @-mentions that aren't in ``obj.tags``
   and adds them, and finds tags without ``startIndex`` or ``length`` in content and
-  popultes those fields.
+  populates those fields.
 
   If ``obj.content`` is HTML, does nothing.
 

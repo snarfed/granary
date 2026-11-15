@@ -329,6 +329,7 @@ _Non-breaking changes:_
   * Add new `merge_urls` function that merges new URLs into a list of `url`/`urls` values, replacing matching URLs and appending new ones.
   * Add new `get_rel_links` function that returns an object's `url`/`urls` links with `rel`s, eg [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links ([bridgy-fed#800](https://github.com/snarfed/bridgy-fed/issues/800)).
   * `snippet`: add `event` support.
+  * `expand_tags`: bug fix, detect plain text @-mentions that are separated from a previous @-mention by a single whitespace or punctuation character.
 * `as2`:
   * `from_as1`:
     * Convert `rsvp-interested` to `TentativeAccept`. Previously it had no `type`.
