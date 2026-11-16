@@ -989,10 +989,13 @@ def to_as1(obj, use_type=True, get_fn=None):
     'pronouns': pronouns,
   })
 
-  # enforce that lat/lon are float. (Pixelfed currently returns them as strings)
+  # enforce that lat/lon are float. (Pixelfed currently returns them as strings.
+  # some servers also use decimal commas.)
   for field in 'latitude', 'longitude':
     val = obj.get(field)
     if val:
+      if isinstance(val, str):
+        val = val.replace(',', '.')
       if not util.is_float(val):
         raise ValueError(f'Expected float for {field} in {obj.get("id")}; got {val}')
       obj[field] = float(val)

@@ -1113,6 +1113,25 @@ class ActivityStreams2Test(testutil.TestCase):
       },
     }))
 
+  def test_lat_lon_decimal_comma(self):
+    self.assertEqual({
+      'objectType': 'note',
+      'location': {
+        'objectType': 'place',
+        'longitude': 21.01178,
+        'latitude': 52.22977,
+        'position': '+52.229770+21.011780/',
+      },
+    }, as2.to_as1({
+      '@context': as2.CONTEXT,
+      'type': 'Note',
+      'location': {
+        'type': 'Place',
+        'longitude': '21,01178',
+        'latitude': '52,22977',
+      },
+    }))
+
   def test_lat_lon_not_float(self):
     with self.assertRaises(ValueError):
       as2.to_as1({
