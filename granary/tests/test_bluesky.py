@@ -1905,7 +1905,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
-      'text': 'foo http://post baz',
+      'text': 'foo post baz',
       'fooOriginalText': content,
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
@@ -1915,8 +1915,42 @@ class BlueskyTest(testutil.TestCase):
         }],
         'index': {
           'byteStart': 4,
-          'byteEnd': 15,
+          'byteEnd': 8,
         },
+      }],
+    }, self.from_as1({
+      'objectType': 'note',
+      'content': content,
+    }))
+
+  def test_from_as1_html_link_url_text_shortened(self):
+    content = 'a <a href="https://example.com/a/very/long/path?q=1">https://example.com/a/very/long/path?q=1</a> b <a href="http://x.example/">http://x.example/</a> c <a href="http://tag.example/foo">#foo</a>'
+    self.assert_equals({
+      '$type': 'app.bsky.feed.post',
+      'createdAt': '2022-01-02T03:04:05.000Z',
+      'text': 'a example.com/a/very/long/… b x.example/ c #foo',
+      'fooOriginalText': content,
+      'facets': [{
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'https://example.com/a/very/long/path?q=1',
+        }],
+        'index': {'byteStart': 2, 'byteEnd': 29},
+      }, {
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#link',
+          'uri': 'http://x.example/',
+        }],
+        'index': {'byteStart': 32, 'byteEnd': 42},
+      }, {
+        '$type': 'app.bsky.richtext.facet',
+        'features': [{
+          '$type': 'app.bsky.richtext.facet#tag',
+          'tag': 'foo',
+        }],
+        'index': {'byteStart': 45, 'byteEnd': 49},
       }],
     }, self.from_as1({
       'objectType': 'note',
@@ -1968,7 +2002,7 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
-      'text': 'spooky http://foo/bar+(Main+Title).mp3',
+      'text': 'spooky foo/bar+(Main+Ti…',
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
         'features': [{
@@ -1977,7 +2011,7 @@ class BlueskyTest(testutil.TestCase):
         }],
         'index': {
           'byteStart': 7,
-          'byteEnd': 38,
+          'byteEnd': 26,
         },
       }],
       'fooOriginalText': content,
@@ -5013,14 +5047,14 @@ class BlueskyTest(testutil.TestCase):
     self.assert_equals({
       '$type': 'app.bsky.feed.post',
       'createdAt': '2022-01-02T03:04:05.000Z',
-      'text': 'https://bsky.app/profile/alice.bsky.social',
+      'text': 'bsky.app/profile/alic…',
       'facets': [{
         '$type': 'app.bsky.richtext.facet',
         'features': [{
           '$type': 'app.bsky.richtext.facet#link',
           'uri': 'https://bsky.app/profile/alice.bsky.social',
         }],
-        'index': {'byteStart': 0, 'byteEnd': 42},
+        'index': {'byteStart': 0, 'byteEnd': 24},
       }],
     }, self.from_as1({
       'objectType': 'note',

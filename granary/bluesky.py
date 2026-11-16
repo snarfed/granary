@@ -1226,6 +1226,30 @@ def _from_as1_post(obj, *, out_type, multiple, actor, summary, blobs, aspects,
 
   tags = util.get_list(obj, 'tags')
 
+  # shorten URLs in link text like bsky.app does, eg https://foo/bar/baz/biff =>
+  # foo/bar/baz…, and shift the tags after them. (bsky.app uses ... instead of …)
+  # https://github.com/snarfed/bridgy-fed/issues/1228
+  # https://github.com/bluesky-social/social-app/blob/9747031e9b/src/lib/strings/url-helpers.ts#L74-L89
+  if content := obj.get('content'):
+    shift = 0
+    for tag in sorted((tag for tag in tags
+                       if tag.get('startIndex') is not None
+                       and tag.get('length') is not None),
+                      key=lambda tag: tag['startIndex']):
+      start = tag['startIndex'] = tag['startIndex'] + shift
+      end = start + tag['length']
+      text = content[start:end]
+      if util.is_web(text):
+        parsed = urlparse(text)
+        assert parsed.netloc
+        path = urlunparse(parsed._replace(scheme='', netloc=''))
+        short = parsed.netloc + (f'{path[:13]}…' if len(path) > 15 else path)
+        content = content[:start] + short + content[end:]
+        tag['length'] = len(short)
+        shift += len(short) - len(text)
+
+    obj['content'] = content
+
   # handle summary. for articles, use instead of content. for notes, assume
   # it's a fediverse-style content warnings, add above content.
   # https://github.com/snarfed/bridgy-fed/issues/1001

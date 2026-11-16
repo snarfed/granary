@@ -351,6 +351,8 @@ _Non-breaking changes:_
     * Stop adding `https://[handle]/` to actor `urls`, since handle domains aren't always web sites ([bridgy-fed#2677](https://github.com/snarfed/bridgy-fed/issues/2677)).
     * Populate `id` and `author` for `site.standard.document` records.
     * Handle `site.standard.document` records whose `site` is an `at://` URI ([bridgy-fed#2768](https://github.com/snarfed/bridgy-fed/issues/2768)).
+  * `from_as1`:
+    * Shorten URLs in post text like bsky.app does, eg `https://example.com/a/very/long/path` => `example.com/a/very/long/…` ([bridgy-fed#1228](https://github.com/snarfed/bridgy-fed/issues/1228)).
   * Convert [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links to/from the upcoming [`community.lexicon.meta.links`](https://tangled.org/essentialrandom.bsky.social/lexicon-community-lexicons/blob/add-proxy-links/community/lexicon/meta/README.md) field in records. `to_as1` also converts [wafrn](https://wafrn.net/)'s `fediverseId` field ([bridgy-fed#800](https://github.com/snarfed/bridgy-fed/issues/800)).
 * `microformats2`:
   * `to_as1`:
