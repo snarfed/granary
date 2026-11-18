@@ -144,7 +144,7 @@ app.after_request(flask_util.default_modern_headers)
 app.post(flask_util.CSP_REPORT_PATH)(flask_util.csp_report)
 app.register_error_handler(Exception, flask_util.handle_exception)
 app.before_request(flask_util.canonicalize_domain(
-  ('granary-demo.appspot.com', 'www.granary.io'), 'granary.io'))
+  'granary.io', from_domains=('granary-demo.appspot.com', 'www.granary.io')))
 if appengine_info.DEBUG or appengine_info.LOCAL_SERVER:
   flask_gae_static.init_app(app)
 
