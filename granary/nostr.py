@@ -50,6 +50,7 @@ import secrets
 
 import bech32
 from bs4 import BeautifulSoup
+import requests
 import secp256k1
 from websockets.exceptions import ConnectionClosedOK
 from webutil import util
@@ -100,7 +101,7 @@ BECH32_RE = re.compile(f'(?P<prefix>{"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,}}'
 URI_RE = re.compile(r'\bnostr:' + BECH32_RE.pattern + r'\b')
 
 # web client URLs for users and events. assume their last path segment is the bech32
-# npub, eg https://primal.net/p/npub123...
+# npub, eg https://primal.net/p/npub123... . allow query and fragment.
 CLIENT_DOMAINS = (
   'coracle.social',
   'damus.io',
@@ -109,8 +110,13 @@ CLIENT_DOMAINS = (
   'primal.net',
   'snort.social',
 )
+CLIENT_DOMAINS_RE = '|'.join(re.escape(d) for d in CLIENT_DOMAINS)
 CLIENT_URL_RE = re.compile(
-  rf'https://(?:{"|".join(re.escape(d) for d in CLIENT_DOMAINS)})/(?:[a-z]+/)?(?P<bech32>{BECH32_RE.pattern})/?')
+  rf'https://(?:{CLIENT_DOMAINS_RE})/(?:[a-z]+/)?(?P<bech32>{BECH32_RE.pattern})/?(?:[?#].*)?')
+# NIP-05 identifiers or bare domains, eg https://njump.me/alice@example.com
+CLIENT_NIP05_URL_RE = re.compile(
+  rf'https://(?:{CLIENT_DOMAINS_RE})/(?P<nip05>(?:[\w.+-]+@)?[a-z0-9-]+(?:\.[a-z0-9-]+)+)/?(?:[?#].*)?',
+  re.IGNORECASE)
 
 ID_RE = re.compile(r'[0-9a-f]{64}')
 
@@ -364,6 +370,49 @@ def nip05_to_npub(nip05):
 
   # convert hex pubkey to npub
   return id_to_uri('npub', pubkey).removeprefix('nostr:')
+
+
+def web_url_to_uri(url, remote=False):
+  """Converts a Nostr web client URL to a ``nostr:`` URI.
+
+  Supports bech32 URLs on :const:`CLIENT_DOMAINS`, eg:
+
+  * ``https://primal.net/p/npub123...``
+  * ``https://coracle.social/notes/nevent123...``
+
+  If ``remote`` is True, also resolves NIP-05 URLs via :func:`nip05_to_npub`, eg:
+
+  * ``https://njump.me/alice@example.com``
+  * ``https://njump.me/example.com`` (``_@example.com``)
+
+  Args:
+    url (str): Nostr web client URL
+    remote (bool): whether to resolve NIP-05 URLs over the network
+
+  Returns:
+    str: ``nostr:`` URI with bech32 id, or None if ``url`` is a NIP-05 URL and
+    ``remote`` is False, or resolving it fails
+
+  Raises:
+    ValueError: if ``url`` can't be parsed as a Nostr web client URL
+  """
+  if not url:
+    return None
+
+  if match := CLIENT_URL_RE.fullmatch(url):
+    return 'nostr:' + match['bech32']
+
+  if match := CLIENT_NIP05_URL_RE.fullmatch(url):
+    if not remote:
+      return None
+
+    try:
+      return 'nostr:' + nip05_to_npub(match['nip05'])
+    except (requests.RequestException, ValueError) as e:
+      logger.info(f"Couldn't resolve {url} : {e}")
+      return None
+
+  raise ValueError(f"{url} doesn't look like a Nostr web client URL")
 
 
 def id_and_sign(event, privkey):

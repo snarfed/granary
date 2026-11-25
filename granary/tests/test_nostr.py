@@ -20,6 +20,7 @@ from .. import nostr
 from ..nostr import (
   BECH32_RE,
   bech32_decode,
+  CLIENT_NIP05_URL_RE,
   CLIENT_URL_RE,
   bech32_encode,
   from_as1,
@@ -41,6 +42,7 @@ from ..nostr import (
   URI_RE,
   uri_to_id,
   verify,
+  web_url_to_uri,
 )
 
 NOW_TS = int(testutil.NOW.timestamp())
@@ -1500,6 +1502,60 @@ class NostrTest(testutil.TestCase):
                              timeout=HTTP_TIMEOUT, stream=True,
                              headers={'User-Agent': util.user_agent})
 
+  def test_web_url_to_uri(self):
+    self.assertIsNone(web_url_to_uri(None))
+    self.assertIsNone(web_url_to_uri(''))
+
+    for url, expected in (
+        (f'https://primal.net/p/{NPUB}', NPUB_URI),
+        (f'https://njump.me/{NPUB}?foo=bar#baz', NPUB_URI),
+        (f'https://coracle.social/notes/{NEVENT}', f'nostr:{NEVENT}'),
+        # NIP-05s need remote
+        ('https://njump.me/alice@example.com', None),
+        ('https://njump.me/example.com', None),
+    ):
+      with self.subTest(url=url):
+        self.assertEqual(expected, web_url_to_uri(url))
+
+    for url in (
+        f'https://example.com/{NPUB}',
+        'https://njump.me/r/relay.example.com',
+        'https://snort.social/alice',
+        'https://njump.me/',
+    ):
+      with self.subTest(url=url):
+        with self.assertRaises(ValueError):
+          web_url_to_uri(url)
+
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'names': {'alice': PUBKEY},
+  }))
+  def test_web_url_to_uri_nip05_remote(self, mock_get):
+    self.assertEqual(NPUB_URI, web_url_to_uri(
+      'https://njump.me/alice@example.com?foo=bar', remote=True))
+    mock_get.assert_any_call('https://example.com/.well-known/nostr.json?name=alice',
+                             timeout=HTTP_TIMEOUT, stream=True,
+                             headers={'User-Agent': util.user_agent})
+
+  @patch.object(util.session, 'get', return_value=requests_response({
+    'names': {'_': PUBKEY},
+  }))
+  def test_web_url_to_uri_nip05_domain_remote(self, mock_get):
+    self.assertEqual(NPUB_URI, web_url_to_uri(
+      'https://njump.me/example.com', remote=True))
+    mock_get.assert_any_call('https://example.com/.well-known/nostr.json?name=_',
+                             timeout=HTTP_TIMEOUT, stream=True,
+                             headers={'User-Agent': util.user_agent})
+
+  @patch.object(util.session, 'get', side_effect=[
+    requests_response('', status=404),
+    requests_response({'names': {'bob': PUBKEY}}),
+  ])
+  def test_web_url_to_uri_nip05_remote_fails(self, mock_get):
+    for _ in range(2):
+      self.assertIsNone(web_url_to_uri(
+        'https://njump.me/alice@example.com', remote=True))
+
   def test_nip05_to_npub_invalid_input(self):
     for bad in ('', 'too@many@ats', 'alice@', '@example.com'):
       with self.subTest(nip05=bad):
@@ -1927,6 +1983,8 @@ https://njump.me/note1fftu0gwauwl7zvrkmdy9cncfw4h9g3rlvwyaha5xf4qnn0zq5g2qrlw3zf
         f'https://snort.social/{URI_NPROFILE.removeprefix("nostr:")}',
         f'https://njump.me/{NEVENT}',
         f'https://primal.net/e/{URI.removeprefix("nostr:")}',
+        f'https://njump.me/{NPUB}/?foo=bar',
+        f'https://njump.me/{NPUB}#baz',
     ):
       with self.subTest(url=url):
         self.assertIsNotNone(CLIENT_URL_RE.fullmatch(url))
@@ -1941,7 +1999,25 @@ https://njump.me/note1fftu0gwauwl7zvrkmdy9cncfw4h9g3rlvwyaha5xf4qnn0zq5g2qrlw3zf
         self.assertIsNone(CLIENT_URL_RE.fullmatch(url))
 
     self.assertEqual(NPUB, CLIENT_URL_RE.fullmatch(
-      f'https://primal.net/p/{NPUB}')['bech32'])
+      f'https://primal.net/p/{NPUB}?foo=bar')['bech32'])
+
+  def test_client_nip05_url_re(self):
+    for url, nip05 in (
+        ('https://njump.me/alice@example.com', 'alice@example.com'),
+        ('https://njump.me/example.com/', 'example.com'),
+        ('https://njump.me/alice@example.com?foo=bar', 'alice@example.com'),
+        ('https://njump.me/alice@example.com/#baz', 'alice@example.com'),
+    ):
+      with self.subTest(url=url):
+        self.assertEqual(nip05, CLIENT_NIP05_URL_RE.fullmatch(url)['nip05'])
+
+    for url in (
+        'https://njump.me/r/relay.example.com',
+        'https://snort.social/alice',
+        'https://example.com/alice@example.com',
+    ):
+      with self.subTest(url=url):
+        self.assertIsNone(CLIENT_NIP05_URL_RE.fullmatch(url))
 
   def test_uri_re(self):
     self.assertIsNone(URI_RE.search(ID))
