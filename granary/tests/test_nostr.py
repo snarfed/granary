@@ -20,6 +20,7 @@ from .. import nostr
 from ..nostr import (
   BECH32_RE,
   bech32_decode,
+  CLIENT_URL_RE,
   bech32_encode,
   from_as1,
   id_for,
@@ -1915,6 +1916,32 @@ https://njump.me/note1fftu0gwauwl7zvrkmdy9cncfw4h9g3rlvwyaha5xf4qnn0zq5g2qrlw3zf
     # author: a4237e420cdb0b3231d171fe879bcae37a2db7abf2f12a337b975337618c3ac2
     # kind: 1
     self.assertIsNotNone(BECH32_RE.fullmatch('nevent1qqsq4xe9gpmh9xrxkzh84dcvx5uq038cqt5lpkud7l2lylkhe3c9t0gzyzjzxljzpndskv3369clapumet3h5tdh40e0z23n0wt4xdmp3savyqcyqqqqqqgzg95fu'))
+
+  def test_client_url_re(self):
+    for url in (
+        f'https://njump.me/{NPUB}',
+        f'https://primal.net/p/{NPUB}',
+        f'https://coracle.social/people/{NPUB}',
+        f'https://damus.io/{NPUB}',
+        f'https://iris.to/{NPUB}',
+        f'https://snort.social/{URI_NPROFILE.removeprefix("nostr:")}',
+        f'https://njump.me/{NEVENT}',
+        f'https://primal.net/e/{URI.removeprefix("nostr:")}',
+    ):
+      with self.subTest(url=url):
+        self.assertIsNotNone(CLIENT_URL_RE.fullmatch(url))
+
+    for url in (
+        f'https://njump.me/{ID}',
+        'https://njump.me/alice@example.com',
+        f'https://example.com/{NPUB}',
+        f'https://primal.net/p/x/{NPUB}',
+    ):
+      with self.subTest(url=url):
+        self.assertIsNone(CLIENT_URL_RE.fullmatch(url))
+
+    self.assertEqual(NPUB, CLIENT_URL_RE.fullmatch(
+      f'https://primal.net/p/{NPUB}')['bech32'])
 
   def test_uri_re(self):
     self.assertIsNone(URI_RE.search(ID))

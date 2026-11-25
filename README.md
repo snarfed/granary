@@ -360,6 +360,7 @@ _Non-breaking changes:_
 * `nostr`:
   * Convert [NIP-48](https://nips.nostr.com/48) `proxy` tags to/from AS1 `canonical` [FEP-fffd](https://codeberg.org/fediverse/fep/src/branch/main/fep/fffd/fep-fffd.md) proxy links in `urls`, with `mimeType` from the tag's protocol ([bridgy-fed#800](https://github.com/snarfed/bridgy-fed/issues/800)).
   * `from_as1`: profile `website` is now always a string URL, never a link object.
+  * Add new `CLIENT_DOMAINS` and `CLIENT_URL_RE` constants for web client user and event URLs, eg `https://primal.net/p/npub123...`.
 * `farcaster`:
   * `web_url_to_farcaster_uri`: add `remote` kwarg that resolves `farcaster.xyz` cast URLs' shortened hashes to full hashes and FIDs via farcaster.xyz's unofficial client API.
 

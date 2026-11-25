@@ -98,6 +98,20 @@ BECH32_TLV_PREFIXES = (
 )
 BECH32_RE = re.compile(f'(?P<prefix>{"|".join(BECH32_PREFIXES)})[a-z0-9]{{50,}}')
 URI_RE = re.compile(r'\bnostr:' + BECH32_RE.pattern + r'\b')
+
+# web client URLs for users and events. assume their last path segment is the bech32
+# npub, eg https://primal.net/p/npub123...
+CLIENT_DOMAINS = (
+  'coracle.social',
+  'damus.io',
+  'iris.to',
+  'njump.me',
+  'primal.net',
+  'snort.social',
+)
+CLIENT_URL_RE = re.compile(
+  rf'https://(?:{"|".join(re.escape(d) for d in CLIENT_DOMAINS)})/(?:[a-z]+/)?(?P<bech32>{BECH32_RE.pattern})/?')
+
 ID_RE = re.compile(r'[0-9a-f]{64}')
 
 # Event kinds
